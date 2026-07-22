@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+title: "Fence Challenge — interactive fence-building labs for polyforms"
+message: "If you use this software, please cite both the article and this repository."
+type: software
+authors:
+  - family-names: Langlois-Rémillard
+    given-names: Alexis
+  - family-names: Müßig
+    given-names: Mia N.
+  - family-names: Roldán
+    given-names: Érika
+repository-code: "https://github.com/ErikaRoldanRoa/fence-challenge"
+url: "https://erikaroldanroa.github.io/fence-challenge/"
+license: MIT
+preferred-citation:
+  type: article
+  title: "Maximale Zäune mit Polyformen"
+  authors:
+    - family-names: Langlois-Rémillard
+      given-names: Alexis
+    - family-names: Müßig
+      given-names: Mia N.
+    - family-names: Roldán
+      given-names: Érika
+  journal: "Mitteilungen der Deutschen Mathematiker-Vereinigung"
+  volume: 33
+  issue: 3
+  start: 187
+  end: 199
+  year: 2025
+  doi: "10.1515/dmvm-2025-0056"

@@ -1,0 +1,12 @@
+{
+  "name": "Fence Challenge",
+  "short_name": "Fence",
+  "description": "Interactive fence-building labs for polyforms on the three regular tilings of the plane.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#07060a",
+  "theme_color": "#07060a",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

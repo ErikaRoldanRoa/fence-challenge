@@ -1,0 +1,325 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap");
+
+:root {
+  --bg: #060c18;
+  --line: #244263;
+  --text: #d9f7ff;
+  --cyan: #3fd8ff;
+  --green: #2df6ac;
+  --rose: #ff6e9d;
+  /* Reserve ~110px on each side of the viewport so the piece chips placed
+     outward of the hex perimeter (≈ 50–60px from the board edge) stay inside
+     the screen.  Heights subtract toolbar (~36) + action bar (~32) + margins. */
+  --board-size: min(calc(100dvh - 90px), calc(100vw - 130px));
+  --hex-window-path: polygon(23% 7%, 77% 7%, 96% 50%, 77% 93%, 23% 93%, 4% 50%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  overflow: hidden;
+  font-family: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(960px 560px at 7% -18%, rgba(26, 194, 255, 0.16), transparent 62%),
+    radial-gradient(760px 560px at 100% -20%, rgba(45, 246, 172, 0.1), transparent 66%),
+    var(--bg);
+  color: var(--text);
+}
+
+.app-shell {
+  width: 100%;
+  height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 6px;
+}
+
+.main-stage {
+  width: min(100%, var(--board-size));
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 6px;
+  justify-items: center;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+}
+
+.play-zone {
+  width: 100%;
+  min-height: 0;
+  display: grid;
+  justify-items: center;
+}
+
+.board-wrap {
+  width: var(--board-size);
+  height: var(--board-size);
+  min-height: 0;
+  position: relative;
+  overflow: visible;
+}
+
+#board-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+.piece-ring {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+.piece-chip {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #172238;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.piece-chip:hover {
+  transform: translate(-50%, -50%) translateY(-1px);
+  border-color: color-mix(in srgb, var(--cyan) 60%, white);
+}
+
+.piece-chip.is-selected {
+  border-color: color-mix(in srgb, var(--cyan) 70%, white);
+  box-shadow:
+    inset 0 0 10px rgba(63, 216, 255, 0.18),
+    0 0 14px rgba(63, 216, 255, 0.2);
+}
+
+.piece-chip.is-on-board:not(.is-selected) {
+  border-color: color-mix(in srgb, var(--green) 55%, white);
+  box-shadow: inset 0 0 8px rgba(45, 246, 172, 0.14);
+}
+
+.piece-chip svg {
+  width: 27px;
+  height: 27px;
+  overflow: visible;
+}
+
+.piece-chip-ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+
+.board-actions {
+  position: absolute;
+  left: 50%;
+  bottom: 2%;
+  transform: translateX(-50%);
+  z-index: 7;
+  display: flex;
+  gap: 6px;
+  transition: opacity 0.18s ease;
+}
+
+.chip {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #1a2740;
+  color: #d8f7ff;
+  font-size: 0.92rem;
+  font-weight: 700;
+  height: 34px;
+  padding: 0 12px;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.chip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(63, 216, 255, 0.34);
+}
+
+.icon-chip {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 999px;
+  color: #9dcde3;
+}
+
+.icon-chip svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.action-chip {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 0.78rem;
+  color: #9ad8ed;
+}
+
+.chip-primary {
+  border-color: color-mix(in srgb, var(--cyan) 56%, white);
+  background: color-mix(in srgb, var(--cyan) 20%, #15263f);
+  box-shadow:
+    inset 0 0 8px rgba(63, 216, 255, 0.19),
+    0 0 12px rgba(63, 216, 255, 0.16);
+}
+
+.chip-area {
+  min-width: 110px;
+  border-color: color-mix(in srgb, var(--cyan) 54%, white);
+  color: #ddfbff;
+  background: linear-gradient(180deg, rgba(28, 143, 176, 0.36), rgba(22, 91, 114, 0.34));
+  box-shadow:
+    inset 0 0 10px rgba(63, 216, 255, 0.2),
+    0 0 20px rgba(63, 216, 255, 0.22);
+}
+
+.chip-danger {
+  border-color: color-mix(in srgb, var(--rose) 50%, white);
+  color: #ffe6ef;
+  background: color-mix(in srgb, var(--rose) 20%, #2a1f32);
+}
+
+.board-camera-chip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 8;
+  pointer-events: auto;
+}
+
+.board-camera-chip.is-active {
+  color: #d8fbff;
+  border-color: color-mix(in srgb, var(--cyan) 70%, white);
+  background: color-mix(in srgb, var(--cyan) 22%, #1a2740);
+  box-shadow:
+    inset 0 0 10px rgba(63, 216, 255, 0.22),
+    0 0 14px rgba(63, 216, 255, 0.3);
+}
+
+.camera-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: auto;
+  cursor: crosshair;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  clip-path: var(--camera-window-path, var(--hex-window-path));
+}
+
+.camera-overlay[hidden] {
+  display: none !important;
+  pointer-events: none;
+}
+
+.camera-overlay video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  clip-path: var(--camera-window-path, var(--hex-window-path));
+  outline: 1px solid rgba(72, 208, 255, 0.9);
+  outline-offset: -1px;
+  pointer-events: none;
+}
+
+.board-wrap.camera-mode .piece-ring,
+.board-wrap.camera-mode .board-actions {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.side-brand {
+  position: absolute;
+  left: 50%;
+  bottom: -22px;
+  transform: translateX(-50%);
+  text-decoration: none;
+  color: rgba(134, 233, 255, 0.55);
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  pointer-events: auto;
+  z-index: 7;
+}
+
+@media (max-width: 900px) {
+  :root {
+    /* Mobile: smaller chips (36×36 vs 40×40) need slightly less side margin.
+       Still reserve ~85px on each side so chips fit. */
+    --board-size: min(calc(100dvh - 132px), calc(100vw - 96px));
+  }
+
+  .app-shell {
+    padding: 6px;
+  }
+
+  .main-stage {
+    gap: 6px;
+  }
+
+  .toolbar {
+    gap: 6px;
+    min-height: 34px;
+  }
+
+  .chip {
+    font-size: 0.8rem;
+    height: 30px;
+    padding: 0 9px;
+  }
+
+  .chip-area {
+    min-width: 84px;
+  }
+
+  .piece-chip {
+    width: 36px;
+    height: 36px;
+  }
+
+  .piece-chip svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .board-actions {
+    bottom: 1%;
+  }
+
+  .side-brand {
+    display: none;
+  }
+}

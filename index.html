@@ -1,0 +1,973 @@
+<!doctype html>
+
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fence Challenge · Hub</title>
+    <meta name="theme-color" content="#07060a" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="manifest.json" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg0:#07060a; --text:rgba(255,255,255,0.92); --muted:rgba(255,255,255,0.70); --muted2:rgba(255,255,255,0.52);
+        --pink:#ff3bd4; --cyan:#2ff3ff; --lime:#70ff7a; --amber:#ffd24a; --purple:#b278ff;
+        --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+        --sans:"Manrope",ui-sans-serif,system-ui,sans-serif;
+        --enclosed:rgba(255,210,74,0.55); --enclosed-stroke:rgba(255,210,74,0.95);
+      }
+      *{box-sizing:border-box;}
+      html,body{margin:0;min-height:100dvh;background:var(--bg0);color:var(--text);font-family:var(--sans);line-height:1.55;}
+      main{max-width:1180px;margin:0 auto;padding:40px 24px 100px;}
+      .hero{text-align:center;padding:8px 0 12px;}
+      .hero h1{margin:0;font-size:clamp(28px,4vw,42px);font-weight:900;letter-spacing:-0.4px;line-height:1.08;}
+      .hero .cite{display:inline-flex;gap:8px;margin-top:14px;padding:4px 12px;border-radius:999px;background:rgba(255,210,74,0.06);border:1px solid rgba(255,210,74,0.28);color:var(--amber);font-family:var(--mono);font-size:11px;letter-spacing:0.06em;text-decoration:none;}
+      .hero .cite:hover{background:rgba(255,210,74,0.14);}
+
+      
+      .rack{margin-top:32px;padding:16px;border-radius:24px;background:rgba(255,255,255,0.015);border:1px solid rgba(255,255,255,0.09);}
+      .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch;}
+      @media(max-width:900px){.grid{grid-template-columns:1fr;}.rack{padding:10px;border-radius:18px;}}
+
+      article.pCard{display:flex;flex-direction:column;padding:14px;border-radius:18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.10);box-shadow:0 18px 50px rgba(0,0,0,0.35);}
+      article.pCard.pink{border-color:rgba(255,59,212,0.34);background:linear-gradient(180deg,rgba(255,59,212,0.07),rgba(255,255,255,0.02));}
+      article.pCard.lime{border-color:rgba(112,255,122,0.34);background:linear-gradient(180deg,rgba(112,255,122,0.07),rgba(255,255,255,0.02));}
+      article.pCard.cyan{border-color:rgba(47,243,255,0.34);background:linear-gradient(180deg,rgba(47,243,255,0.07),rgba(255,255,255,0.02));}
+
+      
+      .pTitle{text-align:center;font-weight:800;font-size:15.5px;letter-spacing:0.01em;line-height:1.25;}
+      article.pCard.pink .pTitle{color:var(--pink);}
+      article.pCard.lime .pTitle{color:var(--lime);}
+      article.pCard.cyan .pTitle{color:var(--cyan);}
+      .pKicker{text-align:center;margin:3px 0 10px;font-family:var(--mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted2);}
+
+      .pIconRow{display:flex;align-items:center;gap:8px;}
+      .pIconRow .spacer{flex:1 1 auto;}
+      .icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:999px;font-size:14px;line-height:1;border:1px solid rgba(255,255,255,0.14);background:rgba(0,0,0,0.28);color:rgba(255,255,255,0.92);cursor:help;text-decoration:none;transition:transform 0.12s ease,border-color 0.12s ease,background 0.12s ease;}
+      .icon:hover,.icon:focus-visible{transform:translateY(-1px);border-color:rgba(255,255,255,0.34);background:rgba(255,255,255,0.08);}
+      
+      a:focus-visible,button:focus-visible,[tabindex]:focus-visible,summary:focus-visible,.icon:focus-visible{outline:2px solid rgba(255,255,255,0.6);outline-offset:2px;}
+      .icon.info{color:var(--purple);border-color:rgba(178,120,255,0.45);font-family:var(--mono);font-weight:800;font-size:14px;}
+      
+      .icon.goal{cursor:help;border-color:rgba(255,210,74,0.45);background:linear-gradient(180deg,rgba(255,210,74,0.12),rgba(255,210,74,0.04));font-size:15px;}
+      
+      .icon.reset{cursor:pointer;width:26px;height:26px;font-size:13px;color:var(--muted2);}
+      
+      .icon.reset:hover{color:var(--text);}
+      .icon.reset > .glyph{display:inline-block;transition:transform 0.12s ease;}
+      .icon.reset:hover > .glyph{transform:rotate(-30deg);}
+      
+      .icon.act{cursor:pointer;width:30px;height:30px;font-size:15px;color:var(--text);
+                border-color:rgba(255,255,255,0.28);background:rgba(255,255,255,0.06);}
+      .icon.act:hover,.icon.act:focus-visible{border-color:rgba(255,255,255,0.5);
+                background:rgba(255,255,255,0.13);transform:translateY(-1px);}
+      .icon.act:active{transform:translateY(0) scale(0.94);}
+      
+      @keyframes actInert{0%{transform:scaleX(1);}35%{transform:scaleX(-1);}70%{transform:scaleX(1);}100%{transform:scaleX(1);}}
+      .icon.act.inert{animation:actInert 0.42s ease-in-out;border-color:rgba(255,210,74,0.55);}
+      @media(prefers-reduced-motion:reduce){.icon.act.inert{animation:none;border-color:rgba(255,210,74,0.75);}}
+      .icon.help{color:var(--muted2);font-family:var(--mono);font-weight:800;font-size:14px;
+                 border-color:rgba(255,255,255,0.2);}
+      .icon.launch{cursor:pointer;opacity:0.35;pointer-events:none;filter:grayscale(0.6);}
+      .icon.launch.unlocked{opacity:1;pointer-events:auto;filter:none;}
+      article.pCard.pink .icon.launch{border-color:rgba(255,59,212,0.60);background:rgba(255,59,212,0.16);color:var(--pink);}
+      article.pCard.lime .icon.launch{border-color:rgba(112,255,122,0.60);background:rgba(112,255,122,0.16);color:var(--lime);}
+      article.pCard.cyan .icon.launch{border-color:rgba(47,243,255,0.60);background:rgba(47,243,255,0.16);color:var(--cyan);}
+      .icon.launch.unlocked:hover{transform:translateY(-1px);}
+
+      
+      .toyWrap{display:flex;gap:8px;margin:2px 0 12px;align-items:stretch;}
+      .toyTray{display:flex;flex-direction:column;gap:5px;flex:0 0 auto;width:40px;}
+      .toyTray .piece{cursor:pointer;width:40px;height:40px;padding:4px;border-radius:9px;background:rgba(0,0,0,0.30);border:1px solid rgba(255,255,255,0.14);transition:border-color 0.10s ease,transform 0.10s ease;}
+      .toyTray .piece:hover{transform:translateY(-1px);}
+      .toyTray .piece.sel{border-color:rgba(255,255,255,0.65);box-shadow:0 0 12px rgba(255,255,255,0.10);}
+      .toyTray .piece.used{opacity:0.35;pointer-events:none;}
+      .toyTray .piece svg{width:100%;height:100%;display:block;}
+      .toy{flex:1 1 auto;min-width:0;aspect-ratio:1/1;padding:8px;border-radius:16px;background:rgba(0,0,0,0.34);border:1px solid rgba(255,255,255,0.08);}
+      .toy svg{width:100%;height:100%;display:block;}
+      .toy .cell{cursor:pointer;fill:rgba(255,255,255,0.02);stroke:rgba(255,255,255,0.22);stroke-width:0.4;transition:fill 0.10s ease;}
+      .toy .cell:hover{fill:rgba(255,255,255,0.08);}
+      .toy .cell.placed{stroke-width:0.5;}
+      .toy .cell.inside{fill:var(--enclosed);stroke:var(--enclosed-stroke);stroke-width:0.6;}
+
+      
+      .toy canvas{width:100%;height:100%;display:block;border-radius:9px;cursor:grab;touch-action:none;}
+      .toy canvas:active{cursor:grabbing;}
+      .toyTray .piece-chip{cursor:pointer;width:40px;height:40px;padding:4px;border-radius:9px;background:rgba(0,0,0,0.30);border:1px solid rgba(255,255,255,0.14);transition:border-color 0.10s ease,transform 0.10s ease;}
+      .toyTray .piece-chip:hover{transform:translateY(-1px);}
+      .toyTray .piece-chip.is-selected{border-color:rgba(255,255,255,0.65);box-shadow:0 0 12px rgba(255,255,255,0.10);}
+      .toyTray .piece-chip.is-on-board{opacity:0.35;}
+      .toyTray .piece-chip svg{width:100%;height:100%;display:block;}
+
+      
+      .pStatus{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:auto;padding:9px;border-radius:16px;background:rgba(0,0,0,0.26);border:1px solid rgba(255,255,255,0.07);min-height:62px;}
+      .pill{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:0 15px;border-radius:999px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.03);color:var(--muted);font-family:var(--mono);font-size:11.5px;letter-spacing:0.05em;text-transform:lowercase;}
+      .pill .k{font-weight:800;font-size:14px;letter-spacing:0.02em;color:var(--text);}
+      .pill.area{border-color:rgba(255,210,74,0.42);background:linear-gradient(135deg,rgba(255,210,74,0.13),rgba(255,210,74,0.04));color:var(--amber);box-shadow:inset 0 1px 0 rgba(255,255,255,0.07);}
+      .pill.area .k{color:var(--amber);font-size:17px;min-width:14px;}
+      
+      .pill.area.live{border-color:rgba(255,210,74,0.95);box-shadow:0 0 16px rgba(255,210,74,0.30),inset 0 1px 0 rgba(255,255,255,0.10);}
+      .pill.corner{border-color:rgba(178,120,255,0.45);background:linear-gradient(135deg,rgba(178,120,255,0.13),rgba(178,120,255,0.04));color:#e6d6ff;box-shadow:inset 0 1px 0 rgba(255,255,255,0.07);}
+      .pill.corner .k{color:var(--purple);}
+
+      
+      .pill.corner.reactive{border-color:rgba(255,255,255,0.10);background:rgba(255,255,255,0.02);color:var(--muted2);transition:color .2s ease,border-color .2s ease,background .2s ease,box-shadow .2s ease;}
+      .pill.corner.reactive .dot{width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,0.16);box-shadow:none;transition:background .2s ease,box-shadow .2s ease;flex:0 0 auto;}
+      .pill.corner.reactive .lab{letter-spacing:0.05em;}
+      .pill.corner.reactive.leak{border-color:rgba(178,120,255,0.85);background:linear-gradient(135deg,rgba(178,120,255,0.20),rgba(178,120,255,0.05));color:#efe4ff;box-shadow:0 0 16px rgba(178,120,255,0.32),inset 0 1px 0 rgba(255,255,255,0.10);}
+      .pill.corner.reactive.leak .dot{background:var(--purple);box-shadow:0 0 10px rgba(178,120,255,0.9);}
+      .pill.corner.reactive.leak .lab{color:#efe4ff;font-weight:700;}
+      button.pill.reset{margin-left:auto;width:42px;padding:0;justify-content:center;font-size:15px;color:var(--muted2);cursor:pointer;}
+      button.pill.reset:hover{color:var(--text);border-color:rgba(255,255,255,0.34);background:rgba(255,255,255,0.07);}
+
+      
+      [data-tip]{position:relative;}
+      [data-tip]::after{content:attr(data-tip);position:absolute;z-index:500;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(4px);padding:10px 12px;border-radius:12px;background:rgba(7,6,10,0.97);border:1px solid rgba(255,59,212,0.45);box-shadow:0 8px 32px rgba(0,0,0,0.65);font-family:var(--sans);font-size:12px;line-height:1.45;color:var(--text);text-align:left;min-width:200px;max-width:260px;opacity:0;pointer-events:none;transition:opacity 0.15s ease,transform 0.15s ease;white-space:normal;}
+      
+      [data-tip]:hover::after,[data-tip]:focus-visible::after{opacity:1;transform:translateX(-50%) translateY(0);}
+      [data-tip-pos="left"]::after{left:0;right:auto;transform:translateX(0) translateY(4px);}
+      [data-tip-pos="left"]:hover::after{transform:translateX(0) translateY(0);}
+      [data-tip-pos="right"]::after{left:auto;right:0;transform:translateX(0) translateY(4px);}
+      [data-tip-pos="right"]:hover::after{transform:translateX(0) translateY(0);}
+      
+      [data-tip-pos$="below"]::after{bottom:auto;top:calc(100% + 10px);transform:translateX(-50%) translateY(-4px);}
+      [data-tip-pos$="below"]:hover::after,[data-tip-pos$="below"]:focus-visible::after{transform:translateX(-50%) translateY(0);}
+      [data-tip-pos="left-below"]::after{left:0;right:auto;transform:translateX(0) translateY(-4px);}
+      [data-tip-pos="left-below"]:hover::after,[data-tip-pos="left-below"]:focus-visible::after{transform:translateX(0) translateY(0);}
+      [data-tip-pos="right-below"]::after{left:auto;right:0;transform:translateX(0) translateY(-4px);}
+      [data-tip-pos="right-below"]:hover::after,[data-tip-pos="right-below"]:focus-visible::after{transform:translateX(0) translateY(0);}
+
+      details{margin-top:22px;padding:14px 16px;border-radius:18px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);}
+      details summary{cursor:pointer;color:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;list-style:none;padding:4px 0;}
+      details summary::-webkit-details-marker{display:none;}
+      details summary::before{content:"▸ ";color:var(--muted2);margin-right:6px;}
+      details[open] summary::before{content:"▾ ";}
+      details p{margin:8px 0;color:var(--muted);font-size:13px;}
+      details a{color:var(--cyan);text-decoration:none;}
+      details a:hover{text-decoration:underline;}
+      .vocabChips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 10px;}
+      .vocabChips button{cursor:pointer;padding:4px 10px;border-radius:999px;background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.08);color:var(--muted);font-family:var(--mono);font-size:11px;}
+      .vocabChips button:hover{color:var(--text);}
+      .vocabChips button.on{color:var(--bg0);background:var(--cyan);border-color:var(--cyan);}
+      .vocabPanel{color:var(--muted);font-size:13px;line-height:1.55;min-height:30px;}
+
+      .floatCredit{position:fixed;bottom:14px;left:16px;z-index:500;padding:8px 14px;border-radius:999px;background:rgba(7,6,10,0.78);backdrop-filter:blur(10px);border:1px solid rgba(255,59,212,0.22);font-size:12.5px;color:var(--muted);letter-spacing:0.03em;}
+      .floatCredit a{color:var(--text);text-decoration:none;font-weight:800;}
+      .floatCredit .ceo{color:var(--muted2);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;font-size:10.5px;}
+      .floatCredit .tlm{color:var(--pink);font-weight:900;letter-spacing:0.11em;}
+      /* Occlusion-safe: the pill ignores pointer events (taps pass through to
+         the page); only its link stays clickable. On narrow screens it drops
+         out of the fixed corner and flows at the end of the content. */
+      .floatCredit{pointer-events:none;}
+      .floatCredit a{pointer-events:auto;}
+      @media(max-width:900px){.floatCredit{position:static;margin:24px auto 0;display:block;width:fit-content;}}
+      /* Language switch — fixed top-right, three equal chips. */
+      .langSel{position:fixed;top:14px;right:16px;z-index:600;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(7,6,10,0.80);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.12);}
+      .langSel button{cursor:pointer;border:none;background:transparent;color:var(--muted2);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.04em;padding:5px 9px;border-radius:999px;transition:color .12s ease,background .12s ease;}
+      .langSel button:hover{color:var(--text);}
+      .langSel button[aria-pressed="true"]{color:var(--bg0);background:var(--amber);}
+      @media(max-width:520px){.langSel{top:10px;right:10px;}}
+    </style>
+    <script src="i18n.js"></script>
+  </head>
+  <body>
+    <nav class="langSel" aria-label="Language / Langue / Sprache">
+      <button type="button" data-lang-btn="fr" aria-pressed="false" onclick="i18n.setLang('fr')">FR</button>
+      <button type="button" data-lang-btn="de" aria-pressed="false" onclick="i18n.setLang('de')">DE</button>
+      <button type="button" data-lang-btn="en" aria-pressed="false" onclick="i18n.setLang('en')">EN</button>
+    </nav>
+    <main>
+      <header class="hero">
+        <h1>Fence Challenge</h1>
+        <a class="cite" href="https://doi.org/10.1515/dmvm-2025-0056" target="_blank" rel="noopener"
+           data-i18n-data-tip="hub.citeTip" data-tip="Langlois-Rémillard, Müßig, Roldán. Maximale Zäune mit Polyformen. DMVM Mitteilungen 33(3), 187–199, 2025."
+         data-i18n="hub.citeChip">♦ LRMR25 · DMVM 2025</a>
+      </header>
+
+      <section class="rack">
+      <div class="grid" aria-label="Fence Challenge apps">
+        <article class="pCard pink" data-tiling="sq" aria-labelledby="sqT">
+          <div class="pTitle" id="sqT" data-i18n="hub.sqTitle">Mission I · Le damier</div>
+          <div class="pKicker" data-i18n="hub.sqKicker">Rätsel 1 · pavage carré</div>
+          <div class="pIconRow">
+            <span class="icon goal" tabindex="0" data-tip-pos="left-below"
+                  data-i18n-data-tip="hub.goalTip" data-tip="Ce plateau a une aire maximale. La trouver, c'est le défi."
+                  data-i18n-aria-label="hub.goalAria" aria-label="But de la mission">🏆</span>
+            <button class="icon act" data-rotate="sq" data-tip-pos="below" data-i18n-data-tip="hub.rotateTip" data-tip="Tourne la pièce choisie (touche R)" data-i18n-aria-label="hub.rotateAria" aria-label="Tourne la pièce choisie">⟳</button>
+            <button class="icon act" data-flip="sq" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie">⇄</button>
+            <button class="icon reset" data-reset="sq" data-tip-pos="below" data-i18n-data-tip="hub.resetTip" data-tip="Efface la barrière" data-i18n-aria-label="hub.resetAria" aria-label="Efface la barrière"><span class="glyph">↺</span></button>
+            <span class="spacer"></span>
+            <span class="icon help" tabindex="0"
+                  data-tip-pos="below" data-i18n-data-tip="hub.helpSq" data-i18n-aria-label="hub.helpAria" data-tip="Clique une pièce du bac : elle apparaît au centre. Glisse-la ensuite où tu veux. ⟳ la tourne, ⇄ la retourne, Suppr l'enlève. Referme une barrière : tu enfermes une aire."
+                  aria-label="Comment jouer">?</span>
+            <span class="icon info" tabindex="0"
+                  data-tip-pos="below" data-i18n-data-tip="hub.infoSq" data-i18n-aria-label="hub.piecesAria" data-tip="Les cinq tétrominos libres — i, l, n, o, t — chacun une seule fois. « Libres » : un reflet reste la même pièce. Rätsel 1 · LRMR25, DMVM 2025."
+                  aria-label="À propos des pièces">i</span>
+            <a class="icon launch" data-launch="sq" href="square-lab/index.html" data-i18n-data-tip="hub.launchSqTip" data-i18n-aria-label="hub.launchSqAria"
+               data-tip="Enclos une aire ≥ 1 ici pour ouvrir le lab Rätsel 2 · 12 pentominoes" data-tip-pos="right-below"
+               aria-label="Ouvrir le lab Rätsel 2">⇢</a>
+          </div>
+          <div class="toyWrap" id="engine-sq">
+            <div class="toyTray" data-tray></div>
+            <div class="toy"><canvas></canvas></div>
+          </div>
+          <div class="pStatus">
+            <span class="pill area" id="pill-sq" data-i18n-data-tip="hub.areaTip" data-tip="Aire enclose actuelle sur ton plateau"><span data-i18n="common.areaLabel">aire</span> <span class="k" id="area-sq">0</span></span>
+            <span class="pill corner reactive" id="coin-sq"
+                  data-i18n-data-tip="hub.coinSqTip" data-tip="Sur le pavage carré, deux cellules peuvent se toucher par un sommet sans partager d'arête. Si ta barrière ne se referme que par un tel sommet, l'extérieur s'y faufile — le coin ne referme rien. Ce témoin s'allume quand ça arrive sur ton plateau.">
+              <span class="dot" aria-hidden="true"></span><span class="lab" data-i18n="hub.coinLabel">coin</span>
+            </span>
+          </div>
+        </article>
+
+        <article class="pCard lime" data-tiling="hex" aria-labelledby="hexT">
+          <div class="pTitle" id="hexT" data-i18n="hub.hexTitle">Mission II · Le nid d'abeilles</div>
+          
+          <div class="pKicker" data-i18n="hub.hexKicker">4 tétrahexes · pavage hexagonal</div>
+          <div class="pIconRow">
+            <span class="icon goal" tabindex="0" data-tip-pos="left-below"
+                  data-i18n-data-tip="hub.goalTip" data-tip="Ce plateau a une aire maximale. La trouver, c'est le défi."
+                  data-i18n-aria-label="hub.goalAria" aria-label="But de la mission">🏆</span>
+            <button class="icon act" data-rotate="hex" data-tip-pos="below" data-i18n-data-tip="hub.rotateTip" data-tip="Tourne la pièce choisie (touche R)" data-i18n-aria-label="hub.rotateAria" aria-label="Tourne la pièce choisie">⟳</button>
+            <button class="icon act" data-flip="hex" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie">⇄</button>
+            <button class="icon reset" data-reset="hex" data-tip-pos="below" data-i18n-data-tip="hub.resetTip" data-tip="Efface la barrière" data-i18n-aria-label="hub.resetAria" aria-label="Efface la barrière"><span class="glyph">↺</span></button>
+            <span class="spacer"></span>
+            <span class="icon help" tabindex="0"
+                  data-tip-pos="below" data-i18n-data-tip="hub.helpHex" data-i18n-aria-label="hub.helpAria" data-tip="Clique une pièce du bac : elle apparaît au centre du nid. Glisse-la ensuite où tu veux. ⟳ la tourne, ⇄ la retourne, Suppr l'enlève. Referme une barrière : tu enfermes une aire."
+                  aria-label="Comment jouer">?</span>
+            <span class="icon info" tabindex="0"
+                  data-tip-pos="below" data-i18n-data-tip="hub.infoHex" data-i18n-aria-label="hub.piecesAria" data-tip="Quatre tétrahexes libres — quatre hexagones collés — arc, bar, wave et worm, chacun une seule fois. Le lab qu'elle ouvre, Rätsel 3, en utilise les sept."
+                  aria-label="À propos des pièces">i</span>
+            <a class="icon launch" data-launch="hex" href="hex-lab/index.html" data-i18n-data-tip="hub.launchHexTip" data-i18n-aria-label="hub.launchHexAria"
+               data-tip="Enclos une aire ≥ 1 pour débloquer" data-tip-pos="right-below"
+               aria-label="Ouvrir Rätsel 3">⇢</a>
+          </div>
+          <div class="toyWrap" id="engine-hex">
+            <div class="toyTray" data-tray></div>
+            <div class="toy"><canvas></canvas></div>
+          </div>
+          <div class="pStatus">
+            <span class="pill area" id="pill-hex" data-i18n-data-tip="hub.areaTip" data-tip="Aire enclose actuelle sur ton plateau"><span data-i18n="common.areaLabel">aire</span> <span class="k" id="area-hex">0</span></span>
+            <span class="pill corner" data-i18n-data-tip="hub.coinHexTip" data-tip="Sur le pavage hex, 3 hexes se rencontrent à chaque sommet et sont deux-à-deux edge-adjacents. Donc « fuite par un coin » implique « fuite par une arête ». Impossible."><span class="k" data-i18n="hub.coinImpossible">corner impossible</span></span>
+          </div>
+        </article>
+
+        <article class="pCard cyan" data-tiling="tri" aria-labelledby="triT">
+          <div class="pTitle" id="triT" data-i18n="hub.triTitle">Mission III · Le champ de triangles</div>
+          <div class="pKicker" data-i18n="hub.triKicker">3 hexiamonds · pavage triangulaire</div>
+          <div class="pIconRow">
+            
+            <span class="icon goal" tabindex="0" data-tip-pos="left-below"
+                  data-i18n-data-tip="hub.goalTip" data-tip="Ce plateau a une aire maximale. La trouver, c'est le défi."
+                  data-i18n-aria-label="hub.goalAria" aria-label="But de la mission">🏆</span>
+            <button class="icon act" data-rotate="tri" data-tip-pos="below" data-i18n-data-tip="hub.rotateTip" data-tip="Tourne la pièce choisie (touche R)" data-i18n-aria-label="hub.rotateAria" aria-label="Tourne la pièce choisie">⟳</button>
+            <button class="icon act" data-flip="tri" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie">⇄</button>
+            <button class="icon reset" data-reset="tri" data-tip-pos="below" data-i18n-data-tip="hub.resetTip" data-tip="Efface la barrière" data-i18n-aria-label="hub.resetAria" aria-label="Efface la barrière"><span class="glyph">↺</span></button>
+            <span class="spacer"></span>
+            <span class="icon help" tabindex="0"
+                  data-tip-pos="below" data-i18n-data-tip="hub.helpTri" data-i18n-aria-label="hub.helpAria" data-tip="Clique une pièce du bac : elle apparaît au centre du champ. Glisse-la ensuite où tu veux. ⟳ la tourne, ⇄ la retourne, Suppr l'enlève. Referme une barrière : tu enfermes une aire."
+                  aria-label="Comment jouer">?</span>
+            <span class="icon info" tabindex="0"
+                  data-tip-pos="below" data-i18n-data-tip="hub.infoTri" data-i18n-aria-label="hub.piecesAria" data-tip="Trois hexiamonds — six triangles collés — chacun une seule fois. Sur ce pavage, deux triangles qui ne se touchent que par un sommet ne sont pas séparés : la barrière doit fermer les sommets aussi. Le lab qu'elle ouvre, Rätsel 4, utilise les douze."
+                  aria-label="Comment jouer">i</span>
+            <a class="icon launch" data-launch="tri" href="triangle-lab/index.html" data-i18n-data-tip="hub.launchTriTip" data-i18n-aria-label="hub.launchTriAria"
+               data-tip="Enclos une aire ≥ 1 pour débloquer" data-tip-pos="right-below"
+               aria-label="Ouvrir Rätsel 4">⇢</a>
+          </div>
+          <div class="toyWrap" id="engine-tri">
+            <div class="toyTray" data-tray></div>
+            <div class="toy"><canvas></canvas></div>
+          </div>
+          <div class="pStatus">
+            <span class="pill area" id="pill-tri" data-i18n-data-tip="hub.areaTip" data-tip="Aire enclose actuelle sur ton plateau"><span data-i18n="common.areaLabel">aire</span> <span class="k" id="area-tri">0</span></span>
+            <span class="pill corner" data-i18n-data-tip="hub.coinTriTip" data-tip="Sur le pavage triangulaire, 6 triangles se rencontrent à chaque sommet. Fuite par un coin possible à chaque sommet du plan."><span class="k" data-i18n="hub.coinLeak6">corner leak × 6</span></span>
+          </div>
+        </article>
+      </div>
+      </section>
+
+      <details>
+        <summary data-i18n="hub.glossaryTitle">Glossaire</summary>
+        <div class="vocabChips" id="vocabChips">
+          <button class="on" data-term="zaun" data-i18n="hub.vocZaun">Zaun</button>
+          <button data-term="polyform" data-i18n="hub.vocPolyform">Polyform</button>
+          <button data-term="raetsel" data-i18n="hub.vocRaetsel">Rätsel</button>
+          <button data-term="fuite" data-i18n="hub.vocFuite">Fuite par un coin</button>
+          <button data-term="reference" data-i18n="hub.vocReference">Vecteurs de référence</button>
+        </div>
+        <p class="vocabPanel" id="vocabDef"></p>
+      </details>
+
+      <details>
+        <summary data-i18n="hub.citePaperTitle">Citer le papier</summary>
+        <p data-i18n-html="hub.citeLine">placeholder</p>
+        <p><a href="https://doi.org/10.1515/dmvm-2025-0056" target="_blank" rel="noopener">doi:10.1515/dmvm-2025-0056</a></p>
+        <p><span data-i18n="hub.citeMoreEn">BibTeX + citation par-app dans</span> <a href="CITATION.md">CITATION.md</a>.</p>
+      </details>
+    </main>
+
+    <div class="floatCredit">
+      <span data-i18n="hub.credit">by</span> <a href="https://erikaroldan.net" target="_blank" rel="noopener">Dr. Erika Roldán</a> · <span class="ceo">CEO</span> · <span class="tlm">THE LEARNING MACHINE</span>
+    </div>
+
+    
+    <script src="piece-engine.js"></script>
+    <script src="lattice-square.js"></script>
+    <script src="lattice-hex.js"></script>
+    <script src="lattice-triangular.js"></script>
+    <script>
+    
+    (() => {
+      const S = 100; // shared viewBox size
+
+      function buildHex() {
+        const R = 2, s = 11;
+        const cellsAxial = [];
+        for (let q = -R; q <= R; q++) {
+          for (let r = Math.max(-R, -q - R); r <= Math.min(R, -q + R); r++) {
+            cellsAxial.push({ q, r });
+          }
+        }
+        const H = s * Math.sqrt(3);
+        const cx = S / 2, cy = S / 2;
+        const cells = [];
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", `0 0 ${S} ${S}`);
+        for (const c of cellsAxial) {
+          const px = cx + (s * 1.5) * c.q;
+          const py = cy + s * (Math.sqrt(3) / 2 * c.q + Math.sqrt(3) * c.r);
+          const pts = [];
+          for (let i = 0; i < 6; i++) {
+            const a = Math.PI / 3 * i;
+            pts.push(`${(px + s * Math.cos(a)).toFixed(2)},${(py + s * Math.sin(a)).toFixed(2)}`);
+          }
+          const p = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+          p.setAttribute("class", "cell");
+          p.setAttribute("points", pts.join(" "));
+          p.dataset.q = c.q; p.dataset.r = c.r;
+          svg.appendChild(p);
+          cells.push({ q: c.q, r: c.r, el: p });
+        }
+        const inSet = new Set(cellsAxial.map((c) => `${c.q},${c.r}`));
+        return {
+          svg, cells, R,
+          key: (c) => `${c.q},${c.r}`,
+          neighbors: (c) => [
+            { q: c.q + 1, r: c.r }, { q: c.q - 1, r: c.r },
+            { q: c.q, r: c.r + 1 }, { q: c.q, r: c.r - 1 },
+            { q: c.q + 1, r: c.r - 1 }, { q: c.q - 1, r: c.r + 1 },
+          ],
+          onBoard: (c) => inSet.has(`${c.q},${c.r}`),
+          isBoundary: (c) => {
+            for (const n of [
+              { q: c.q + 1, r: c.r }, { q: c.q - 1, r: c.r },
+              { q: c.q, r: c.r + 1 }, { q: c.q, r: c.r - 1 },
+              { q: c.q + 1, r: c.r - 1 }, { q: c.q - 1, r: c.r + 1 },
+            ]) if (!inSet.has(`${n.q},${n.r}`)) return true;
+            return false;
+          },
+        };
+      }
+
+      function buildTri() {
+        const ROWS = 4, COLS = 6;
+        const hb = 14; // half-base — sized so the lattice fills the 100x100 viewBox
+        const H = hb * Math.sqrt(3);
+        const totalW = COLS * hb + hb;
+        const totalH = ROWS * H;
+        const offX = (S - totalW) / 2, offY = (S - totalH) / 2;
+        const cells = [];
+        const cellsList = [];
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", `0 0 ${S} ${S}`);
+        for (let y = 0; y < ROWS; y++) {
+          for (let x = 0; x < COLS; x++) {
+            for (let u = 0; u <= 1; u++) {
+              const scale = 1;
+              const verts = u === 0
+                ? [ [ (x + 1) * hb, y * H ], [ x * hb, (y + 1) * H ], [ (x + 2) * hb, (y + 1) * H ] ]
+                : [ [ x * hb, y * H ], [ (x + 2) * hb, y * H ], [ (x + 1) * hb, (y + 1) * H ] ];
+              const pts = verts.map(([px, py]) => `${(offX + px).toFixed(2)},${(offY + py).toFixed(2)}`).join(" ");
+              const p = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+              p.setAttribute("class", "cell");
+              p.setAttribute("points", pts);
+              p.dataset.x = x; p.dataset.y = y; p.dataset.u = u;
+              svg.appendChild(p);
+              cellsList.push({ x, y, u, el: p });
+            }
+          }
+        }
+        const inSet = new Set(cellsList.map((c) => `${c.x},${c.y},${c.u}`));
+        return {
+          svg, cells: cellsList, ROWS, COLS,
+          key: (c) => `${c.x},${c.y},${c.u}`,
+          neighbors: (c) => {
+            const out = [
+              { x: c.x - 1, y: c.y, u: 1 - c.u },
+              { x: c.x + 1, y: c.y, u: 1 - c.u },
+            ];
+            if (c.u === 0) out.push({ x: c.x, y: c.y + 1, u: 1 });
+            else out.push({ x: c.x, y: c.y - 1, u: 0 });
+            return out;
+          },
+          onBoard: (c) => inSet.has(`${c.x},${c.y},${c.u}`),
+          isBoundary: (c) => {
+            const nbs = [
+              { x: c.x - 1, y: c.y, u: 1 - c.u },
+              { x: c.x + 1, y: c.y, u: 1 - c.u },
+              c.u === 0 ? { x: c.x, y: c.y + 1, u: 1 } : { x: c.x, y: c.y - 1, u: 0 },
+            ];
+            for (const n of nbs) if (!inSet.has(`${n.x},${n.y},${n.u}`)) return true;
+            return false;
+          },
+        };
+      }
+
+      function computeArea(toy, fenceSet) {
+        const allKeys = toy.cells.map((c) => toy.key(c));
+        const emptyKeys = allKeys.filter((k) => !fenceSet.has(k));
+        const emptySet = new Set(emptyKeys);
+        const outSet = new Set();
+        const q = [];
+        for (const c of toy.cells) {
+          const k = toy.key(c);
+          if (!emptySet.has(k)) continue;
+          if (toy.isBoundary(c)) { outSet.add(k); q.push(c); }
+        }
+        while (q.length) {
+          const c = q.shift();
+          for (const n of toy.neighbors(c)) {
+            if (!toy.onBoard(n)) continue;
+            const nk = toy.key(n);
+            if (!emptySet.has(nk) || outSet.has(nk)) continue;
+            outSet.add(nk); q.push(n);
+          }
+        }
+        return emptyKeys.filter((k) => !outSet.has(k)).length;
+      }
+
+      
+      const PIECES = {
+        hex: [
+          { name: "bar", color: "#70ff7a", cells: [[0,0],[1,0],[2,0]] },
+          { name: "tri", color: "#a0ff9c", cells: [[0,0],[1,0],[1,-1]] },
+          { name: "elbow", color: "#38d453", cells: [[0,0],[1,0],[0,1]] },
+        ],
+        tri: [
+          { name: "rhomb", color: "#2ff3ff", cells: [[0,0,0],[1,0,1],[2,0,0],[3,0,1]] },
+          { name: "L", color: "#7defff", cells: [[0,0,0],[1,0,1],[2,0,0],[1,1,1]] },
+          { name: "tri", color: "#22a8b5", cells: [[0,0,0],[1,0,1],[0,1,1],[-1,0,1]] },
+        ],
+      };
+
+      
+      function pieceIconSvg(tiling, p) {
+        const NS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(NS, "svg");
+        svg.setAttribute("viewBox", "0 0 100 100");
+        let polys = [];
+        if (tiling === "sq") {
+          const cs = 22;
+          for (const [x, y] of p.cells) {
+            polys.push({ x: x * cs, y: y * cs, w: cs, h: cs });
+          }
+        } else if (tiling === "hex") {
+          const s = 12;
+          for (const [q, r] of p.cells) {
+            const cx = 50 + (s * 1.5) * q;
+            const cy = 50 + s * (Math.sqrt(3) / 2 * q + Math.sqrt(3) * r);
+            const pts = [];
+            for (let i = 0; i < 6; i++) {
+              const a = Math.PI / 3 * i;
+              pts.push(`${(cx + s * Math.cos(a)).toFixed(1)},${(cy + s * Math.sin(a)).toFixed(1)}`);
+            }
+            polys.push({ pts: pts.join(" ") });
+          }
+        } else {
+          const hb = 10, H = hb * Math.sqrt(3);
+          for (const [x, y, u] of p.cells) {
+            const v = u === 0
+              ? [ [ (x + 1) * hb, y * H ], [ x * hb, (y + 1) * H ], [ (x + 2) * hb, (y + 1) * H ] ]
+              : [ [ x * hb, y * H ], [ (x + 2) * hb, y * H ], [ (x + 1) * hb, (y + 1) * H ] ];
+            polys.push({ pts: v.map(([px, py]) => `${(px).toFixed(1)},${(py).toFixed(1)}`).join(" ") });
+          }
+        }
+        const bbox = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
+        for (const p of polys) {
+          if (p.pts) {
+            for (const pt of p.pts.split(" ")) {
+              const [px, py] = pt.split(",").map(Number);
+              bbox.minX = Math.min(bbox.minX, px);
+              bbox.maxX = Math.max(bbox.maxX, px);
+              bbox.minY = Math.min(bbox.minY, py);
+              bbox.maxY = Math.max(bbox.maxY, py);
+            }
+          } else {
+            bbox.minX = Math.min(bbox.minX, p.x);
+            bbox.maxX = Math.max(bbox.maxX, p.x + p.w);
+            bbox.minY = Math.min(bbox.minY, p.y);
+            bbox.maxY = Math.max(bbox.maxY, p.y + p.h);
+          }
+        }
+        const bw = bbox.maxX - bbox.minX, bh = bbox.maxY - bbox.minY;
+        const scale = Math.min(80 / Math.max(bw, 1), 80 / Math.max(bh, 1));
+        const tx = 50 - (bbox.minX + bw / 2) * scale;
+        const ty = 50 - (bbox.minY + bh / 2) * scale;
+        const g = document.createElementNS(NS, "g");
+        g.setAttribute("transform", `translate(${tx},${ty}) scale(${scale})`);
+        for (const shape of polys) {
+          if (shape.pts) {
+            const el = document.createElementNS(NS, "polygon");
+            el.setAttribute("points", shape.pts);
+            el.setAttribute("fill", p.color);
+            el.setAttribute("stroke", "rgba(10,20,36,0.7)");
+            el.setAttribute("stroke-width", "0.6");
+            g.appendChild(el);
+          } else {
+            const el = document.createElementNS(NS, "rect");
+            el.setAttribute("x", shape.x); el.setAttribute("y", shape.y);
+            el.setAttribute("width", shape.w); el.setAttribute("height", shape.h);
+            el.setAttribute("fill", p.color);
+            el.setAttribute("stroke", "rgba(10,20,36,0.7)");
+            el.setAttribute("stroke-width", "0.6");
+            g.appendChild(el);
+          }
+        }
+        svg.appendChild(g);
+        return svg;
+      }
+
+      
+      function absoluteCells(tiling, piece, anchor) {
+        return piece.cells.map((c) => {
+          if (tiling === "sq") {
+            return { x: anchor.x + (c[0] - piece.cells[0][0]),
+                     y: anchor.y + (c[1] - piece.cells[0][1]) };
+          } else if (tiling === "hex") {
+            return { q: anchor.q + (c[0] - piece.cells[0][0]),
+                     r: anchor.r + (c[1] - piece.cells[0][1]) };
+          } else {
+            const du = c[2] - piece.cells[0][2];
+            return { x: anchor.x + (c[0] - piece.cells[0][0]),
+                     y: anchor.y + (c[1] - piece.cells[0][1]),
+                     u: (anchor.u + Math.abs(du)) % 2 === 0 ? anchor.u : 1 - anchor.u };
+          }
+        });
+      }
+
+      function wireCard(tiling, buildFn) {
+        const toy = buildFn();
+        const wrap = document.getElementById(`toy-${tiling}`);
+        wrap.appendChild(toy.svg);
+        const tray = document.getElementById(`tray-${tiling}`);
+        const areaEl = document.getElementById(`area-${tiling}`);
+        const launch = document.querySelector(`[data-launch="${tiling}"]`);
+
+        const pieces = PIECES[tiling];
+        const placed = new Map();
+        let selectedPiece = 0;
+
+        pieces.forEach((p, i) => {
+          const chip = document.createElement("div");
+          chip.className = "piece";
+          chip.dataset.idx = i;
+          chip.title = p.name;
+          chip.appendChild(pieceIconSvg(tiling, p));
+          chip.addEventListener("click", () => {
+            selectedPiece = i;
+            refreshTray();
+          });
+          tray.appendChild(chip);
+        });
+
+        function refreshTray() {
+          [...tray.children].forEach((c, i) => {
+            c.classList.toggle("sel", i === selectedPiece && !placed.has(i));
+            c.classList.toggle("used", placed.has(i));
+          });
+        }
+
+        function fenceCellsAll() {
+          const out = [];
+          for (const abs of placed.values()) for (const c of abs) out.push(c);
+          return out;
+        }
+
+        function refresh() {
+          const fenceCells = fenceCellsAll();
+          const fenceSet = new Set(fenceCells.map(toy.key));
+          const area = computeArea(toy, fenceSet);
+          areaEl.textContent = area;
+          document.getElementById(`pill-${tiling}`).classList.toggle("live", area >= 1);
+          const enclosedKeys = new Set();
+          if (area > 0) {
+            const emptyKeys = toy.cells.map(toy.key).filter((k) => !fenceSet.has(k));
+            const emptySet = new Set(emptyKeys);
+            const outSet = new Set();
+            const q = [];
+            for (const c of toy.cells) {
+              const k = toy.key(c);
+              if (emptySet.has(k) && toy.isBoundary(c)) { outSet.add(k); q.push(c); }
+            }
+            while (q.length) {
+              const c = q.shift();
+              for (const n of toy.neighbors(c)) {
+                if (!toy.onBoard(n)) continue;
+                const nk = toy.key(n);
+                if (!emptySet.has(nk) || outSet.has(nk)) continue;
+                outSet.add(nk); q.push(n);
+              }
+            }
+            for (const k of emptyKeys) if (!outSet.has(k)) enclosedKeys.add(k);
+          }
+          const colorMap = new Map();
+          for (const [idx, abs] of placed.entries()) {
+            const col = pieces[idx].color;
+            for (const c of abs) colorMap.set(toy.key(c), col);
+          }
+          for (const c of toy.cells) {
+            const k = toy.key(c);
+            c.el.classList.toggle("placed", colorMap.has(k));
+            c.el.classList.toggle("inside", enclosedKeys.has(k));
+            if (colorMap.has(k)) {
+              c.el.setAttribute("style", `fill:${colorMap.get(k)};stroke:rgba(10,20,36,0.8);`);
+            } else {
+              c.el.removeAttribute("style");
+            }
+          }
+          if (area >= 1) {
+            launch.classList.add("unlocked");
+            launch.setAttribute("data-i18n-data-tip", "hub.unlockedGeneric"); launch.setAttribute("data-tip", i18n.t("hub.unlockedGeneric"));
+            try { localStorage.setItem(`unlock-${tiling}`, "1"); } catch (e) {}
+          }
+        }
+
+        try {
+          if (localStorage.getItem(`unlock-${tiling}`) === "1") {
+            launch.classList.add("unlocked");
+            launch.setAttribute("data-i18n-data-tip", "hub.unlockedGeneric"); launch.setAttribute("data-tip", i18n.t("hub.unlockedGeneric"));
+          }
+        } catch (e) {}
+
+        for (const c of toy.cells) {
+          c.el.addEventListener("click", () => {
+            for (const [idx, abs] of placed.entries()) {
+              if (abs.some((a) => toy.key(a) === toy.key(c))) {
+                placed.delete(idx);
+                refreshTray(); refresh();
+                return;
+              }
+            }
+            if (placed.has(selectedPiece)) {
+              const next = pieces.findIndex((_, i) => !placed.has(i));
+              if (next < 0) return;
+              selectedPiece = next;
+            }
+            const piece = pieces[selectedPiece];
+            const abs = absoluteCells(tiling, piece, c);
+            const blocked = new Set(fenceCellsAll().map(toy.key));
+            for (const a of abs) {
+              if (!toy.onBoard(a)) return;
+              if (blocked.has(toy.key(a))) return;
+            }
+            placed.set(selectedPiece, abs);
+            const next = pieces.findIndex((_, i) => !placed.has(i));
+            if (next >= 0) selectedPiece = next;
+            refreshTray(); refresh();
+          });
+        }
+        document.querySelector(`[data-reset="${tiling}"]`).addEventListener("click", () => {
+          placed.clear();
+          selectedPiece = 0;
+          refreshTray(); refresh();
+        });
+        refreshTray();
+        refresh();
+      }
+
+      
+      function bindKeyRefresh(root, refresh) {
+        document.addEventListener("keydown", (e) => {
+          if (!root.matches(":hover") && !root.contains(document.activeElement)) return;
+          if (["r", "R", "f", "F", "Delete", "Backspace"].includes(e.key)) {
+            setTimeout(refresh, 0); // after the engine's own handler
+          }
+        });
+      }
+
+      
+      (function mountSquareEngine() {
+        const root = document.getElementById("engine-sq");
+        const areaEl = document.getElementById("area-sq");
+        const launch = document.querySelector('[data-launch="sq"]');
+        if (!root || !window.PieceEngine || !window.LatticeSquare) return;
+
+        const coin = document.getElementById("coin-sq");
+        const coinLab = coin.querySelector(".lab");
+
+        const engine = window.PieceEngine.createPieceEngine({
+          root,
+          lattice: window.LatticeSquare,
+          pieceSet: window.LatticeSquare.TETROMINO_SET,
+          board: { size: window.LatticeSquare.BOARD_SIZE_DEFAULT },
+          padding: 5, // tighter frame: the 9x9 fills more of the canvas
+          callbacks: {
+            onArea: ({ area, cornerLeak, regionCount }) => {
+              const valid = area >= 1 && regionCount === 1;
+              areaEl.textContent = area;
+              document.getElementById("pill-sq").classList.toggle("live", valid);
+              root.dataset.pockets = regionCount > 1 ? String(regionCount) : "";
+              coin.classList.toggle("leak", !!cornerLeak);
+              coinLab.textContent = i18n.t(cornerLeak ? "hub.coinOpen" : "hub.coinLabel");
+              if (valid) unlock();
+            },
+            onStatus: (msg) => { root.dataset.status = msg; },
+          },
+        });
+        root._engine = engine;
+
+        function unlock() {
+          launch.classList.add("unlocked");
+          launch.setAttribute("data-i18n-data-tip", "hub.unlockedSq"); launch.setAttribute("data-tip", i18n.t("hub.unlockedSq"));
+          try { localStorage.setItem("unlock-sq", "1"); } catch (e) {}
+        }
+        try {
+          if (localStorage.getItem("unlock-sq") === "1") unlock();
+        } catch (e) {}
+
+        const refresh = () => engine.detectArea();
+        const canvas = root.querySelector("canvas");
+        ["pointerup", "pointercancel"].forEach((t) =>
+          canvas.addEventListener(t, refresh));
+        root.querySelector("[data-tray]").addEventListener("click", () => {
+          setTimeout(refresh, 0);
+        });
+        bindKeyRefresh(root, refresh);
+
+        document.querySelector('[data-reset="sq"]').addEventListener("click", () => {
+          engine.clear();
+          engine.detectArea();
+        });
+
+        const btnRotate = document.querySelector('[data-rotate="sq"]');
+        const btnFlip = document.querySelector('[data-flip="sq"]');
+
+        function flipIsInert() {
+          const s = engine.state;
+          const piece = s.placedPieces.find((p) => p.id === s.selectedPieceId);
+          if (!piece) return false;
+          const type = s.pieceTypeMap.get(piece.typeId);
+          return !!type && type.flipMap[piece.variantIndex] === piece.variantIndex;
+        }
+        function rotateIsInert() {
+          const s = engine.state;
+          const piece = s.placedPieces.find((p) => p.id === s.selectedPieceId);
+          if (!piece) return false;
+          const type = s.pieceTypeMap.get(piece.typeId);
+          return !!type && type.rotateMap[piece.variantIndex] === piece.variantIndex;
+        }
+        const inertTimers = new WeakMap();
+        function reportInert(btn, msg) {
+          window.clearTimeout(inertTimers.get(btn));
+          btn.classList.remove("inert");
+          void btn.offsetWidth; // restart the animation
+          btn.classList.add("inert");
+          root.dataset.symmetry = msg;
+          inertTimers.set(btn, window.setTimeout(() => {
+            btn.classList.remove("inert");
+          }, 420));
+        }
+
+        btnRotate.addEventListener("click", () => {
+          const inert = rotateIsInert();
+          engine.rotateSelection();
+          engine.detectArea();
+          if (inert) reportInert(btnRotate, i18n.t("hub.symmRotateInert"));
+        });
+        btnFlip.addEventListener("click", () => {
+          const inert = flipIsInert();
+          engine.flipSelection();
+          engine.detectArea();
+          if (inert) reportInert(btnFlip, i18n.t("hub.symmFlipInert"));
+        });
+      })();
+
+      
+      (function mountHexEngine() {
+        const root = document.getElementById("engine-hex");
+        const areaEl = document.getElementById("area-hex");
+        const launch = document.querySelector('[data-launch="hex"]');
+        if (!root || !window.PieceEngine || !window.LatticeHex) return;
+
+        const engine = window.PieceEngine.createPieceEngine({
+          root,
+          lattice: window.LatticeHex,
+          pieceSet: window.LatticeHex.TETRAHEX_SET,
+          board: { radius: window.LatticeHex.BOARD_RADIUS_DEFAULT },
+          padding: 5,
+          callbacks: {
+            onArea: ({ area, regionCount }) => {
+              const valid = area >= 1 && regionCount === 1;
+              areaEl.textContent = area;
+              document.getElementById("pill-hex").classList.toggle("live", valid);
+              root.dataset.pockets = regionCount > 1 ? String(regionCount) : "";
+              if (valid) unlock();
+            },
+            onStatus: (msg) => { root.dataset.status = msg; },
+          },
+        });
+        root._engine = engine;
+
+        function unlock() {
+          launch.classList.add("unlocked");
+          launch.setAttribute("data-i18n-data-tip", "hub.unlockedHex"); launch.setAttribute("data-tip", i18n.t("hub.unlockedHex"));
+          try { localStorage.setItem("unlock-hex", "1"); } catch (e) {}
+        }
+        try {
+          if (localStorage.getItem("unlock-hex") === "1") unlock();
+        } catch (e) {}
+
+        const refresh = () => engine.detectArea();
+        const canvas = root.querySelector("canvas");
+        ["pointerup", "pointercancel"].forEach((t) => canvas.addEventListener(t, refresh));
+        root.querySelector("[data-tray]").addEventListener("click", () => setTimeout(refresh, 0));
+        bindKeyRefresh(root, refresh);
+
+        document.querySelector('[data-reset="hex"]').addEventListener("click", () => {
+          engine.clear();
+          engine.detectArea();
+        });
+
+        const btnRotateH = document.querySelector('[data-rotate="hex"]');
+        const btnFlipH = document.querySelector('[data-flip="hex"]');
+        const inertTimersH = new WeakMap();
+        function inertH(kind) {
+          const s = engine.state;
+          const piece = s.placedPieces.find((p) => p.id === s.selectedPieceId);
+          if (!piece) return false;
+          const type = s.pieceTypeMap.get(piece.typeId);
+          if (!type) return false;
+          const map = kind === "rotate" ? type.rotateMap : type.flipMap;
+          return map[piece.variantIndex] === piece.variantIndex;
+        }
+        function reportInertH(btn, msg) {
+          window.clearTimeout(inertTimersH.get(btn));
+          btn.classList.remove("inert");
+          void btn.offsetWidth;
+          btn.classList.add("inert");
+          root.dataset.symmetry = msg;
+          inertTimersH.set(btn, window.setTimeout(() => btn.classList.remove("inert"), 420));
+        }
+        btnRotateH.addEventListener("click", () => {
+          const was = inertH("rotate");
+          engine.rotateSelection();
+          engine.detectArea();
+          if (was) reportInertH(btnRotateH, i18n.t("hub.symmRotateInert"));
+        });
+        btnFlipH.addEventListener("click", () => {
+          const was = inertH("flip");
+          engine.flipSelection();
+          engine.detectArea();
+          if (was) reportInertH(btnFlipH, i18n.t("hub.symmFlipInert"));
+        });
+      })();
+
+      
+      (function mountTriEngine() {
+        const root = document.getElementById("engine-tri");
+        const areaEl = document.getElementById("area-tri");
+        const launch = document.querySelector('[data-launch="tri"]');
+        if (!root || !window.PieceEngine || !window.LatticeTriangular) return;
+
+        const engine = window.PieceEngine.createPieceEngine({
+          root,
+          lattice: window.LatticeTriangular,
+          pieceSet: window.LatticeTriangular.HEXIAMOND_SET,
+          board: { hexSide: window.LatticeTriangular.BOARD_HEXSIDE_DEFAULT },
+          padding: 5,
+          callbacks: {
+            onArea: ({ area, regionCount }) => {
+              const valid = area >= 1 && regionCount === 1;
+              areaEl.textContent = area;
+              document.getElementById("pill-tri").classList.toggle("live", valid);
+              root.dataset.pockets = regionCount > 1 ? String(regionCount) : "";
+              if (valid) unlock();
+            },
+            onStatus: (msg) => { root.dataset.status = msg; },
+          },
+        });
+        root._engine = engine;
+
+        function unlock() {
+          launch.classList.add("unlocked");
+          launch.setAttribute("data-i18n-data-tip", "hub.unlockedTri"); launch.setAttribute("data-tip", i18n.t("hub.unlockedTri"));
+          try { localStorage.setItem("unlock-tri", "1"); } catch (e) {}
+        }
+        try {
+          if (localStorage.getItem("unlock-tri") === "1") unlock();
+        } catch (e) {}
+
+        const refresh = () => engine.detectArea();
+        const canvas = root.querySelector("canvas");
+        ["pointerup", "pointercancel"].forEach((t) => canvas.addEventListener(t, refresh));
+        root.querySelector("[data-tray]").addEventListener("click", () => setTimeout(refresh, 0));
+        bindKeyRefresh(root, refresh);
+
+        document.querySelector('[data-reset="tri"]').addEventListener("click", () => {
+          engine.clear();
+          engine.detectArea();
+        });
+
+        const btnRotateT = document.querySelector('[data-rotate="tri"]');
+        const btnFlipT = document.querySelector('[data-flip="tri"]');
+        const inertTimersT = new WeakMap();
+        function inertT(kind) {
+          const s = engine.state;
+          const piece = s.placedPieces.find((p) => p.id === s.selectedPieceId);
+          if (!piece) return false;
+          const type = s.pieceTypeMap.get(piece.typeId);
+          if (!type) return false;
+          const map = kind === "rotate" ? type.rotateMap : type.flipMap;
+          return map[piece.variantIndex] === piece.variantIndex;
+        }
+        function reportInertT(btn, msg) {
+          window.clearTimeout(inertTimersT.get(btn));
+          btn.classList.remove("inert");
+          void btn.offsetWidth;
+          btn.classList.add("inert");
+          root.dataset.symmetry = msg;
+          inertTimersT.set(btn, window.setTimeout(() => btn.classList.remove("inert"), 420));
+        }
+        btnRotateT.addEventListener("click", () => {
+          const was = inertT("rotate");
+          engine.rotateSelection();
+          engine.detectArea();
+          if (was) reportInertT(btnRotateT, i18n.t("hub.symmRotateInert"));
+        });
+        btnFlipT.addEventListener("click", () => {
+          const was = inertT("flip");
+          engine.flipSelection();
+          engine.detectArea();
+          if (was) reportInertT(btnFlipT, i18n.t("hub.symmFlipInert"));
+        });
+      })();
+
+      const DEFKEY = { zaun: "hub.defZaun", polyform: "hub.defPolyform", raetsel: "hub.defRaetsel", fuite: "hub.defFuite", reference: "hub.defReference" };
+      const chips = document.querySelectorAll("#vocabChips button");
+      const panel = document.getElementById("vocabDef");
+      let curTerm = "zaun";
+      const show = (t) => { curTerm = t; panel.textContent = window.i18n ? i18n.t(DEFKEY[t]) : ""; };
+      chips.forEach((c) => c.addEventListener("click", () => {
+        chips.forEach((x) => x.classList.remove("on"));
+        c.classList.add("on"); show(c.dataset.term);
+      }));
+      show("zaun");
+      document.addEventListener("fc-langchange", () => show(curTerm));
+    })();
+    </script>
+  </body>
+</html>

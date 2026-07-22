@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="hx.title">Polyhex Fence Lab</title>
+  <link rel="stylesheet" href="./styles.css" />
+    <style>
+      .langSel{position:fixed;top:12px;right:14px;z-index:9999;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(7,6,10,0.82);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.14);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+      .langSel button{cursor:pointer;border:none;background:transparent;color:rgba(255,255,255,0.55);font-size:11px;font-weight:700;letter-spacing:0.04em;padding:5px 9px;border-radius:999px;}
+      .langSel button:hover{color:#fff;}
+      .langSel button[aria-pressed="true"]{color:#07060a;background:#ffd24a;}
+    </style>
+    <script src="../i18n.js"></script>
+  <meta name="theme-color" content="#07060a" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+  </head>
+<body>
+    <nav class="langSel" aria-label="Language / Langue / Sprache">
+      <button type="button" data-lang-btn="fr" aria-pressed="false" onclick="i18n.setLang('fr')">FR</button>
+      <button type="button" data-lang-btn="de" aria-pressed="false" onclick="i18n.setLang('de')">DE</button>
+      <button type="button" data-lang-btn="en" aria-pressed="false" onclick="i18n.setLang('en')">EN</button>
+    </nav>
+
+  <div class="app-shell">
+    <main class="main-stage">
+      <header class="toolbar">
+        <button id="detect-area" class="chip chip-primary" data-i18n="common.detectArea">Detect Area</button>
+        <div id="area-chip" class="chip chip-area" data-i18n="common.areaLabel">Area: 0</div>
+        <button id="clear-board" class="chip chip-danger" data-i18n="common.clear">Clear</button>
+      </header>
+
+      <section class="play-zone">
+        <section class="board-wrap">
+          <button id="camera-chip" class="chip icon-chip board-camera-chip" type="button" data-i18n-aria-label="common.camera" aria-label="Camera">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M9 5.5 10.2 4h3.6L15 5.5h2.7A2.3 2.3 0 0 1 20 7.8v8.5a2.3 2.3 0 0 1-2.3 2.2H6.3A2.3 2.3 0 0 1 4 16.3V7.8a2.3 2.3 0 0 1 2.3-2.3H9Zm3 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 1.8a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4Z"
+              />
+            </svg>
+          </button>
+          <div id="piece-tray" class="piece-ring" data-i18n-aria-label="hx.tray.ariaLabel" aria-label="Tetrahex pieces"></div>
+          <div class="board-actions">
+            <button id="rotate-piece" class="chip action-chip" data-i18n="common.rotate">Rotate (R)</button>
+            <button id="flip-piece" class="chip action-chip" data-i18n="common.flip">Flip (F)</button>
+          </div>
+          <canvas id="board-canvas" width="1200" height="980" data-i18n-aria-label="hx.board.ariaLabel" aria-label="Polyhex board"></canvas>
+          <div id="camera-overlay" class="camera-overlay" hidden>
+            <video id="camera-video" autoplay playsinline muted></video>
+            <canvas id="camera-capture" width="1200" height="980" hidden></canvas>
+          </div>
+          <input id="upload-photo" type="file" accept="image/*" capture="environment" hidden />
+          <a
+            class="side-brand"
+            href="https://doi.org/10.1515/dmvm-2025-0056"
+            target="_blank"
+            rel="noreferrer"
+            data-i18n-title="hx.brand.citeTitle" title="Cite: Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025 — doi:10.1515/dmvm-2025-0056"
+           data-i18n="hx.brand.text">
+            Polyhex Fence · LRMR25 · Dr. Erika Roldán
+          </a>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

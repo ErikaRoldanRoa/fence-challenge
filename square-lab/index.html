@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title data-i18n="sq.docTitle">Fence Challenge</title>
+    <link rel="stylesheet" href="styles.css" />
+      <style>
+      .langSel{position:fixed;top:12px;right:14px;z-index:9999;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(7,6,10,0.82);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.14);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+      .langSel button{cursor:pointer;border:none;background:transparent;color:rgba(255,255,255,0.55);font-size:11px;font-weight:700;letter-spacing:0.04em;padding:5px 9px;border-radius:999px;}
+      .langSel button:hover{color:#fff;}
+      .langSel button[aria-pressed="true"]{color:#07060a;background:#ffd24a;}
+    </style>
+    <script src="../i18n.js"></script>
+  <meta name="theme-color" content="#07060a" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <nav class="langSel" aria-label="Language / Langue / Sprache">
+      <button type="button" data-lang-btn="fr" aria-pressed="false" onclick="i18n.setLang('fr')">FR</button>
+      <button type="button" data-lang-btn="de" aria-pressed="false" onclick="i18n.setLang('de')">DE</button>
+      <button type="button" data-lang-btn="en" aria-pressed="false" onclick="i18n.setLang('en')">EN</button>
+    </nav>
+
+    <div class="app-shell">
+      <section class="panel active" id="panel-game" role="region" data-i18n-aria-label="sq.panelGame.aria" data-i18n-aria-label="sq.gameMode.aria" aria-label="Game mode">
+        <div class="game-layout">
+          <a
+            id="side-brand-link"
+            class="side-brand"
+            href="https://doi.org/10.1515/dmvm-2025-0056"
+            target="_blank"
+            rel="noopener"
+            data-i18n-title="sq.brand.citeTitle" title="Cite: Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025 — doi:10.1515/dmvm-2025-0056"
+           data-i18n="sq.brand.line">
+            Fence Challenge · LRMR25 · Dr. Erika Roldán
+          </a>
+          <div class="game-toolbar">
+            <div class="game-controls">
+              <button id="detect-game-area" class="btn btn-primary" data-i18n="common.detectArea">Detect Area</button>
+              <div class="metrics" id="game-metrics"></div>
+              <button id="clear-board" class="btn btn-danger" data-i18n="common.clear">Clear</button>
+            </div>
+          </div>
+          <aside class="dock-panel">
+            <div id="piece-tray" class="piece-tray piece-dock" data-i18n-aria-label="sq.pieceDock.aria" aria-label="Piece dock"></div>
+            <div class="piece-actions">
+              <button id="rotate-piece" class="btn" data-i18n="common.rotate">Rotate (R)</button>
+              <button id="flip-piece" class="btn" data-i18n="common.flip">Flip (F)</button>
+            </div>
+          </aside>
+          <div class="game-main">
+            <div class="board-stage">
+              <button
+                id="camera-toggle"
+                class="camera-chip board-camera-chip"
+                type="button"
+                aria-pressed="false"
+                data-i18n-aria-label="sq.cameraToggle.aria" aria-label="Open camera"
+                data-i18n-title="sq.cameraToggle.title" title="Open camera"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path
+                    d="M9 5.5 10.2 4h3.6L15 5.5h2.7A2.3 2.3 0 0 1 20 7.8v8.5a2.3 2.3 0 0 1-2.3 2.2H6.3A2.3 2.3 0 0 1 4 16.3V7.8a2.3 2.3 0 0 1 2.3-2.3H9Zm3 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 1.8a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4Z"
+                  />
+                </svg>
+              </button>
+              <canvas id="game-board" width="900" height="900" data-i18n-aria-label="sq.board.aria" aria-label="Fence board"></canvas>
+              <div class="camera-inline-stage" id="camera-inline-stage" aria-live="polite">
+                <video id="quick-camera-video" autoplay playsinline muted></video>
+                <button id="quick-take-picture" class="btn btn-primary" type="button" data-i18n="sq.takePicture">Take Picture</button>
+                <canvas id="quick-camera-capture" width="960" height="540" data-i18n-aria-label="sq.capturedFrame.aria" data-i18n-aria-label="sq.camera.capturedFrame.aria" aria-label="Captured frame"></canvas>
+              </div>
+            </div>
+            <div class="status-card compact" id="game-status" aria-live="polite" data-i18n="sq.status.initial">
+              Tap an icon to add a tile. Drag to move. Corner-touching does not enclose area.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-camera" role="region" data-i18n-aria-label="sq.panelCamera.aria" data-i18n-aria-label="sq.cameraMode.aria" aria-label="Camera mode">
+        <aside class="sidebar">
+          <div class="mode-icons camera-mode-icons" data-i18n-aria-label="sq.modeToggle.aria" aria-label="Mode toggle chips">
+            <button
+              class="camera-chip active"
+              type="button"
+              data-mode-toggle="camera"
+              aria-pressed="true"
+              aria-label="Camera mode"
+              data-i18n-title="sq.cameraMode.title" title="Camera mode"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  d="M9 5.5 10.2 4h3.6L15 5.5h2.7A2.3 2.3 0 0 1 20 7.8v8.5a2.3 2.3 0 0 1-2.3 2.2H6.3A2.3 2.3 0 0 1 4 16.3V7.8a2.3 2.3 0 0 1 2.3-2.3H9Zm3 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 1.8a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4Z"
+                />
+              </svg>
+            </button>
+            <button
+              class="camera-chip game-chip"
+              type="button"
+              data-mode-toggle="game"
+              aria-pressed="false"
+              aria-label="Game mode"
+              data-i18n-title="sq.gameMode.title" title="Game mode"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M5 5h4v4H5zM10 5h4v4h-4zM15 5h4v4h-4zM5 10h4v4H5zM10 10h4v4h-4zM10 15h4v4h-4z" />
+              </svg>
+            </button>
+          </div>
+          <p class="camera-note" data-i18n="sq.cameraAssist">Camera Assist</p>
+
+          <div class="controls-grid">
+            <button id="start-camera" class="btn" data-i18n="sq.camera.start">Start</button>
+            <button id="stop-camera" class="btn" data-i18n="sq.camera.stop">Stop</button>
+            <button id="capture-frame" class="btn" data-i18n="sq.camera.capture">Capture</button>
+            <button id="auto-qr" class="btn" data-i18n="sq.camera.autoQr">Auto QR</button>
+            <button id="reset-corners" class="btn" data-i18n="sq.camera.reset">Reset</button>
+          </div>
+          <label class="upload-label" for="upload-frame" data-i18n="sq.camera.loadImage">
+            Load image
+            <input id="upload-frame" type="file" accept="image/*" />
+          </label>
+
+          <label class="threshold-label" for="luma-threshold" data-i18n="sq.camera.threshold">
+            Threshold
+            <input id="luma-threshold" type="range" min="40" max="220" value="130" />
+            <span id="threshold-value">130</span>
+          </label>
+
+          <div class="controls-grid">
+            <button id="detect-camera-fence" class="btn btn-primary" data-i18n="sq.camera.detect">Detect</button>
+            <button id="compute-camera-area" class="btn" data-i18n="sq.camera.area">Area</button>
+            <button id="clear-camera-mask" class="btn btn-danger" data-i18n="sq.camera.clearMask">Clear Mask</button>
+          </div>
+
+          <div class="status-card" id="camera-status" aria-live="polite" data-i18n="sq.camera.statusReady">
+            Camera mode is ready.
+          </div>
+          <div class="metrics" id="camera-metrics"></div>
+        </aside>
+
+        <div class="camera-column">
+          <div class="camera-box">
+            <video autoplay playsinline muted></video>
+            <canvas width="960" height="540" aria-label="Captured frame"></canvas>
+          </div>
+          <p class="canvas-tip" data-i18n="sq.camera.tipCorners">
+            Tap capture canvas to set corners: TL, TR, BR, BL.
+          </p>
+          <canvas id="camera-grid" width="700" height="700" data-i18n-aria-label="sq.camera.boardMask.aria" aria-label="Detected board mask"></canvas>
+          <p class="canvas-tip" data-i18n="sq.camera.tipRefine">Tap cells in the detected grid to refine fence tiles.</p>
+        </div>
+      </section>
+
+      <footer class="footer-note" data-i18n="sq.footer">
+        Current version computes enclosed area. Maximum-area optimization can be added next.
+      </footer>
+    </div>
+
+    <script defer src="app.js"></script>
+  </body>
+</html>
