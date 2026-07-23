@@ -479,6 +479,7 @@ const gameState = {
   drag: null,
   occupiedBy: makeNullGrid(),
   interiorKeys: new Set(),
+  leakKeys: new Set(),
   analysis: null,
   hoverCell: null,
   layout: null,
@@ -1048,23 +1049,31 @@ function runGameAreaDetection() {
   const analysis = analyzeFence(blocked);
   gameState.analysis = analysis;
   gameState.interiorKeys = new Set(analysis.interiorKeys);
+  gameState.leakKeys = new Set(analysis.leakKeys);
   updateGameMetrics();
   renderGameBoard();
 
   if (analysis.totalArea === 0) {
-    setGameStatus("No enclosed area detected yet.");
+    setGameStatus(
+      analysis.cornerLeak
+        ? "Corner leak: the outside slips through a corner, so nothing is enclosed yet."
+        : "No enclosed area detected yet.",
+    );
     return;
   }
 
   const largest = analysis.components[0] ? analysis.components[0].size : 0;
-  setGameStatus(
-    `Fence detected: enclosed area ${analysis.totalArea} unit squares across ${analysis.components.length} region(s). Largest region: ${largest}.`,
-  );
+  let message = `Fence detected: enclosed area ${analysis.totalArea} unit squares across ${analysis.components.length} region(s). Largest region: ${largest}.`;
+  if (analysis.cornerLeak) {
+    message += ` Corner leak: the outside slips through a corner, so those cells stay open.`;
+  }
+  setGameStatus(message);
 }
 
 function clearGameAnalysis() {
   gameState.analysis = null;
   gameState.interiorKeys.clear();
+  if (gameState.leakKeys) gameState.leakKeys.clear();
 }
 
 function syncGameLayoutSize() {
@@ -1132,13 +1141,30 @@ function renderGameBoard() {
         const piece = PIECE_BY_ID.get(occupant);
         gameCtx.fillStyle = piece ? piece.color : "#888";
       } else if (gameState.interiorKeys.has(key)) {
-        gameCtx.fillStyle = "rgba(46, 207, 153, 0.4)";
+        gameCtx.fillStyle = "rgba(46, 207, 153, 0.55)";
+      } else if (gameState.leakKeys && gameState.leakKeys.has(key)) {
+        gameCtx.fillStyle = "rgba(178, 120, 255, 0.35)";
       } else {
         gameCtx.fillStyle = "#121a26";
       }
 
       gameCtx.fillRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
     }
+  }
+
+  if (gameState.interiorKeys.size > 0) {
+    gameCtx.save();
+    gameCtx.shadowBlur = 10;
+    gameCtx.shadowColor = "rgba(46, 207, 153, 0.85)";
+    gameCtx.fillStyle = "rgba(46, 207, 153, 0.5)";
+    for (let y = 0; y < BOARD_SIZE; y += 1) {
+      for (let x = 0; x < BOARD_SIZE; x += 1) {
+        if (gameState.interiorKeys.has(keyOf(x, y))) {
+          gameCtx.fillRect(originX + x * cellSize + 1, originY + y * cellSize + 1, cellSize - 2, cellSize - 2);
+        }
+      }
+    }
+    gameCtx.restore();
   }
 
   gameCtx.strokeStyle = "#2a374a";
@@ -4354,6 +4380,44 @@ function analyzeFence(blocked) {
     }
   }
 
+  // Strict (4-connected) outside flood: treats corners as sealed. A cell enclosed here but
+  // reached by the 8-connected outside flood leaks through a corner. leakKeys = those cells.
+  const strictVisited = makeBoolGrid(false);
+  const strictQueue = [];
+  const strictEnqueue = (x, y) => {
+    strictVisited[y][x] = true;
+    strictQueue.push({ x, y });
+  };
+  for (let x = 0; x < BOARD_SIZE; x += 1) {
+    if (!blocked[0][x] && !strictVisited[0][x]) strictEnqueue(x, 0);
+    if (!blocked[BOARD_SIZE - 1][x] && !strictVisited[BOARD_SIZE - 1][x]) strictEnqueue(x, BOARD_SIZE - 1);
+  }
+  for (let y = 0; y < BOARD_SIZE; y += 1) {
+    if (!blocked[y][0] && !strictVisited[y][0]) strictEnqueue(0, y);
+    if (!blocked[y][BOARD_SIZE - 1] && !strictVisited[y][BOARD_SIZE - 1]) strictEnqueue(BOARD_SIZE - 1, y);
+  }
+  let strictHead = 0;
+  while (strictHead < strictQueue.length) {
+    const current = strictQueue[strictHead];
+    strictHead += 1;
+    for (const [dx, dy] of ORTHOGONAL_NEIGHBORS) {
+      const nx = current.x + dx;
+      const ny = current.y + dy;
+      if (!isInsideBoard(nx, ny) || blocked[ny][nx] || strictVisited[ny][nx]) {
+        continue;
+      }
+      strictEnqueue(nx, ny);
+    }
+  }
+  const leakKeys = [];
+  for (let y = 0; y < BOARD_SIZE; y += 1) {
+    for (let x = 0; x < BOARD_SIZE; x += 1) {
+      if (!blocked[y][x] && !strictVisited[y][x] && visited[y][x]) {
+        leakKeys.push(keyOf(x, y));
+      }
+    }
+  }
+
   const components = [];
   const seen = makeBoolGrid(false);
 
@@ -4392,6 +4456,8 @@ function analyzeFence(blocked) {
     totalArea: interiorKeys.length,
     components,
     interiorKeys,
+    leakKeys,
+    cornerLeak: leakKeys.length > 0,
   };
 }
 
