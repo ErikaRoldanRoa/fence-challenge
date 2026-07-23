@@ -360,6 +360,8 @@
 
     function onPointerDown(event) {
       if (!viewReady()) return; // guard: no hit-testing before first layout
+      state._downPieceId = null;
+      state._didDrag = false;
       const point = pointerToCanvas(event);
       const nearest = lattice.findNearestBoardCell(screenToWorld(point), state.board, null);
       if (!nearest) return;
@@ -367,6 +369,8 @@
       const occupancy = buildOccupancyMap();
       const occupiedBy = occupancy.get(nearest.key);
       if (occupiedBy) {
+        state._downPieceId = occupiedBy;
+        state._downWasSelected = state.selectedPieceId === occupiedBy;
         setSelectedPieceId(occupiedBy);
         state.draggingPieceId = occupiedBy;
         try { dom.canvas.setPointerCapture(event.pointerId); } catch (e) {  }
@@ -397,11 +401,18 @@
       if (!canPlace(piece.typeId, piece.variantIndex, nearest, piece.id)) return;
 
       piece.marker = lattice.bareCell(nearest);
+      state._didDrag = true;
       resetArea();
       render();
     }
 
     function onPointerUp(event) {
+      // Tap (no drag) on an already-selected piece removes it — the phone
+      // equivalent of the Delete key, which touch devices do not have.
+      if (state._downPieceId && !state._didDrag && state._downWasSelected) {
+        removePiece(state._downPieceId);
+      }
+      state._downPieceId = null;
       if (state.draggingPieceId) {
         setStatus("Drag to move a piece. Edge-only fences enclose area.");
       }
