@@ -1,5 +1,7 @@
 # Fence Challenge
 
+**Alexis Langlois-Rémillard · Mia N. Müßig · Erika Roldán**
+
 An interactive companion to the paper **"Maximale Zäune mit Polyformen"** by
 Alexis Langlois-Rémillard, Mia N. Müßig and Erika Roldán (*Mitteilungen der
 Deutschen Mathematiker-Vereinigung* **33**(3), 187–199, 2025;
