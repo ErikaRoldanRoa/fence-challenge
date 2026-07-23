@@ -13,7 +13,7 @@ Available in **Français · Deutsch · English** — switch top-right.
 
 ## Play
 
-**→ [Open the hub](https://erikaroldanroa.github.io/fence-challenge/)** — three
+**[Open the hub](https://erikaroldanroa.github.io/fence-challenge/)** — three
 mini-challenges, one per tiling. Solve one to open its full lab.
 
 Or open a lab directly:

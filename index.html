@@ -149,10 +149,22 @@
       details p{margin:8px 0;color:var(--muted);font-size:13px;}
       details a{color:var(--cyan);text-decoration:none;}
       details a:hover{text-decoration:underline;}
-      .vocabChips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 10px;}
-      .vocabChips button{cursor:pointer;padding:4px 10px;border-radius:999px;background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.08);color:var(--muted);font-family:var(--mono);font-size:11px;}
-      .vocabChips button:hover{color:var(--text);}
-      .vocabChips button.on{color:var(--bg0);background:var(--cyan);border-color:var(--cyan);}
+      .refRack{margin-top:34px;}
+      .chipRow{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;}
+      .refChip{cursor:pointer;padding:9px 17px;border-radius:999px;font-family:var(--sans);font-size:13px;font-weight:700;border:1.5px solid transparent;background:transparent;transition:transform .13s ease,background .13s ease,color .13s ease,box-shadow .13s ease;}
+      .refChip:hover{transform:translateY(-1px);}
+      .refChip.pink{color:var(--pink);border-color:rgba(255,59,212,0.55);background:rgba(255,59,212,0.09);}
+      .refChip.pink.on{background:var(--pink);color:var(--bg0);box-shadow:0 6px 20px rgba(255,59,212,0.30);}
+      .refChip.cyan{color:var(--cyan);border-color:rgba(47,243,255,0.55);background:rgba(47,243,255,0.09);}
+      .refChip.cyan.on{background:var(--cyan);color:var(--bg0);box-shadow:0 6px 20px rgba(47,243,255,0.30);}
+      .refChip.lime{color:var(--lime);border-color:rgba(112,255,122,0.55);background:rgba(112,255,122,0.09);}
+      .refChip.lime.on{background:var(--lime);color:var(--bg0);box-shadow:0 6px 20px rgba(112,255,122,0.30);}
+      .refChip.amber{color:var(--amber);border-color:rgba(255,210,74,0.55);background:rgba(255,210,74,0.09);}
+      .refChip.amber.on{background:var(--amber);color:var(--bg0);box-shadow:0 6px 20px rgba(255,210,74,0.30);}
+      .refChip.purple{color:var(--purple);border-color:rgba(178,120,255,0.55);background:rgba(178,120,255,0.10);}
+      .refChip.purple.on{background:var(--purple);color:var(--bg0);box-shadow:0 6px 20px rgba(178,120,255,0.30);}
+      .refPanel{margin:16px auto 0;max-width:760px;padding:16px 20px;border-radius:16px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.09);color:var(--muted);font-size:14px;line-height:1.62;min-height:44px;text-align:center;}
+      .refPanel a{color:var(--cyan);text-decoration:none;} .refPanel a:hover{text-decoration:underline;}
       .vocabPanel{color:var(--muted);font-size:13px;line-height:1.55;min-height:30px;}
 
       .floatCredit{position:fixed;bottom:14px;left:16px;z-index:500;padding:8px 14px;border-radius:999px;background:rgba(7,6,10,0.78);backdrop-filter:blur(10px);border:1px solid rgba(255,59,212,0.22);font-size:12.5px;color:var(--muted);letter-spacing:0.03em;}
@@ -209,7 +221,7 @@
                   aria-label="À propos des pièces">i</span>
             <a class="icon launch" data-launch="sq" href="square-lab/index.html" data-i18n-data-tip="hub.launchSqTip" data-i18n-aria-label="hub.launchSqAria"
                data-tip="Enclos une aire ≥ 1 ici pour ouvrir le lab Rätsel 2 · 12 pentominoes" data-tip-pos="right-below"
-               aria-label="Ouvrir le lab Rätsel 2">⇢</a>
+               aria-label="Ouvrir le lab Rätsel 2">🚀</a>
           </div>
           <div class="toyWrap" id="engine-sq">
             <div class="toyTray" data-tray></div>
@@ -244,7 +256,7 @@
                   aria-label="À propos des pièces">i</span>
             <a class="icon launch" data-launch="hex" href="hex-lab/index.html" data-i18n-data-tip="hub.launchHexTip" data-i18n-aria-label="hub.launchHexAria"
                data-tip="Enclos une aire ≥ 1 pour débloquer" data-tip-pos="right-below"
-               aria-label="Ouvrir Rätsel 3">⇢</a>
+               aria-label="Ouvrir Rätsel 3">🚀</a>
           </div>
           <div class="toyWrap" id="engine-hex">
             <div class="toyTray" data-tray></div>
@@ -276,7 +288,7 @@
                   aria-label="Comment jouer">i</span>
             <a class="icon launch" data-launch="tri" href="triangle-lab/index.html" data-i18n-data-tip="hub.launchTriTip" data-i18n-aria-label="hub.launchTriAria"
                data-tip="Enclos une aire ≥ 1 pour débloquer" data-tip-pos="right-below"
-               aria-label="Ouvrir Rätsel 4">⇢</a>
+               aria-label="Ouvrir Rätsel 4">🚀</a>
           </div>
           <div class="toyWrap" id="engine-tri">
             <div class="toyTray" data-tray></div>
@@ -290,29 +302,18 @@
       </div>
       </section>
 
-      <details>
-        <summary data-i18n="hub.historyTitle">History</summary>
-        <p data-i18n="hub.historyBody">The challenge has a long pedigree.</p>
-      </details>
-
-      <details>
-        <summary data-i18n="hub.glossaryTitle">Glossaire</summary>
-        <div class="vocabChips" id="vocabChips">
-          <button class="on" data-term="zaun" data-i18n="hub.vocZaun">Zaun</button>
-          <button data-term="polyform" data-i18n="hub.vocPolyform">Polyform</button>
-          <button data-term="raetsel" data-i18n="hub.vocRaetsel">Rätsel</button>
-          <button data-term="fuite" data-i18n="hub.vocFuite">Fuite par un coin</button>
-          <button data-term="reference" data-i18n="hub.vocReference">Vecteurs de référence</button>
+      <section class="refRack" aria-label="Reference">
+        <div class="chipRow" id="refChips">
+          <button class="refChip amber on" data-panel="history" data-i18n="hub.historyTitle">History</button>
+          <button class="refChip pink" data-panel="zaun" data-i18n="hub.vocZaun">Zaun</button>
+          <button class="refChip lime" data-panel="polyform" data-i18n="hub.vocPolyform">Polyform</button>
+          <button class="refChip cyan" data-panel="raetsel" data-i18n="hub.vocRaetsel">Rätsel</button>
+          <button class="refChip purple" data-panel="fuite" data-i18n="hub.vocFuite">Fuite par un coin</button>
+          <button class="refChip cyan" data-panel="reference" data-i18n="hub.vocReference">Vecteurs de référence</button>
+          <button class="refChip pink" data-panel="paper" data-i18n="hub.chipPaper">Paper</button>
         </div>
-        <p class="vocabPanel" id="vocabDef"></p>
-      </details>
-
-      <details>
-        <summary data-i18n="hub.citePaperTitle">Citer le papier</summary>
-        <p data-i18n-html="hub.citeLine">placeholder</p>
-        <p><a href="https://doi.org/10.1515/dmvm-2025-0056" target="_blank" rel="noopener">doi:10.1515/dmvm-2025-0056</a></p>
-        <p><span data-i18n="hub.citeMoreEn">BibTeX + citation par-app dans</span> <a href="CITATION.md">CITATION.md</a>.</p>
-      </details>
+        <div class="refPanel" id="refPanel"></div>
+      </section>
     </main>
 
     <div class="floatCredit">
@@ -961,17 +962,24 @@
         });
       })();
 
-      const DEFKEY = { zaun: "hub.defZaun", polyform: "hub.defPolyform", raetsel: "hub.defRaetsel", fuite: "hub.defFuite", reference: "hub.defReference" };
-      const chips = document.querySelectorAll("#vocabChips button");
-      const panel = document.getElementById("vocabDef");
-      let curTerm = "zaun";
-      const show = (t) => { curTerm = t; panel.textContent = window.i18n ? i18n.t(DEFKEY[t]) : ""; };
-      chips.forEach((c) => c.addEventListener("click", () => {
-        chips.forEach((x) => x.classList.remove("on"));
-        c.classList.add("on"); show(c.dataset.term);
-      }));
-      show("zaun");
-      document.addEventListener("fc-langchange", () => show(curTerm));
+      const PANELKEY = { history:"hub.historyBody", zaun:"hub.defZaun", polyform:"hub.defPolyform", raetsel:"hub.defRaetsel", fuite:"hub.defFuite", reference:"hub.defReference" };
+      const refChips = document.querySelectorAll("#refChips .refChip");
+      const refPanel = document.getElementById("refPanel");
+      let activePanel = "history";
+      function renderPanel() {
+        refChips.forEach((c) => c.classList.toggle("on", c.dataset.panel === activePanel));
+        if (!window.i18n) return;
+        if (activePanel === "paper") {
+          refPanel.innerHTML = i18n.t("hub.citeLine") +
+            ' <a href="https://doi.org/10.1515/dmvm-2025-0056" target="_blank" rel="noopener">doi:10.1515/dmvm-2025-0056</a>. ' +
+            '<span>' + i18n.t("hub.citeMoreEn") + '</span> <a href="CITATION.md">CITATION.md</a>.';
+        } else {
+          refPanel.textContent = i18n.t(PANELKEY[activePanel]);
+        }
+      }
+      refChips.forEach((c) => c.addEventListener("click", () => { activePanel = c.dataset.panel; renderPanel(); }));
+      renderPanel();
+      document.addEventListener("fc-langchange", renderPanel);
     })();
     </script>
   </body>

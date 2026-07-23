@@ -63,8 +63,8 @@ var DICT = {
   "hub.vocFuite": "Fuite par un coin",
   "hub.vocReference": "Vecteurs de référence",
   "hub.defZaun": "Une polyforme posée sur un pavage régulier telle que le complémentaire se sépare en exactement deux composantes qui ne se touchent pas — même pas par un sommet. Objectif : enclore la plus grande aire.",
-  "hub.defPolyform": "Ensemble connecté de cellules sur un pavage régulier. Carrés → polyomino ; triangles → polyiamond ; hexagones → polyhex.",
-  "hub.defRaetsel": "« Énigme » en allemand. Rätsel 1 → tétrominos carrés (le toy de la 1ʳᵉ carte) ; Rätsel 2 → pentominoes carrés (le lab qu'elle ouvre — même pavage, autre problème) ; Rätsel 3 → tétrahexes hexagonaux ; Rätsel 4 → hexiamonds triangulaires.",
+  "hub.defPolyform": "Un ensemble connecté de cellules sur un pavage régulier. Sur les carrés on les appelle polyominos, sur les triangles polyiamonds, et sur les hexagones polyhexes.",
+  "hub.defRaetsel": "En allemand, cela veut simplement dire énigme. Le papier en pose quatre, une par famille de pièces : les tétrominos carrés de cette carte, les pentominos carrés du lab qu'elle ouvre (même pavage, un problème plus difficile), les tétrahexes hexagonaux et les hexiamonds triangulaires.",
   "hub.defFuite": "L'intérieur et l'extérieur d'une barrière se touchent par un sommet, pas par une arête. Interdit — la barrière doit séparer par arêtes uniquement. Sur le pavage hexagonal, cette condition est automatique.",
   "hub.defReference": "Encodage d'une barrière via la séquence des polyformes le long du bord. Sert à construire une borne supérieure par symétrisation (Brunn-Minkowski).",
   "hub.credit": "par",
@@ -206,7 +206,8 @@ var DICT = {
   "tri.status.cameraFrameCaptured": "Image de la caméra capturée. Le crochet du pipeline de marqueurs est actif (ratio sombre ${detection.darkRatio.toFixed(3)}).",
   "hub.historyTitle": "Histoire",
   "hub.historyBody": "Le défi a une longue histoire. F. V. Feser a posé la première ferme de pentominos en 1968, et Martin Gardner l'a popularisée dans sa chronique du Scientific American en 1973, défiant ses lecteurs de battre sa meilleure barrière. Donald Knuth y est vite parvenu — et Takakazu Shimauchi a démontré le maximum en 1978. Le fence challenge porte l'idée aux trois pavages réguliers du plan.",
-  "cam.disabledTip": "Le mode caméra n'est pas encore actif ici. Pour les événements et ateliers, nous pouvons apporter un dispositif de réalité mixte qui lit un vrai plateau de pièces découpées."
+  "cam.disabledTip": "Le mode caméra n'est pas encore actif ici. Pour les événements et ateliers, nous pouvons apporter un dispositif de réalité mixte qui lit un vrai plateau de pièces découpées.",
+  "hub.chipPaper": "Le papier"
  },
  "de": {
   "common.detectArea": "Fläche messen",
@@ -271,8 +272,8 @@ var DICT = {
   "hub.vocFuite": "Eckenleck",
   "hub.vocReference": "Referenzvektoren",
   "hub.defZaun": "Eine Polyform, die so auf eine reguläre Parkettierung gelegt wird, dass ihr Komplement in genau zwei Komponenten zerfällt, die sich nicht berühren — nicht einmal an einer Ecke. Ziel: die größte Fläche umschließen.",
-  "hub.defPolyform": "Eine zusammenhängende Menge von Zellen auf einer regulären Parkettierung. Quadrate → Polyomino; Dreiecke → Polyiamond; Sechsecke → Polyhex.",
-  "hub.defRaetsel": "So heißen die Aufgaben im Paper. Rätsel 1 → quadratische Tetrominos (das Toy der ersten Karte); Rätsel 2 → quadratische Pentominos (das Lab, das sie öffnet — dieselbe Parkettierung, ein anderes Problem); Rätsel 3 → hexagonale Tetrahexe; Rätsel 4 → dreieckige Hexiamonds.",
+  "hub.defPolyform": "Eine zusammenhängende Menge von Zellen auf einer regulären Parkettierung. Auf Quadraten heißen diese Formen Polyominos, auf Dreiecken Polyiamonds und auf Sechsecken Polyhexe.",
+  "hub.defRaetsel": "Auf Deutsch bedeutet es einfach Rätsel. Das Paper stellt vier davon, eines je Teilefamilie: die quadratischen Tetrominos dieser Karte, die quadratischen Pentominos des Labs, das sie öffnet (dieselbe Parkettierung, ein schwierigeres Problem), die hexagonalen Tetrahexe und die dreieckigen Hexiamonds.",
   "hub.defFuite": "Das Innen und Außen eines Zauns berühren sich an einer Ecke, nicht entlang einer Kante. Verboten — der Zaun darf nur über Kanten trennen. Auf der hexagonalen Parkettierung ist diese Bedingung automatisch erfüllt.",
   "hub.defReference": "Kodierung eines Zauns über die Folge der Polyformen entlang seines Randes. Dient dazu, per Symmetrisierung (Brunn–Minkowski) eine obere Schranke zu konstruieren.",
   "hub.credit": "von",
@@ -414,7 +415,8 @@ var DICT = {
   "tri.status.cameraFrameCaptured": "Kamerabild aufgenommen. Der Marker-Pipeline-Hook ist aktiv (Dunkelanteil ${detection.darkRatio.toFixed(3)}).",
   "hub.historyTitle": "Geschichte",
   "hub.historyBody": "Das Rätsel hat eine lange Geschichte. F. V. Feser stellte 1968 die erste Pentomino-Farm, und Martin Gardner machte sie 1973 in seiner Kolumne im Scientific American bekannt und forderte die Leserschaft heraus, seinen besten Zaun zu übertreffen. Donald Knuth gelang dies bald — und Takakazu Shimauchi bewies 1978 das wahre Maximum. Der Fence Challenge trägt die Idee auf alle drei regulären Parkettierungen der Ebene.",
-  "cam.disabledTip": "Der Kameramodus ist hier noch nicht aktiv. Für Outreach-Events und Workshops können wir einen Mixed-Reality-Aufbau mitbringen, der ein echtes Brett aus ausgeschnittenen Teilen liest."
+  "cam.disabledTip": "Der Kameramodus ist hier noch nicht aktiv. Für Outreach-Events und Workshops können wir einen Mixed-Reality-Aufbau mitbringen, der ein echtes Brett aus ausgeschnittenen Teilen liest.",
+  "hub.chipPaper": "Das Paper"
  },
  "en": {
   "common.detectArea": "Measure Area",
@@ -479,8 +481,8 @@ var DICT = {
   "hub.vocFuite": "Corner leak",
   "hub.vocReference": "Reference vectors",
   "hub.defZaun": "A polyform placed on a regular tiling so that its complement splits into exactly two components that do not touch — not even at a vertex. Goal: enclose the largest area.",
-  "hub.defPolyform": "A connected set of cells on a regular tiling. Squares → polyomino; triangles → polyiamond; hexagons → polyhex.",
-  "hub.defRaetsel": "\"Puzzle\" in German. Rätsel 1 → square tetrominoes (the first card's toy); Rätsel 2 → square pentominoes (the lab it opens — same tiling, a different problem); Rätsel 3 → hexagonal tetrahexes; Rätsel 4 → triangular hexiamonds.",
+  "hub.defPolyform": "A connected set of cells on a regular tiling. On squares these shapes are called polyominoes, on triangles polyiamonds, and on hexagons polyhexes.",
+  "hub.defRaetsel": "In German it simply means puzzle. The paper poses four, one per piece family: the square tetrominoes of this card, the square pentominoes of the lab it opens (same tiling, a harder problem), the hexagonal tetrahexes, and the triangular hexiamonds.",
   "hub.defFuite": "The inside and outside of a fence touch at a vertex, not along an edge. Forbidden — the fence must separate by edges only. On the hex tiling, this condition is automatic.",
   "hub.defReference": "Encoding of a fence via the sequence of polyforms along its boundary. Used to build an upper bound by symmetrization (Brunn–Minkowski).",
   "hub.credit": "by",
@@ -622,7 +624,8 @@ var DICT = {
   "tri.status.cameraFrameCaptured": "Camera frame captured. Marker pipeline hook is live (dark ratio ${detection.darkRatio.toFixed(3)}).",
   "hub.historyTitle": "History",
   "hub.historyBody": "The challenge has a long pedigree. F. V. Feser posed the first pentomino farm in 1968, and Martin Gardner popularised it in his 1973 Scientific American column, daring readers to beat his best fence. Donald Knuth soon did — and Takakazu Shimauchi proved the true maximum in 1978. The fence challenge carries the idea to all three regular tilings of the plane.",
-  "cam.disabledTip": "Camera mode isn't active here yet. For outreach events and workshops we can bring a mixed-reality setup that reads a real board of cut-out pieces."
+  "cam.disabledTip": "Camera mode isn't active here yet. For outreach events and workshops we can bring a mixed-reality setup that reads a real board of cut-out pieces.",
+  "hub.chipPaper": "Paper"
  }
 };
 
