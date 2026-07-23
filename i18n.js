@@ -196,7 +196,9 @@ var DICT = {
   "hub.infoAria": "Comment débloquer cette carte",
   "hub.vocFence": "Barrière",
   "hub.defFence": "Une barrière, ce sont deux polyformes ou plus qui enferment une aire, de sorte que l'intérieur et l'extérieur ne se touchent jamais — pas même par un coin. Sur les grilles carrée et triangulaire, il faut la fermer arête contre arête : un coin où deux cellules se touchent sans partager d'arête laisse l'extérieur se faufiler (sur les hexagones, c'est impossible). Le but est d'enclore la plus grande aire.",
-  "hub.paperTip": "Tous les résultats et toutes les preuves sont dans l'article — une version anglaise paraîtra sur arXiv."
+  "hub.paperTip": "L'article publié que cette application accompagne (DMVM 2025).",
+  "hub.chipArxiv": "arXiv",
+  "hub.arxivTip": "La version anglaise de cet article arrive sur arXiv."
  },
  "de": {
   "common.detectArea": "Fläche messen",
@@ -394,7 +396,9 @@ var DICT = {
   "hub.infoAria": "So funktioniert diese Karte",
   "hub.vocFence": "Zaun",
   "hub.defFence": "Ein Zaun besteht aus zwei oder mehr Polyformen, die eine Fläche einschließen, sodass sich Innen und Außen nie berühren — nicht einmal an einer Ecke. Auf dem quadratischen und dem dreieckigen Gitter muss er Kante an Kante geschlossen sein: eine Ecke, an der sich zwei Kacheln ohne gemeinsame Kante berühren, lässt das Äußere durch (auf Sechsecken ist das unmöglich). Ziel ist es, die größte Fläche einzuschließen.",
-  "hub.paperTip": "Alle Ergebnisse und Beweise stehen im Paper — eine englische Fassung erscheint bald auf arXiv."
+  "hub.paperTip": "Das veröffentlichte Paper, das diese App begleitet (DMVM 2025).",
+  "hub.chipArxiv": "arXiv",
+  "hub.arxivTip": "Die englische Fassung dieses Artikels erscheint bald auf arXiv."
  },
  "en": {
   "common.detectArea": "Measure Area",
@@ -592,7 +596,9 @@ var DICT = {
   "hub.infoAria": "How this card works",
   "hub.vocFence": "Fence",
   "hub.defFence": "A fence is two or more polyforms sealing off an area, so that the inside and outside never touch — not even at a corner. On the square and triangular grids you must close it edge to edge: a corner where two cells meet without sharing an edge lets the outside leak in (on hexagons that can't happen). The goal is to enclose the largest area.",
-  "hub.paperTip": "All the results and proofs are in the paper — an English version is forthcoming on arXiv."
+  "hub.paperTip": "The published paper this app accompanies (DMVM 2025).",
+  "hub.chipArxiv": "arXiv",
+  "hub.arxivTip": "The English version of this paper is on its way to arXiv."
  }
 };
 
