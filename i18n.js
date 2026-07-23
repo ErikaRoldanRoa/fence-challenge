@@ -49,7 +49,7 @@ var DICT = {
   "hub.citePaperTitle": "Citer l'article",
   "hub.citeLine": "<strong>Langlois-Rémillard, A., Müßig, M. N., &amp; Roldán, E.</strong> (2025). <em>Maximale Zäune mit Polyformen.</em> Mitteilungen der Deutschen Mathematiker-Vereinigung 33(3), 187–199.",
   "hub.citeMoreEn": "BibTeX et citation par appli dans",
-  "hub.vocPolyform": "Polyform",
+  "hub.vocPolyform": "Polyforme",
   "hub.defPolyform": "Une forme faite de cellules d'un pavage régulier, jointes arête contre arête. Sur les carrés ce sont des polyominos, sur les triangles des polyiamonds, et sur les hexagones des polyhexes.",
   "hub.credit": "par",
   "sq.docTitle": "Défi des barrières",

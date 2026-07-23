@@ -297,10 +297,10 @@
 
       <section class="refRack" aria-label="Reference">
         <div class="chipRow" id="refChips">
-          <button class="refChip amber on" data-panel="history" data-i18n="hub.historyTitle">History</button>
+          <button class="refChip lime on" data-panel="polyform" data-i18n="hub.vocPolyform">Polyform</button>
           <button class="refChip pink" data-panel="fence" data-i18n="hub.vocFence">Fence</button>
-          <button class="refChip lime" data-panel="polyform" data-i18n="hub.vocPolyform">Polyform</button>
           <button class="refChip purple" data-panel="paper" data-i18n="hub.chipPaper">Paper</button>
+          <button class="refChip amber" data-panel="history" data-i18n="hub.historyTitle">History</button>
         </div>
         <div class="refPanel" id="refPanel"></div>
       </section>
@@ -955,7 +955,7 @@
       const PANELKEY = { history:"hub.historyBody", fence:"hub.defFence", polyform:"hub.defPolyform" };
       const refChips = document.querySelectorAll("#refChips .refChip");
       const refPanel = document.getElementById("refPanel");
-      let activePanel = "history";
+      let activePanel = "polyform";
       function renderPanel() {
         refChips.forEach((c) => c.classList.toggle("on", c.dataset.panel === activePanel));
         if (!window.i18n) return;
