@@ -545,6 +545,8 @@ function reorient(piece, nextVariant) {
 function onPointerDown(event) {
   state._downPieceId = null;
   state._didDrag = false;
+  state._downClientX = event.clientX;
+  state._downClientY = event.clientY;
   const point = pointerToCanvas(event);
   const nearest = findNearestBoardCell(point);
   if (!nearest) return;
@@ -570,6 +572,11 @@ function onPointerDown(event) {
 
 function onPointerMove(event) {
   if (!state.draggingPieceId) return;
+  if (!state._didDrag) {
+    const mdx = event.clientX - state._downClientX;
+    const mdy = event.clientY - state._downClientY;
+    if (mdx * mdx + mdy * mdy > 36) state._didDrag = true;
+  }
   const piece = state.placedPieces.find((p) => p.id === state.draggingPieceId);
   if (!piece) return;
   const point = pointerToCanvas(event);

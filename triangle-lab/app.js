@@ -612,6 +612,8 @@ function onPointerDown(event) {
     state._downPieceId = occupiedBy;
     state._downWasSelected = state.selectedPieceId === occupiedBy;
     state._didDrag = false;
+    state._downClientX = event.clientX;
+    state._downClientY = event.clientY;
     state.selectedPieceId = occupiedBy;
     state.draggingPieceId = occupiedBy;
     dom.canvas.setPointerCapture(event.pointerId);
@@ -636,6 +638,11 @@ function onPointerMove(event) {
   }
   if (!state.draggingPieceId) {
     return;
+  }
+  if (!state._didDrag) {
+    const mdx = event.clientX - state._downClientX;
+    const mdy = event.clientY - state._downClientY;
+    if (mdx * mdx + mdy * mdy > 36) state._didDrag = true;
   }
   const piece = state.placedPieces.find((item) => item.id === state.draggingPieceId);
   if (!piece) {
