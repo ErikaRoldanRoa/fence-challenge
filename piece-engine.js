@@ -362,6 +362,8 @@
       if (!viewReady()) return; // guard: no hit-testing before first layout
       state._downPieceId = null;
       state._didDrag = false;
+      state._downClientX = event.clientX;
+      state._downClientY = event.clientY;
       const point = pointerToCanvas(event);
       const nearest = lattice.findNearestBoardCell(screenToWorld(point), state.board, null);
       if (!nearest) return;
@@ -388,6 +390,13 @@
 
     function onPointerMove(event) {
       if (!state.draggingPieceId || !viewReady()) return;
+      // Any real pointer travel means "drag", not "tap" — so a move that doesn't cross a
+      // cell (or lands on a blocked one) is never mistaken for a tap-to-delete on pointerup.
+      if (!state._didDrag) {
+        const mdx = event.clientX - state._downClientX;
+        const mdy = event.clientY - state._downClientY;
+        if (mdx * mdx + mdy * mdy > 36) state._didDrag = true;
+      }
       const piece = state.placedPieces.find((p) => p.id === state.draggingPieceId);
       if (!piece) return;
       const type = state.pieceTypeMap.get(piece.typeId);
