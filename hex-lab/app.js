@@ -551,6 +551,8 @@ function reorient(piece, nextVariant) {
 }
 
 function onPointerDown(event) {
+  state._downPieceId = null;
+  state._didDrag = false;
   const point = pointerToCanvas(event);
   const nearest = findNearestBoardCell(point);
   if (!nearest) return;
@@ -558,6 +560,8 @@ function onPointerDown(event) {
   const occupancy = buildOccupancyMap();
   const occupiedBy = occupancy.get(nearest.key);
   if (occupiedBy) {
+    state._downPieceId = occupiedBy;
+    state._downWasSelected = state.selectedPieceId === occupiedBy;
     state.selectedPieceId = occupiedBy;
     state.draggingPieceId = occupiedBy;
     dom.canvas.setPointerCapture(event.pointerId);
@@ -582,12 +586,26 @@ function onPointerMove(event) {
   if (piece.marker.q === nearest.q && piece.marker.r === nearest.r) return;
   if (!canPlace(piece.typeId, piece.variantIndex, nearest, piece.id)) return;
   piece.marker = { q: nearest.q, r: nearest.r };
+  state._didDrag = true;
   state.enclosedCells = new Set();
   updateAreaChip(0);
   render();
 }
 
 function onPointerUp(event) {
+  // Tap (no drag) on an already-selected piece removes it — phones have no Delete key.
+  if (state._downPieceId && !state._didDrag && state._downWasSelected) {
+    const i = state.placedPieces.findIndex((p) => p.id === state._downPieceId);
+    if (i >= 0) {
+      state.placedPieces.splice(i, 1);
+      state.selectedPieceId = null;
+      state.enclosedCells = new Set();
+      updateAreaChip(0);
+      refreshTray();
+      render();
+    }
+  }
+  state._downPieceId = null;
   state.draggingPieceId = null;
   try { dom.canvas.releasePointerCapture(event.pointerId); } catch (e) {  }
 }

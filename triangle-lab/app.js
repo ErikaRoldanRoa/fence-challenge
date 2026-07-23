@@ -600,6 +600,9 @@ function onPointerDown(event) {
   const occupancy = buildOccupancyMap();
   const occupiedBy = occupancy.get(nearest.key);
   if (occupiedBy) {
+    state._downPieceId = occupiedBy;
+    state._downWasSelected = state.selectedPieceId === occupiedBy;
+    state._didDrag = false;
     state.selectedPieceId = occupiedBy;
     state.draggingPieceId = occupiedBy;
     dom.canvas.setPointerCapture(event.pointerId);
@@ -607,6 +610,7 @@ function onPointerDown(event) {
     render();
     return;
   }
+  state._downPieceId = null;
 
   if (!state.selectedTypeId) {
     return;
@@ -648,12 +652,28 @@ function onPointerMove(event) {
     return;
   }
   piece.marker = { i: nearest.i, j: nearest.j, o: nearest.o };
+  state._didDrag = true;
   state.enclosedCells = new Set();
   updateAreaChip(0);
   render();
 }
 
 function onPointerUp(event) {
+  // Tap (no drag) on an already-selected piece removes it — phones have no Delete key.
+  if (state._downPieceId && !state._didDrag && state._downWasSelected) {
+    const index = state.placedPieces.findIndex((piece) => piece.id === state._downPieceId);
+    if (index >= 0) {
+      const removed = state.placedPieces[index];
+      state.placedPieces.splice(index, 1);
+      state.selectedPieceId = null;
+      state.enclosedCells = new Set();
+      updateAreaChip(0);
+      setStatus(`Removed piece ${removed.typeId}.`);
+      refreshTray();
+      render();
+    }
+  }
+  state._downPieceId = null;
   if (state.draggingPieceId) {
     setStatus("Drag to move a piece. Edge-only fences enclose area.");
   }
