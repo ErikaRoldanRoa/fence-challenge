@@ -71,6 +71,7 @@ const state = {
   nextPieceId: 1,
   draggingPieceId: null,
   enclosedCells: new Set(),
+  leakCells: new Set(),
   enclosedRegionCount: 0,
   enclosedLargest: 0,
   lastStatus: "",
@@ -101,10 +102,13 @@ function wireEvents() {
     state.enclosedCells = result.enclosedSet;
     state.enclosedRegionCount = result.regionCount;
     state.enclosedLargest = result.largestRegion;
+    state.leakCells = result.leakCells;
     updateAreaChip(result.area);
-    setStatus(
-      `Enclosed area: ${result.area} triangles across ${result.regionCount} region(s). Largest: ${result.largestRegion}.`
-    );
+    let message = `Enclosed area: ${result.area} triangles across ${result.regionCount} region(s). Largest: ${result.largestRegion}.`;
+    if (result.cornerLeak) {
+      message += ` Corner leak: the outside slips through a shared vertex, so those cells stay open.`;
+    }
+    setStatus(message);
     render();
   });
 
@@ -115,6 +119,7 @@ function wireEvents() {
     state.placedPieces = [];
     state.selectedPieceId = null;
     state.enclosedCells = new Set();
+    state.leakCells = new Set();
     state.enclosedRegionCount = 0;
     state.enclosedLargest = 0;
     updateAreaChip(0);
@@ -182,6 +187,7 @@ function wireEvents() {
         state.placedPieces.splice(index, 1);
         state.selectedPieceId = null;
         state.enclosedCells = new Set();
+        state.leakCells = new Set();
         updateAreaChip(0);
         setStatus(`Removed piece ${removed.typeId}.`);
         refreshTray();
@@ -486,6 +492,7 @@ function spawnPiece(typeId, preferredCell = null) {
   state.placedPieces.push(piece);
   state.selectedPieceId = piece.id;
   state.enclosedCells = new Set();
+  state.leakCells = new Set();
   updateAreaChip(0);
   setStatus(`Placed ${typeId}.`);
   return true;
@@ -521,6 +528,7 @@ function rotateSelection() {
     if (reorientPlacedPiece(selected, nextVariant)) {
       setStatus(`Rotated ${selected.typeId}.`);
       state.enclosedCells = new Set();
+      state.leakCells = new Set();
       updateAreaChip(0);
       render();
     }
@@ -544,6 +552,7 @@ function flipSelection() {
     if (reorientPlacedPiece(selected, nextVariant)) {
       setStatus(`Flipped ${selected.typeId}.`);
       state.enclosedCells = new Set();
+      state.leakCells = new Set();
       updateAreaChip(0);
       render();
     }
@@ -654,6 +663,7 @@ function onPointerMove(event) {
   piece.marker = { i: nearest.i, j: nearest.j, o: nearest.o };
   state._didDrag = true;
   state.enclosedCells = new Set();
+  state.leakCells = new Set();
   updateAreaChip(0);
   render();
 }
@@ -667,6 +677,7 @@ function onPointerUp(event) {
       state.placedPieces.splice(index, 1);
       state.selectedPieceId = null;
       state.enclosedCells = new Set();
+      state.leakCells = new Set();
       updateAreaChip(0);
       setStatus(`Removed piece ${removed.typeId}.`);
       refreshTray();
@@ -783,6 +794,41 @@ function computeEnclosedArea() {
 
   const enclosed = emptyKeys.filter((key) => !outsideVisited.has(key));
   const enclosedSet = new Set(enclosed);
+
+  // Second flood, edge-only: a cell sealed edge-to-edge but still reachable by the outside
+  // through a shared vertex is a "corner leak" — enclosed under strict walls, but not under the
+  // real vertex-aware rule. leakCells = strict-enclosed \ actually-enclosed. Mirrors the hub witness.
+  const outsideStrict = new Set();
+  const strictQueue = [];
+  for (const entry of state.boardCellEntries) {
+    if (!emptySet.has(entry.key)) {
+      continue;
+    }
+    const touchesOutside =
+      entry.touchesBoundaryVertex ||
+      cellNeighbors(entry).some((neighbor) => !state.boardCellMap.has(cellKey(neighbor)));
+    if (touchesOutside) {
+      outsideStrict.add(entry.key);
+      strictQueue.push(entry.key);
+    }
+  }
+  while (strictQueue.length > 0) {
+    const key = strictQueue.shift();
+    for (const nKey of edgeOnlyNeighborKeys(key, emptySet)) {
+      if (!emptySet.has(nKey) || outsideStrict.has(nKey)) {
+        continue;
+      }
+      outsideStrict.add(nKey);
+      strictQueue.push(nKey);
+    }
+  }
+  const leakCells = new Set();
+  for (const key of emptyKeys) {
+    if (!outsideStrict.has(key) && !enclosedSet.has(key)) {
+      leakCells.add(key);
+    }
+  }
+
   const visited = new Set();
   let regionCount = 0;
   let largestRegion = 0;
@@ -817,7 +863,22 @@ function computeEnclosedArea() {
     enclosedSet,
     regionCount,
     largestRegion,
+    leakCells,
+    cornerLeak: leakCells.size > 0,
   };
+}
+
+// Edge-only reachability (no shared-vertex hop) — the strict-wall view used to detect corner leaks.
+function edgeOnlyNeighborKeys(key, candidateSet) {
+  const reachable = new Set();
+  const cell = parseCellKey(key);
+  for (const neighbor of cellNeighbors(cell)) {
+    const nKey = cellKey(neighbor);
+    if (candidateSet.has(nKey)) {
+      reachable.add(nKey);
+    }
+  }
+  return reachable;
 }
 
 function getReachableNeighborKeys(key, candidateSet) {
@@ -885,6 +946,7 @@ function render() {
 
   drawBoardBase();
   drawEnclosedCells();
+  drawLeakCells();
   drawPlacedPieces();
 }
 
@@ -929,7 +991,10 @@ function drawEnclosedCells() {
     return;
   }
   const ctx = state.ctx;
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
   ctx.save();
+  ctx.shadowBlur = 15 * dpr;
+  ctx.shadowColor = "rgba(45, 246, 172, 0.85)";
   for (const key of state.enclosedCells) {
     const cell = state.boardCellMap.get(key);
     if (!cell) {
@@ -941,8 +1006,36 @@ function drawEnclosedCells() {
     ctx.lineTo(verts[1].x, verts[1].y);
     ctx.lineTo(verts[2].x, verts[2].y);
     ctx.closePath();
-    ctx.fillStyle = "rgba(45, 246, 172, 0.34)";
+    ctx.fillStyle = "rgba(45, 246, 172, 0.52)";
     ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawLeakCells() {
+  if (!state.leakCells || state.leakCells.size === 0) {
+    return;
+  }
+  const ctx = state.ctx;
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  ctx.save();
+  ctx.setLineDash([4 * dpr, 3 * dpr]);
+  for (const key of state.leakCells) {
+    const cell = state.boardCellMap.get(key);
+    if (!cell) {
+      continue;
+    }
+    const verts = cell.vertices.map(worldToScreen);
+    ctx.beginPath();
+    ctx.moveTo(verts[0].x, verts[0].y);
+    ctx.lineTo(verts[1].x, verts[1].y);
+    ctx.lineTo(verts[2].x, verts[2].y);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(178, 120, 255, 0.20)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(200, 150, 255, 0.85)";
+    ctx.lineWidth = 1.4 * dpr;
+    ctx.stroke();
   }
   ctx.restore();
 }
@@ -1148,6 +1241,7 @@ function applyDetectedPolyiamondState(detection) {
   state.placedPieces = detection.placements;
   state.selectedPieceId = null;
   state.enclosedCells = new Set();
+  state.leakCells = new Set();
   state.enclosedLargest = 0;
   state.enclosedRegionCount = 0;
   updateAreaChip(0);
