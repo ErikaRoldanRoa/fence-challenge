@@ -352,17 +352,9 @@ function wireEvents() {
   dom.rotateBtn.addEventListener("click", () => rotateSelection());
   dom.flipBtn.addEventListener("click", () => flipSelection());
 
-  if (dom.cameraChip) {
-    dom.cameraChip.addEventListener("click", () => {
-      setStatus(
-        "Camera / QR mode is not wired in the polyhex app yet — use the sibling fence-challenge-app for QR-assisted photo detection while the polyhex camera pipeline is being ported."
-      );
-      dom.cameraChip.setAttribute(
-        "title",
-        "Camera not yet available on polyhex — coming next iteration. See CITATION.md for the sibling apps."
-      );
-    });
-  }
+  // The camera chip is handled globally by cam-note.js: the click is blocked and a clean,
+  // trilingual "mixed-reality outreach" tooltip is set. No per-lab handler (it would only
+  // re-expose internal notes on a public surface).
 
   dom.canvas.addEventListener("pointerdown", onPointerDown);
   dom.canvas.addEventListener("pointermove", onPointerMove);
