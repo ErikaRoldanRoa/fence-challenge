@@ -216,6 +216,7 @@
             <span class="icon help" tabindex="0"
                   data-tip-pos="below" data-i18n-data-tip="hub.helpSq" data-i18n-aria-label="hub.helpAria" data-tip="Clique une pièce du bac : elle apparaît au centre. Glisse-la ensuite où tu veux. ⟳ la tourne, ⇄ la retourne, Suppr l'enlève. Referme une barrière : tu enfermes une aire."
                   aria-label="Comment jouer">?</span>
+            <span class="icon info" tabindex="0" data-tip-pos="below" data-i18n-data-tip="hub.infoSq" data-i18n-aria-label="hub.infoAria" data-tip="Enclose any area to unlock, then tap 🚀 for the full challenge — 12 pentominoes." aria-label="How this card works">i</span>
             <a class="icon launch" data-launch="sq" href="square-lab/index.html" data-i18n-data-tip="hub.launchSqTip" data-i18n-aria-label="hub.launchSqAria"
                data-tip="Enclos une aire ≥ 1 ici pour ouvrir le lab Challenge 2 · 12 pentominoes" data-tip-pos="right-below"
                aria-label="Ouvrir le lab Challenge 2">🚀</a>
@@ -248,6 +249,7 @@
             <span class="icon help" tabindex="0"
                   data-tip-pos="below" data-i18n-data-tip="hub.helpHex" data-i18n-aria-label="hub.helpAria" data-tip="Clique une pièce du bac : elle apparaît au centre du nid. Glisse-la ensuite où tu veux. ⟳ la tourne, ⇄ la retourne, Suppr l'enlève. Referme une barrière : tu enfermes une aire."
                   aria-label="Comment jouer">?</span>
+            <span class="icon info" tabindex="0" data-tip-pos="below" data-i18n-data-tip="hub.infoHex" data-i18n-aria-label="hub.infoAria" data-tip="Enclose any area to unlock, then tap 🚀 for the full challenge — 7 tetrahexes." aria-label="How this card works">i</span>
             <a class="icon launch" data-launch="hex" href="hex-lab/index.html" data-i18n-data-tip="hub.launchHexTip" data-i18n-aria-label="hub.launchHexAria"
                data-tip="Enclos une aire ≥ 1 pour débloquer" data-tip-pos="right-below"
                aria-label="Ouvrir Challenge 3">🚀</a>
@@ -258,7 +260,6 @@
           </div>
           <div class="pStatus">
             <span class="pill area" id="pill-hex" data-i18n-data-tip="hub.areaTip" data-tip="Aire enclose actuelle sur ton plateau"><span data-i18n="common.areaLabel">aire</span> <span class="k" id="area-hex">0</span></span>
-            <span class="pill corner" data-i18n-data-tip="hub.coinHexTip" data-tip="Sur le pavage hex, 3 hexes se rencontrent à chaque sommet et sont deux-à-deux edge-adjacents. Donc « fuite par un coin » implique « fuite par une arête ». Impossible."><span class="k" data-i18n="hub.coinImpossible">corner impossible</span></span>
           </div>
         </article>
 
@@ -277,6 +278,7 @@
             <span class="icon help" tabindex="0"
                   data-tip-pos="below" data-i18n-data-tip="hub.helpTri" data-i18n-aria-label="hub.helpAria" data-tip="Clique une pièce du bac : elle apparaît au centre du champ. Glisse-la ensuite où tu veux. ⟳ la tourne, ⇄ la retourne, Suppr l'enlève. Referme une barrière : tu enfermes une aire."
                   aria-label="Comment jouer">?</span>
+            <span class="icon info" tabindex="0" data-tip-pos="below" data-i18n-data-tip="hub.infoTri" data-i18n-aria-label="hub.infoAria" data-tip="Enclose any area to unlock, then tap 🚀 for the full challenge — 12 hexiamonds." aria-label="How this card works">i</span>
             <a class="icon launch" data-launch="tri" href="triangle-lab/index.html" data-i18n-data-tip="hub.launchTriTip" data-i18n-aria-label="hub.launchTriAria"
                data-tip="Enclos une aire ≥ 1 pour débloquer" data-tip-pos="right-below"
                aria-label="Ouvrir Challenge 4">🚀</a>
@@ -287,7 +289,7 @@
           </div>
           <div class="pStatus">
             <span class="pill area" id="pill-tri" data-i18n-data-tip="hub.areaTip" data-tip="Aire enclose actuelle sur ton plateau"><span data-i18n="common.areaLabel">aire</span> <span class="k" id="area-tri">0</span></span>
-            <span class="pill corner" data-i18n-data-tip="hub.coinTriTip" data-tip="Sur le pavage triangulaire, 6 triangles se rencontrent à chaque sommet. Fuite par un coin possible à chaque sommet du plan."><span class="k" data-i18n="hub.coinLeak6">corner leak × 6</span></span>
+            <span class="pill corner" data-i18n-data-tip="hub.coinTriTip" data-tip="Sur le pavage triangulaire, 6 triangles se rencontrent à chaque sommet. Fuite par un coin possible à chaque sommet du plan."><span class="k" data-i18n="hub.coinLabel">corner leak</span></span>
           </div>
         </article>
       </div>
@@ -296,9 +298,8 @@
       <section class="refRack" aria-label="Reference">
         <div class="chipRow" id="refChips">
           <button class="refChip amber on" data-panel="history" data-i18n="hub.historyTitle">History</button>
-          <button class="refChip pink" data-panel="zaun" data-i18n="hub.vocZaun">Zaun</button>
+          <button class="refChip pink" data-panel="fence" data-i18n="hub.vocFence">Fence</button>
           <button class="refChip lime" data-panel="polyform" data-i18n="hub.vocPolyform">Polyform</button>
-          <button class="refChip cyan" data-panel="fuite" data-i18n="hub.vocFuite">Corner leak</button>
           <button class="refChip purple" data-panel="paper" data-i18n="hub.chipPaper">Paper</button>
         </div>
         <div class="refPanel" id="refPanel"></div>
@@ -717,7 +718,7 @@
               document.getElementById("pill-sq").classList.toggle("live", valid);
               root.dataset.pockets = regionCount > 1 ? String(regionCount) : "";
               coin.classList.toggle("leak", !!cornerLeak);
-              coinLab.textContent = i18n.t(cornerLeak ? "hub.coinOpen" : "hub.coinLabel");
+              coinLab.textContent = i18n.t("hub.coinLabel");
               if (valid) unlock();
             },
             onStatus: (msg) => { root.dataset.status = msg; },
@@ -951,7 +952,7 @@
         });
       })();
 
-      const PANELKEY = { history:"hub.historyBody", zaun:"hub.defZaun", polyform:"hub.defPolyform", fuite:"hub.defFuite" };
+      const PANELKEY = { history:"hub.historyBody", fence:"hub.defFence", polyform:"hub.defPolyform" };
       const refChips = document.querySelectorAll("#refChips .refChip");
       const refPanel = document.getElementById("refPanel");
       let activePanel = "history";
