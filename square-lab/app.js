@@ -615,14 +615,26 @@ function bindGameControls() {
       return;
     }
 
+    const wasActive = gameState.activePieceId === occupant;
     gameState.activePieceId = occupant;
     startDraggingPiece(occupant, cell, event.pointerId);
+    if (gameState.drag) {
+      gameState.drag._downX = event.clientX;
+      gameState.drag._downY = event.clientY;
+      gameState.drag._moved = false;
+      gameState.drag._wasActive = wasActive;
+    }
     dom.gameBoard.setPointerCapture(event.pointerId);
     event.preventDefault();
   });
 
   dom.gameBoard.addEventListener("pointermove", (event) => {
     if (gameState.drag && gameState.drag.pointerId === event.pointerId) {
+      if (!gameState.drag._moved) {
+        const mdx = event.clientX - gameState.drag._downX;
+        const mdy = event.clientY - gameState.drag._downY;
+        if (mdx * mdx + mdy * mdy > 36) gameState.drag._moved = true;
+      }
       gameState.drag.pointerCell = eventToCell(event, dom.gameBoard, gameState.layout);
       renderGameBoard();
       return;
@@ -651,7 +663,12 @@ function bindGameControls() {
   dom.gameBoard.addEventListener("pointerup", (event) => {
     if (gameState.drag && gameState.drag.pointerId === event.pointerId) {
       gameState.drag.pointerCell = eventToCell(event, dom.gameBoard, gameState.layout);
-      finishDraggingPiece();
+      // A tap (no travel) on an already-active piece removes it — the phone equivalent of Delete.
+      if (!gameState.drag._moved && gameState.drag._wasActive) {
+        deleteDraggedPiece();
+      } else {
+        finishDraggingPiece();
+      }
       if (dom.gameBoard.hasPointerCapture(event.pointerId)) {
         dom.gameBoard.releasePointerCapture(event.pointerId);
       }
@@ -1352,6 +1369,24 @@ function startDraggingPiece(pieceId, grabbedCell, pointerId) {
   dom.gameBoard.style.cursor = "grabbing";
   renderGameBoard();
   setGameStatus(`Dragging ${placed.name} (${placed.id}). Release to drop.`);
+}
+
+function deleteDraggedPiece() {
+  if (!gameState.drag) {
+    return;
+  }
+  const drag = gameState.drag;
+  // The piece was lifted off the board in startDraggingPiece; a tap-to-delete simply does not
+  // put it back — it returns to the tray as available.
+  gameState.activePieceId = null;
+  gameState.drag = null;
+  rebuildGameOccupancy();
+  clearGameAnalysis();
+  updatePieceTrayState();
+  updateGameMetrics();
+  dom.gameBoard.style.cursor = "crosshair";
+  setGameStatus(`Removed ${drag.name} (${drag.pieceId}).`);
+  renderGameBoard();
 }
 
 function finishDraggingPiece(forceRevert = false) {
