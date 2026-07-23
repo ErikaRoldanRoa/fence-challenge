@@ -322,6 +322,16 @@
     return reachable;
   }
 
+  function regionSplitNeighborKeys(key, candidateSet) {
+    const reachable = new Set();
+    const cell = parseCellKey(key);
+    for (const neighbor of cellNeighbors(cell)) {
+      const nKey = cellKey(neighbor);
+      if (candidateSet.has(nKey)) reachable.add(nKey);
+    }
+    return reachable;
+  }
+
   const NEAREST_THRESHOLD_2 = 0.74 * 0.74;
 
   function findNearestBoardCell(worldPoint, board, accept = null) {
@@ -388,6 +398,7 @@
     buildVariants,
     markerConstraint,
     regionNeighborKeys,
+    regionSplitNeighborKeys,
     findNearestBoardCell,
     HEXIAMOND_SET,
     BOARD_HEXSIDE_DEFAULT: TRI_BOARD_HEXSIDE_DEFAULT,

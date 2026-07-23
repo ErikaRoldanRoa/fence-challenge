@@ -229,7 +229,7 @@
             <span class="pill area" id="pill-sq" data-i18n-data-tip="hub.areaTip" data-tip="Aire enclose actuelle sur ton plateau"><span data-i18n="common.areaLabel">aire</span> <span class="k" id="area-sq">0</span></span>
             <span class="pill corner reactive" id="coin-sq"
                   data-i18n-data-tip="hub.coinSqTip" data-tip="Sur le pavage carré, deux cellules peuvent se toucher par un sommet sans partager d'arête. Si ta barrière ne se referme que par un tel sommet, l'extérieur s'y faufile — le coin ne referme rien. Ce témoin s'allume quand ça arrive sur ton plateau.">
-              <span class="dot" aria-hidden="true"></span><span class="lab" data-i18n="hub.coinLabel">coin</span>
+              <span class="dot" aria-hidden="true"></span><span class="lab" data-i18n="hub.coinLabel">corner leak</span>
             </span>
           </div>
         </article>
@@ -289,7 +289,7 @@
           </div>
           <div class="pStatus">
             <span class="pill area" id="pill-tri" data-i18n-data-tip="hub.areaTip" data-tip="Aire enclose actuelle sur ton plateau"><span data-i18n="common.areaLabel">aire</span> <span class="k" id="area-tri">0</span></span>
-            <span class="pill corner" data-i18n-data-tip="hub.coinTriTip" data-tip="Sur le pavage triangulaire, 6 triangles se rencontrent à chaque sommet. Fuite par un coin possible à chaque sommet du plan."><span class="k" data-i18n="hub.coinLabel">corner leak</span></span>
+            <span class="pill corner reactive" id="coin-tri" data-i18n-data-tip="hub.coinTriTip" data-tip="Sur le pavage triangulaire, 6 triangles se rencontrent à chaque sommet ; deux d'entre eux peuvent donc s'y toucher sans partager d'arête. Si ta barrière ne se referme que par un tel sommet, l'extérieur s'y faufile — le coin ne referme rien. Ce témoin s'allume quand ça arrive sur ton plateau."><span class="dot" aria-hidden="true"></span><span class="lab" data-i18n="hub.coinLabel">corner leak</span></span>
           </div>
         </article>
       </div>
@@ -886,10 +886,11 @@
           board: { hexSide: window.LatticeTriangular.BOARD_HEXSIDE_DEFAULT },
           padding: 5,
           callbacks: {
-            onArea: ({ area, regionCount }) => {
+            onArea: ({ area, cornerLeak, regionCount }) => {
               const valid = area >= 1 && regionCount === 1;
               areaEl.textContent = area;
               document.getElementById("pill-tri").classList.toggle("live", valid);
+              document.getElementById("coin-tri").classList.toggle("leak", !!cornerLeak);
               root.dataset.pockets = regionCount > 1 ? String(regionCount) : "";
               if (valid) unlock();
             },
