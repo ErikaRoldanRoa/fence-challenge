@@ -571,7 +571,19 @@
         const entry = state.board.map.get(key);
         if (entry) entries.push(entry);
       }
-      drawCells(entries, "rgba(45, 246, 172, 0.34)", "rgba(45, 246, 172, 0.6)", 1.2);
+      const clean = !state.leakCells || state.leakCells.size === 0;
+      if (clean) {
+        // a real, leak-free enclosure — light it up like neon
+        const ctx = state.ctx;
+        ctx.save();
+        ctx.shadowBlur = 15 * (state.view.dpr || 1);
+        ctx.shadowColor = "rgba(45, 246, 172, 0.85)";
+        drawCells(entries, "rgba(45, 246, 172, 0.52)", "rgba(140, 255, 214, 0.95)", 1.8);
+        ctx.restore();
+      } else {
+        // an area that leaks through a corner — keep it muted so the leak reads as the problem
+        drawCells(entries, "rgba(45, 246, 172, 0.24)", "rgba(45, 246, 172, 0.5)", 1.1);
+      }
     }
 
     function drawLeak() {

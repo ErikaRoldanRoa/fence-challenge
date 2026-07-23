@@ -189,15 +189,16 @@ var DICT = {
   "tri.status.couldNotReadPhoto": "Impossible de lire la photo téléversée.",
   "tri.status.cameraFrameCaptured": "Image de la caméra capturée. Le crochet du pipeline de marqueurs est actif (ratio sombre ${detection.darkRatio.toFixed(3)}).",
   "hub.historyTitle": "Histoire",
-  "hub.historyBody": "La ferme de pentominos est un casse-tête classique. F. V. Feser l'a posée en 1968, et Martin Gardner l'a rendue célèbre dans sa chronique du Scientific American en 1973, mettant ses lecteurs au défi de battre sa meilleure barrière. L'informaticien Donald Knuth en a vite trouvé une plus grande — et Takakazu Shimauchi en a démontré le maximum en 1978.",
+  "hub.historyBody": "La ferme de pentominos est un casse-tête classique. F. V. Feser l'a posée en 1968, et Martin Gardner l'a rendue célèbre dans sa chronique du Scientific American en 1973, mettant ses lecteurs au défi de battre sa meilleure barrière. L'informaticien Donald Knuth en a vite trouvé une plus grande — et Takakazu Shimauchi en a démontré le maximum en 1978. Jusqu'où peut aller une barrière ? L'article dévoile le record de chaque pavage.",
   "cam.disabledTip": "Le mode caméra n'est pas encore actif ici. Pour les événements et ateliers, nous pouvons apporter un dispositif de réalité mixte qui lit un vrai plateau de pièces découpées.",
   "hub.chipPaper": "L'article",
-  "hub.infoSq": "Enclos une aire pour débloquer, puis touche 🚀 pour le défi complet — 12 pentominos.",
-  "hub.infoHex": "Enclos une aire pour débloquer, puis touche 🚀 pour le défi complet — 7 tétrahexes.",
-  "hub.infoTri": "Enclos une aire pour débloquer, puis touche 🚀 pour le défi complet — 12 hexiamonds.",
+  "hub.infoSq": "Enclos une aire pour débloquer, puis touche 🚀 pour le défi complet avec 12 pentominos.",
+  "hub.infoHex": "Enclos une aire pour débloquer, puis touche 🚀 pour le défi complet avec 7 tétrahexes.",
+  "hub.infoTri": "Enclos une aire pour débloquer, puis touche 🚀 pour le défi complet avec 12 hexiamonds.",
   "hub.infoAria": "Comment débloquer cette carte",
   "hub.vocFence": "Barrière",
-  "hub.defFence": "Une barrière, ce sont deux polyformes ou plus qui enferment une aire, de sorte que l'intérieur et l'extérieur ne se touchent jamais — pas même par un coin. Sur les grilles carrée et triangulaire, il faut la fermer arête contre arête : un coin où deux cellules se touchent sans partager d'arête laisse l'extérieur se faufiler (sur les hexagones, c'est impossible). Le but est d'enclore la plus grande aire."
+  "hub.defFence": "Une barrière, ce sont deux polyformes ou plus qui enferment une aire, de sorte que l'intérieur et l'extérieur ne se touchent jamais — pas même par un coin. Sur les grilles carrée et triangulaire, il faut la fermer arête contre arête : un coin où deux cellules se touchent sans partager d'arête laisse l'extérieur se faufiler (sur les hexagones, c'est impossible). Le but est d'enclore la plus grande aire.",
+  "hub.paperTip": "Tous les résultats et toutes les preuves sont dans l'article — une version anglaise paraîtra sur arXiv."
  },
  "de": {
   "common.detectArea": "Fläche messen",
@@ -388,15 +389,16 @@ var DICT = {
   "tri.status.couldNotReadPhoto": "Das hochgeladene Foto konnte nicht gelesen werden.",
   "tri.status.cameraFrameCaptured": "Kamerabild aufgenommen. Der Marker-Pipeline-Hook ist aktiv (Dunkelanteil ${detection.darkRatio.toFixed(3)}).",
   "hub.historyTitle": "Geschichte",
-  "hub.historyBody": "Die Pentomino-Farm ist ein klassisches Rätsel. Sie geht auf F. V. Feser (1968) zurück; Martin Gardner machte sie 1973 in seiner Kolumne im Scientific American berühmt und forderte die Leserschaft heraus, seinen besten Zaun zu übertreffen. Der Informatiker Donald Knuth fand bald einen größeren — und Takakazu Shimauchi bewies 1978 das Maximum.",
+  "hub.historyBody": "Die Pentomino-Farm ist ein klassisches Rätsel. Sie geht auf F. V. Feser (1968) zurück; Martin Gardner machte sie 1973 in seiner Kolumne im Scientific American berühmt und forderte die Leserschaft heraus, seinen besten Zaun zu übertreffen. Der Informatiker Donald Knuth fand bald einen größeren — und Takakazu Shimauchi bewies 1978 das Maximum. Wie groß kann ein Zaun werden? Das Paper verrät den Rekord für jede Parkettierung.",
   "cam.disabledTip": "Der Kameramodus ist hier noch nicht aktiv. Für Outreach-Events und Workshops können wir einen Mixed-Reality-Aufbau mitbringen, der ein echtes Brett aus ausgeschnittenen Teilen liest.",
   "hub.chipPaper": "Das Paper",
-  "hub.infoSq": "Umschließe eine Fläche zum Freischalten, dann tippe 🚀 für die volle Herausforderung — 12 Pentominos.",
-  "hub.infoHex": "Umschließe eine Fläche zum Freischalten, dann tippe 🚀 für die volle Herausforderung — 7 Tetrahexe.",
-  "hub.infoTri": "Umschließe eine Fläche zum Freischalten, dann tippe 🚀 für die volle Herausforderung — 12 Hexiamonds.",
+  "hub.infoSq": "Umschließe eine Fläche zum Freischalten, dann tippe 🚀 für die volle Herausforderung mit 12 Pentominos.",
+  "hub.infoHex": "Umschließe eine Fläche zum Freischalten, dann tippe 🚀 für die volle Herausforderung mit 7 Tetrahexe.",
+  "hub.infoTri": "Umschließe eine Fläche zum Freischalten, dann tippe 🚀 für die volle Herausforderung mit 12 Hexiamonds.",
   "hub.infoAria": "So funktioniert diese Karte",
   "hub.vocFence": "Zaun",
-  "hub.defFence": "Ein Zaun besteht aus zwei oder mehr Polyformen, die eine Fläche einschließen, sodass sich Innen und Außen nie berühren — nicht einmal an einer Ecke. Auf dem quadratischen und dem dreieckigen Gitter muss er Kante an Kante geschlossen sein: eine Ecke, an der sich zwei Kacheln ohne gemeinsame Kante berühren, lässt das Äußere durch (auf Sechsecken ist das unmöglich). Ziel ist es, die größte Fläche einzuschließen."
+  "hub.defFence": "Ein Zaun besteht aus zwei oder mehr Polyformen, die eine Fläche einschließen, sodass sich Innen und Außen nie berühren — nicht einmal an einer Ecke. Auf dem quadratischen und dem dreieckigen Gitter muss er Kante an Kante geschlossen sein: eine Ecke, an der sich zwei Kacheln ohne gemeinsame Kante berühren, lässt das Äußere durch (auf Sechsecken ist das unmöglich). Ziel ist es, die größte Fläche einzuschließen.",
+  "hub.paperTip": "Alle Ergebnisse und Beweise stehen im Paper — eine englische Fassung erscheint bald auf arXiv."
  },
  "en": {
   "common.detectArea": "Measure Area",
@@ -587,15 +589,16 @@ var DICT = {
   "tri.status.couldNotReadPhoto": "Could not read the uploaded photo.",
   "tri.status.cameraFrameCaptured": "Camera frame captured. Marker pipeline hook is live (dark ratio ${detection.darkRatio.toFixed(3)}).",
   "hub.historyTitle": "History",
-  "hub.historyBody": "The pentomino farm is a classic puzzle. F. V. Feser posed it in 1968, and Martin Gardner made it famous in his 1973 Scientific American column, daring readers to beat his best fence. The computer scientist Donald Knuth soon found a larger one — and Takakazu Shimauchi proved the maximum in 1978.",
+  "hub.historyBody": "The pentomino farm is a classic puzzle. F. V. Feser posed it in 1968, and Martin Gardner made it famous in his 1973 Scientific American column, daring readers to beat his best fence. The computer scientist Donald Knuth soon found a larger one — and Takakazu Shimauchi proved the maximum in 1978. How large can a fence get? The paper reveals the record for every tiling.",
   "cam.disabledTip": "Camera mode isn't active here yet. For outreach events and workshops we can bring a mixed-reality setup that reads a real board of cut-out pieces.",
   "hub.chipPaper": "Paper",
-  "hub.infoSq": "Enclose any area to unlock, then tap 🚀 for the full challenge — 12 pentominoes.",
-  "hub.infoHex": "Enclose any area to unlock, then tap 🚀 for the full challenge — 7 tetrahexes.",
-  "hub.infoTri": "Enclose any area to unlock, then tap 🚀 for the full challenge — 12 hexiamonds.",
+  "hub.infoSq": "Enclose any area to unlock, then tap 🚀 for the full challenge with 12 pentominoes.",
+  "hub.infoHex": "Enclose any area to unlock, then tap 🚀 for the full challenge with 7 tetrahexes.",
+  "hub.infoTri": "Enclose any area to unlock, then tap 🚀 for the full challenge with 12 hexiamonds.",
   "hub.infoAria": "How this card works",
   "hub.vocFence": "Fence",
-  "hub.defFence": "A fence is two or more polyforms sealing off an area, so that the inside and outside never touch — not even at a corner. On the square and triangular grids you must close it edge to edge: a corner where two cells meet without sharing an edge lets the outside leak in (on hexagons that can't happen). The goal is to enclose the largest area."
+  "hub.defFence": "A fence is two or more polyforms sealing off an area, so that the inside and outside never touch — not even at a corner. On the square and triangular grids you must close it edge to edge: a corner where two cells meet without sharing an edge lets the outside leak in (on hexagons that can't happen). The goal is to enclose the largest area.",
+  "hub.paperTip": "All the results and proofs are in the paper — an English version is forthcoming on arXiv."
  }
 };
 
