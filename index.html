@@ -163,9 +163,6 @@
       .refChip.amber.on{background:var(--amber);color:var(--bg0);box-shadow:0 6px 20px rgba(255,210,74,0.30);}
       .refChip.purple{color:var(--purple);border-color:rgba(178,120,255,0.55);background:rgba(178,120,255,0.10);}
       .refChip.purple.on{background:var(--purple);color:var(--bg0);box-shadow:0 6px 20px rgba(178,120,255,0.30);}
-      /* forthcoming-paper chips: a dashed, muted cluster that reads as "coming soon" */
-      .linkChip{cursor:default;padding:9px 15px;border-radius:999px;font-family:var(--sans);font-size:13px;font-weight:700;color:var(--cyan);border:1.5px dashed rgba(47,243,255,0.42);background:rgba(47,243,255,0.05);transition:transform .13s ease,background .13s ease;}
-      .linkChip:hover,.linkChip:focus-visible{transform:translateY(-1px);background:rgba(47,243,255,0.12);outline:none;}
       .refPanel{margin:16px auto 0;max-width:760px;padding:16px 20px;border-radius:16px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.09);color:var(--muted);font-size:14px;line-height:1.62;min-height:44px;text-align:center;}
       .refPanel a{color:var(--cyan);text-decoration:none;} .refPanel a:hover{text-decoration:underline;}
       .vocabPanel{color:var(--muted);font-size:13px;line-height:1.55;min-height:30px;}
@@ -302,9 +299,8 @@
         <div class="chipRow" id="refChips">
           <button class="refChip lime on" data-panel="polyform" data-i18n="hub.vocPolyform">Polyform</button>
           <button class="refChip pink" data-panel="fence" data-i18n="hub.vocFence">Fence</button>
-          <button class="refChip purple" data-panel="paper" data-i18n="hub.chipPaper" data-i18n-data-tip="hub.paperTip" data-tip="Tous les résultats et toutes les preuves sont dans l'article — une version anglaise paraîtra sur arXiv.">Paper</button>
-          <span class="linkChip" tabindex="0" role="note" data-i18n="hub.chipArxiv" data-i18n-data-tip="hub.arxivTip" data-i18n-aria-label="hub.arxivTip" data-tip="The English version of this paper is on its way to arXiv.">arXiv</span>
           <button class="refChip amber" data-panel="history" data-i18n="hub.historyTitle">History</button>
+          <button class="refChip purple" data-panel="publications" data-i18n="hub.chipPublications">Publications</button>
         </div>
         <div class="refPanel" id="refPanel"></div>
       </section>
@@ -598,10 +594,11 @@
       function renderPanel() {
         refChips.forEach((c) => c.classList.toggle("on", c.dataset.panel === activePanel));
         if (!window.i18n) return;
-        if (activePanel === "paper") {
+        if (activePanel === "publications") {
           refPanel.innerHTML = i18n.t("hub.citeLine") +
-            ' <a href="https://doi.org/10.1515/dmvm-2025-0056" target="_blank" rel="noopener">doi:10.1515/dmvm-2025-0056</a>. ' +
-            '<span>' + i18n.t("hub.citeMoreEn") + '</span> <a href="CITATION.cff">CITATION.cff</a>.';
+            ' <a href="https://doi.org/10.1515/dmvm-2025-0056" target="_blank" rel="noopener">doi:10.1515/dmvm-2025-0056</a>.' +
+            '<br>' + i18n.t("hub.pubEnglish") +
+            '<br><span>' + i18n.t("hub.citeMoreEn") + '</span> <a href="CITATION.cff">CITATION.cff</a>.';
         } else {
           refPanel.textContent = i18n.t(PANELKEY[activePanel]);
         }
