@@ -8,7 +8,7 @@ authors:
   - family-names: Müßig
     given-names: Mia N.
   - family-names: Roldán
-    given-names: Érika
+    given-names: Erika
 repository-code: "https://github.com/ErikaRoldanRoa/fence-challenge"
 url: "https://erikaroldanroa.github.io/fence-challenge/"
 license: MIT
@@ -21,7 +21,7 @@ preferred-citation:
     - family-names: Müßig
       given-names: Mia N.
     - family-names: Roldán
-      given-names: Érika
+      given-names: Erika
   journal: "Mitteilungen der Deutschen Mathematiker-Vereinigung"
   volume: 33
   issue: 3

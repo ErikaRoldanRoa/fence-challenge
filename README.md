@@ -1,7 +1,7 @@
 # Fence Challenge
 
 An interactive companion to the paper **"Maximale Zäune mit Polyformen"** by
-Alexis Langlois-Rémillard, Mia N. Müßig and Érika Roldán (*Mitteilungen der
+Alexis Langlois-Rémillard, Mia N. Müßig and Erika Roldán (*Mitteilungen der
 Deutschen Mathematiker-Vereinigung* **33**(3), 187–199, 2025;
 doi:[10.1515/dmvm-2025-0056](https://doi.org/10.1515/dmvm-2025-0056)).
 
@@ -41,10 +41,10 @@ To run locally, serve the folder with any static file server — for example
 
 - **Alexis Langlois-Rémillard** — <https://alexisl-r.github.io/>
 - **Mia N. Müßig** — <https://miamuessig.de/>
-- **Érika Roldán** — <https://www.erikaroldan.net/>
+- **Erika Roldán** — <https://www.erikaroldan.net/>
 
 Listed alphabetically, equal contribution, as on the paper. Interactive app
-developed by Érika Roldán · [The Learning Machine](https://erikaroldan.net).
+developed by Dr. Erika Roldán · [The Learning Machine](https://erikaroldan.net).
 
 ## Citation
 
