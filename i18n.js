@@ -203,7 +203,10 @@ var DICT = {
   "tri.status.cameraFrameNotReady": "L'image de la caméra n'est pas encore prête.",
   "tri.status.captureFailed": "Échec de la capture. Réessaie.",
   "tri.status.couldNotReadPhoto": "Impossible de lire la photo téléversée.",
-  "tri.status.cameraFrameCaptured": "Image de la caméra capturée. Le crochet du pipeline de marqueurs est actif (ratio sombre ${detection.darkRatio.toFixed(3)})."
+  "tri.status.cameraFrameCaptured": "Image de la caméra capturée. Le crochet du pipeline de marqueurs est actif (ratio sombre ${detection.darkRatio.toFixed(3)}).",
+  "hub.historyTitle": "Histoire",
+  "hub.historyBody": "Le défi a une longue histoire. F. V. Feser a posé la première ferme de pentominos en 1968, et Martin Gardner l'a popularisée dans sa chronique du Scientific American en 1973, défiant ses lecteurs de battre sa meilleure barrière. Donald Knuth y est vite parvenu — et Takakazu Shimauchi a démontré le maximum en 1978. Le fence challenge porte l'idée aux trois pavages réguliers du plan.",
+  "cam.disabledTip": "Le mode caméra n'est pas encore actif ici. Pour les événements et ateliers, nous pouvons apporter un dispositif de réalité mixte qui lit un vrai plateau de pièces découpées."
  },
  "de": {
   "common.detectArea": "Fläche messen",
@@ -408,7 +411,10 @@ var DICT = {
   "tri.status.cameraFrameNotReady": "Kamerabild noch nicht bereit.",
   "tri.status.captureFailed": "Aufnahme fehlgeschlagen. Versuch es nochmal.",
   "tri.status.couldNotReadPhoto": "Das hochgeladene Foto konnte nicht gelesen werden.",
-  "tri.status.cameraFrameCaptured": "Kamerabild aufgenommen. Der Marker-Pipeline-Hook ist aktiv (Dunkelanteil ${detection.darkRatio.toFixed(3)})."
+  "tri.status.cameraFrameCaptured": "Kamerabild aufgenommen. Der Marker-Pipeline-Hook ist aktiv (Dunkelanteil ${detection.darkRatio.toFixed(3)}).",
+  "hub.historyTitle": "Geschichte",
+  "hub.historyBody": "Das Rätsel hat eine lange Geschichte. F. V. Feser stellte 1968 die erste Pentomino-Farm, und Martin Gardner machte sie 1973 in seiner Kolumne im Scientific American bekannt und forderte die Leserschaft heraus, seinen besten Zaun zu übertreffen. Donald Knuth gelang dies bald — und Takakazu Shimauchi bewies 1978 das wahre Maximum. Der Fence Challenge trägt die Idee auf alle drei regulären Parkettierungen der Ebene.",
+  "cam.disabledTip": "Der Kameramodus ist hier noch nicht aktiv. Für Outreach-Events und Workshops können wir einen Mixed-Reality-Aufbau mitbringen, der ein echtes Brett aus ausgeschnittenen Teilen liest."
  },
  "en": {
   "common.detectArea": "Measure Area",
@@ -613,7 +619,10 @@ var DICT = {
   "tri.status.cameraFrameNotReady": "Camera frame not ready yet.",
   "tri.status.captureFailed": "Capture failed. Try again.",
   "tri.status.couldNotReadPhoto": "Could not read the uploaded photo.",
-  "tri.status.cameraFrameCaptured": "Camera frame captured. Marker pipeline hook is live (dark ratio ${detection.darkRatio.toFixed(3)})."
+  "tri.status.cameraFrameCaptured": "Camera frame captured. Marker pipeline hook is live (dark ratio ${detection.darkRatio.toFixed(3)}).",
+  "hub.historyTitle": "History",
+  "hub.historyBody": "The challenge has a long pedigree. F. V. Feser posed the first pentomino farm in 1968, and Martin Gardner popularised it in his 1973 Scientific American column, daring readers to beat his best fence. Donald Knuth soon did — and Takakazu Shimauchi proved the true maximum in 1978. The fence challenge carries the idea to all three regular tilings of the plane.",
+  "cam.disabledTip": "Camera mode isn't active here yet. For outreach events and workshops we can bring a mixed-reality setup that reads a real board of cut-out pieces."
  }
 };
 

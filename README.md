@@ -19,10 +19,6 @@ mini-challenges, one per tiling. Solve one to open its full lab.
 Or open a lab directly:
 [square](square-lab/) · [hexagonal](hex-lab/) · [triangular](triangle-lab/).
 
-The square lab also has a **camera mode**: photograph a physical board of
-printed, cut-out pieces and it reads the fence for you — the digital twin of
-the paper's "print and cut" invitation.
-
 ## The mathematics
 
 The tilings, the polyforms, and the fence challenges come from the 2025 DMVM

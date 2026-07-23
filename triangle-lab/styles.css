@@ -321,3 +321,8 @@ body {
     display: none;
   }
 }
+
+/* Camera / photo capture — visible but disabled for now (offered as a
+   mixed-reality setup for outreach events; see the hover note). */
+.board-camera-chip { opacity: 0.5; cursor: help; }
+.board-camera-chip:hover { opacity: 0.75; }
