@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: "Fence Challenge — interactive fence-building labs for polyforms"
+title: "Fence Challenge: interactive fence-building labs for polyforms"
 message: "If you use this software, please cite both the article and this repository."
 type: software
 authors:
@@ -29,3 +29,20 @@ preferred-citation:
   end: 199
   year: 2025
   doi: "10.1515/dmvm-2025-0056"
+references:
+  - type: article
+    title: "Extremal fences with polyforms"
+    authors:
+      - family-names: Langlois-Rémillard
+        given-names: Alexis
+      - family-names: Müßig
+        given-names: Mia N.
+      - family-names: Roldán
+        given-names: Erika
+    year: 2026
+    doi: "10.48550/arXiv.2607.22379"
+    url: "https://arxiv.org/abs/2607.22379"
+    identifiers:
+      - type: other
+        value: "arXiv:2607.22379"
+        description: "arXiv identifier of the English version"
