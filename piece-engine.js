@@ -3,6 +3,9 @@
 (function (globalScope) {
   "use strict";
 
+  const FenceAnalysisModule =
+    typeof module !== "undefined" && module.exports ? require("./fence-analysis.js") : null;
+
   const DEFAULT_COLORS = [
     "#ff5b7f", "#ff9d1e", "#ffd84a", "#93e03b", "#2de2d5", "#1bc7ff",
     "#5ea8ff", "#7f83ff", "#ad73ff", "#d866ff", "#ff5fb3", "#ff9f8e",
@@ -21,6 +24,8 @@
 
     if (!root) throw new Error("createPieceEngine: `root` is required.");
     if (!lattice) throw new Error("createPieceEngine: `lattice` is required.");
+    const analyzer = FenceAnalysisModule || globalScope.FenceAnalysis;
+    if (!analyzer) throw new Error("createPieceEngine: load fence-analysis.js before piece-engine.js.");
 
     const dom = {
       root,
@@ -49,6 +54,7 @@
       placedPieces: [],
       nextPieceId: 1,
       draggingPieceId: null,
+      freshPieceId: null, // placed by the last spawn and not touched since
       enclosedCells: new Set(),
       enclosedRegionCount: 0,
       enclosedLargest: 0,
@@ -182,6 +188,7 @@
       };
       state.placedPieces.push(piece);
       setSelectedPieceId(piece.id);
+      state.freshPieceId = piece.id;
       resetArea();
       setStatus(`Placed ${typeId}.`);
       return true;
@@ -258,84 +265,16 @@
       render();
     }
 
-    const regionSplitNeighborKeys =
-      lattice.regionSplitNeighborKeys || lattice.regionNeighborKeys;
-
-    function enclosedUnder(occupied, neighborFn) {
-      const emptyKeys = state.board.cells
-        .map((entry) => entry.key)
-        .filter((key) => !occupied.has(key));
-      const emptySet = new Set(emptyKeys);
-      const outsideVisited = new Set();
-      const queue = [];
-
-      for (const entry of state.board.cells) {
-        if (!emptySet.has(entry.key)) continue;
-        const touchesOutside =
-          entry.touchesBoundary ||
-          lattice.cellNeighbors(entry).some((n) => !state.board.map.has(lattice.cellKey(n)));
-        if (touchesOutside) {
-          outsideVisited.add(entry.key);
-          queue.push(entry.key);
-        }
-      }
-
-      while (queue.length > 0) {
-        const key = queue.shift();
-        for (const nKey of neighborFn(key, emptySet, state.board)) {
-          if (!emptySet.has(nKey) || outsideVisited.has(nKey)) continue;
-          outsideVisited.add(nKey);
-          queue.push(nKey);
-        }
-      }
-
-      return emptyKeys.filter((key) => !outsideVisited.has(key));
-    }
-
+    // Enclosure rule shared with the camera view (fence-analysis.js). The
+    // result keeps the fields this engine always returned (area, enclosedSet,
+    // regionCount, largestRegion, cornerLeak, leakCells) and adds regions,
+    // outsideSet, leakCount and leakVertices.
     function computeEnclosedArea() {
       const occupied = new Set();
       for (const piece of state.placedPieces) {
         for (const cell of pieceAbsoluteCells(piece)) occupied.add(lattice.cellKey(cell));
       }
-
-      const enclosed = enclosedUnder(occupied, lattice.regionNeighborKeys);
-      const enclosedSet = new Set(enclosed);
-
-      const enclosedStrict = new Set(enclosedUnder(occupied, regionSplitNeighborKeys));
-      const leakCells = new Set();
-      for (const key of enclosedStrict) if (!enclosedSet.has(key)) leakCells.add(key);
-
-      const visited = new Set();
-      let regionCount = 0;
-      let largestRegion = 0;
-
-      for (const start of enclosed) {
-        if (visited.has(start)) continue;
-        regionCount += 1;
-        let regionSize = 0;
-        const regionQueue = [start];
-        visited.add(start);
-
-        while (regionQueue.length > 0) {
-          const key = regionQueue.pop();
-          regionSize += 1;
-          for (const nKey of regionSplitNeighborKeys(key, enclosedSet, state.board)) {
-            if (!enclosedSet.has(nKey) || visited.has(nKey)) continue;
-            visited.add(nKey);
-            regionQueue.push(nKey);
-          }
-        }
-        if (regionSize > largestRegion) largestRegion = regionSize;
-      }
-
-      return {
-        area: enclosed.length,
-        enclosedSet,
-        regionCount,
-        largestRegion,
-        cornerLeak: leakCells.size > 0,
-        leakCells,
-      };
+      return analyzer.analyze({ board: state.board, lattice, occupied });
     }
 
     function detectArea() {
@@ -364,6 +303,10 @@
       state._didDrag = false;
       state._downClientX = event.clientX;
       state._downClientY = event.clientY;
+      // Fingers and pens wobble more than a mouse: they get a wider slop
+      // before a press counts as a drag, and the piece stays put until then.
+      state._coarseDown = event.pointerType === "touch" || event.pointerType === "pen";
+      state._dragSlop2 = state._coarseDown ? 100 : 36;
       const point = pointerToCanvas(event);
       const nearest = lattice.findNearestBoardCell(screenToWorld(point), state.board, null);
       if (!nearest) return;
@@ -372,7 +315,10 @@
       const occupiedBy = occupancy.get(nearest.key);
       if (occupiedBy) {
         state._downPieceId = occupiedBy;
-        state._downWasSelected = state.selectedPieceId === occupiedBy;
+        // The first tap on a piece that was just placed only keeps it selected.
+        state._downWasSelected =
+          state.selectedPieceId === occupiedBy && state.freshPieceId !== occupiedBy;
+        state.freshPieceId = null;
         setSelectedPieceId(occupiedBy);
         state.draggingPieceId = occupiedBy;
         try { dom.canvas.setPointerCapture(event.pointerId); } catch (e) {  }
@@ -390,12 +336,13 @@
 
     function onPointerMove(event) {
       if (!state.draggingPieceId || !viewReady()) return;
-      // Any real pointer travel means "drag", not "tap" — so a move that doesn't cross a
+      // Any real pointer travel means "drag", not "tap", so a move that doesn't cross a
       // cell (or lands on a blocked one) is never mistaken for a tap-to-delete on pointerup.
       if (!state._didDrag) {
         const mdx = event.clientX - state._downClientX;
         const mdy = event.clientY - state._downClientY;
-        if (mdx * mdx + mdy * mdy > 36) state._didDrag = true;
+        if (mdx * mdx + mdy * mdy > (state._dragSlop2 || 36)) state._didDrag = true;
+        else if (state._coarseDown) return;
       }
       const piece = state.placedPieces.find((p) => p.id === state.draggingPieceId);
       if (!piece) return;
@@ -416,7 +363,7 @@
     }
 
     function onPointerUp(event) {
-      // Tap (no drag) on an already-selected piece removes it — the phone
+      // Tap (no drag) on an already-selected piece removes it: the phone
       // equivalent of the Delete key, which touch devices do not have.
       if (state._downPieceId && !state._didDrag && state._downWasSelected) {
         removePiece(state._downPieceId);
@@ -580,9 +527,10 @@
         const entry = state.board.map.get(key);
         if (entry) entries.push(entry);
       }
-      const clean = !state.leakCells || state.leakCells.size === 0;
+      // A fence encloses exactly one inside and lets nothing in through a corner.
+      const clean = (!state.leakCells || state.leakCells.size === 0) && state.enclosedRegionCount === 1;
       if (clean) {
-        // a real, leak-free enclosure — light it up like neon
+        // a real fence: light it up like neon
         const ctx = state.ctx;
         ctx.save();
         ctx.shadowBlur = 15 * (state.view.dpr || 1);
@@ -590,7 +538,7 @@
         drawCells(entries, "rgba(45, 246, 172, 0.52)", "rgba(140, 255, 214, 0.95)", 1.8);
         ctx.restore();
       } else {
-        // an area that leaks through a corner — keep it muted so the leak reads as the problem
+        // a corner leak or several insides: keep it muted so the problem reads first
         drawCells(entries, "rgba(45, 246, 172, 0.24)", "rgba(45, 246, 172, 0.5)", 1.1);
       }
     }
@@ -665,6 +613,7 @@
     }
 
     function setSelectedPieceId(id) {
+      if (id !== state.freshPieceId) state.freshPieceId = null;
       if (state.selectedPieceId === id) return;
       state.selectedPieceId = id;
       emit.selection(id);
@@ -742,12 +691,22 @@
 
     let resizeObserver = null;
     if (typeof ResizeObserver === "function") {
-      resizeObserver = new ResizeObserver(() => { if (!state.destroyed) resize(); });
+      // Resize on the next frame: resizing the canvas inside the observer
+      // callback can re-trigger it, which WebKit reports as an error.
+      let resizeQueued = false;
+      resizeObserver = new ResizeObserver(() => {
+        if (state.destroyed || resizeQueued) return;
+        resizeQueued = true;
+        window.requestAnimationFrame(() => {
+          resizeQueued = false;
+          if (!state.destroyed) resize();
+        });
+      });
       resizeObserver.observe(dom.canvas);
     }
 
     setStatus(
-      `${lattice.name} board ready — ${state.pieceTypes.length} pieces on ${state.board.cells.length} cells.`
+      `${lattice.name} board ready: ${state.pieceTypes.length} pieces on ${state.board.cells.length} cells.`
     );
     render();
 
