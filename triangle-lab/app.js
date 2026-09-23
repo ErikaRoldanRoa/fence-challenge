@@ -1,3 +1,5 @@
+"use strict";
+
 const HEXIAMOND_ORDER = 6;
 const BOARD_BASE_HEX_SIDE = 11;
 const BOARD_EXTRA_TRIANGLE_LAYERS = 2;
@@ -18,15 +20,6 @@ const MARKER_COLORS = [
   "#ff5fb3",
   "#ff9f8e",
 ];
-const HEX_BOARD_FRAME = [
-  { x: 0.23, y: 0.07 },
-  { x: 0.77, y: 0.07 },
-  { x: 0.96, y: 0.5 },
-  { x: 0.77, y: 0.93 },
-  { x: 0.23, y: 0.93 },
-  { x: 0.04, y: 0.5 },
-];
-const RING_EDGE_SLOTS = [0.18, 0.4, 0.62, 0.84];
 const ROTATE_60 = { reflect: false, rot: 1 };
 const REFLECT = { reflect: true, rot: 0 };
 
@@ -38,21 +31,33 @@ for (let rot = 0; rot < 6; rot += 1) {
   SYMMETRIES.push({ reflect: true, rot });
 }
 
+// Names and order as in the paper (Abbildung 5), keyed by the canonical shape.
+const HEXIAMOND_NAMES = [
+  ["0,0,0|0,0,1|0,1,0|0,1,1|0,2,0|0,2,1", "rhomboid"],
+  ["0,0,1|0,1,0|0,1,1|0,2,0|0,2,1|1,0,0", "crook"],
+  ["0,0,1|0,1,0|0,1,1|0,2,0|0,2,1|1,1,0", "crown"],
+  ["0,0,0|0,0,1|0,1,0|0,1,1|0,2,0|1,0,0", "sphinx"],
+  ["0,0,1|0,1,0|0,1,1|1,1,0|1,1,1|1,2,0", "snake"],
+  ["0,0,0|0,0,1|0,1,0|0,1,1|1,0,0|1,1,0", "yacht"],
+  ["0,0,0|0,0,1|0,1,0|0,1,1|1,1,0|1,1,1", "chevron"],
+  ["0,0,1|0,1,0|0,1,1|0,2,0|1,1,0|1,1,1", "signpost"],
+  ["0,0,0|0,0,1|0,1,0|0,1,1|1,0,0|1,0,1", "lobster"],
+  ["0,0,0|0,0,1|0,1,0|0,1,1|1,0,1|1,1,0", "shoe"],
+  ["0,0,1|0,1,0|0,1,1|1,0,0|1,0,1|1,1,0", "hexagon"],
+  ["0,1,0|0,1,1|0,2,0|1,0,1|1,1,0|1,1,1", "butterfly"],
+];
+
 const dom = {
-  boardWrap: document.querySelector(".board-wrap"),
+  stage: document.getElementById("stage"),
+  boardWrap: document.getElementById("board-wrap"),
   canvas: document.getElementById("board-canvas"),
   tray: document.getElementById("piece-tray"),
   detectAreaBtn: document.getElementById("detect-area"),
   clearBtn: document.getElementById("clear-board"),
   rotateBtn: document.getElementById("rotate-piece"),
   flipBtn: document.getElementById("flip-piece"),
-  areaChip: document.getElementById("area-chip"),
-  cameraChip: document.getElementById("camera-chip"),
-  cameraOverlay: document.getElementById("camera-overlay"),
-  cameraVideo: document.getElementById("camera-video"),
-  cameraCapture: document.getElementById("camera-capture"),
-  uploadPhotoInput: document.getElementById("upload-photo"),
-  sideBrand: document.querySelector(".side-brand"),
+  areaValue: document.getElementById("area-value"),
+  status: document.getElementById("status"),
 };
 
 const state = {
@@ -60,13 +65,15 @@ const state = {
   boardCells: [],
   boardCellMap: new Map(),
   boardCellEntries: [],
-  vertexToCellKeys: new Map(),
+  board: null,
   boardBounds: null,
   view: { scale: 1, offsetX: 0, offsetY: 0, width: 0, height: 0 },
+  layout: { mode: "ring", cw: 0, ch: 0, padL: 0, padT: 0, slots: [] },
   pieceTypes: [],
   pieceTypeMap: new Map(),
   selectedTypeId: null,
   selectedPieceId: null,
+  freshPieceId: null,
   placedPieces: [],
   nextPieceId: 1,
   draggingPieceId: null,
@@ -74,10 +81,25 @@ const state = {
   leakCells: new Set(),
   enclosedRegionCount: 0,
   enclosedLargest: 0,
-  lastStatus: "",
-  cameraStream: null,
-  cameraActive: false,
+  status: null,
 };
+
+// Inner margin of the drawing, in CSS pixels.
+const CANVAS_PADDING = 10;
+// Outward normals (degrees, y down) of the six sides of the board outline.
+// The board is a flat-top hexagon.
+const OUTLINE_NORMALS = [30, 90, 150, 210, 270, 330];
+const RING_SIDE_SLOTS = [0.18, 0.4, 0.62, 0.84];
+const CHIP_CLEARANCE = 8;
+// Controls in a side column and the board filling the rest of the screen:
+// the same condition as in styles.css.
+const WIDE = window.matchMedia("(min-width: 640px) and (min-aspect-ratio: 5/4)");
+// Space between two chips, and between the chips and the board.
+const CHIP_GAP = 8;
+// Smallest board side tried, in CSS pixels.
+const MIN_BOARD = 160;
+// The ring is kept when its board is at least this share of the largest.
+const RING_PREFERENCE = 0.97;
 
 init();
 
@@ -85,87 +107,93 @@ function init() {
   buildBoard();
   buildPieces();
   wireEvents();
-  resizeCanvas();
+  useTouchTips();
   refreshTray();
-  setStatus(
-    `Hexiamond pipeline ready (${state.pieceTypes.length} free hexiamonds on a ${state.boardCells.length}-triangle hex board).`
-  );
-  render();
+  updateAreaChip(0);
+  setStatus("tri.s.ready");
+  fitLayout();
+}
+
+// Touch screens have no R or F key, so their tooltips leave the key out.
+function useTouchTips() {
+  if (!window.matchMedia("(pointer: coarse)").matches) return;
+  for (const [btn, key] of [[dom.rotateBtn, "tri.rotateTipTouch"], [dom.flipBtn, "tri.flipTipTouch"]]) {
+    btn.setAttribute("data-i18n-title", key);
+    btn.title = t(key);
+  }
+}
+
+function t(key, vars) {
+  return window.i18n ? window.i18n.t(key, vars) : key;
+}
+
+function pieceName(typeId) {
+  const type = state.pieceTypeMap.get(typeId);
+  return type ? type.name : typeId;
+}
+
+function resetMeasure() {
+  state.enclosedCells = new Set();
+  state.leakCells = new Set();
+  updateAreaChip(0);
 }
 
 function wireEvents() {
   dom.detectAreaBtn.addEventListener("click", () => {
-    if (state.cameraActive) {
-      closeCameraOverlay();
-    }
     const result = computeEnclosedArea();
     state.enclosedCells = result.enclosedSet;
     state.enclosedRegionCount = result.regionCount;
     state.enclosedLargest = result.largestRegion;
     state.leakCells = result.leakCells;
     updateAreaChip(result.area);
-    let message = `Enclosed area: ${result.area} triangles across ${result.regionCount} region(s). Largest: ${result.largestRegion}.`;
-    if (result.cornerLeak) {
-      message += ` Corner leak: the outside slips through a shared vertex, so those cells stay open.`;
-    }
-    setStatus(message);
+    // "Fence closed" only for a real fence: one inside, and no corner the
+    // outside slips through.
+    const parts = [];
+    if (result.area === 0 && !result.cornerLeak) parts.push({ key: "tri.s.areaNone" });
+    else if (result.area === 0) parts.push({ key: "tri.s.leakOnly" });
+    else if (result.regionCount > 1) parts.push({ key: "tri.s.areaSplit", vars: { area: result.area, regions: result.regionCount } });
+    else if (result.cornerLeak) parts.push({ key: result.area === 1 ? "tri.s.area1" : "tri.s.area", vars: { area: result.area } });
+    else parts.push({ key: result.area === 1 ? "tri.s.fence1" : "tri.s.fence", vars: { area: result.area } });
+    if (result.cornerLeak && result.area > 0) parts.push({ key: "tri.s.leak" });
+    setStatusParts(parts);
     render();
   });
 
   dom.clearBtn.addEventListener("click", () => {
-    if (state.cameraActive) {
-      closeCameraOverlay();
-    }
     state.placedPieces = [];
     state.selectedPieceId = null;
-    state.enclosedCells = new Set();
-    state.leakCells = new Set();
+    state.freshPieceId = null;
     state.enclosedRegionCount = 0;
     state.enclosedLargest = 0;
-    updateAreaChip(0);
-    setStatus("Board cleared.");
+    resetMeasure();
+    setStatus("tri.s.cleared");
     refreshTray();
     render();
   });
 
-  dom.rotateBtn.addEventListener("click", () => {
-    if (state.cameraActive) {
-      closeCameraOverlay();
-    }
-    rotateSelection();
-  });
+  dom.rotateBtn.addEventListener("click", () => rotateSelection());
+  dom.flipBtn.addEventListener("click", () => flipSelection());
 
-  dom.flipBtn.addEventListener("click", () => {
-    if (state.cameraActive) {
-      closeCameraOverlay();
-    }
-    flipSelection();
+  document.querySelectorAll("[data-lang-btn]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (window.i18n) window.i18n.setLang(btn.getAttribute("data-lang-btn"));
+    });
   });
-
-  dom.cameraChip.addEventListener("click", () => {
-    void onCameraChipClick();
-  });
-  dom.cameraOverlay.addEventListener("click", () => {
-    if (state.cameraActive) {
-      void captureCameraFrameAndDetect();
-    }
-  });
-  dom.uploadPhotoInput.addEventListener("change", () => {
-    void detectFromUploadedPhoto();
+  document.addEventListener("fc-langchange", () => {
+    renderStatus();
+    refreshTray();
+    fitLayout();
   });
 
   dom.canvas.addEventListener("pointerdown", onPointerDown);
   dom.canvas.addEventListener("pointermove", onPointerMove);
   dom.canvas.addEventListener("pointerup", onPointerUp);
   dom.canvas.addEventListener("pointercancel", onPointerUp);
-  window.addEventListener("resize", resizeCanvas);
-  window.addEventListener("beforeunload", closeCameraOverlay);
+  window.addEventListener("resize", fitLayout);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitLayout);
 
   window.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && state.cameraActive) {
-      closeCameraOverlay();
-      return;
-    }
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
     if (event.key === "r" || event.key === "R") {
       event.preventDefault();
       rotateSelection();
@@ -181,93 +209,61 @@ function wireEvents() {
         return;
       }
       event.preventDefault();
-      const index = state.placedPieces.findIndex((piece) => piece.id === state.selectedPieceId);
-      if (index >= 0) {
-        const removed = state.placedPieces[index];
-        state.placedPieces.splice(index, 1);
-        state.selectedPieceId = null;
-        state.enclosedCells = new Set();
-        state.leakCells = new Set();
-        updateAreaChip(0);
-        setStatus(`Removed piece ${removed.typeId}.`);
-        refreshTray();
-        render();
-      }
+      removePiece(state.selectedPieceId);
     }
   });
 }
 
+function removePiece(pieceId) {
+  const index = state.placedPieces.findIndex((piece) => piece.id === pieceId);
+  if (index < 0) {
+    return;
+  }
+  const removed = state.placedPieces[index];
+  state.placedPieces.splice(index, 1);
+  if (state.selectedPieceId === pieceId) state.selectedPieceId = null;
+  if (state.freshPieceId === pieceId) state.freshPieceId = null;
+  resetMeasure();
+  setStatus("tri.s.removed", { name: pieceName(removed.typeId) });
+  refreshTray();
+  render();
+}
+
+// The board comes from the shared lattice module, so the lab, the hub and the
+// camera judge fences on the same cells with the same rule (fence-analysis.js).
 function buildBoard() {
-  const cells = [];
-  const map = new Map();
-  const vertexToCellKeys = new Map();
-  const scanRange = BOARD_HEX_SIDE + 4;
-
-  for (let i = -scanRange; i <= scanRange; i += 1) {
-    for (let j = -scanRange; j <= scanRange; j += 1) {
-      for (let o = 0; o <= 1; o += 1) {
-        const cell = { i, j, o };
-        const latticeVertices = cellToLatticeVertices(cell);
-        if (!latticeVertices.every(isInsideBoardHex)) {
-          continue;
-        }
-        const key = cellKey(cell);
-        const entry = {
-          key,
-          i,
-          j,
-          o,
-          latticeVertices,
-          touchesBoundaryVertex: latticeVertices.some(isBoundaryVertex),
-          centroid: cellCentroidWorld(cell),
-          vertices: cellWorldVertices(cell),
-        };
-        cells.push(entry);
-        map.set(key, entry);
-        for (const vertex of latticeVertices) {
-          const vKey = vertexKey(vertex);
-          const linked = vertexToCellKeys.get(vKey);
-          if (linked) {
-            linked.push(key);
-          } else {
-            vertexToCellKeys.set(vKey, [key]);
-          }
-        }
-      }
-    }
-  }
-
-  let minX = Number.POSITIVE_INFINITY;
-  let maxX = Number.NEGATIVE_INFINITY;
-  let minY = Number.POSITIVE_INFINITY;
-  let maxY = Number.NEGATIVE_INFINITY;
-  for (const entry of cells) {
-    for (const v of entry.vertices) {
-      if (v.x < minX) minX = v.x;
-      if (v.x > maxX) maxX = v.x;
-      if (v.y < minY) minY = v.y;
-      if (v.y > maxY) maxY = v.y;
-    }
-  }
-
-  state.boardCells = cells;
-  state.boardCellMap = map;
-  state.boardCellEntries = cells;
-  state.vertexToCellKeys = vertexToCellKeys;
-  state.boardBounds = { minX, maxX, minY, maxY };
+  const board = LatticeTriangular.buildBoard({ hexSide: BOARD_HEX_SIDE });
+  state.board = board;
+  state.boardCells = board.cells;
+  state.boardCellMap = board.map;
+  state.boardCellEntries = board.cells;
+  state.boardBounds = board.bounds;
 }
 
 function buildPieces() {
   const freeHexiamonds = generateFreePolyiamonds(HEXIAMOND_ORDER);
-  freeHexiamonds.sort((a, b) => cellsKey(a).localeCompare(cellsKey(b)));
+  const byKey = new Map(freeHexiamonds.map((shape) => [cellsKey(shape), shape]));
+  const named = HEXIAMOND_NAMES.filter(([key]) => byKey.has(key)).map(([key, name]) => ({ name, shape: byKey.get(key) }));
+  const known = new Set(HEXIAMOND_NAMES.map(([key]) => key));
+  freeHexiamonds
+    .filter((shape) => !known.has(cellsKey(shape)))
+    .forEach((shape, index) => named.push({ name: `H${index + 1}`, shape }));
 
-  const types = freeHexiamonds.map((shape, index) => {
-    const id = `H${index + 1}`;
-    const color = MARKER_COLORS[index % MARKER_COLORS.length];
-    const variantData = buildVariants(shape);
+  // Each piece keeps the colour it always had: colours follow the sorted
+  // shape keys, while the tray follows the paper's order.
+  const colourRank = new Map(
+    freeHexiamonds
+      .map((shape) => cellsKey(shape))
+      .sort((a, b) => a.localeCompare(b))
+      .map((key, rank) => [key, rank])
+  );
+  const types = named.map((entry) => {
+    const variantData = buildVariants(entry.shape);
+    const rank = colourRank.get(cellsKey(entry.shape));
     return {
-      id,
-      color,
+      id: entry.name,
+      name: entry.name,
+      color: MARKER_COLORS[rank % MARKER_COLORS.length],
       variants: variantData.variants,
       rotateMap: variantData.rotateMap,
       flipMap: variantData.flipMap,
@@ -393,13 +389,16 @@ function transformAnchoredVariant(variant, symmetry) {
 
 function refreshTray() {
   dom.tray.innerHTML = "";
-  state.pieceTypes.forEach((type, index) => {
+  state.pieceTypes.forEach((type) => {
     const chip = document.createElement("button");
-    chip.className = "piece-chip piece-chip-ring";
+    chip.className = "piece-chip";
     chip.type = "button";
-    chip.title = `${type.id}`;
-
-    if (state.selectedTypeId === type.id) {
+    chip.title = type.name;
+    chip.dataset.type = type.id;
+    chip.setAttribute("aria-label", t("tri.piece.aria", { name: type.name }));
+    const selected = state.selectedTypeId === type.id;
+    chip.setAttribute("aria-pressed", selected ? "true" : "false");
+    if (selected) {
       chip.classList.add("is-selected");
     }
     if (state.placedPieces.some((piece) => piece.typeId === type.id)) {
@@ -412,12 +411,14 @@ function refreshTray() {
       const existing = state.placedPieces.find((piece) => piece.typeId === type.id);
       if (existing) {
         state.selectedPieceId = existing.id;
-        setStatus(`Selected ${type.id}. Drag it on the board.`);
+        setStatus("tri.s.selected", { name: type.name });
       } else if (!spawnPiece(type.id)) {
-        setStatus(`No available space to place ${type.id}.`);
+        setStatus("tri.s.noSpace", { name: type.name });
       }
       refreshTray();
       render();
+      const again = dom.tray.querySelector(`[data-type="${type.id}"]`);
+      if (again) again.focus();
     });
     dom.tray.appendChild(chip);
   });
@@ -491,10 +492,11 @@ function spawnPiece(typeId, preferredCell = null) {
   };
   state.placedPieces.push(piece);
   state.selectedPieceId = piece.id;
-  state.enclosedCells = new Set();
-  state.leakCells = new Set();
-  updateAreaChip(0);
-  setStatus(`Placed ${typeId}.`);
+  // A new piece starts selected, but the next tap on it only confirms the
+  // selection: removing it takes a second, deliberate tap.
+  state.freshPieceId = piece.id;
+  resetMeasure();
+  setStatus("tri.s.placed", { name: pieceName(typeId) });
   return true;
 }
 
@@ -526,10 +528,8 @@ function rotateSelection() {
     const type = state.pieceTypeMap.get(selected.typeId);
     const nextVariant = type.rotateMap[selected.variantIndex];
     if (reorientPlacedPiece(selected, nextVariant)) {
-      setStatus(`Rotated ${selected.typeId}.`);
-      state.enclosedCells = new Set();
-      state.leakCells = new Set();
-      updateAreaChip(0);
+      setStatus("tri.s.rotated", { name: pieceName(selected.typeId) });
+      resetMeasure();
       render();
     }
     return;
@@ -550,10 +550,8 @@ function flipSelection() {
     const type = state.pieceTypeMap.get(selected.typeId);
     const nextVariant = type.flipMap[selected.variantIndex];
     if (reorientPlacedPiece(selected, nextVariant)) {
-      setStatus(`Flipped ${selected.typeId}.`);
-      state.enclosedCells = new Set();
-      state.leakCells = new Set();
-      updateAreaChip(0);
+      setStatus("tri.s.flipped", { name: pieceName(selected.typeId) });
+      resetMeasure();
       render();
     }
     return;
@@ -580,12 +578,12 @@ function reorientPlacedPiece(piece, nextVariantIndex) {
   const preferred = oldMarkerEntry ? oldMarkerEntry.centroid : cellCentroidWorld(piece.marker);
   const nextMarker = findBestMarkerCell(piece.typeId, nextVariantIndex, preferred, piece.id);
   if (!nextMarker) {
-    setStatus(`No room to reorient ${piece.typeId} at this moment.`);
+    setStatus("tri.s.noRoom", { name: pieceName(piece.typeId) });
     return false;
   }
 
   if (!canPlace(piece.typeId, nextVariantIndex, nextMarker, piece.id)) {
-    setStatus(`No valid placement after reorientation for ${piece.typeId}.`);
+    setStatus("tri.s.noRoom", { name: pieceName(piece.typeId) });
     return false;
   }
 
@@ -596,10 +594,6 @@ function reorientPlacedPiece(piece, nextVariantIndex) {
 }
 
 function onPointerDown(event) {
-  if (state.cameraActive) {
-    void captureCameraFrameAndDetect();
-    return;
-  }
   const point = pointerToCanvas(event);
   const nearest = findNearestBoardCell(point, null);
   if (!nearest) {
@@ -610,10 +604,13 @@ function onPointerDown(event) {
   const occupiedBy = occupancy.get(nearest.key);
   if (occupiedBy) {
     state._downPieceId = occupiedBy;
-    state._downWasSelected = state.selectedPieceId === occupiedBy;
+    state._downWasSelected = state.selectedPieceId === occupiedBy && state.freshPieceId !== occupiedBy;
+    state.freshPieceId = null;
     state._didDrag = false;
+    state._moved = false;
     state._downClientX = event.clientX;
     state._downClientY = event.clientY;
+    state._dragSlop = event.pointerType === "touch" ? 10 : 6;
     state.selectedPieceId = occupiedBy;
     state.draggingPieceId = occupiedBy;
     dom.canvas.setPointerCapture(event.pointerId);
@@ -633,16 +630,14 @@ function onPointerDown(event) {
 }
 
 function onPointerMove(event) {
-  if (state.cameraActive) {
-    return;
-  }
   if (!state.draggingPieceId) {
     return;
   }
   if (!state._didDrag) {
     const mdx = event.clientX - state._downClientX;
     const mdy = event.clientY - state._downClientY;
-    if (mdx * mdx + mdy * mdy > 36) state._didDrag = true;
+    const slop = state._dragSlop || 6;
+    if (mdx * mdx + mdy * mdy > slop * slop) state._didDrag = true;
   }
   const piece = state.placedPieces.find((item) => item.id === state.draggingPieceId);
   if (!piece) {
@@ -669,32 +664,34 @@ function onPointerMove(event) {
   }
   piece.marker = { i: nearest.i, j: nearest.j, o: nearest.o };
   state._didDrag = true;
-  state.enclosedCells = new Set();
-  state.leakCells = new Set();
-  updateAreaChip(0);
+  if (!state._moved) {
+    // The measurement no longer describes the board: say what happened.
+    state._moved = true;
+    setStatus("tri.s.moving", { name: pieceName(piece.typeId) });
+  }
+  resetMeasure();
   render();
 }
 
 function onPointerUp(event) {
-  // Tap (no drag) on an already-selected piece removes it — phones have no Delete key.
-  if (state._downPieceId && !state._didDrag && state._downWasSelected) {
-    const index = state.placedPieces.findIndex((piece) => piece.id === state._downPieceId);
-    if (index >= 0) {
-      const removed = state.placedPieces[index];
-      state.placedPieces.splice(index, 1);
-      state.selectedPieceId = null;
-      state.enclosedCells = new Set();
-      state.leakCells = new Set();
-      updateAreaChip(0);
-      setStatus(`Removed piece ${removed.typeId}.`);
-      refreshTray();
-      render();
+  const pieceId = state._downPieceId;
+  if (pieceId && !state._didDrag) {
+    const piece = state.placedPieces.find((item) => item.id === pieceId);
+    // Tap on a piece that was already selected removes it (phones have no
+    // Delete key); the first tap on a piece only selects it.
+    if (piece && state._downWasSelected) {
+      removePiece(pieceId);
+    } else if (piece) {
+      setStatus("tri.s.selectedTap", { name: pieceName(piece.typeId) });
     }
   }
-  state._downPieceId = null;
-  if (state.draggingPieceId) {
-    setStatus("Drag to move a piece. Edge-only fences enclose area.");
+  if (pieceId && state._moved) {
+    const piece = state.placedPieces.find((item) => item.id === pieceId);
+    if (piece) setStatus("tri.s.moved", { name: pieceName(piece.typeId) });
   }
+  state._moved = false;
+  state._downPieceId = null;
+  state._downWasSelected = false;
   state.draggingPieceId = null;
   if (dom.canvas.hasPointerCapture(event.pointerId)) {
     dom.canvas.releasePointerCapture(event.pointerId);
@@ -759,6 +756,7 @@ function buildOccupancyMap(ignorePieceId = null) {
   return occupancy;
 }
 
+// What the placed pieces enclose, judged by the shared rule.
 function computeEnclosedArea() {
   const occupied = new Set();
   for (const piece of state.placedPieces) {
@@ -766,168 +764,244 @@ function computeEnclosedArea() {
       occupied.add(cellKey(cell));
     }
   }
+  return FenceAnalysis.analyze({ board: state.board, lattice: LatticeTriangular, occupied });
+}
 
-  const emptyKeys = state.boardCellEntries
-    .map((entry) => entry.key)
-    .filter((key) => !occupied.has(key));
-  const emptySet = new Set(emptyKeys);
-  const outsideVisited = new Set();
-  const queue = [];
+/* ---------- layout ---------- */
 
-  for (const entry of state.boardCellEntries) {
-    if (!emptySet.has(entry.key)) {
-      continue;
-    }
-    const neighbors = cellNeighbors(entry);
-    const touchesOutside =
-      entry.touchesBoundaryVertex ||
-      neighbors.some((neighbor) => !state.boardCellMap.has(cellKey(neighbor)));
-    if (touchesOutside) {
-      outsideVisited.add(entry.key);
-      queue.push(entry.key);
-    }
-  }
+function cssNumber(name, fallback) {
+  const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));
+  return Number.isFinite(v) ? v : fallback;
+}
 
-  while (queue.length > 0) {
-    const key = queue.shift();
-    for (const nKey of getReachableNeighborKeys(key, emptySet)) {
-      if (!emptySet.has(nKey) || outsideVisited.has(nKey)) {
-        continue;
-      }
-      outsideVisited.add(nKey);
-      queue.push(nKey);
-    }
-  }
+// Height of everything on the page except the board stage.
+function heightAroundStage() {
+  const main = dom.stage.parentElement;
+  const app = main.parentElement;
+  const px = (el, prop) => parseFloat(getComputedStyle(el)[prop]) || 0;
+  let h = px(app, "paddingTop") + px(app, "paddingBottom");
+  for (const el of app.children) if (el !== main) h += el.offsetHeight;
+  const kids = [...main.children];
+  h += px(main, "paddingTop") + px(main, "paddingBottom") + px(main, "rowGap") * (kids.length - 1);
+  for (const el of kids) if (el !== dom.stage) h += el.offsetHeight;
+  return h;
+}
 
-  const enclosed = emptyKeys.filter((key) => !outsideVisited.has(key));
-  const enclosedSet = new Set(enclosed);
+// Canvas size that fits the board into a box of w x h CSS pixels.
+function canvasForBox(w, h) {
+  const b = state.boardBounds;
+  const bw = Math.max(b.maxX - b.minX, 0.0001);
+  const bh = Math.max(b.maxY - b.minY, 0.0001);
+  const scale = Math.max(0.0001, Math.min((w - 2 * CANVAS_PADDING) / bw, (h - 2 * CANVAS_PADDING) / bh));
+  return { cw: Math.floor(bw * scale + 2 * CANVAS_PADDING), ch: Math.floor(bh * scale + 2 * CANVAS_PADDING) };
+}
 
-  // Second flood, edge-only: a cell sealed edge-to-edge but still reachable by the outside
-  // through a shared vertex is a "corner leak" — enclosed under strict walls, but not under the
-  // real vertex-aware rule. leakCells = strict-enclosed \ actually-enclosed. Mirrors the hub witness.
-  const outsideStrict = new Set();
-  const strictQueue = [];
-  for (const entry of state.boardCellEntries) {
-    if (!emptySet.has(entry.key)) {
-      continue;
-    }
-    const touchesOutside =
-      entry.touchesBoundaryVertex ||
-      cellNeighbors(entry).some((neighbor) => !state.boardCellMap.has(cellKey(neighbor)));
-    if (touchesOutside) {
-      outsideStrict.add(entry.key);
-      strictQueue.push(entry.key);
-    }
-  }
-  while (strictQueue.length > 0) {
-    const key = strictQueue.shift();
-    for (const nKey of edgeOnlyNeighborKeys(key, emptySet)) {
-      if (!emptySet.has(nKey) || outsideStrict.has(nKey)) {
-        continue;
-      }
-      outsideStrict.add(nKey);
-      strictQueue.push(nKey);
-    }
-  }
-  const leakCells = new Set();
-  for (const key of emptyKeys) {
-    if (!outsideStrict.has(key) && !enclosedSet.has(key)) {
-      leakCells.add(key);
-    }
-  }
-
-  const visited = new Set();
-  let regionCount = 0;
-  let largestRegion = 0;
-
-  for (const start of enclosed) {
-    if (visited.has(start)) {
-      continue;
-    }
-    regionCount += 1;
-    let regionSize = 0;
-    const regionQueue = [start];
-    visited.add(start);
-
-    while (regionQueue.length > 0) {
-      const key = regionQueue.pop();
-      regionSize += 1;
-      for (const nKey of getReachableNeighborKeys(key, enclosedSet)) {
-        if (!enclosedSet.has(nKey) || visited.has(nKey)) {
-          continue;
-        }
-        visited.add(nKey);
-        regionQueue.push(nKey);
-      }
-    }
-    if (regionSize > largestRegion) {
-      largestRegion = regionSize;
-    }
-  }
-
+// Board transform for a canvas of cw x ch CSS pixels (same formula as
+// resizeCanvas, without the device pixel ratio).
+function viewForCanvas(cw, ch) {
+  const b = state.boardBounds;
+  const bw = Math.max(b.maxX - b.minX, 0.0001);
+  const bh = Math.max(b.maxY - b.minY, 0.0001);
+  const scale = Math.max(0.0001, Math.min((cw - 2 * CANVAS_PADDING) / bw, (ch - 2 * CANVAS_PADDING) / bh));
   return {
-    area: enclosed.length,
-    enclosedSet,
-    regionCount,
-    largestRegion,
-    leakCells,
-    cornerLeak: leakCells.size > 0,
+    scale,
+    offsetX: (cw - bw * scale) * 0.5 - b.minX * scale,
+    offsetY: (ch - bh * scale) * 0.5 - b.minY * scale,
   };
 }
 
-// Edge-only reachability (no shared-vertex hop) — the strict-wall view used to detect corner leaks.
-function edgeOnlyNeighborKeys(key, candidateSet) {
-  const reachable = new Set();
-  const cell = parseCellKey(key);
-  for (const neighbor of cellNeighbors(cell)) {
-    const nKey = cellKey(neighbor);
-    if (candidateSet.has(nKey)) {
-      reachable.add(nKey);
-    }
-  }
-  return reachable;
-}
-
-function getReachableNeighborKeys(key, candidateSet) {
-  const reachable = new Set();
-  const cell = parseCellKey(key);
-  for (const neighbor of cellNeighbors(cell)) {
-    const nKey = cellKey(neighbor);
-    if (candidateSet.has(nKey)) {
-      reachable.add(nKey);
-    }
-  }
-
-  const entry = state.boardCellMap.get(key);
-  if (!entry) {
-    return reachable;
-  }
-  for (const vertex of entry.latticeVertices) {
-    const linked = state.vertexToCellKeys.get(vertexKey(vertex));
-    if (!linked) {
-      continue;
-    }
-    for (const linkedKey of linked) {
-      if (linkedKey !== key && candidateSet.has(linkedKey)) {
-        reachable.add(linkedKey);
+// The board outline: the tightest hexagon around every cell, as support
+// lines {n, h} (outward normal, distance) and corners (line k meets k+1).
+function boardOutline(view) {
+  const lines = OUTLINE_NORMALS.map((deg) => {
+    const a = (deg * Math.PI) / 180;
+    const n = { x: Math.cos(a), y: Math.sin(a) };
+    let h = -Infinity;
+    for (const entry of state.boardCellEntries) {
+      for (const v of entry.vertices) {
+        h = Math.max(h, (v.x * view.scale + view.offsetX) * n.x + (v.y * view.scale + view.offsetY) * n.y);
       }
     }
+    return { n, h };
+  });
+  const corners = lines.map((l1, k) => {
+    const l2 = lines[(k + 1) % lines.length];
+    const det = l1.n.x * l2.n.y - l1.n.y * l2.n.x;
+    return {
+      x: (l1.h * l2.n.y - l2.h * l1.n.y) / det,
+      y: (l1.n.x * l2.h - l2.n.x * l1.h) / det,
+    };
+  });
+  return { lines, corners };
+}
+
+// Chip centres along the three upper sides, clockwise from the left corner.
+function ringSlots(view, chip) {
+  const { lines, corners } = boardOutline(view);
+  const half = chip / 2;
+  const slots = [];
+  for (const k of [3, 4, 5]) {
+    const a = corners[(k + lines.length - 1) % lines.length];
+    const b = corners[k];
+    const n = lines[k].n;
+    const off = (Math.abs(n.x) + Math.abs(n.y)) * half + CHIP_CLEARANCE;
+    for (const tt of RING_SIDE_SLOTS) {
+      slots.push({ x: a.x + (b.x - a.x) * tt + n.x * off, y: a.y + (b.y - a.y) * tt + n.y * off });
+    }
   }
-  return reachable;
+  return slots;
+}
+
+// Chip centres in rows under a board of cw x ch pixels.
+function traySlots(cw, ch, chip, count) {
+  const perRow = Math.max(1, Math.floor((cw + CHIP_GAP) / (chip + CHIP_GAP)));
+  const rows = Math.ceil(count / perRow);
+  const slots = [];
+  for (let i = 0; i < count; i += 1) {
+    const row = Math.floor(i / perRow);
+    const inRow = row < rows - 1 ? perRow : count - perRow * (rows - 1);
+    const col = i - row * perRow;
+    const rowWidth = inRow * chip + (inRow - 1) * CHIP_GAP;
+    slots.push({
+      x: (cw - rowWidth) / 2 + chip / 2 + col * (chip + CHIP_GAP),
+      y: ch + CHIP_GAP + chip / 2 + row * (chip + CHIP_GAP),
+    });
+  }
+  return { slots, height: CHIP_GAP + rows * chip + (rows - 1) * CHIP_GAP };
+}
+
+// Three ways to set out the piece chips. Each returns the canvas box, the
+// padding around it for the chips, and the chip centres in canvas pixels.
+
+// Around the board outline.
+function ringLayout(availW, availH, chip) {
+  const half = chip / 2 + 2;
+  let pads = { l: 0, r: 0, t: 0, b: 0 };
+  let box = canvasForBox(availW, availH);
+  let slots = [];
+  for (let pass = 0; pass < 4; pass += 1) {
+    slots = ringSlots(viewForCanvas(box.cw, box.ch), chip);
+    pads = { l: 0, r: 0, t: 0, b: 0 };
+    for (const s of slots) {
+      pads.l = Math.max(pads.l, half - s.x);
+      pads.r = Math.max(pads.r, s.x + half - box.cw);
+      pads.t = Math.max(pads.t, half - s.y);
+      pads.b = Math.max(pads.b, s.y + half - box.ch);
+    }
+    // Keep the board centred horizontally.
+    pads.l = pads.r = Math.ceil(Math.max(pads.l, pads.r));
+    pads.t = Math.ceil(pads.t);
+    pads.b = Math.ceil(pads.b);
+    box = canvasForBox(Math.max(MIN_BOARD, availW - pads.l - pads.r), Math.max(MIN_BOARD, availH - pads.t - pads.b));
+  }
+  slots = ringSlots(viewForCanvas(box.cw, box.ch), chip);
+  return { mode: "ring", box, pads, slots };
+}
+
+// In columns on both sides of the board, centred on it.
+function railLayout(availW, availH, chip, count) {
+  const perCol = Math.max(1, Math.floor((availH + CHIP_GAP) / (chip + CHIP_GAP)));
+  const leftCount = Math.ceil(count / 2);
+  const cols = Math.ceil(leftCount / perCol);
+  const railW = cols * (chip + CHIP_GAP);
+  const box = canvasForBox(Math.max(MIN_BOARD, availW - 2 * railW), availH);
+  const slots = [];
+  const place = (start, n, side) => {
+    for (let k = 0; k < n; k += 1) {
+      const col = Math.floor(k / perCol);
+      const row = k - col * perCol;
+      const inCol = Math.min(perCol, n - col * perCol);
+      const colH = inCol * chip + (inCol - 1) * CHIP_GAP;
+      const dx = CHIP_GAP + chip / 2 + col * (chip + CHIP_GAP);
+      slots[start + k] = {
+        x: side < 0 ? -dx : box.cw + dx,
+        y: box.ch / 2 - colH / 2 + chip / 2 + row * (chip + CHIP_GAP),
+      };
+    }
+  };
+  place(0, leftCount, -1);
+  place(leftCount, count - leftCount, 1);
+  const rows = Math.min(perCol, leftCount);
+  const extra = Math.max(0, Math.ceil((rows * chip + (rows - 1) * CHIP_GAP - box.ch) / 2));
+  return { mode: "rails", box, pads: { l: railW, r: railW, t: extra, b: extra }, slots };
+}
+
+// In rows under the board.
+function trayLayout(availW, availH, chip, count) {
+  const trayH = (w) => traySlots(w, 0, chip, count).height;
+  let box = canvasForBox(availW, Math.max(MIN_BOARD, availH - trayH(availW)));
+  // A narrower board may need one more row of chips.
+  box = canvasForBox(availW, Math.max(MIN_BOARD, availH - trayH(box.cw)));
+  const tray = traySlots(box.cw, box.ch, chip, count);
+  return { mode: "tray", box, pads: { l: 0, r: 0, t: 0, b: tray.height }, slots: tray.slots };
+}
+
+// A layout is usable when no two chips overlap and it fits the space.
+function layoutFits(layout, availW, availH, chip) {
+  const { box, pads, slots } = layout;
+  if (box.cw + pads.l + pads.r > availW + 1) return false;
+  if (box.ch + pads.t + pads.b > availH + 1) return false;
+  const min = chip + 2;
+  for (let i = 0; i < slots.length; i += 1) {
+    for (let j = i + 1; j < slots.length; j += 1) {
+      if (Math.abs(slots[i].x - slots[j].x) < min && Math.abs(slots[i].y - slots[j].y) < min) return false;
+    }
+  }
+  return true;
+}
+
+// Size the board to the space the rest of the page leaves, and pick the chip
+// layout that gives the largest board. The ring around the board is kept
+// whenever it costs little.
+function fitLayout() {
+  const chip = cssNumber("--chip", 40);
+  const count = state.pieceTypes.length;
+  const wide = WIDE.matches;
+  if (wide) dom.stage.style.height = "";
+  const availW = dom.stage.clientWidth;
+  const availH = wide ? dom.stage.clientHeight : Math.max(260, window.innerHeight - heightAroundStage());
+
+  const candidates = [
+    ringLayout(availW, availH, chip),
+    railLayout(availW, availH, chip, count),
+    trayLayout(availW, availH, chip, count),
+  ];
+  const scaleOf = (l) => viewForCanvas(l.box.cw, l.box.ch).scale;
+  const usable = candidates.filter((l) => l.mode === "tray" || layoutFits(l, availW, availH, chip));
+  let chosen = usable[0];
+  for (const l of usable) if (scaleOf(l) > scaleOf(chosen)) chosen = l;
+  const ring = usable.find((l) => l.mode === "ring");
+  if (ring && scaleOf(ring) >= RING_PREFERENCE * scaleOf(chosen)) chosen = ring;
+
+  const { box, pads, slots } = chosen;
+  state.layout = { mode: chosen.mode, cw: box.cw, ch: box.ch, padL: pads.l, padT: pads.t, slots };
+  const wrapW = box.cw + pads.l + pads.r;
+  const wrapH = box.ch + pads.t + pads.b;
+  if (!wide) dom.stage.style.height = `${wrapH}px`;
+  dom.boardWrap.style.width = `${wrapW}px`;
+  dom.boardWrap.style.height = `${wrapH}px`;
+  dom.canvas.style.left = `${pads.l}px`;
+  dom.canvas.style.top = `${pads.t}px`;
+  dom.canvas.style.width = `${box.cw}px`;
+  dom.canvas.style.height = `${box.ch}px`;
+  resizeCanvas();
 }
 
 function resizeCanvas() {
+  const { cw, ch } = state.layout;
+  if (!cw || !ch) {
+    return;
+  }
   const dpr = Math.max(1, window.devicePixelRatio || 1);
-  const rect = dom.canvas.getBoundingClientRect();
-  const width = Math.max(1, Math.round(rect.width * dpr));
-  const height = Math.max(1, Math.round(rect.height * dpr));
+  const width = Math.max(1, Math.round(cw * dpr));
+  const height = Math.max(1, Math.round(ch * dpr));
 
   if (dom.canvas.width !== width || dom.canvas.height !== height) {
     dom.canvas.width = width;
     dom.canvas.height = height;
   }
 
-  const padding = 10 * dpr;
+  const padding = CANVAS_PADDING * dpr;
   const bounds = state.boardBounds;
   const boardWidth = bounds.maxX - bounds.minX;
   const boardHeight = bounds.maxY - bounds.minY;
@@ -941,6 +1015,19 @@ function resizeCanvas() {
   state.view = { scale, offsetX, offsetY, width, height };
   layoutPieceRing();
   render();
+}
+
+function layoutPieceRing() {
+  const chips = [...dom.tray.querySelectorAll(".piece-chip")];
+  const { slots, padL, padT } = state.layout;
+  if (chips.length === 0 || !slots || slots.length === 0) {
+    return;
+  }
+  chips.forEach((chip, index) => {
+    const anchor = slots[index % slots.length];
+    chip.style.left = `${padL + anchor.x}px`;
+    chip.style.top = `${padT + anchor.y}px`;
+  });
 }
 
 function render() {
@@ -1096,164 +1183,24 @@ function findNearestBoardCell(point, orientation = null) {
 }
 
 function updateAreaChip(area) {
-  dom.areaChip.textContent = `Area: ${area}`;
+  dom.areaValue.textContent = String(area);
 }
 
-function setStatus(message) {
-  state.lastStatus = message;
+// Keeps the message as keys so a language switch can render it again.
+function setStatus(key, vars) {
+  setStatusParts([{ key, vars }]);
 }
 
-async function onCameraChipClick() {
-  if (!state.cameraActive) {
-    await openCameraOverlay();
+function setStatusParts(parts) {
+  state.status = parts;
+  renderStatus();
+}
+
+function renderStatus() {
+  if (!state.status) {
     return;
   }
-  await captureCameraFrameAndDetect();
-}
-
-async function openCameraOverlay() {
-  if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") {
-    dom.uploadPhotoInput.click();
-    setStatus("Camera API not available. Upload a photo instead.");
-    return;
-  }
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: "environment" },
-      },
-      audio: false,
-    });
-    state.cameraStream = stream;
-    dom.cameraVideo.srcObject = stream;
-    await dom.cameraVideo.play();
-    dom.cameraOverlay.hidden = false;
-    dom.boardWrap.classList.add("camera-mode");
-    dom.cameraChip.classList.add("is-active");
-    state.cameraActive = true;
-    setStatus("Camera opened.");
-  } catch (error) {
-    dom.uploadPhotoInput.click();
-    setStatus("Camera permission denied or unavailable. Upload a photo instead.");
-  }
-}
-
-function closeCameraOverlay() {
-  if (state.cameraStream) {
-    for (const track of state.cameraStream.getTracks()) {
-      track.stop();
-    }
-  }
-  state.cameraStream = null;
-  dom.cameraVideo.srcObject = null;
-  dom.cameraOverlay.hidden = true;
-  dom.boardWrap.classList.remove("camera-mode");
-  dom.cameraChip.classList.remove("is-active");
-  state.cameraActive = false;
-}
-
-async function captureCameraFrameAndDetect() {
-  if (!state.cameraActive) {
-    await openCameraOverlay();
-    return;
-  }
-
-  try {
-    const video = dom.cameraVideo;
-    const capture = dom.cameraCapture;
-    const frameWidth = video.videoWidth || dom.canvas.width;
-    const frameHeight = video.videoHeight || dom.canvas.height;
-    if (!frameWidth || !frameHeight) {
-      setStatus("Camera frame not ready yet.");
-      return;
-    }
-    capture.width = frameWidth;
-    capture.height = frameHeight;
-    const ctx = capture.getContext("2d");
-    ctx.drawImage(video, 0, 0, frameWidth, frameHeight);
-
-    const detection = runPolyiamondMarkerPipeline(capture);
-    applyDetectedPolyiamondState(detection);
-  } catch (error) {
-    setStatus("Capture failed. Try again.");
-  } finally {
-    closeCameraOverlay();
-  }
-}
-
-async function detectFromUploadedPhoto() {
-  const file = dom.uploadPhotoInput.files?.[0];
-  if (!file) {
-    return;
-  }
-
-  const image = new Image();
-  const objectUrl = URL.createObjectURL(file);
-  await new Promise((resolve, reject) => {
-    image.onload = resolve;
-    image.onerror = reject;
-    image.src = objectUrl;
-  }).catch(() => null);
-  URL.revokeObjectURL(objectUrl);
-  if (!image.width || !image.height) {
-    setStatus("Could not read the uploaded photo.");
-    return;
-  }
-
-  const capture = dom.cameraCapture;
-  capture.width = image.width;
-  capture.height = image.height;
-  const ctx = capture.getContext("2d");
-  ctx.drawImage(image, 0, 0, image.width, image.height);
-
-  const detection = runPolyiamondMarkerPipeline(capture);
-  applyDetectedPolyiamondState(detection);
-  if (state.cameraActive) {
-    closeCameraOverlay();
-  }
-  dom.uploadPhotoInput.value = "";
-}
-
-function runPolyiamondMarkerPipeline(frameCanvas) {
-  const ctx = frameCanvas.getContext("2d", { willReadFrequently: true });
-  const image = ctx.getImageData(0, 0, frameCanvas.width, frameCanvas.height);
-  const data = image.data;
-  let darkPixels = 0;
-  const sampleStep = Math.max(1, Math.floor((frameCanvas.width * frameCanvas.height) / 140000));
-  for (let i = 0; i < data.length; i += 4 * sampleStep) {
-    const luma = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-    if (luma < 52) {
-      darkPixels += 1;
-    }
-  }
-  const sampledPixels = Math.ceil(data.length / (4 * sampleStep));
-  const darkRatio = sampledPixels > 0 ? darkPixels / sampledPixels : 0;
-
-  return {
-    ok: false,
-    detectedMarkers: 0,
-    darkRatio,
-    placements: [],
-  };
-}
-
-function applyDetectedPolyiamondState(detection) {
-  if (!detection.ok) {
-    setStatus(
-      `Camera frame captured. Marker pipeline hook is live (dark ratio ${detection.darkRatio.toFixed(3)}).`
-    );
-    return;
-  }
-  state.placedPieces = detection.placements;
-  state.selectedPieceId = null;
-  state.enclosedCells = new Set();
-  state.leakCells = new Set();
-  state.enclosedLargest = 0;
-  state.enclosedRegionCount = 0;
-  updateAreaChip(0);
-  refreshTray();
-  render();
+  dom.status.textContent = state.status.map((part) => t(part.key, part.vars || undefined)).join(" ");
 }
 
 function pointerToCanvas(event) {
@@ -1276,201 +1223,6 @@ function screenToWorld(point) {
     x: (point.x - state.view.offsetX) / state.view.scale,
     y: (point.y - state.view.offsetY) / state.view.scale,
   };
-}
-
-function layoutPieceRing() {
-  if (!state.boardCellEntries.length) {
-    return;
-  }
-
-  const rect = dom.canvas.getBoundingClientRect();
-  const boardHex = getBoardHexVerticesCss();
-  if (!boardHex) {
-    return;
-  }
-  applyCameraWindowPath(boardHex, rect);
-  layoutCameraChip(rect, boardHex);
-  layoutSideBrand(rect, boardHex);
-
-  const chips = [...dom.tray.querySelectorAll(".piece-chip-ring")];
-  if (chips.length === 0) {
-    return;
-  }
-  const center = {
-    x: (boardHex.left.x + boardHex.right.x) * 0.5,
-    y: (boardHex.topLeft.y + boardHex.bottomLeft.y) * 0.5,
-  };
-  const chipRect = chips[0].getBoundingClientRect();
-  const halfW = Math.max(16, chipRect.width * 0.5);
-  const halfH = Math.max(16, chipRect.height * 0.5);
-  const chipClearance = 14;
-  const edges = [
-    { a: boardHex.left, b: boardHex.topLeft },
-    { a: boardHex.topLeft, b: boardHex.topRight },
-    { a: boardHex.topRight, b: boardHex.right },
-  ];
-  const ordered = [];
-  for (const edgeDef of edges) {
-    const a = edgeDef.a;
-    const b = edgeDef.b;
-    const edgeVec = { x: b.x - a.x, y: b.y - a.y };
-    const edgeLen = Math.hypot(edgeVec.x, edgeVec.y) || 1;
-    const midpoint = { x: (a.x + b.x) * 0.5, y: (a.y + b.y) * 0.5 };
-    const toOutside = { x: midpoint.x - center.x, y: midpoint.y - center.y };
-
-    const n1 = { x: -edgeVec.y / edgeLen, y: edgeVec.x / edgeLen };
-    const n2 = { x: edgeVec.y / edgeLen, y: -edgeVec.x / edgeLen };
-    const dot1 = n1.x * toOutside.x + n1.y * toOutside.y;
-    const normal = dot1 >= 0 ? n1 : n2;
-    const outwardPx = Math.abs(normal.x) * halfW + Math.abs(normal.y) * halfH + chipClearance;
-
-    for (const t of RING_EDGE_SLOTS) {
-      const edgeX = a.x + edgeVec.x * t;
-      const edgeY = a.y + edgeVec.y * t;
-      ordered.push({
-        x: edgeX + normal.x * outwardPx,
-        y: edgeY + normal.y * outwardPx,
-      });
-    }
-  }
-
-  chips.forEach((chip, index) => {
-    const anchor = ordered[index % ordered.length];
-    chip.style.left = `${anchor.x}px`;
-    chip.style.top = `${anchor.y}px`;
-  });
-}
-
-function applyCameraWindowPath(boardHex, rect) {
-  const points = [
-    boardHex.topLeft,
-    boardHex.topRight,
-    boardHex.right,
-    boardHex.bottomRight,
-    boardHex.bottomLeft,
-    boardHex.left,
-  ];
-  const polygon = points
-    .map((point) => `${((point.x / rect.width) * 100).toFixed(4)}% ${((point.y / rect.height) * 100).toFixed(4)}%`)
-    .join(", ");
-  dom.boardWrap.style.setProperty("--camera-window-path", `polygon(${polygon})`);
-}
-
-function layoutCameraChip(rect = dom.canvas.getBoundingClientRect(), boardHex = getBoardHexVerticesCss()) {
-  if (!boardHex) {
-    return;
-  }
-  const topRightVertex = boardHex.topRight;
-  const center = {
-    x: (boardHex.left.x + boardHex.right.x) * 0.5,
-    y: (boardHex.topLeft.y + boardHex.bottomLeft.y) * 0.5,
-  };
-  const vx = topRightVertex.x - center.x;
-  const vy = topRightVertex.y - center.y;
-  const len = Math.hypot(vx, vy) || 1;
-  const outward = 28;
-  const x = topRightVertex.x + (vx / len) * outward;
-  const y = topRightVertex.y + (vy / len) * outward;
-  const chipHalf = 16;
-  const clampedX = clamp(x, chipHalf, rect.width - chipHalf);
-  const clampedY = clamp(y, chipHalf, rect.height - chipHalf);
-  dom.cameraChip.style.left = `${clampedX}px`;
-  dom.cameraChip.style.top = `${clampedY}px`;
-  dom.cameraChip.style.right = "auto";
-}
-
-function layoutSideBrand(rect = dom.canvas.getBoundingClientRect(), boardHex = getBoardHexVerticesCss()) {
-  if (!dom.sideBrand || !boardHex) {
-    return;
-  }
-
-  const center = {
-    x: (boardHex.left.x + boardHex.right.x) * 0.5,
-    y: (boardHex.topLeft.y + boardHex.bottomLeft.y) * 0.5,
-  };
-
-  const a = boardHex.bottomRight;
-  const b = boardHex.right;
-  const edgeVec = { x: b.x - a.x, y: b.y - a.y };
-  const edgeLen = Math.hypot(edgeVec.x, edgeVec.y) || 1;
-  const anchorT = 0.52;
-  const edgePoint = {
-    x: a.x + edgeVec.x * anchorT,
-    y: a.y + edgeVec.y * anchorT,
-  };
-  const toOutside = {
-    x: edgePoint.x - center.x,
-    y: edgePoint.y - center.y,
-  };
-  const n1 = { x: -edgeVec.y / edgeLen, y: edgeVec.x / edgeLen };
-  const n2 = { x: edgeVec.y / edgeLen, y: -edgeVec.x / edgeLen };
-  const dot1 = n1.x * toOutside.x + n1.y * toOutside.y;
-  const normal = dot1 >= 0 ? n1 : n2;
-  const offset = 34;
-  const x = edgePoint.x + normal.x * offset;
-  const y = edgePoint.y + normal.y * offset;
-  const angleDeg = (Math.atan2(edgeVec.y, edgeVec.x) * 180) / Math.PI;
-
-  dom.sideBrand.style.left = `${x}px`;
-  dom.sideBrand.style.top = `${y}px`;
-  dom.sideBrand.style.transformOrigin = "50% 50%";
-  dom.sideBrand.style.transform = `translate(-50%, -50%) rotate(${angleDeg.toFixed(2)}deg)`;
-}
-
-function toCssFromScreen(point) {
-  const rect = dom.canvas.getBoundingClientRect();
-  const sx = rect.width / Math.max(state.view.width, 1);
-  const sy = rect.height / Math.max(state.view.height, 1);
-  return { x: point.x * sx, y: point.y * sy };
-}
-
-function getBoardHexVerticesCss() {
-  const points = state.boardCellEntries.flatMap((entry) =>
-    entry.vertices.map((vertex) => toCssFromScreen(worldToScreen(vertex)))
-  );
-  const hull = convexHull(points);
-  if (hull.length < 6) {
-    return null;
-  }
-
-  const dirs = {
-    right: { x: 1, y: 0 },
-    topRight: { x: 0.5, y: -SQRT3_HALF },
-    topLeft: { x: -0.5, y: -SQRT3_HALF },
-    left: { x: -1, y: 0 },
-    bottomLeft: { x: -0.5, y: SQRT3_HALF },
-    bottomRight: { x: 0.5, y: SQRT3_HALF },
-  };
-
-  const extreme = (dir) =>
-    hull.reduce((best, point) => {
-      const scoreBest = best.x * dir.x + best.y * dir.y;
-      const scorePoint = point.x * dir.x + point.y * dir.y;
-      return scorePoint > scoreBest ? point : best;
-    }, hull[0]);
-
-  return {
-    left: extreme(dirs.left),
-    right: extreme(dirs.right),
-    topLeft: extreme(dirs.topLeft),
-    topRight: extreme(dirs.topRight),
-    bottomLeft: extreme(dirs.bottomLeft),
-    bottomRight: extreme(dirs.bottomRight),
-  };
-}
-
-function isInsideBoardHex(vertex) {
-  const i = vertex.i;
-  const j = vertex.j;
-  const k = i + j;
-  return Math.max(Math.abs(i), Math.abs(j), Math.abs(k)) <= BOARD_HEX_SIDE;
-}
-
-function isBoundaryVertex(vertex) {
-  const i = vertex.i;
-  const j = vertex.j;
-  const k = i + j;
-  return Math.max(Math.abs(i), Math.abs(j), Math.abs(k)) === BOARD_HEX_SIDE;
 }
 
 function latticeToWorld(point) {
@@ -1596,15 +1348,6 @@ function cellKey(cell) {
   return `${cell.i},${cell.j},${cell.o}`;
 }
 
-function vertexKey(vertex) {
-  return `${vertex.i},${vertex.j}`;
-}
-
-function parseCellKey(key) {
-  const [i, j, o] = key.split(",").map(Number);
-  return { i, j, o };
-}
-
 function cellsKey(cells) {
   return [...cells]
     .sort(cellSort)
@@ -1648,8 +1391,4 @@ function convexHull(points) {
 
 function cross(a, b, c) {
   return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-}
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
 }

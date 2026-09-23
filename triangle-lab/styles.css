@@ -1,14 +1,21 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap");
-
 :root {
   --bg: #060c18;
   --line: #244263;
   --text: #d9f7ff;
+  --muted: rgba(190, 232, 248, 0.72);
   --cyan: #3fd8ff;
   --green: #2df6ac;
   --rose: #ff6e9d;
-  --board-size: min(calc(100dvh - 56px), calc(100vw - 36px));
-  --hex-window-path: polygon(23% 7%, 77% 7%, 96% 50%, 77% 93%, 23% 93%, 4% 50%);
+  --chip: 40px;
+  --control: 36px;
+  --gutter: 16px;
+}
+
+@media (pointer: coarse), (max-width: 600px) {
+  :root {
+    --chip: 44px;
+    --control: 44px;
+  }
 }
 
 * {
@@ -18,13 +25,11 @@
 html,
 body {
   margin: 0;
-  width: 100%;
-  height: 100%;
 }
 
 body {
-  overflow: hidden;
-  font-family: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  min-height: 100dvh;
+  font-family: "Manrope", "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
   background:
     radial-gradient(960px 560px at 7% -18%, rgba(26, 194, 255, 0.16), transparent 62%),
     radial-gradient(760px 560px at 100% -20%, rgba(45, 246, 172, 0.1), transparent 66%),
@@ -32,64 +37,188 @@ body {
   color: var(--text);
 }
 
-.app-shell {
-  width: 100%;
-  height: 100dvh;
-  display: grid;
-  place-items: center;
-  padding: 6px;
-}
-
-.main-stage {
-  width: min(100%, var(--board-size));
-  height: 100%;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 6px;
-  justify-items: center;
-}
-
-.toolbar {
+.app {
+  min-height: 100dvh;
   display: flex;
+  flex-direction: column;
+  padding: env(safe-area-inset-top, 0px) max(var(--gutter), env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(var(--gutter), env(safe-area-inset-left, 0px));
+}
+
+/* ---------- header ---------- */
+
+.lab-header {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.back-link {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--control);
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #111c30;
+  color: #c7f7ff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.back-link:hover {
+  border-color: color-mix(in srgb, var(--cyan) 50%, white);
+}
+
+.lab-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #d7f7ff;
+  text-shadow: 0 0 10px rgba(0, 209, 255, 0.3);
+}
+
+.header-end {
+  flex: 0 0 auto;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.camera-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--control);
+  min-width: var(--control);
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--cyan) 45%, var(--line));
+  background: color-mix(in srgb, var(--cyan) 12%, #111c30);
+  color: #bfefff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.camera-link:hover {
+  border-color: color-mix(in srgb, var(--cyan) 70%, white);
+  color: #e6fbff;
+}
+
+.camera-link svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  fill: currentColor;
+}
+
+.langSel {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(7, 6, 10, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.langSel button {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.66);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  min-width: 36px;
+  min-height: calc(var(--control) - 8px);
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.langSel button:hover {
+  color: #fff;
+}
+
+.langSel button[aria-pressed="true"] {
+  color: #07060a;
+  background: #ffd24a;
+}
+
+/* ---------- main column ---------- */
+
+.main {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 36px;
+  padding: 8px 0;
 }
 
-.play-zone {
+.goal {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.toolbar,
+.board-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.stage {
+  position: relative;
   width: 100%;
-  min-height: 0;
-  display: grid;
-  justify-items: center;
+  flex: 0 0 auto;
 }
 
 .board-wrap {
-  width: var(--board-size);
-  height: var(--board-size);
-  min-height: 0;
-  position: relative;
-  overflow: visible;
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
 }
 
 #board-canvas {
-  width: 100%;
-  height: 100%;
+  position: absolute;
   display: block;
   touch-action: none;
 }
 
-.piece-ring {
+.piece-tray {
   position: absolute;
   inset: 0;
-  z-index: 6;
   pointer-events: none;
-  transition: opacity 0.18s ease;
 }
 
 .piece-chip {
-  width: 40px;
-  height: 40px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--chip);
+  height: var(--chip);
+  transform: translate(-50%, -50%);
   border-radius: 12px;
   border: 1px solid var(--line);
   background: #172238;
@@ -97,11 +226,11 @@ body {
   place-items: center;
   padding: 0;
   cursor: pointer;
-  transition: transform 0.12s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  pointer-events: auto;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .piece-chip:hover {
-  transform: translate(-50%, -50%) translateY(-1px);
   border-color: color-mix(in srgb, var(--cyan) 60%, white);
 }
 
@@ -109,7 +238,7 @@ body {
   border-color: color-mix(in srgb, var(--cyan) 70%, white);
   box-shadow:
     inset 0 0 10px rgba(63, 216, 255, 0.18),
-    0 0 14px rgba(63, 216, 255, 0.2);
+    0 0 14px rgba(63, 216, 255, 0.3);
 }
 
 .piece-chip.is-on-board:not(.is-selected) {
@@ -118,29 +247,12 @@ body {
 }
 
 .piece-chip svg {
-  width: 27px;
-  height: 27px;
+  width: 70%;
+  height: 70%;
   overflow: visible;
 }
 
-.piece-chip-ring {
-  position: absolute;
-  left: 0;
-  top: 0;
-  transform: translate(-50%, -50%);
-  pointer-events: auto;
-}
-
-.board-actions {
-  position: absolute;
-  left: 50%;
-  bottom: 2%;
-  transform: translateX(-50%);
-  z-index: 7;
-  display: flex;
-  gap: 6px;
-  transition: opacity 0.18s ease;
-}
+/* ---------- controls ---------- */
 
 .chip {
   appearance: none;
@@ -148,39 +260,31 @@ body {
   border-radius: 11px;
   background: #1a2740;
   color: #d8f7ff;
+  font: inherit;
   font-size: 0.92rem;
   font-weight: 700;
-  height: 34px;
-  padding: 0 12px;
-  display: inline-grid;
-  place-items: center;
+  min-height: var(--control);
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   cursor: pointer;
 }
 
-.chip:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(63, 216, 255, 0.34);
-}
-
-.icon-chip {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border-radius: 999px;
-  color: #9dcde3;
-}
-
-.icon-chip svg {
-  width: 16px;
-  height: 16px;
-  fill: currentColor;
+.chip:focus-visible,
+.piece-chip:focus-visible,
+.back-link:focus-visible,
+.camera-link:focus-visible,
+.langSel button:focus-visible,
+.cite:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
 }
 
 .action-chip {
-  height: 28px;
-  padding: 0 10px;
-  font-size: 0.78rem;
   color: #9ad8ed;
+  min-width: 96px;
 }
 
 .chip-primary {
@@ -192,7 +296,8 @@ body {
 }
 
 .chip-area {
-  min-width: 110px;
+  cursor: default;
+  min-width: 96px;
   border-color: color-mix(in srgb, var(--cyan) 54%, white);
   color: #ddfbff;
   background: linear-gradient(180deg, rgba(28, 143, 176, 0.36), rgba(22, 91, 114, 0.34));
@@ -201,128 +306,290 @@ body {
     0 0 20px rgba(63, 216, 255, 0.22);
 }
 
+.area-value {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.05rem;
+}
+
 .chip-danger {
   border-color: color-mix(in srgb, var(--rose) 50%, white);
   color: #ffe6ef;
   background: color-mix(in srgb, var(--rose) 20%, #2a1f32);
 }
 
-.board-camera-chip {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 8;
-  pointer-events: auto;
+.status {
+  margin: 0;
+  max-width: 40rem;
+  min-height: 2.8em;
+  color: #cdefff;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  text-align: center;
 }
 
-.board-camera-chip.is-active {
-  color: #d8fbff;
-  border-color: color-mix(in srgb, var(--cyan) 70%, white);
-  background: color-mix(in srgb, var(--cyan) 22%, #1a2740);
-  box-shadow:
-    inset 0 0 10px rgba(63, 216, 255, 0.22),
-    0 0 14px rgba(63, 216, 255, 0.3);
+/* ---------- citation ---------- */
+
+.cite-bar {
+  flex: 0 0 auto;
+  padding: 6px 0 10px;
+  text-align: center;
 }
 
-.camera-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  pointer-events: auto;
-  cursor: crosshair;
-  display: grid;
-  place-items: center;
-  background: transparent;
-  clip-path: var(--camera-window-path, var(--hex-window-path));
-}
-
-.camera-overlay[hidden] {
-  display: none !important;
-  pointer-events: none;
-}
-
-.camera-overlay video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  clip-path: var(--camera-window-path, var(--hex-window-path));
-  outline: 1px solid rgba(72, 208, 255, 0.9);
-  outline-offset: -1px;
-  pointer-events: none;
-}
-
-.board-wrap.camera-mode .piece-ring,
-.board-wrap.camera-mode .board-actions {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.side-brand {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+.cite {
+  color: rgba(134, 233, 255, 0.75);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.4;
   text-decoration: none;
-  color: #86e9ff;
-  font-weight: 700;
-  font-size: 0.76rem;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  text-shadow:
-    0 0 10px rgba(63, 216, 255, 0.25),
-    0 0 18px rgba(45, 246, 172, 0.14);
-  pointer-events: auto;
-  z-index: 7;
 }
 
-@media (max-width: 900px) {
+.cite:hover {
+  color: #bff3ff;
+  text-decoration: underline;
+}
+
+/* ---------- small screens ---------- */
+
+@media (max-width: 600px) {
   :root {
-    --board-size: min(calc(100dvh - 132px), calc(100vw - 8px));
+    --gutter: 16px;
   }
 
-  .app-shell {
-    padding: 6px;
+  .main {
+    justify-content: flex-start;
   }
 
-  .main-stage {
-    gap: 6px;
+  .lab-title {
+    order: 3;
+    flex-basis: 100%;
+    font-size: 1rem;
   }
 
-  .toolbar {
-    gap: 6px;
-    min-height: 34px;
+  .camera-link {
+    padding: 0;
+    justify-content: center;
+  }
+
+  .camera-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .langSel button {
+    min-width: 40px;
   }
 
   .chip {
-    font-size: 0.8rem;
-    height: 30px;
-    padding: 0 9px;
-  }
-
-  .chip-area {
-    min-width: 84px;
-  }
-
-  .piece-chip {
-    width: 36px;
-    height: 36px;
-  }
-
-  .piece-chip svg {
-    width: 24px;
-    height: 24px;
-  }
-
-  .board-actions {
-    bottom: 1%;
-  }
-
-  .side-brand {
-    display: none;
+    padding: 0 12px;
+    font-size: 0.88rem;
   }
 }
 
-/* Camera / photo capture — visible but disabled for now (offered as a
-   mixed-reality setup for outreach events; see the hover note). */
-.board-camera-chip { opacity: 0.5; cursor: help; }
-.board-camera-chip:hover { opacity: 0.75; }
+@media (max-width: 380px) {
+  .lab-header {
+    column-gap: 8px;
+  }
+
+  .back-link {
+    padding: 0 10px;
+    font-size: 0.8rem;
+  }
+
+  .header-end {
+    gap: 6px;
+  }
+
+  .langSel button {
+    min-width: 36px;
+    padding: 4px 6px;
+  }
+}
+
+/* Touch screens: every target at least 44 px. */
+@media (pointer: coarse) {
+  .langSel {
+    padding: 0;
+  }
+
+  .langSel button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .cite-bar {
+    padding: 0 0 4px;
+  }
+
+  .cite {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
+
+/* Very narrow phones: the back link keeps its arrow and its label for
+   screen readers; the words would push the header onto two rows. */
+@media (max-width: 385px) {
+  .back-link {
+    padding: 0;
+    min-width: var(--control);
+    justify-content: center;
+  }
+
+  .back-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+/* ---------- wide screens ----------
+   Landscape screens: the title and the controls sit in a side column and
+   the board fills the rest of the screen, from top to bottom. app.js uses
+   the same condition. */
+@media (min-width: 640px) and (min-aspect-ratio: 5/4) {
+  :root {
+    --side: clamp(280px, 26vw, 360px);
+  }
+
+  .app {
+    width: calc(var(--side) + max(var(--gutter), env(safe-area-inset-left, 0px)));
+    padding-right: 0;
+  }
+
+  .lab-header {
+    padding-top: 12px;
+  }
+
+  .lab-title {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .header-end {
+    order: 4;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    row-gap: 6px;
+    justify-content: space-between;
+  }
+
+  .main {
+    flex: 1 0 auto;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 20px 0;
+  }
+
+  .goal,
+  .status {
+    text-align: left;
+  }
+
+  .toolbar,
+  .board-actions {
+    justify-content: flex-start;
+  }
+
+  .stage {
+    position: fixed;
+    top: env(safe-area-inset-top, 0px);
+    bottom: env(safe-area-inset-bottom, 0px);
+    left: calc(var(--side) + 2 * max(var(--gutter), env(safe-area-inset-left, 0px)));
+    right: max(var(--gutter), env(safe-area-inset-right, 0px));
+    width: auto;
+    height: auto;
+  }
+
+  .board-wrap {
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .cite-bar {
+    text-align: left;
+  }
+}
+
+/* Touch buttons are larger: the column needs a little more room. */
+@media (min-width: 640px) and (min-aspect-ratio: 5/4) and (pointer: coarse) {
+  :root {
+    --side: clamp(300px, 26vw, 360px);
+  }
+}
+
+/* Wide but short (phones held sideways, small laptops): a denser column. */
+@media (min-width: 640px) and (min-aspect-ratio: 5/4) and (max-height: 500px) {
+  .lab-header {
+    padding: 6px 0;
+  }
+
+  .lab-title {
+    font-size: 0.95rem;
+  }
+
+  .header-end {
+    order: 0;
+    flex-basis: auto;
+  }
+
+  .back-link,
+  .camera-link {
+    padding: 0;
+    min-width: var(--control);
+    justify-content: center;
+  }
+
+  .back-text,
+  .camera-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .main {
+    gap: 6px;
+    padding: 6px 0;
+  }
+
+  .goal {
+    font-size: 0.82rem;
+  }
+
+  .chip {
+    padding: 0 10px;
+    font-size: 0.85rem;
+  }
+
+  .action-chip,
+  .chip-area {
+    min-width: 0;
+  }
+
+  .status {
+    min-height: 0;
+    font-size: 0.85rem;
+    line-height: 1.3;
+  }
+
+  .cite-bar {
+    padding: 0 0 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
