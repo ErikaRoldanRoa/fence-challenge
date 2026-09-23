@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap");
-
 :root {
   --bg: #0d1117;
   --panel: #151b24;
@@ -11,6 +9,8 @@
   --accent-2: #00ffa2;
   --danger: #ff5f8f;
   --neon-violet: #b388ff;
+  /* The enclosed inside: the same amber as the area pill on the home page. */
+  --amber: #ffd24a;
   --shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
 }
 
@@ -21,8 +21,12 @@
 html,
 body {
   margin: 0;
-  height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+}
+
+/* The page colour sits on html, so no seam shows below a scrolled body. */
+html {
+  background: var(--bg);
 }
 
 body {
@@ -30,273 +34,180 @@ body {
     radial-gradient(900px 420px at 10% -10%, rgba(63, 184, 255, 0.14), transparent 60%),
     radial-gradient(700px 440px at 100% -8%, rgba(46, 207, 153, 0.12), transparent 64%),
     var(--bg);
+  background-repeat: no-repeat;
   color: var(--text);
-  font-family: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  font-family: "Manrope", "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+  min-height: 100dvh;
 }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- page grid ----------
+   Portrait (the default): one column, from top to bottom: title row,
+   toolbar, board, status, pieces, credit. app.js sizes the board
+   (--compact-board) so that everything down to Rotate/Flip fits on screen.
+   Landscape: a side column holds everything but the board, and the board
+   fills the height of the screen (see the media query further down). */
 
 .app-shell {
   width: min(1600px, 100%);
   margin: 0 auto;
-  height: 100dvh;
-  min-height: 100dvh;
-  padding: 6px;
+  padding: 6px 8px;
+}
+
+.game-layout {
   display: grid;
-  grid-template-rows: minmax(0, 1fr);
-  gap: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "head"
+    "toolbar"
+    "main"
+    "status"
+    "dock"
+    "label";
+  justify-items: center;
+  row-gap: 6px;
+  width: 100%;
 }
 
-.topbar {
-  display: none;
-}
+/* ---------- header: back to the hub, title, language ---------- */
 
-.topbar-minimal {
+.lab-header {
+  grid-area: head;
+  justify-self: stretch;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  gap: 12px;
+  padding: 0 4px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.brand-stack {
-  width: fit-content;
-  display: grid;
-  justify-items: start;
-  gap: 2px;
-  padding: 0 2px;
-}
-
-.brand-title {
-  margin: 0;
-  font-size: clamp(1.05rem, 1.5vw, 1.35rem);
-  font-weight: 800;
-  line-height: 1;
-  color: #d7f7ff;
-  text-shadow:
-    0 0 10px rgba(0, 209, 255, 0.35),
-    0 0 22px rgba(0, 209, 255, 0.18);
-}
-
-.brand-credit {
-  margin: 0;
-  color: #9cecff;
-  font-size: 0.72rem;
-  font-weight: 600;
-  white-space: nowrap;
-  text-shadow: 0 0 8px rgba(0, 209, 255, 0.24);
-}
-
-.mode-icons {
-  display: flex;
+.back-link {
+  flex: 0 0 auto;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  margin-left: 0;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel-soft);
+  color: #c7f7ff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-.camera-mode-icons {
-  margin-bottom: 4px;
+.back-link:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, white);
 }
 
+.lab-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #d7f7ff;
+  text-shadow: 0 0 10px rgba(0, 209, 255, 0.3);
+}
+
+.header-end {
+  flex: 0 0 auto;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.langSel {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(7, 6, 10, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.langSel button {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  min-width: 36px;
+  min-height: 30px;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.langSel button:hover {
+  color: #fff;
+}
+
+.langSel button[aria-pressed="true"] {
+  color: #07060a;
+  background: #ffd24a;
+}
+
+/* "Play on paper": a link to the camera page. */
 .camera-chip {
-  width: 34px;
+  min-width: 34px;
   height: 34px;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: var(--panel-soft);
-  color: #9fbed2;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  padding: 0;
+  color: #9fe6ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 8px;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .camera-chip svg {
   width: 18px;
   height: 18px;
+  flex: 0 0 auto;
   fill: currentColor;
 }
 
-.camera-chip.active {
+.camera-chip:hover {
   color: #d8fbff;
-  border-color: color-mix(in srgb, var(--accent) 70%, white);
-  background: color-mix(in srgb, var(--accent) 22%, var(--panel-soft));
-  box-shadow:
-    inset 0 0 10px rgba(0, 209, 255, 0.22),
-    0 0 12px rgba(0, 209, 255, 0.28);
+  border-color: color-mix(in srgb, var(--accent) 60%, white);
+  background: color-mix(in srgb, var(--accent) 16%, var(--panel-soft));
 }
 
-.game-chip.active {
-  color: #ecfff7;
-  border-color: color-mix(in srgb, var(--accent-2) 70%, white);
-  background: color-mix(in srgb, var(--accent-2) 22%, var(--panel-soft));
-  box-shadow:
-    inset 0 0 10px rgba(0, 255, 162, 0.2),
-    0 0 12px rgba(0, 255, 162, 0.24);
-}
-
-.panel {
-  display: none;
-  grid-template-columns: 360px 1fr;
-  gap: 8px;
-}
-
-.panel.active {
-  display: grid;
-  min-height: 0;
-  height: 100%;
-}
-
-#panel-game {
-  --label-width: 30px;
-  --dock-width: 58px;
-  --dock-gap: 8px;
-  --board-size: min(calc(100dvh - 34px), calc(100vw - 180px));
-  --toolbar-height: 38px;
-  --status-height: 0px;
-  grid-template-columns: 1fr;
-  align-items: center;
-  justify-items: center;
-}
-
-#panel-game.panel.active {
-  display: grid;
-  min-height: 0;
-  height: 100%;
-}
-
-#panel-camera.panel.active {
-  display: none;
-}
-
-#panel-camera {
-  display: none;
-}
-
-.sidebar,
-.camera-column {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 8px;
-  box-shadow: var(--shadow);
-}
-
-.sidebar {
-  display: grid;
-  align-content: start;
-  gap: 12px;
-}
-
-#panel-camera .sidebar,
-#panel-camera .camera-column {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 0;
-}
-
-#panel-camera .sidebar {
-  width: min(100%, 276px);
-  align-content: center;
-  gap: 8px;
-}
-
-#panel-camera .camera-column {
-  width: min(100%, 980px);
-  gap: 8px;
-  align-content: center;
-  justify-items: center;
-}
-
-.camera-note {
-  margin: 0;
-  font-size: 0.76rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #7fd8f4;
-  text-shadow: 0 0 8px rgba(0, 209, 255, 0.24);
-}
-
-.sidebar h2 {
-  margin: 0;
-  font-size: 1rem;
-}
-
-.game-layout {
-  display: grid;
-  grid-template-columns: var(--dock-width) var(--board-size) var(--label-width);
-  grid-template-rows: var(--toolbar-height) var(--board-size);
-  grid-template-areas:
-    ". toolbar ."
-    "dock main label";
-  column-gap: var(--dock-gap);
-  row-gap: 6px;
-  width: calc(var(--label-width) + var(--dock-width) + (var(--dock-gap) * 2) + var(--board-size));
-  margin: 0;
-  align-items: start;
-  justify-content: center;
-  align-content: center;
-  min-height: 0;
-  max-width: 100%;
-  max-height: 100%;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  box-shadow: none;
-}
-
-.side-brand {
-  grid-area: label;
-  align-self: center;
-  justify-self: center;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  text-decoration: none;
-  color: #8fe8ff;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  font-size: 0.76rem;
-  text-shadow:
-    0 0 9px rgba(0, 209, 255, 0.3),
-    0 0 18px rgba(0, 255, 162, 0.16);
-}
-
-.side-brand:hover {
-  color: #d7f8ff;
-}
-
-.game-main {
-  grid-area: main;
-  width: var(--board-size);
-  height: var(--board-size);
-  min-height: 0;
-  display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 6px;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  background: transparent;
-  justify-items: center;
-  align-items: start;
-}
+/* ---------- toolbar: measure, area, clear ---------- */
 
 .game-toolbar {
   grid-area: toolbar;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  width: var(--board-size);
+  width: 100%;
 }
 
 .game-controls {
   display: flex;
-  gap: 10px;
+  flex-wrap: nowrap;
+  justify-content: center;
   align-items: center;
-}
-
-.game-controls .mode-icons {
-  margin-left: 10px;
-  margin-right: 4px;
+  gap: 8px;
 }
 
 .game-controls .btn {
@@ -304,127 +215,131 @@ body {
   font-size: 0.8rem;
 }
 
-.hint,
-.canvas-tip,
-.steps {
-  margin: 0;
+.btn {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-soft);
+  color: #c7f7ff;
+  font-family: inherit;
+  font-weight: 700;
+  padding: 10px;
+  cursor: pointer;
+  text-shadow: 0 0 8px rgba(0, 209, 255, 0.25);
+}
+
+.btn:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, white);
+}
+
+.btn-primary {
+  background: color-mix(in srgb, var(--accent) 28%, var(--panel-soft));
+  border-color: color-mix(in srgb, var(--accent) 60%, white);
+  box-shadow: 0 0 10px rgba(0, 209, 255, 0.25);
+}
+
+.btn-danger {
+  background: color-mix(in srgb, var(--danger) 22%, var(--panel-soft));
+  border-color: color-mix(in srgb, var(--danger) 58%, white);
+  text-shadow: 0 0 8px rgba(255, 95, 143, 0.22);
+}
+
+.metrics {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 6px 10px;
   color: var(--muted);
+  background: #121923;
   font-size: 0.9rem;
 }
 
-.steps {
-  padding-left: 18px;
-  display: grid;
-  gap: 4px;
+/* Amber, like the inside it counts. */
+#game-metrics {
+  width: 88px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  color: #ffe9a8;
+  border-color: rgba(255, 210, 74, 0.6);
+  background: linear-gradient(135deg, rgba(255, 210, 74, 0.2), rgba(255, 210, 74, 0.05)), #141820;
+  box-shadow: 0 0 14px rgba(255, 210, 74, 0.2);
+}
+
+#game-metrics strong {
+  color: var(--amber);
+  font-size: 1.05rem;
+  text-shadow: 0 0 12px rgba(255, 210, 74, 0.35);
+}
+
+/* ---------- board ---------- */
+
+/* app.js sets --compact-board in the one-column layout. */
+.game-main {
+  grid-area: main;
+  width: min(100%, var(--compact-board, 100%));
+  max-width: 100%;
+  min-height: 0;
 }
 
 .board-stage {
-  min-height: 0;
-  display: grid;
-  place-items: center;
   position: relative;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  background: transparent;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
-  width: var(--board-size);
-  height: var(--board-size);
 }
 
-.board-camera-chip {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 6;
-}
-
-.camera-inline-stage {
-  position: absolute;
-  inset: 0;
-  display: none;
-  align-items: center;
-  justify-items: center;
-  background: #0f141c;
+#game-board {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   border-radius: 12px;
   border: 1px solid var(--line);
-  overflow: hidden;
+  background: #0f141c;
+  touch-action: none;
+  cursor: crosshair;
 }
 
-.camera-inline-stage video {
+/* ---------- status line ---------- */
+
+.status-line {
+  grid-area: status;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  min-height: 2.6em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.82rem;
+  line-height: 1.3;
+  color: #bfe9f7;
 }
 
-.camera-inline-stage canvas {
-  display: none;
-}
-
-.camera-inline-stage .btn {
-  position: absolute;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 7px 14px;
-}
-
-#panel-game.camera-inline-active #game-board {
-  display: none;
-}
-
-#panel-game.camera-inline-active .camera-inline-stage {
-  display: grid;
-}
-
-#quick-camera-capture {
-  display: none;
-}
-
-#panel-game.camera-inline-active #quick-camera-video {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  aspect-ratio: auto;
-  border: none;
-  border-radius: 0;
-  display: block;
-}
+/* ---------- pieces, Rotate and Flip ---------- */
 
 .dock-panel {
   grid-area: dock;
-  width: var(--dock-width);
-  height: var(--board-size);
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
   gap: 8px;
-  border: none;
-  border-radius: 0;
-  padding: 2px 0 0;
-  background: transparent;
-  box-shadow: none;
 }
 
-.piece-tray {
-  display: grid;
-  gap: 5px;
-  max-height: calc(var(--board-size) - 126px);
-  overflow: visible;
-  padding-right: 0;
-  justify-items: center;
-  align-content: start;
-}
-
+/* All twelve pieces stay visible: two rows of six on a phone, one row of
+   twelve when there is room. */
 .piece-dock {
-  grid-template-columns: 1fr;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  max-width: calc(6 * 44px + 5 * 8px);
 }
 
 .piece-btn {
+  flex: 0 0 44px;
   display: grid;
   grid-template-columns: 1fr;
   border: 1px solid var(--line);
@@ -437,17 +352,6 @@ body {
   height: 44px;
   align-items: center;
   justify-items: center;
-}
-
-.piece-actions {
-  display: grid;
-  gap: 5px;
-  align-content: start;
-}
-
-.piece-actions .btn {
-  padding: 6px 3px;
-  font-size: 0.72rem;
 }
 
 .piece-preview {
@@ -467,349 +371,308 @@ body {
   opacity: 0.5;
 }
 
-.controls-grid {
+.piece-btn.placed.selected {
+  opacity: 0.85;
+}
+
+.piece-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+  width: min(100%, 420px);
 }
 
-#panel-camera .controls-grid {
-  gap: 6px;
-}
-
-.btn {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--panel-soft);
-  color: #c7f7ff;
-  font-weight: 700;
-  padding: 10px;
-  cursor: pointer;
-  text-shadow: 0 0 8px rgba(0, 209, 255, 0.25);
-}
-
-#panel-camera .btn {
-  padding: 8px 9px;
-  font-size: 0.78rem;
-}
-
-.btn:hover {
-  border-color: color-mix(in srgb, var(--accent) 45%, white);
-}
-
-.btn-primary {
-  background: color-mix(in srgb, var(--accent) 28%, var(--panel-soft));
-  border-color: color-mix(in srgb, var(--accent) 60%, white);
-  box-shadow: 0 0 10px rgba(0, 209, 255, 0.25);
-}
-
-.btn-danger {
-  background: color-mix(in srgb, var(--danger) 22%, var(--panel-soft));
-  border-color: color-mix(in srgb, var(--danger) 58%, white);
-  text-shadow: 0 0 8px rgba(255, 95, 143, 0.22);
-}
-
-.status-card {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px;
-  color: var(--text);
-  background: #121923;
-  min-height: 46px;
-}
-
-#panel-camera .status-card {
-  background: rgba(17, 26, 38, 0.7);
-  border-color: #2a3a50;
-  min-height: 40px;
-  font-size: 0.85rem;
-}
-
-.status-card.compact {
-  display: none;
-}
-
-.metrics {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px;
-  color: var(--muted);
-  background: #121923;
-  display: grid;
-  gap: 5px;
-  font-size: 0.9rem;
-}
-
-#panel-camera .metrics {
-  background: rgba(17, 26, 38, 0.7);
-  border-color: #2a3a50;
+.piece-actions .btn {
+  min-height: 44px;
+  padding: 6px;
   font-size: 0.82rem;
 }
 
-.camera-column {
-  display: grid;
-  gap: 10px;
-  align-content: start;
-  min-height: 0;
-}
+/* ---------- credit ---------- */
 
-#game-board,
-#camera-grid,
-#quick-camera-capture {
-  width: 100%;
-  border-radius: 12px;
-  border: 1px solid var(--line);
-  background: #0f141c;
-}
-
-#game-board {
-  width: 100%;
-  height: 100%;
-  aspect-ratio: 1 / 1;
-  margin: 0;
-}
-
-#game-board {
-  touch-action: none;
-  cursor: crosshair;
-}
-
-#game-metrics {
-  min-width: 106px;
+.side-brand {
+  grid-area: label;
+  justify-self: center;
+  padding: 8px 0 12px;
   text-align: center;
-  color: #e6fdff;
-  border-color: #2c6786;
-  background: radial-gradient(circle at 50% 30%, rgba(0, 209, 255, 0.42), rgba(18, 27, 40, 0.9));
-  box-shadow:
-    inset 0 0 22px rgba(0, 209, 255, 0.28),
-    0 0 18px rgba(0, 209, 255, 0.38);
-}
-
-#game-metrics strong {
-  color: #ffffff;
+  text-decoration: none;
+  color: #8fe8ff;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-size: 0.72rem;
   text-shadow:
-    0 0 12px rgba(0, 209, 255, 0.38),
-    0 0 20px rgba(179, 136, 255, 0.3);
+    0 0 9px rgba(0, 209, 255, 0.3),
+    0 0 18px rgba(0, 255, 162, 0.16);
 }
 
-.camera-box {
-  display: grid;
-  gap: 8px;
+.side-brand:hover {
+  color: #d7f8ff;
 }
 
-#panel-camera .camera-box {
-  width: min(100%, 980px);
-  grid-template-columns: 1fr 1fr;
-}
+/* ---------- one column, wide enough for one row of twelve pieces ---------- */
 
-#quick-camera-video {
-  width: 100%;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-  background: #090d12;
-  min-height: 180px;
-}
-
-#quick-camera-video,
-#quick-camera-capture {
-  aspect-ratio: 16 / 9;
-  min-height: 0;
-  height: auto;
-}
-
-#camera-grid {
-  width: min(100%, var(--camera-grid-size));
-  aspect-ratio: 1 / 1;
-}
-
-#panel-camera .canvas-tip {
-  max-width: 680px;
-  text-align: center;
-  font-size: 0.78rem;
-  color: #84adc4;
-}
-
-.threshold-label {
-  display: grid;
-  gap: 6px;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-#panel-camera .threshold-label,
-#panel-camera .upload-label {
-  gap: 4px;
-  font-size: 0.78rem;
-  color: #86bad1;
-}
-
-.threshold-label input {
-  width: 100%;
-}
-
-.upload-label {
-  display: grid;
-  gap: 6px;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.upload-label input {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 8px;
-  background: #111827;
-  color: var(--text);
-}
-
-.footer-note {
-  color: var(--muted);
-  text-align: center;
-  font-size: 0.88rem;
-  display: none;
-}
-
-@media (max-width: 1180px) {
-  html,
-  body {
-    overflow: auto;
-    overflow-x: hidden;
+@media (min-width: 660px) {
+  .piece-dock {
+    max-width: calc(12 * 44px + 11 * 8px);
   }
+}
 
-  #panel-game,
-  #panel-game.panel.active {
-    justify-items: stretch;
-    align-items: start;
-  }
-
-  .panel {
-    grid-template-columns: 1fr;
-  }
-
-  .app-shell {
-    height: auto;
-    min-height: 100dvh;
-    grid-template-rows: auto;
-    padding: 8px;
-  }
-
-  .topbar-minimal {
+@media (max-width: 600px) {
+  .lab-header {
     flex-wrap: wrap;
-    align-items: flex-start;
+    row-gap: 4px;
+    padding: 0 0 6px;
   }
 
-  .mode-icons {
-    margin-left: 0;
+  .lab-title {
+    order: 3;
+    flex-basis: 100%;
+    font-size: 0.95rem;
+  }
+
+  .paper-label {
+    display: none;
   }
 
   .camera-chip {
-    width: 32px;
-    height: 32px;
-  }
-
-  .game-layout {
-    width: 100%;
-    max-width: 100%;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto;
-    grid-template-areas:
-      "toolbar"
-      "main"
-      "dock"
-      "label";
-    height: auto;
-    justify-items: center;
-    row-gap: 8px;
-    column-gap: 0;
-  }
-
-  .side-brand {
-    writing-mode: horizontal-tb;
-    transform: none;
-    justify-self: center;
-    align-self: start;
-    font-size: 0.68rem;
-  }
-
-  .game-main {
-    order: 1;
-    width: min(100%, calc(100vw - 18px));
-    max-width: 100%;
-    height: auto;
-  }
-
-  .game-controls {
-    flex-wrap: nowrap;
-    justify-content: center;
-  }
-
-  .game-controls .mode-icons {
-    margin-left: 4px;
-    margin-right: 0;
-  }
-
-  .game-toolbar {
-    width: min(100%, calc(100vw - 18px));
-    max-width: 100%;
-  }
-
-  #game-metrics {
-    min-width: 0;
-    width: 90px;
-    margin-left: 0;
-  }
-
-  .dock-panel {
-    order: 2;
-    grid-template-rows: auto auto;
-    height: auto;
-    width: min(100%, calc(100vw - 18px));
-    max-width: 100%;
-    justify-content: flex-start;
-  }
-
-  .piece-dock {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    max-height: none;
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    gap: 8px;
-  }
-
-  .piece-dock .piece-btn {
-    flex: 0 0 44px;
-  }
-
-  .piece-actions {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  #game-board {
-    width: 100%;
-    height: 100%;
-  }
-
-  .board-stage {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1 / 1;
-  }
-
-  .board-camera-chip {
-    top: 7px;
-    right: 7px;
-  }
-
-  .camera-inline-stage .btn {
-    bottom: 10px;
+    width: 44px;
+    padding: 0;
   }
 }
 
-/* Camera / photo capture — visible but disabled for now (offered as a
-   mixed-reality setup for outreach events; see the hover note). */
-.board-camera-chip { opacity: 0.5; cursor: help; }
-.board-camera-chip:hover { opacity: 0.75; }
+@media (max-width: 400px) {
+  .lab-header {
+    column-gap: 6px;
+  }
+
+  .header-end {
+    gap: 4px;
+  }
+
+  .langSel {
+    gap: 2px;
+  }
+
+  .game-controls {
+    gap: 6px;
+  }
+
+  .game-controls .btn {
+    padding: 5px 8px;
+  }
+
+  #game-metrics {
+    width: auto;
+    padding: 6px 8px;
+  }
+}
+
+/* ---------- landscape: a side column and a board as tall as the screen ----------
+   app.js uses the same condition (SIDE_LAYOUT_QUERY). */
+
+@media (min-width: 560px) and (min-aspect-ratio: 1/1) {
+  .app-shell {
+    --shell-pad: 8px;
+    --col-gap: 16px;
+    --side-min: 260px;
+    --side-max: 360px;
+    --board-size: max(
+      240px,
+      min(
+        calc(100dvh - 2 * var(--shell-pad)),
+        calc(100vw - 2 * var(--shell-pad) - var(--col-gap) - var(--side-min))
+      )
+    );
+    --side-width: clamp(
+      var(--side-min),
+      calc(100vw - 2 * var(--shell-pad) - var(--col-gap) - var(--board-size)),
+      var(--side-max)
+    );
+    width: 100%;
+    padding: var(--shell-pad);
+  }
+
+  .game-layout {
+    grid-template-columns: var(--side-width) var(--board-size);
+    grid-template-rows: auto auto auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "head main"
+      "toolbar main"
+      "dock main"
+      "status main"
+      "label main";
+    justify-content: center;
+    align-content: start;
+    justify-items: stretch;
+    align-items: start;
+    column-gap: var(--col-gap);
+    row-gap: 14px;
+    min-height: var(--board-size);
+  }
+
+  .lab-header {
+    flex-wrap: wrap;
+    row-gap: 8px;
+    column-gap: 8px;
+    padding: 0 0 10px;
+    container-type: inline-size;
+  }
+
+  .header-end {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    max-width: 100%;
+  }
+
+  .lab-title {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .game-toolbar {
+    justify-content: flex-start;
+  }
+
+  .game-controls {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .game-main {
+    width: var(--board-size);
+    height: var(--board-size);
+  }
+
+  .board-stage {
+    height: 100%;
+  }
+
+  .status-line {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .dock-panel {
+    align-items: stretch;
+  }
+
+  .piece-dock,
+  .piece-actions {
+    max-width: none;
+    width: 100%;
+  }
+
+  .piece-dock {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 44px);
+    gap: 6px;
+    justify-content: start;
+  }
+
+  .side-brand {
+    align-self: end;
+    justify-self: start;
+    padding: 0;
+    text-align: left;
+  }
+}
+
+/* A narrow side column: "Play on paper" becomes an icon, so the language
+   switch stays on the same row. */
+@container (max-width: 300px) {
+  .paper-label {
+    display: none;
+  }
+
+  .camera-chip {
+    width: 44px;
+    padding: 0;
+  }
+}
+
+/* Short and wide (phones held sideways): a wider, denser side column. */
+@media (min-width: 560px) and (min-aspect-ratio: 1/1) and (max-height: 520px) {
+  .app-shell {
+    --shell-pad: 6px;
+    --col-gap: 12px;
+    --side-max: 440px;
+  }
+
+  .game-layout {
+    row-gap: 6px;
+  }
+
+  .lab-header {
+    padding: 0 0 6px;
+    row-gap: 4px;
+  }
+
+  .lab-title {
+    font-size: 0.9rem;
+  }
+
+  .back-link,
+  .camera-chip {
+    width: 44px;
+    padding: 0;
+  }
+
+  .back-text,
+  .paper-label {
+    display: none;
+  }
+
+  .status-line {
+    min-height: 0;
+    font-size: 0.78rem;
+  }
+
+  .side-brand {
+    font-size: 0.66rem;
+  }
+
+  /* Rotate and Flip beside the pieces, to save height. */
+  .dock-panel {
+    flex-direction: row;
+    align-items: start;
+  }
+
+  .piece-dock {
+    grid-template-columns: repeat(6, 44px);
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  .piece-actions {
+    grid-template-columns: 1fr;
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+}
+
+@media (pointer: coarse) {
+  .back-link,
+  .langSel button,
+  .game-controls .btn,
+  .camera-chip {
+    min-height: 44px;
+  }
+
+  .langSel button,
+  .camera-chip,
+  .back-link {
+    min-width: 44px;
+  }
+
+  .side-brand {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  /* No keyboard on a touch screen: the R and F hints would only confuse. */
+  .key-hint {
+    display: none;
+  }
+}
