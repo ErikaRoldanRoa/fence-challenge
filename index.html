@@ -4,14 +4,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'" />
     <title>Fence Challenge · Hub</title>
+    <meta name="description" content="Construis des barrières de polyominos, de polyhexes et de polyiamonds, et enclos la plus grande aire, à l’écran ou sur papier avec la caméra. Le compagnon interactif de l’article « Maximale Zäune mit Polyformen » (DMVM 2025)." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Fence Challenge" />
+    <meta property="og:title" content="Fence Challenge" />
+    <meta property="og:description" content="Construis des barrières de polyformes et enclos la plus grande aire, à l’écran ou sur papier avec la caméra." />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:locale:alternate" content="de_DE" />
+    <meta property="og:locale:alternate" content="en_GB" />
     <meta name="theme-color" content="#07060a" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="manifest.json" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="preload" href="fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="fonts/manrope.css" />
     <style>
       :root {
         --bg0:#07060a; --text:rgba(255,255,255,0.92); --muted:rgba(255,255,255,0.70); --muted2:rgba(255,255,255,0.52);
@@ -22,7 +29,7 @@
       }
       *{box-sizing:border-box;}
       html,body{margin:0;min-height:100dvh;background:var(--bg0);color:var(--text);font-family:var(--sans);line-height:1.55;}
-      main{max-width:1180px;margin:0 auto;padding:40px 24px 100px;}
+      main{max-width:1180px;margin:0 auto;padding:40px 24px 48px;}
       .hero{text-align:center;padding:8px 0 12px;}
       .hero h1{margin:0;font-size:clamp(28px,4vw,42px);font-weight:900;letter-spacing:-0.4px;line-height:1.08;}
       .hero .cite{display:inline-flex;gap:8px;margin-top:14px;padding:4px 12px;border-radius:999px;background:rgba(255,210,74,0.06);border:1px solid rgba(255,210,74,0.28);color:var(--amber);font-family:var(--mono);font-size:11px;letter-spacing:0.06em;text-decoration:none;}
@@ -45,8 +52,9 @@
       article.pCard.cyan .pTitle{color:var(--cyan);}
       .pKicker{text-align:center;margin:3px 0 10px;font-family:var(--mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted2);}
 
-      .pIconRow{display:flex;align-items:center;gap:8px;}
-      .pIconRow .spacer{flex:1 1 auto;}
+      .pIconRow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;}
+      .pIconSet{display:flex;align-items:center;gap:8px;}
+      .pIconSet.nav{margin-left:auto;}
       .icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:999px;font-size:14px;line-height:1;border:1px solid rgba(255,255,255,0.14);background:rgba(0,0,0,0.28);color:rgba(255,255,255,0.92);cursor:help;text-decoration:none;transition:transform 0.12s ease,border-color 0.12s ease,background 0.12s ease;}
       .icon:hover,.icon:focus-visible{transform:translateY(-1px);border-color:rgba(255,255,255,0.34);background:rgba(255,255,255,0.08);}
       
@@ -105,7 +113,9 @@
 
       
       .pStatus{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:auto;padding:9px;border-radius:16px;background:rgba(0,0,0,0.26);border:1px solid rgba(255,255,255,0.07);min-height:62px;}
-      .pill{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:0 15px;border-radius:999px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.03);color:var(--muted);font-family:var(--mono);font-size:11.5px;letter-spacing:0.05em;text-transform:lowercase;}
+      .pill{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:0 15px;border-radius:999px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.03);color:var(--muted);font-family:var(--mono);font-size:11.5px;letter-spacing:0.05em;}
+      /* French and English labels read in lower case; German nouns keep their capitals. */
+      .pill:not(:lang(de)){text-transform:lowercase;}
       .pill .k{font-weight:800;font-size:14px;letter-spacing:0.02em;color:var(--text);}
       .pill.area{border-color:rgba(255,210,74,0.42);background:linear-gradient(135deg,rgba(255,210,74,0.13),rgba(255,210,74,0.04));color:var(--amber);box-shadow:inset 0 1px 0 rgba(255,255,255,0.07);}
       .pill.area .k{color:var(--amber);font-size:17px;min-width:14px;}
@@ -125,21 +135,46 @@
       button.pill.reset:hover{color:var(--text);border-color:rgba(255,255,255,0.34);background:rgba(255,255,255,0.07);}
 
       
-      [data-tip]{position:relative;}
-      [data-tip]::after{content:attr(data-tip);position:absolute;z-index:500;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(4px);padding:10px 12px;border-radius:12px;background:rgba(7,6,10,0.97);border:1px solid rgba(255,59,212,0.45);box-shadow:0 8px 32px rgba(0,0,0,0.65);font-family:var(--sans);font-size:12px;line-height:1.45;color:var(--text);text-align:left;min-width:200px;max-width:260px;opacity:0;pointer-events:none;transition:opacity 0.15s ease,transform 0.15s ease;white-space:normal;}
-      
-      [data-tip]:hover::after,[data-tip]:focus-visible::after{opacity:1;transform:translateX(-50%) translateY(0);}
-      [data-tip-pos="left"]::after{left:0;right:auto;transform:translateX(0) translateY(4px);}
-      [data-tip-pos="left"]:hover::after{transform:translateX(0) translateY(0);}
-      [data-tip-pos="right"]::after{left:auto;right:0;transform:translateX(0) translateY(4px);}
-      [data-tip-pos="right"]:hover::after{transform:translateX(0) translateY(0);}
-      
-      [data-tip-pos$="below"]::after{bottom:auto;top:calc(100% + 10px);transform:translateX(-50%) translateY(-4px);}
-      [data-tip-pos$="below"]:hover::after,[data-tip-pos$="below"]:focus-visible::after{transform:translateX(-50%) translateY(0);}
-      [data-tip-pos="left-below"]::after{left:0;right:auto;transform:translateX(0) translateY(-4px);}
-      [data-tip-pos="left-below"]:hover::after,[data-tip-pos="left-below"]:focus-visible::after{transform:translateX(0) translateY(0);}
-      [data-tip-pos="right-below"]::after{left:auto;right:0;transform:translateX(0) translateY(-4px);}
-      [data-tip-pos="right-below"]:hover::after,[data-tip-pos="right-below"]:focus-visible::after{transform:translateX(0) translateY(0);}
+      /* Tooltips: one popover, placed by script and clamped to the viewport. */
+      .tipPop{position:fixed;z-index:700;left:0;top:0;max-width:min(280px,calc(100vw - 16px));padding:10px 12px;border-radius:12px;background:rgba(7,6,10,0.97);border:1px solid rgba(255,59,212,0.45);box-shadow:0 8px 32px rgba(0,0,0,0.65);font-family:var(--sans);font-size:12.5px;font-weight:500;line-height:1.45;letter-spacing:normal;text-transform:none;color:var(--text);text-align:left;white-space:normal;overflow-wrap:break-word;pointer-events:none;opacity:0;transition:opacity 0.15s ease;}
+      .tipPop.on{opacity:1;}
+      @media(prefers-reduced-motion:reduce){.tipPop{transition:none;}}
+
+      /* Play on paper: the card's camera button and the section under the cards. */
+      /* The status bar stays on one line: the camera keeps its place at the
+         right end, and on narrow cards the corner pill's label takes two lines
+         inside the pill instead of pushing the camera down. */
+      .pStatus{gap:6px;flex-wrap:nowrap;}
+      .pStatus .pill{padding:0 12px;flex:0 0 auto;white-space:nowrap;}
+      .pStatus .pill.corner{flex:0 1 auto;min-width:0;white-space:normal;}
+      .pStatus .pill.corner .lab{line-height:1.2;text-wrap:balance;}
+      .pStatus .pill.cam{margin-left:auto;width:42px;min-height:42px;padding:0;justify-content:center;cursor:pointer;text-decoration:none;color:var(--accent);border-color:var(--accent-line);background:rgba(0,0,0,0.22);transition:transform .12s ease,background .12s ease,border-color .12s ease;}
+      .pill.cam:hover,.pill.cam:focus-visible{background:var(--accent-soft);border-color:var(--accent);transform:translateY(-1px);}
+      .pill.cam svg{width:20px;height:20px;display:block;}
+      @media(pointer:coarse){.pStatus .pill.cam{width:44px;min-height:44px;}}
+      article.pCard.pink{--accent:var(--pink);--accent-line:rgba(255,59,212,0.50);--accent-soft:rgba(255,59,212,0.14);--accent-glow:rgba(255,59,212,0.45);}
+      article.pCard.lime{--accent:var(--lime);--accent-line:rgba(112,255,122,0.50);--accent-soft:rgba(112,255,122,0.14);--accent-glow:rgba(112,255,122,0.40);}
+      article.pCard.cyan{--accent:var(--cyan);--accent-line:rgba(47,243,255,0.50);--accent-soft:rgba(47,243,255,0.14);--accent-glow:rgba(47,243,255,0.40);}
+
+      .paper{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px 20px;margin-top:18px;padding:16px 20px;border-radius:20px;border:1px dashed rgba(47,243,255,0.30);background:linear-gradient(90deg,rgba(47,243,255,0.05),rgba(112,255,122,0.03) 60%,rgba(255,59,212,0.04));}
+      .paperArt{width:46px;height:56px;display:block;}
+      .paperTitle{margin:0 0 3px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--cyan);}
+      .paperBody{margin:0;color:var(--muted);font-size:13.5px;line-height:1.55;}
+      .paperLinks{display:flex;flex-wrap:wrap;gap:9px;justify-content:flex-end;}
+      .paperLink{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:999px;font-family:var(--sans);font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;border:1.5px solid rgba(47,243,255,0.55);color:var(--cyan);background:rgba(47,243,255,0.08);transition:transform .13s ease,background .13s ease,box-shadow .13s ease;}
+      .paperLink:hover,.paperLink:focus-visible{transform:translateY(-1px);background:rgba(47,243,255,0.16);box-shadow:0 6px 20px rgba(47,243,255,0.18);}
+      .paperLink.kit{border-color:rgba(112,255,122,0.55);color:var(--lime);background:rgba(112,255,122,0.07);}
+      .paperLink.kit:hover,.paperLink.kit:focus-visible{background:rgba(112,255,122,0.15);box-shadow:0 6px 20px rgba(112,255,122,0.16);}
+      .paperLink svg{width:18px;height:18px;flex:0 0 auto;}
+      @media(max-width:760px){.paper{grid-template-columns:auto minmax(0,1fr);padding:14px 16px;}.paperLinks{grid-column:1 / -1;justify-content:flex-start;}}
+      @media(prefers-reduced-motion:reduce){.pill.cam,.paperLink{transition:none;}.pill.cam:hover,.paperLink:hover{transform:none;}}
+
+      /* A card that just received a board from the camera glows once. */
+      @keyframes arrive{0%{box-shadow:0 18px 50px rgba(0,0,0,0.35),0 0 0 0 transparent;}25%{box-shadow:0 18px 50px rgba(0,0,0,0.35),0 0 0 2px var(--accent),0 0 42px var(--accent-glow);}100%{box-shadow:0 18px 50px rgba(0,0,0,0.35),0 0 0 0 transparent;}}
+      article.pCard.arrive{animation:arrive 2.4s ease-out 1;}
+      @media(prefers-reduced-motion:reduce){article.pCard.arrive{animation:none;outline:2px solid var(--accent);outline-offset:3px;}}
+
+      .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0;}
 
       details{margin-top:22px;padding:14px 16px;border-radius:18px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);}
       details summary{cursor:pointer;color:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;list-style:none;padding:4px 0;}
@@ -171,30 +206,38 @@
       .refPanel .pubMore{margin-top:10px;font-size:13px;color:var(--muted2);}
       .vocabPanel{color:var(--muted);font-size:13px;line-height:1.55;min-height:30px;}
 
-      .floatCredit{position:fixed;bottom:14px;left:16px;z-index:500;padding:8px 14px;border-radius:999px;background:rgba(7,6,10,0.78);backdrop-filter:blur(10px);border:1px solid rgba(255,59,212,0.22);font-size:12.5px;color:var(--muted);letter-spacing:0.03em;}
-      .floatCredit a{color:var(--text);text-decoration:none;font-weight:800;}
+      /* Credit: at the end of the page. It floats in the bottom-left corner only
+         on screens wide enough for the side margin to hold it, so it never
+         covers the content. It ignores pointer events except on its link. */
+      .floatCredit{display:block;width:fit-content;margin:28px auto 0;padding:8px 14px;border-radius:999px;background:rgba(7,6,10,0.78);border:1px solid rgba(255,59,212,0.22);font-size:12.5px;color:var(--muted);letter-spacing:0.03em;pointer-events:none;}
+      .floatCredit a{color:var(--text);text-decoration:none;font-weight:800;pointer-events:auto;}
       .floatCredit .ceo{color:var(--muted2);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;font-size:10.5px;}
-      .floatCredit .tlm{color:var(--pink);font-weight:900;letter-spacing:0.11em;}
-      /* Occlusion-safe: the pill ignores pointer events (taps pass through to
-         the page); only its link stays clickable. On narrow screens it drops
-         out of the fixed corner and flows at the end of the content. */
-      .floatCredit{pointer-events:none;}
-      .floatCredit a{pointer-events:auto;}
-      @media(max-width:900px){.floatCredit{position:static;margin:24px auto 0;display:block;width:fit-content;}}
-      /* Language switch — fixed top-right, three equal chips. */
+      .floatCredit .tlm{color:var(--pink);font-weight:900;letter-spacing:0.11em;white-space:nowrap;}
+      .floatCredit .who{white-space:nowrap;}
+      @media(min-width:1940px){main{padding-bottom:100px;}.floatCredit{position:fixed;bottom:14px;left:16px;z-index:500;margin:0;backdrop-filter:blur(10px);}}
+      /* Language switch: fixed top-right, three equal chips. */
       .langSel{position:fixed;top:14px;right:16px;z-index:600;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(7,6,10,0.80);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.12);}
       .langSel button{cursor:pointer;border:none;background:transparent;color:var(--muted2);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.04em;padding:5px 9px;border-radius:999px;transition:color .12s ease,background .12s ease;}
       .langSel button:hover{color:var(--text);}
       .langSel button[aria-pressed="true"]{color:var(--bg0);background:var(--amber);}
-      @media(max-width:520px){.langSel{top:10px;right:10px;}}
+      /* A card scrolled into view stays clear of the fixed language switch. */
+      article.pCard{scroll-margin-top:72px;}
+      /* With one column of cards (phones, tablets) the switch sits at the top
+         of the page and scrolls away, so it never covers a card. */
+      @media(max-width:900px){.langSel{position:static;width:fit-content;margin:10px 12px 0 auto;}main{padding-top:14px;}}
+      /* Touch screens: every button and tip holder is at least 44 px. */
+      @media(pointer:coarse){
+        .langSel button{min-width:44px;min-height:44px;padding:0 10px;}
+        .icon,.icon.act,.icon.reset{width:44px;height:44px;}
+      }
     </style>
     <script src="i18n.js"></script>
   </head>
   <body>
     <nav class="langSel" aria-label="Language / Langue / Sprache">
-      <button type="button" data-lang-btn="fr" aria-pressed="false" onclick="i18n.setLang('fr')">FR</button>
-      <button type="button" data-lang-btn="de" aria-pressed="false" onclick="i18n.setLang('de')">DE</button>
-      <button type="button" data-lang-btn="en" aria-pressed="false" onclick="i18n.setLang('en')">EN</button>
+      <button type="button" data-lang-btn="fr" aria-pressed="false">FR</button>
+      <button type="button" data-lang-btn="de" aria-pressed="false">DE</button>
+      <button type="button" data-lang-btn="en" aria-pressed="false">EN</button>
     </nav>
     <main>
       <header class="hero">
@@ -205,65 +248,73 @@
       </header>
 
       <section class="rack">
-      <div class="grid" aria-label="Fence Challenge apps">
+      <div class="grid" data-i18n-aria-label="hub.appsAria" aria-label="Les trois défis">
         <article class="pCard pink" data-tiling="sq" aria-labelledby="sqT">
           <div class="pTitle" id="sqT" data-i18n="hub.sqTitle">Mission I · Le damier</div>
-          <div class="pKicker" data-i18n="hub.sqKicker">Challenge 1 · pavage carré</div>
+          <div class="pKicker" data-i18n="hub.sqKicker">Défi 1 · pavage carré</div>
           <div class="pIconRow">
+            <span class="pIconSet tools">
             <span class="icon goal" tabindex="0" data-tip-pos="left-below"
-                  data-i18n-data-tip="hub.goalTip" data-tip="Ce plateau a une aire maximale. La trouver, c'est le défi."
+                  data-i18n-data-tip="hub.goalTip" data-tip="Enclos la plus grande aire possible."
                   data-i18n-aria-label="hub.goalAria" aria-label="But de la mission">🏆</span>
             <button class="icon act" data-rotate="sq" data-tip-pos="below" data-i18n-data-tip="hub.rotateTip" data-tip="Tourne la pièce choisie (touche R)" data-i18n-aria-label="hub.rotateAria" aria-label="Tourne la pièce choisie">⟳</button>
             <button class="icon act" data-flip="sq" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie">⇄</button>
             <button class="icon reset" data-reset="sq" data-tip-pos="below" data-i18n-data-tip="hub.resetTip" data-tip="Efface la barrière" data-i18n-aria-label="hub.resetAria" aria-label="Efface la barrière"><span class="glyph">🗑</span></button>
-            <span class="spacer"></span>
+            </span>
+            <span class="pIconSet nav">
             <span class="icon help" tabindex="0"
-                  data-tip-pos="below" data-i18n-data-tip="hub.helpSq" data-i18n-aria-label="hub.helpAria" data-tip="Clique une pièce du bac : elle apparaît au centre. Glisse-la ensuite où tu veux. ⟳ la tourne, ⇄ la retourne, Suppr l'enlève. Referme une barrière : tu enfermes une aire."
+                  data-tip-pos="below" data-i18n-data-tip="hub.helpSq" data-i18n-aria-label="hub.helpAria" data-tip="Choisis une pièce, glisse-la en place. ⟳ tourne, ⇄ retourne, touche-la pour l’enlever. Ferme la barrière pour enclore une aire."
                   aria-label="Comment jouer">?</span>
-            <span class="icon info" tabindex="0" data-tip-pos="below" data-i18n-data-tip="hub.infoSq" data-i18n-aria-label="hub.infoAria" data-tip="Enclose any area to unlock, then tap 🚀 for the full challenge — 12 pentominoes." aria-label="How this card works">i</span>
+            <span class="icon info" tabindex="0" data-tip-pos="below" data-i18n-data-tip="hub.infoSq" data-i18n-aria-label="hub.infoAria" data-tip="Ferme une barrière (aire ≥ 1) pour débloquer, puis touche 🚀 pour le défi complet avec 12 pentominos." aria-label="Comment débloquer cette carte">i</span>
             <a class="icon launch" data-launch="sq" href="square-lab/index.html" data-i18n-data-tip="hub.launchSqTip" data-i18n-aria-label="hub.launchSqAria"
-               data-tip="Enclos une aire ≥ 1 ici pour ouvrir le lab Challenge 2 · 12 pentominoes" data-tip-pos="right-below"
-               aria-label="Ouvrir le lab Challenge 2">🚀</a>
+               data-tip="Ferme une barrière ici (aire ≥ 1) pour ouvrir le labo du Défi 2 · 12 pentominos" data-tip-pos="right-below"
+               aria-label="Ouvrir le labo du Défi 2">🚀</a>
+            </span>
           </div>
           <div class="toyWrap" id="engine-sq">
             <div class="toyTray" data-tray></div>
             <div class="toy"><canvas></canvas></div>
           </div>
           <div class="pStatus">
-            <span class="pill area" id="pill-sq" data-i18n-data-tip="hub.areaTip" data-tip="Aire enclose actuelle sur ton plateau"><span data-i18n="common.areaLabel">aire</span> <span class="k" id="area-sq">0</span></span>
+            <span class="pill area" id="pill-sq" data-i18n-data-tip="hub.areaTip" data-tip="Aire actuellement enclose sur ton plateau"><span data-i18n="common.areaLabel">Aire</span> <span class="k" id="area-sq">0</span></span>
             <span class="pill corner reactive" id="coin-sq"
-                  data-i18n-data-tip="hub.coinSqTip" data-tip="Sur le pavage carré, deux cellules peuvent se toucher par un sommet sans partager d'arête. Si ta barrière ne se referme que par un tel sommet, l'extérieur s'y faufile — le coin ne referme rien. Ce témoin s'allume quand ça arrive sur ton plateau.">
-              <span class="dot" aria-hidden="true"></span><span class="lab" data-i18n="hub.coinLabel">corner leak</span>
+                  data-i18n-data-tip="hub.coinSqTip" data-tip="Sur le pavage carré, deux cases peuvent se toucher par un coin sans partager d’arête. Si ta barrière ne se ferme que par un tel coin, l’extérieur se faufile par ce coin : le coin ne ferme rien. Ce témoin s’allume quand ça arrive sur ton plateau.">
+              <span class="dot" aria-hidden="true"></span><span class="lab" data-i18n="hub.coinLabel">fuite par un coin</span>
             </span>
+            <a class="pill cam" href="camera/?board=sq9" data-tip-pos="right" data-i18n-data-tip="hub.camTip" data-tip="Jouer sur papier : la caméra lit ton plateau imprimé" data-i18n-aria-label="hub.camAria" aria-label="Jouer sur papier avec la caméra"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></a>
           </div>
         </article>
 
         <article class="pCard lime" data-tiling="hex" aria-labelledby="hexT">
-          <div class="pTitle" id="hexT" data-i18n="hub.hexTitle">Mission II · Le nid d'abeilles</div>
+          <div class="pTitle" id="hexT" data-i18n="hub.hexTitle">Mission II · Le nid d’abeilles</div>
           
           <div class="pKicker" data-i18n="hub.hexKicker">4 tétrahexes · pavage hexagonal</div>
           <div class="pIconRow">
+            <span class="pIconSet tools">
             <span class="icon goal" tabindex="0" data-tip-pos="left-below"
-                  data-i18n-data-tip="hub.goalTip" data-tip="Ce plateau a une aire maximale. La trouver, c'est le défi."
+                  data-i18n-data-tip="hub.goalTip" data-tip="Enclos la plus grande aire possible."
                   data-i18n-aria-label="hub.goalAria" aria-label="But de la mission">🏆</span>
             <button class="icon act" data-rotate="hex" data-tip-pos="below" data-i18n-data-tip="hub.rotateTip" data-tip="Tourne la pièce choisie (touche R)" data-i18n-aria-label="hub.rotateAria" aria-label="Tourne la pièce choisie">⟳</button>
             <button class="icon act" data-flip="hex" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie">⇄</button>
             <button class="icon reset" data-reset="hex" data-tip-pos="below" data-i18n-data-tip="hub.resetTip" data-tip="Efface la barrière" data-i18n-aria-label="hub.resetAria" aria-label="Efface la barrière"><span class="glyph">🗑</span></button>
-            <span class="spacer"></span>
+            </span>
+            <span class="pIconSet nav">
             <span class="icon help" tabindex="0"
-                  data-tip-pos="below" data-i18n-data-tip="hub.helpHex" data-i18n-aria-label="hub.helpAria" data-tip="Clique une pièce du bac : elle apparaît au centre du nid. Glisse-la ensuite où tu veux. ⟳ la tourne, ⇄ la retourne, Suppr l'enlève. Referme une barrière : tu enfermes une aire."
+                  data-tip-pos="below" data-i18n-data-tip="hub.helpHex" data-i18n-aria-label="hub.helpAria" data-tip="Choisis une pièce, glisse-la en place. ⟳ tourne, ⇄ retourne, touche-la pour l’enlever. Ferme la barrière pour enclore une aire."
                   aria-label="Comment jouer">?</span>
-            <span class="icon info" tabindex="0" data-tip-pos="below" data-i18n-data-tip="hub.infoHex" data-i18n-aria-label="hub.infoAria" data-tip="Enclose any area to unlock, then tap 🚀 for the full challenge — 7 tetrahexes." aria-label="How this card works">i</span>
+            <span class="icon info" tabindex="0" data-tip-pos="below" data-i18n-data-tip="hub.infoHex" data-i18n-aria-label="hub.infoAria" data-tip="Ferme une barrière (aire ≥ 1) pour débloquer, puis touche 🚀 pour le défi complet avec 7 tétrahexes." aria-label="Comment débloquer cette carte">i</span>
             <a class="icon launch" data-launch="hex" href="hex-lab/index.html" data-i18n-data-tip="hub.launchHexTip" data-i18n-aria-label="hub.launchHexAria"
-               data-tip="Enclos une aire ≥ 1 pour débloquer" data-tip-pos="right-below"
-               aria-label="Ouvrir Challenge 3">🚀</a>
+               data-tip="Ferme une barrière (aire ≥ 1) pour débloquer" data-tip-pos="right-below"
+               aria-label="Ouvrir le Défi 3">🚀</a>
+            </span>
           </div>
           <div class="toyWrap" id="engine-hex">
             <div class="toyTray" data-tray></div>
             <div class="toy"><canvas></canvas></div>
           </div>
           <div class="pStatus">
-            <span class="pill area" id="pill-hex" data-i18n-data-tip="hub.areaTip" data-tip="Aire enclose actuelle sur ton plateau"><span data-i18n="common.areaLabel">aire</span> <span class="k" id="area-hex">0</span></span>
+            <span class="pill area" id="pill-hex" data-i18n-data-tip="hub.areaTip" data-tip="Aire actuellement enclose sur ton plateau"><span data-i18n="common.areaLabel">Aire</span> <span class="k" id="area-hex">0</span></span>
+            <a class="pill cam" href="camera/?board=hex4" data-tip-pos="right" data-i18n-data-tip="hub.camTip" data-tip="Jouer sur papier : la caméra lit ton plateau imprimé" data-i18n-aria-label="hub.camAria" aria-label="Jouer sur papier avec la caméra"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></a>
           </div>
         </article>
 
@@ -271,350 +322,80 @@
           <div class="pTitle" id="triT" data-i18n="hub.triTitle">Mission III · Le champ de triangles</div>
           <div class="pKicker" data-i18n="hub.triKicker">3 hexiamonds · pavage triangulaire</div>
           <div class="pIconRow">
-            
+            <span class="pIconSet tools">
             <span class="icon goal" tabindex="0" data-tip-pos="left-below"
-                  data-i18n-data-tip="hub.goalTip" data-tip="Ce plateau a une aire maximale. La trouver, c'est le défi."
+                  data-i18n-data-tip="hub.goalTip" data-tip="Enclos la plus grande aire possible."
                   data-i18n-aria-label="hub.goalAria" aria-label="But de la mission">🏆</span>
             <button class="icon act" data-rotate="tri" data-tip-pos="below" data-i18n-data-tip="hub.rotateTip" data-tip="Tourne la pièce choisie (touche R)" data-i18n-aria-label="hub.rotateAria" aria-label="Tourne la pièce choisie">⟳</button>
             <button class="icon act" data-flip="tri" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie">⇄</button>
             <button class="icon reset" data-reset="tri" data-tip-pos="below" data-i18n-data-tip="hub.resetTip" data-tip="Efface la barrière" data-i18n-aria-label="hub.resetAria" aria-label="Efface la barrière"><span class="glyph">🗑</span></button>
-            <span class="spacer"></span>
+            </span>
+            <span class="pIconSet nav">
             <span class="icon help" tabindex="0"
-                  data-tip-pos="below" data-i18n-data-tip="hub.helpTri" data-i18n-aria-label="hub.helpAria" data-tip="Clique une pièce du bac : elle apparaît au centre du champ. Glisse-la ensuite où tu veux. ⟳ la tourne, ⇄ la retourne, Suppr l'enlève. Referme une barrière : tu enfermes une aire."
+                  data-tip-pos="below" data-i18n-data-tip="hub.helpTri" data-i18n-aria-label="hub.helpAria" data-tip="Choisis une pièce, glisse-la en place. ⟳ tourne, ⇄ retourne, touche-la pour l’enlever. Ferme la barrière pour enclore une aire."
                   aria-label="Comment jouer">?</span>
-            <span class="icon info" tabindex="0" data-tip-pos="below" data-i18n-data-tip="hub.infoTri" data-i18n-aria-label="hub.infoAria" data-tip="Enclose any area to unlock, then tap 🚀 for the full challenge — 12 hexiamonds." aria-label="How this card works">i</span>
+            <span class="icon info" tabindex="0" data-tip-pos="below" data-i18n-data-tip="hub.infoTri" data-i18n-aria-label="hub.infoAria" data-tip="Ferme une barrière (aire ≥ 1) pour débloquer, puis touche 🚀 pour le défi complet avec 12 hexiamonds." aria-label="Comment débloquer cette carte">i</span>
             <a class="icon launch" data-launch="tri" href="triangle-lab/index.html" data-i18n-data-tip="hub.launchTriTip" data-i18n-aria-label="hub.launchTriAria"
-               data-tip="Enclos une aire ≥ 1 pour débloquer" data-tip-pos="right-below"
-               aria-label="Ouvrir Challenge 4">🚀</a>
+               data-tip="Ferme une barrière (aire ≥ 1) pour débloquer" data-tip-pos="right-below"
+               aria-label="Ouvrir le Défi 4">🚀</a>
+            </span>
           </div>
           <div class="toyWrap" id="engine-tri">
             <div class="toyTray" data-tray></div>
             <div class="toy"><canvas></canvas></div>
           </div>
           <div class="pStatus">
-            <span class="pill area" id="pill-tri" data-i18n-data-tip="hub.areaTip" data-tip="Aire enclose actuelle sur ton plateau"><span data-i18n="common.areaLabel">aire</span> <span class="k" id="area-tri">0</span></span>
-            <span class="pill corner reactive" id="coin-tri" data-i18n-data-tip="hub.coinTriTip" data-tip="Sur le pavage triangulaire, 6 triangles se rencontrent à chaque sommet ; deux d'entre eux peuvent donc s'y toucher sans partager d'arête. Si ta barrière ne se referme que par un tel sommet, l'extérieur s'y faufile — le coin ne referme rien. Ce témoin s'allume quand ça arrive sur ton plateau."><span class="dot" aria-hidden="true"></span><span class="lab" data-i18n="hub.coinLabel">corner leak</span></span>
+            <span class="pill area" id="pill-tri" data-i18n-data-tip="hub.areaTip" data-tip="Aire actuellement enclose sur ton plateau"><span data-i18n="common.areaLabel">Aire</span> <span class="k" id="area-tri">0</span></span>
+            <span class="pill corner reactive" id="coin-tri" data-i18n-data-tip="hub.coinTriTip" data-tip="Sur le pavage triangulaire, 6 triangles se rencontrent à chaque coin ; deux d’entre eux peuvent donc s’y toucher sans partager d’arête. Si ta barrière ne se ferme que par un tel coin, l’extérieur se faufile par ce coin : le coin ne ferme rien. Ce témoin s’allume quand ça arrive sur ton plateau."><span class="dot" aria-hidden="true"></span><span class="lab" data-i18n="hub.coinLabel">fuite par un coin</span></span>
+            <a class="pill cam" href="camera/?board=tri4" data-tip-pos="right" data-i18n-data-tip="hub.camTip" data-tip="Jouer sur papier : la caméra lit ton plateau imprimé" data-i18n-aria-label="hub.camAria" aria-label="Jouer sur papier avec la caméra"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></a>
           </div>
         </article>
       </div>
       </section>
 
-      <section class="refRack" aria-label="Reference">
+      <section class="paper" aria-labelledby="paperT">
+        <svg class="paperArt" viewBox="0 0 46 56" aria-hidden="true" focusable="false">
+            <rect x="1.5" y="1.5" width="43" height="53" rx="3" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"/>
+            <path d="M11 18h24M11 24h24M11 30h24M11 36h24M11 42h24M11 18v24M17 18v24M23 18v24M29 18v24M35 18v24" stroke="rgba(170,220,255,0.28)" stroke-width="0.8"/>
+            <rect x="17" y="24" width="12" height="12" fill="rgba(45,246,172,0.55)"/>
+            <path d="M11 18h6v6h-6zM29 18h6v6h-6zM11 36h6v6h-6zM29 36h6v6h-6zM17 18h12v6H17zM11 24h6v12h-6zM29 24h6v12h-6zM17 36h12v6H17z" fill="rgba(255,59,212,0.55)"/>
+            <rect x="5" y="5" width="7" height="7" fill="rgba(255,255,255,0.85)"/><rect x="34" y="5" width="7" height="7" fill="rgba(255,255,255,0.85)"/>
+            <rect x="5" y="44" width="7" height="7" fill="rgba(255,255,255,0.85)"/><rect x="34" y="44" width="7" height="7" fill="rgba(255,255,255,0.85)"/>
+          </svg>
+        <div class="paperText">
+          <h2 class="paperTitle" id="paperT" data-i18n="hub.paperTitle">Jouer sur papier</h2>
+          <p class="paperBody" data-i18n="hub.paperBody">Imprime un plateau et ses pièces, découpe-les et construis ta barrière sur la table. La caméra de ton téléphone suit tes pièces et allume l’intérieur enclos sur l’image de ton plateau ; l’image reste sur ton appareil.</p>
+        </div>
+        <div class="paperLinks">
+          <a class="paperLink kit" href="kit/?board=sq9"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 9V3.5h10V9M7 17.5H4.5v-8h15v8H17M7 14h10v6.5H7z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span data-i18n="hub.paperKit">Imprimer le kit</span></a>
+          <a class="paperLink" href="camera/"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg><span data-i18n="hub.paperCamera">Ouvrir la caméra</span></a>
+        </div>
+      </section>
+
+      <section class="refRack" data-i18n-aria-label="hub.refAria" aria-label="Pour aller plus loin">
         <div class="chipRow" id="refChips">
-          <button class="refChip lime on" data-panel="polyform" data-i18n="hub.vocPolyform">Polyform</button>
-          <button class="refChip pink" data-panel="fence" data-i18n="hub.vocFence">Fence</button>
-          <button class="refChip amber" data-panel="history" data-i18n="hub.historyTitle">History</button>
+          <button class="refChip lime on" data-panel="polyform" data-i18n="hub.vocPolyform">Polyforme</button>
+          <button class="refChip pink" data-panel="fence" data-i18n="hub.vocFence">Barrière</button>
+          <button class="refChip amber" data-panel="history" data-i18n="hub.historyTitle">Histoire</button>
           <button class="refChip purple" data-panel="publications" data-i18n="hub.chipPublications">Publications</button>
         </div>
         <div class="refPanel" id="refPanel"></div>
       </section>
+
+      <div class="floatCredit">
+        <span data-i18n="hub.credit">par</span> <span class="tlm">THE LEARNING MACHINE</span> · <span class="who"><span class="ceo">CEO</span> <a href="https://erikaroldan.net" target="_blank" rel="noopener">Dr. Erika Roldán</a></span>
+      </div>
     </main>
 
-    <div class="floatCredit">
-      <span data-i18n="hub.credit">by</span> <span class="tlm">THE LEARNING MACHINE</span> · <span class="ceo">CEO</span> <a href="https://erikaroldan.net" target="_blank" rel="noopener">Dr. Erika Roldán</a>
-    </div>
+    <div id="hubLive" class="sr-only" role="status" aria-live="polite"></div>
+
 
     
+    <script src="fence-analysis.js"></script>
     <script src="piece-engine.js"></script>
     <script src="lattice-square.js"></script>
     <script src="lattice-hex.js"></script>
     <script src="lattice-triangular.js"></script>
-    <script>
-    
-    (() => {
-
-      
-      function bindKeyRefresh(root, refresh) {
-        document.addEventListener("keydown", (e) => {
-          if (!root.matches(":hover") && !root.contains(document.activeElement)) return;
-          if (["r", "R", "f", "F", "Delete", "Backspace"].includes(e.key)) {
-            setTimeout(refresh, 0); // after the engine's own handler
-          }
-        });
-      }
-
-      
-      (function mountSquareEngine() {
-        const root = document.getElementById("engine-sq");
-        const areaEl = document.getElementById("area-sq");
-        const launch = document.querySelector('[data-launch="sq"]');
-        if (!root || !window.PieceEngine || !window.LatticeSquare) return;
-
-        const coin = document.getElementById("coin-sq");
-        const coinLab = coin.querySelector(".lab");
-
-        const engine = window.PieceEngine.createPieceEngine({
-          root,
-          lattice: window.LatticeSquare,
-          pieceSet: window.LatticeSquare.TETROMINO_SET,
-          board: { size: window.LatticeSquare.BOARD_SIZE_DEFAULT },
-          padding: 5, // tighter frame: the 9x9 fills more of the canvas
-          callbacks: {
-            onArea: ({ area, cornerLeak, regionCount }) => {
-              const valid = area >= 1 && regionCount === 1;
-              areaEl.textContent = area;
-              document.getElementById("pill-sq").classList.toggle("live", valid);
-              root.dataset.pockets = regionCount > 1 ? String(regionCount) : "";
-              coin.classList.toggle("leak", !!cornerLeak);
-              coinLab.textContent = i18n.t("hub.coinLabel");
-              if (valid) unlock();
-            },
-            onStatus: (msg) => { root.dataset.status = msg; },
-          },
-        });
-        root._engine = engine;
-
-        function unlock() {
-          launch.classList.add("unlocked");
-          launch.setAttribute("data-i18n-data-tip", "hub.unlockedSq"); launch.setAttribute("data-tip", i18n.t("hub.unlockedSq"));
-          try { localStorage.setItem("unlock-sq", "1"); } catch (e) {}
-        }
-        try {
-          if (localStorage.getItem("unlock-sq") === "1") unlock();
-        } catch (e) {}
-
-        const refresh = () => engine.detectArea();
-        const canvas = root.querySelector("canvas");
-        ["pointerup", "pointercancel"].forEach((t) =>
-          canvas.addEventListener(t, refresh));
-        root.querySelector("[data-tray]").addEventListener("click", () => {
-          setTimeout(refresh, 0);
-        });
-        bindKeyRefresh(root, refresh);
-
-        document.querySelector('[data-reset="sq"]').addEventListener("click", () => {
-          engine.clear();
-          engine.detectArea();
-        });
-
-        const btnRotate = document.querySelector('[data-rotate="sq"]');
-        const btnFlip = document.querySelector('[data-flip="sq"]');
-
-        function flipIsInert() {
-          const s = engine.state;
-          const piece = s.placedPieces.find((p) => p.id === s.selectedPieceId);
-          if (!piece) return false;
-          const type = s.pieceTypeMap.get(piece.typeId);
-          return !!type && type.flipMap[piece.variantIndex] === piece.variantIndex;
-        }
-        function rotateIsInert() {
-          const s = engine.state;
-          const piece = s.placedPieces.find((p) => p.id === s.selectedPieceId);
-          if (!piece) return false;
-          const type = s.pieceTypeMap.get(piece.typeId);
-          return !!type && type.rotateMap[piece.variantIndex] === piece.variantIndex;
-        }
-        const inertTimers = new WeakMap();
-        function reportInert(btn, msg) {
-          window.clearTimeout(inertTimers.get(btn));
-          btn.classList.remove("inert");
-          void btn.offsetWidth; // restart the animation
-          btn.classList.add("inert");
-          root.dataset.symmetry = msg;
-          inertTimers.set(btn, window.setTimeout(() => {
-            btn.classList.remove("inert");
-          }, 420));
-        }
-
-        btnRotate.addEventListener("click", () => {
-          const inert = rotateIsInert();
-          engine.rotateSelection();
-          engine.detectArea();
-          if (inert) reportInert(btnRotate, i18n.t("hub.symmRotateInert"));
-        });
-        btnFlip.addEventListener("click", () => {
-          const inert = flipIsInert();
-          engine.flipSelection();
-          engine.detectArea();
-          if (inert) reportInert(btnFlip, i18n.t("hub.symmFlipInert"));
-        });
-      })();
-
-      
-      (function mountHexEngine() {
-        const root = document.getElementById("engine-hex");
-        const areaEl = document.getElementById("area-hex");
-        const launch = document.querySelector('[data-launch="hex"]');
-        if (!root || !window.PieceEngine || !window.LatticeHex) return;
-
-        const engine = window.PieceEngine.createPieceEngine({
-          root,
-          lattice: window.LatticeHex,
-          pieceSet: window.LatticeHex.TETRAHEX_SET,
-          board: { radius: window.LatticeHex.BOARD_RADIUS_DEFAULT },
-          padding: 5,
-          callbacks: {
-            onArea: ({ area, regionCount }) => {
-              const valid = area >= 1 && regionCount === 1;
-              areaEl.textContent = area;
-              document.getElementById("pill-hex").classList.toggle("live", valid);
-              root.dataset.pockets = regionCount > 1 ? String(regionCount) : "";
-              if (valid) unlock();
-            },
-            onStatus: (msg) => { root.dataset.status = msg; },
-          },
-        });
-        root._engine = engine;
-
-        function unlock() {
-          launch.classList.add("unlocked");
-          launch.setAttribute("data-i18n-data-tip", "hub.unlockedHex"); launch.setAttribute("data-tip", i18n.t("hub.unlockedHex"));
-          try { localStorage.setItem("unlock-hex", "1"); } catch (e) {}
-        }
-        try {
-          if (localStorage.getItem("unlock-hex") === "1") unlock();
-        } catch (e) {}
-
-        const refresh = () => engine.detectArea();
-        const canvas = root.querySelector("canvas");
-        ["pointerup", "pointercancel"].forEach((t) => canvas.addEventListener(t, refresh));
-        root.querySelector("[data-tray]").addEventListener("click", () => setTimeout(refresh, 0));
-        bindKeyRefresh(root, refresh);
-
-        document.querySelector('[data-reset="hex"]').addEventListener("click", () => {
-          engine.clear();
-          engine.detectArea();
-        });
-
-        const btnRotateH = document.querySelector('[data-rotate="hex"]');
-        const btnFlipH = document.querySelector('[data-flip="hex"]');
-        const inertTimersH = new WeakMap();
-        function inertH(kind) {
-          const s = engine.state;
-          const piece = s.placedPieces.find((p) => p.id === s.selectedPieceId);
-          if (!piece) return false;
-          const type = s.pieceTypeMap.get(piece.typeId);
-          if (!type) return false;
-          const map = kind === "rotate" ? type.rotateMap : type.flipMap;
-          return map[piece.variantIndex] === piece.variantIndex;
-        }
-        function reportInertH(btn, msg) {
-          window.clearTimeout(inertTimersH.get(btn));
-          btn.classList.remove("inert");
-          void btn.offsetWidth;
-          btn.classList.add("inert");
-          root.dataset.symmetry = msg;
-          inertTimersH.set(btn, window.setTimeout(() => btn.classList.remove("inert"), 420));
-        }
-        btnRotateH.addEventListener("click", () => {
-          const was = inertH("rotate");
-          engine.rotateSelection();
-          engine.detectArea();
-          if (was) reportInertH(btnRotateH, i18n.t("hub.symmRotateInert"));
-        });
-        btnFlipH.addEventListener("click", () => {
-          const was = inertH("flip");
-          engine.flipSelection();
-          engine.detectArea();
-          if (was) reportInertH(btnFlipH, i18n.t("hub.symmFlipInert"));
-        });
-      })();
-
-      
-      (function mountTriEngine() {
-        const root = document.getElementById("engine-tri");
-        const areaEl = document.getElementById("area-tri");
-        const launch = document.querySelector('[data-launch="tri"]');
-        if (!root || !window.PieceEngine || !window.LatticeTriangular) return;
-
-        const engine = window.PieceEngine.createPieceEngine({
-          root,
-          lattice: window.LatticeTriangular,
-          pieceSet: window.LatticeTriangular.HEXIAMOND_SET,
-          board: { hexSide: window.LatticeTriangular.BOARD_HEXSIDE_DEFAULT },
-          padding: 5,
-          callbacks: {
-            onArea: ({ area, cornerLeak, regionCount }) => {
-              const valid = area >= 1 && regionCount === 1;
-              areaEl.textContent = area;
-              document.getElementById("pill-tri").classList.toggle("live", valid);
-              document.getElementById("coin-tri").classList.toggle("leak", !!cornerLeak);
-              root.dataset.pockets = regionCount > 1 ? String(regionCount) : "";
-              if (valid) unlock();
-            },
-            onStatus: (msg) => { root.dataset.status = msg; },
-          },
-        });
-        root._engine = engine;
-
-        function unlock() {
-          launch.classList.add("unlocked");
-          launch.setAttribute("data-i18n-data-tip", "hub.unlockedTri"); launch.setAttribute("data-tip", i18n.t("hub.unlockedTri"));
-          try { localStorage.setItem("unlock-tri", "1"); } catch (e) {}
-        }
-        try {
-          if (localStorage.getItem("unlock-tri") === "1") unlock();
-        } catch (e) {}
-
-        const refresh = () => engine.detectArea();
-        const canvas = root.querySelector("canvas");
-        ["pointerup", "pointercancel"].forEach((t) => canvas.addEventListener(t, refresh));
-        root.querySelector("[data-tray]").addEventListener("click", () => setTimeout(refresh, 0));
-        bindKeyRefresh(root, refresh);
-
-        document.querySelector('[data-reset="tri"]').addEventListener("click", () => {
-          engine.clear();
-          engine.detectArea();
-        });
-
-        const btnRotateT = document.querySelector('[data-rotate="tri"]');
-        const btnFlipT = document.querySelector('[data-flip="tri"]');
-        const inertTimersT = new WeakMap();
-        function inertT(kind) {
-          const s = engine.state;
-          const piece = s.placedPieces.find((p) => p.id === s.selectedPieceId);
-          if (!piece) return false;
-          const type = s.pieceTypeMap.get(piece.typeId);
-          if (!type) return false;
-          const map = kind === "rotate" ? type.rotateMap : type.flipMap;
-          return map[piece.variantIndex] === piece.variantIndex;
-        }
-        function reportInertT(btn, msg) {
-          window.clearTimeout(inertTimersT.get(btn));
-          btn.classList.remove("inert");
-          void btn.offsetWidth;
-          btn.classList.add("inert");
-          root.dataset.symmetry = msg;
-          inertTimersT.set(btn, window.setTimeout(() => btn.classList.remove("inert"), 420));
-        }
-        btnRotateT.addEventListener("click", () => {
-          const was = inertT("rotate");
-          engine.rotateSelection();
-          engine.detectArea();
-          if (was) reportInertT(btnRotateT, i18n.t("hub.symmRotateInert"));
-        });
-        btnFlipT.addEventListener("click", () => {
-          const was = inertT("flip");
-          engine.flipSelection();
-          engine.detectArea();
-          if (was) reportInertT(btnFlipT, i18n.t("hub.symmFlipInert"));
-        });
-      })();
-
-      const PANELKEY = { history:"hub.historyBody", fence:"hub.defFence", polyform:"hub.defPolyform" };
-      const refChips = document.querySelectorAll("#refChips .refChip");
-      const refPanel = document.getElementById("refPanel");
-      let activePanel = "polyform";
-      function renderPanel() {
-        refChips.forEach((c) => c.classList.toggle("on", c.dataset.panel === activePanel));
-        if (!window.i18n) return;
-        refPanel.classList.toggle("pub", activePanel === "publications");
-        if (activePanel === "publications") {
-          refPanel.innerHTML =
-            '<ul class="pubList">' +
-              '<li>' + i18n.t("hub.citeLine") +
-                ' <a href="https://doi.org/10.1515/dmvm-2025-0056" target="_blank" rel="noopener">doi:10.1515/dmvm-2025-0056</a>.</li>' +
-              '<li>' + i18n.t("hub.pubEnglish") + '</li>' +
-            '</ul>' +
-            '<div class="pubMore">' + i18n.t("hub.citeMoreEn") + ' <a href="CITATION.cff">CITATION.cff</a>.</div>';
-        } else {
-          refPanel.textContent = i18n.t(PANELKEY[activePanel]);
-        }
-      }
-      refChips.forEach((c) => c.addEventListener("click", () => { activePanel = c.dataset.panel; renderPanel(); }));
-      renderPanel();
-      document.addEventListener("fc-langchange", renderPanel);
-    })();
-    </script>
+    <script src="hub.js"></script>
   </body>
 </html>
