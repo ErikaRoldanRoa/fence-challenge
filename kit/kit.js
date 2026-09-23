@@ -51,8 +51,8 @@
   const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
   const INK = "#111111";
-  const GRID = "#b9b9b9";
-  const OUTLINE = "#7a7a7a";
+  const GRID = "#2563eb"; // strong blue: printed from the colour cartridge alone
+  const OUTLINE = "#1e3a8a";
 
   function fmt(v) {
     return String(Math.round(v * 1000) / 1000);
@@ -472,6 +472,13 @@
     );
   }
 
+  // Grid lines and cut lines share one width. Every line is centred on the cell
+  // boundary, so a piece cut along the middle of its cut line covers exactly half
+  // of the grid line under each of its edges, and its neighbour covers the other half.
+  function gridLineWidth(s) {
+    return Math.min(1.2, Math.max(0.5, 0.045 * s));
+  }
+
   function boardSheet(L, opts) {
     const g = L.geometry;
     const tx = L.toSheet;
@@ -479,7 +486,7 @@
     const edges = edgesOf(g.board.cells.map((c) => c.vertices));
     const inner = edges.filter((e) => e.count === 2);
     const outer = edges.filter((e) => e.count === 1);
-    const lineW = Math.min(0.35, Math.max(0.2, 0.018 * s));
+    const lineW = gridLineWidth(s);
     let svg = svgOpen(L, opts.title, "kit-sheet kit-board");
     svg += titleLine(opts.title);
     svg += '<g class="kit-cells" data-cells="' + g.board.cells.length + '" fill="none" stroke-linecap="round">';
@@ -538,7 +545,7 @@
           fmt(innerW) + '" stroke-linecap="round"/>';
       }
       if (!back) {
-        svg += '<path d="' + outline + '" fill="none" stroke="' + INK + '" stroke-width="0.3" stroke-linejoin="round"/>';
+        svg += '<path d="' + outline + '" fill="none" stroke="' + INK + '" stroke-width="' + fmt(gridLineWidth(s)) + '" stroke-linejoin="round"/>';
       }
       svg += "</g>";
     });
@@ -584,8 +591,8 @@
     const w = Math.max(vb[2], vb[3]) / 90;
     let svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + vb.map(fmt).join(" ") + '" aria-hidden="true" focusable="false">';
     svg += '<rect x="' + fmt(vb[0]) + '" y="' + fmt(vb[1]) + '" width="' + fmt(vb[2]) + '" height="' + fmt(vb[3]) + '" fill="#fff"/>';
-    svg += '<path d="' + segmentsPath(edges.filter((e) => e.count === 2), id) + '" fill="none" stroke="#b5b5b5" stroke-width="' + fmt(w) + '"/>';
-    svg += '<path d="' + loopsPath(loopsOf(edges.filter((e) => e.count === 1)), id) + '" fill="none" stroke="#666" stroke-width="' + fmt(w * 2) + '"/>';
+    svg += '<path d="' + segmentsPath(edges.filter((e) => e.count === 2), id) + '" fill="none" stroke="' + GRID + '" stroke-width="' + fmt(w) + '"/>';
+    svg += '<path d="' + loopsPath(loopsOf(edges.filter((e) => e.count === 1)), id) + '" fill="none" stroke="' + OUTLINE + '" stroke-width="' + fmt(w * 2) + '"/>';
     for (const corner of FenceBoards.CORNERS) {
       const m = g.markers[corner];
       svg += '<path fill="#000" d="' + markerPath(m.id, m.corners[0].x, m.corners[0].y, g.markerSize) + '"/>';
