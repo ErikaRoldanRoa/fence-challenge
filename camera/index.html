@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07060a" />
+    <title>Play on paper · Fence Challenge</title>
+    <meta
+      name="description"
+      content="Build a fence with real pieces on a printed Fence Challenge board. Your phone’s camera follows your pieces and lights up the inside on the picture of your board. The picture stays on your device."
+    />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../fonts/manrope.css" />
+    <link rel="stylesheet" href="view.css" />
+    <script src="../i18n.js"></script>
+    <script src="i18n.js"></script>
+  </head>
+  <body data-fc-state="start" data-fc-area="0" data-fc-board="" data-fc-status="">
+    <h1 class="sr-only" data-i18n="cam.title">Play on paper</h1>
+
+    <header class="topbar">
+      <button id="closeBtn" class="ctl round" type="button" aria-label="Close" title="Close" data-i18n-aria-label="cam.close" data-i18n-title="cam.close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+      </button>
+      <span class="grow"></span>
+      <button id="countBtn" class="chip toggle" type="button" aria-pressed="false" hidden>
+        <span class="sw" aria-hidden="true"></span><span data-i18n="cam.countFirst">Count first</span>
+      </button>
+      <nav class="langSel" aria-label="Language / Langue / Sprache">
+        <button type="button" data-lang-btn="fr" aria-pressed="false" lang="fr">FR</button>
+        <button type="button" data-lang-btn="de" aria-pressed="false" lang="de">DE</button>
+        <button type="button" data-lang-btn="en" aria-pressed="false" lang="en">EN</button>
+      </nav>
+    </header>
+
+    <main id="stage" class="stage">
+      <video id="video" class="media" playsinline muted autoplay disablepictureinpicture></video>
+      <canvas id="still" class="media" hidden></canvas>
+      <canvas id="overlay" class="overlay" aria-hidden="true"></canvas>
+      <div id="stageLabel" class="sr-only" role="img" aria-label="Camera picture with your fence drawn over it" data-i18n-aria-label="cam.videoLabel"></div>
+      <button id="zoomBtn" class="ctl round zoomBtn" type="button" aria-pressed="true" aria-label="Zoom on the board" title="Zoom on the board" data-i18n-aria-label="cam.zoom" data-i18n-title="cam.zoom" hidden>
+        <svg class="i-in" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" /><path d="M15 15l5.5 5.5M8 10.5h5M10.5 8v5" /></svg>
+        <svg class="i-out" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" /><path d="M15 15l5.5 5.5M8 10.5h5" /></svg>
+      </button>
+      <p id="boardTag" class="boardTag" aria-hidden="true" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+        <span id="boardTagName"></span>
+      </p>
+    </main>
+
+    <section id="sheet" class="sheet" aria-labelledby="sheetTitle">
+      <div class="card">
+        <p id="sheetTitle" class="sheetTitle" data-i18n="cam.title">Play on paper</p>
+        <p class="lede" data-i18n="cam.lede">Build your fence with real pieces on the printed board. On the picture of your board, the camera lights up the inside you enclose.</p>
+        <p class="needTitle" data-i18n="cam.needTitle">You need:</p>
+        <ul class="need">
+          <li data-i18n="cam.needBoard">the printed board, with its four black corner squares</li>
+          <li data-i18n="cam.needPieces">the cut-out pieces</li>
+          <li data-i18n="cam.needLight">a well-lit table</li>
+        </ul>
+        <a id="kitLink" class="kit" href="../kit/">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z" /></svg>
+          <span data-i18n="cam.kitLink">Print the kit</span>
+        </a>
+        <div id="phoneBlock" class="phone" hidden>
+          <div id="qr" class="qr" role="img" aria-label="QR code that opens this page on your phone" data-i18n-aria-label="cam.qrLabel"></div>
+          <div class="phoneText">
+            <p class="phoneTitle" data-i18n="cam.desk.title">On a computer?</p>
+            <p data-i18n="cam.desk.scan">Scan this code with your phone to open this page there.</p>
+            <p data-i18n="cam.desk.photo">Or take a photo of your board with your phone and choose it here.</p>
+          </div>
+        </div>
+        <p class="privacy">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11h12v10H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3" /></svg>
+          <span data-i18n="cam.privacy">The picture stays on this device. Nothing is recorded or sent.</span>
+        </p>
+        <p id="sheetMsg" class="msg" role="status" aria-live="polite"></p>
+        <a id="ownTab" class="kit ownTab" href="./" target="_blank" rel="noopener" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" /></svg>
+          <span data-i18n="cam.openTab">Open this page in its own tab</span>
+        </a>
+        <div id="sheetActions" class="actions">
+          <button id="startBtn" class="btn primary" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h4l2-3h6l2 3h4v12H3z" /><circle cx="12" cy="13.5" r="3.6" /></svg>
+            <span id="startLabel" data-i18n="cam.start">Start the camera</span>
+          </button>
+          <button id="photoBtn" class="btn secondary" type="button" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z" /><path d="M4 16l5-5 4 4 3-3 4 4" /><circle cx="15.5" cy="9" r="1.4" /></svg>
+            <span id="photoLabel" data-i18n="cam.photo">Use a photo instead</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="dock" class="dock" aria-label="Camera controls" data-i18n-aria-label="cam.controlsLabel" hidden>
+      <p id="status" class="status"></p>
+      <div class="row">
+        <div class="side">
+          <button id="pauseBtn" class="ctl round" type="button" aria-label="Pause" title="Pause" data-i18n-aria-label="cam.pause" data-i18n-title="cam.pause">
+            <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5v14M15.5 5v14" /></svg>
+            <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg>
+          </button>
+          <button id="photoAgainBtn" class="chip" type="button" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h4l2-3h6l2 3h4v12H3z" /><circle cx="12" cy="13.5" r="3.6" /></svg>
+            <span data-i18n="cam.photoAgain">New photo</span>
+          </button>
+        </div>
+        <div id="pill" class="pill">
+          <span class="lab" data-i18n="cam.area">area</span>
+          <span id="areaNum" class="num">0</span>
+        </div>
+        <div class="side end">
+          <button id="torchBtn" class="ctl round" type="button" aria-pressed="false" aria-label="Light" title="Light" data-i18n-aria-label="cam.torch" data-i18n-title="cam.torch" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L5 13.5h6L10 22l8-11.5h-6z" /></svg>
+          </button>
+          <button id="useCameraBtn" class="chip" type="button" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h12v10H3zM15 10.5l6-3.5v10l-6-3.5" /></svg>
+            <span data-i18n="cam.useCamera">Use the camera</span>
+          </button>
+        </div>
+      </div>
+      <button id="continueBtn" class="btn continue" type="button" aria-describedby="continueWhy" disabled hidden>
+        <span data-i18n="cam.continue">Continue on screen</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" /></svg>
+      </button>
+      <p id="continueWhy" class="why" hidden></p>
+    </section>
+
+    <p id="announce" class="sr-only" role="status" aria-live="polite" aria-atomic="false"></p>
+
+    <input id="photoInput" class="sr-only" type="file" accept="image/*" tabindex="-1" aria-hidden="true" />
+
+    <script src="../lattice-square.js"></script>
+    <script src="../lattice-hex.js"></script>
+    <script src="../lattice-triangular.js"></script>
+    <script src="../fence-analysis.js"></script>
+    <script src="../vendor/js-aruco2/cv.js"></script>
+    <script src="../vendor/js-aruco2/aruco.js"></script>
+    <script src="../vendor/js-aruco2/dictionaries/aruco_4x4_1000.js"></script>
+    <script src="../vendor/qrcode-generator/qrcode.js"></script>
+    <script src="boards.js"></script>
+    <script src="core.js"></script>
+    <script src="view.js"></script>
+  </body>
+</html>
