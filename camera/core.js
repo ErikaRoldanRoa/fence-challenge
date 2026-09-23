@@ -14,9 +14,11 @@
  *   5. read the covered cells as whole pieces of the board's set where they
  *      can be (which also drops the colour a piece spills onto the cells
  *      next to it), then judge them with FenceAnalysis, the rule the screen
- *      uses. A state that is not whole pieces looking like cut pieces (a
- *      fingertip, a pen or a hand resting on the board) is accepted only
- *      after a long still moment, and never as pieces.
+ *      uses. Whole pieces that do not look like cut pieces (a fingertip or a
+ *      hand resting on them) are accepted only after a long still moment,
+ *      and never as pieces. Covered cells that no set of the board's pieces
+ *      explains (a pen or a scrap of paper on the board, a piece well off
+ *      its cells) are never judged: the last state explained is kept.
  * The classic 20 x 20 kit (corner ids 50-53, one mark on every tile) is
  * located by its printed grid lines, checked against the print, and its
  * tiles are read from their marks.
@@ -103,8 +105,9 @@
     pieceSupport: 0.6, // mean reading of the cells under a piece that is placed
     searchMs: 100, // time for one search for whole pieces (reconstruct's default)
     optionalShare: 4, // a search looks at most at this many times the pieces' area in optional cells
-    photoSearchMs: 250, // all the searches for one photo together
+    photoSearchMs: 250, // all the searches for one photo together (again once if they run out of time)
     liveSearchMs: 25, // the same for a live frame that accepts a new state
+    searchTries: 3, // searches for a live state waiting to be accepted, while they run out of time
   };
 
   // ---------------------------------------------------------------------------
@@ -985,7 +988,9 @@
           err = Math.max(err, e);
         }
         const side = Math.sqrt(quadArea(u.marker.corners));
-        const tol = Math.max(2.5, 0.08 * side);
+        // (loose enough for a sheet that is not quite flat, whose marks do
+        // not lie on one plane; a mark read in the wrong place is still dropped)
+        const tol = Math.max(2.5, 0.25 * side);
         if (err > tol && err / tol > worstErr) {
           worstErr = err / tol;
           worst = i;
@@ -2282,10 +2287,16 @@
    * Within a step, the cover needing the fewest and clearest extra cells
    * wins, and every piece placed must lie mostly on cells that look covered
    * (printed boards; the classic kit skips step 2 and this rule).
-   * No cell is ever added that does not look at least borderline. `score(key)`
-   * is a cell's reading in [0, 1]; all the searches share `timeLimit`
-   * milliseconds. Returns { occupied, pieces, complete }; without a cover,
-   * `occupied` holds the covered cells as they were read. */
+   * No cell is ever added that does not look at least borderline. When no
+   * step gives such a cover, a cover of exactly the covered cells (step 1)
+   * is taken even if some of its pieces read faintly: it adds and drops no
+   * cell, and each of its cells already looks covered. `score(key)` is a
+   * cell's reading in [0, 1]; all the searches share `timeLimit`
+   * milliseconds. Returns { occupied, pieces, complete, unexplained, late }:
+   * without a cover (`complete` false), `occupied` holds the covered cells as
+   * they were read, `unexplained` those of them no tile explains (empty when
+   * complete), and `late` is true when a search ran out of time before it
+   * could tell. */
   function wholePieces(info, onSet, maybe, tiles, score, timeLimit) {
     const deadline = clock() + timeLimit;
     const types = pieceTypesFor(info);
@@ -2315,29 +2326,42 @@
     if (extra.length) attempts.push([rest, extra, false]);
     if (soft.size && extra.length) attempts.push([hard, [...soft].concat(extra), false]);
     let others = null;
+    let exact = null; // step 1's cover when some of its pieces read faintly
+    let late = false;
     for (let i = 0; i < attempts.length; i += 1) {
       const [required, optional, exactFirst] = attempts[i];
       const now = clock();
-      if (now > deadline) break;
+      if (now > deadline) {
+        late = true;
+        break;
+      }
       // the first step (the usual one) may take half the time; the others
       // share what is left
       const until = now + (deadline - now) * (i === 0 && attempts.length > 1 ? 0.5 : 1 / (attempts.length - i));
       const found = reconstruct(info.geometry, required, free, { maxEachType: 1, optional, score, deadline: until, exactFirst });
-      if (found && (!printed || found.every((p) => p.cells.reduce((sum, k) => sum + score(k), 0) >= TUNING.pieceSupport * p.cells.length))) {
+      if (!found) {
+        if (clock() >= until) late = true;
+        continue;
+      }
+      if (!printed || found.every((p) => p.cells.reduce((sum, k) => sum + score(k), 0) >= TUNING.pieceSupport * p.cells.length)) {
         others = found;
         break;
       }
+      if (i === 0) exact = found;
     }
+    if (!others && exact) others = exact;
     const complete = others !== null;
     const pieces = complete || placed.length ? placed.concat(others || []) : null;
     namePieces(info, pieces);
     const occupied = new Set(taken);
+    const unexplained = new Set();
     if (others) {
       for (const p of others) for (const k of p.cells) occupied.add(k);
     } else {
       for (const k of onSet) occupied.add(k);
+      for (const k of rest) unexplained.add(k);
     }
-    return { occupied, pieces, complete };
+    return { occupied, pieces, complete, unexplained, late: !complete && late };
   }
 
   /* Weak covered cells that touch a clearly covered cell (or a tile), in
@@ -2557,10 +2581,18 @@
    *                      pieces look like cut pieces in `pieceChecks` frames
    *                      in a row (well covered, and nothing of their colour
    *                      in their notches or beyond the rim: see
-   *                      looksLikePiece). Any other new state is accepted
-   *                      only once it has not changed for `doubtMs` (the
-   *                      first state excepted: nothing was accepted before).
-   *   analysis           FenceAnalysis of `occupied`
+   *                      looksLikePiece). A new state made of whole pieces
+   *                      that do not look like cut pieces is accepted only
+   *                      once it has not changed for `doubtMs` (the first
+   *                      state excepted: nothing was accepted before). A
+   *                      state that no set of the kit's pieces explains (a
+   *                      pen, a scrap of paper or a piece well off its
+   *                      cells) is never accepted, however long it lasts:
+   *                      the last state accepted stays, and `stable` is
+   *                      false while it is in view, so the page holds that
+   *                      state.
+   *   analysis           FenceAnalysis of `occupied` (so never of cells the
+   *                      kit's pieces do not explain)
    *   pieces             whole pieces for `occupied` (see reconstruct) that
    *                      the camera vouches for, or null
    *   piecesComplete     true when `pieces` cover `occupied` exactly and the
@@ -2569,7 +2601,13 @@
    *                      vouched for later, once they look right.
    *   doubtful           a new state is waiting because it does not look like
    *                      whole pieces of the kit (it is accepted only after
-   *                      `doubtMs`, and without those pieces)
+   *                      `doubtMs`, and without those pieces), or because no
+   *                      set of the kit's pieces explains it (see unexplained)
+   *   unexplained        the covered cells of the latest state waiting that no
+   *                      set of the kit's pieces explains (for the classic kit:
+   *                      those no tile read explains), until a state is
+   *                      accepted or the view is back to the accepted one;
+   *                      empty otherwise
    *   stable             this frame agrees with `occupied` and nothing moves
    *   handsLikely        something moved over the board a moment ago; while a
    *                      corner mark has been hidden for a few frames in a row,
@@ -2611,6 +2649,7 @@
         pendingKey: null,
         pendingSince: 0,
         pendingWhole: null, // whole pieces found for the pending state (see wholeFor)
+        pendingTries: 0, // searches made for it
         pendingChecks: 0, // frames in a row its new pieces looked like cut pieces
         lastMotion: -Infinity,
         seen: new Map(), // corner -> last time it was read
@@ -2623,6 +2662,7 @@
         piecesComplete: false,
         trusted: new Set(), // pieces accepted as cut pieces of the kit (pieceKey)
         doubt: null, // { pieces, covered, checks }: whole pieces accepted without trusting the new ones
+        unexplained: new Set(), // cells of the latest state waiting that no set of pieces explains
         switchTo: null,
         switchCount: 0,
       };
@@ -2647,9 +2687,11 @@
       st.hasCommit = false;
       st.pendingKey = null;
       st.pendingWhole = null;
+      st.pendingTries = 0;
       st.pendingChecks = 0;
       st.trusted = new Set();
       st.doubt = null;
+      st.unexplained = new Set();
       st.seen = new Map();
       st.missing = new Map();
       st.readSince = new Map();
@@ -2683,7 +2725,8 @@
           handsLikely: false,
           fresh: false,
           changed: false,
-          doubtful: false,
+          doubtful: st.unexplained.size > 0,
+          unexplained: new Set(st.unexplained),
         },
         extra
       );
@@ -2765,9 +2808,10 @@
       return pieces.some((p) => p.tile == null && !st.trusted.has(pieceKey(p)));
     }
 
-    // Accept the pending state. Without `trust`, only the pieces the camera
-    // vouched for before (and tiles) are kept, piecesComplete is false, and
-    // the whole cover waits in `doubt` until its new pieces look right.
+    // Accept the pending state (one that whole pieces of the kit explain).
+    // Without `trust`, only the pieces the camera vouched for before (and
+    // tiles) are kept, piecesComplete is false, and the whole cover waits in
+    // `doubt` until its new pieces look right.
     function commit(info, w, trust) {
       st.committedOn.set(st.on);
       st.committed = w.occupied;
@@ -2777,17 +2821,19 @@
         st.trusted = new Set(w.pieces.map(pieceKey));
         st.doubt = null;
       } else {
-        const kept = (w.pieces || []).filter((p) => p.tile != null || st.trusted.has(pieceKey(p)));
+        const kept = w.pieces.filter((p) => p.tile != null || st.trusted.has(pieceKey(p)));
         st.pieces = kept.length ? kept : null;
         st.piecesComplete = false;
         st.trusted = new Set(kept.map(pieceKey));
-        st.doubt = w.complete ? { pieces: w.pieces, covered: w.covered, checks: 0 } : null;
+        st.doubt = { pieces: w.pieces, covered: w.covered, checks: 0 };
       }
       st.analysis = dep("FenceAnalysis").analyze({ board: info.board, lattice: info.lattice, occupied: st.committed });
       st.pendingKey = null;
       st.pendingWhole = null;
+      st.pendingTries = 0;
       st.pendingChecks = 0;
       st.hasCommit = true;
+      st.unexplained = new Set();
     }
 
     function process(image, frameOptions) {
@@ -3001,12 +3047,15 @@
       // and a few cells taken away soon, new covered cells a little later.
       // The new state must also be made of whole pieces of the kit, and its
       // new pieces must look like cut pieces (looksLikePiece) in frames in a
-      // row. Otherwise (a fingertip, a pen or a hand resting on the board,
-      // which may also hide pieces or be read as paper) it is accepted only
-      // once it has not changed for `doubtMs`, and then without the pieces
-      // the camera cannot vouch for (piecesComplete false), so nothing of it
-      // is carried on screen. The first state has nothing to keep instead:
-      // it is accepted at once, with the same caution about its pieces.
+      // row. Whole pieces that do not look cut (a fingertip or a hand resting
+      // on a piece's cells) are accepted only once they have not changed for
+      // `doubtMs`, and then without the pieces the camera cannot vouch for
+      // (piecesComplete false), so nothing of them is carried on screen. The
+      // first state has nothing to keep instead: it is accepted at once, with
+      // the same caution about its pieces. A state that no set of the kit's
+      // pieces explains (a pen, a scrap, a hand, which may also hide pieces
+      // or be read as paper) is never accepted: its cells are reported as
+      // `unexplained` and the last state accepted stays.
       let diff = 0;
       let added = 0;
       for (let c = 0; c < n; c += 1) {
@@ -3020,6 +3069,7 @@
         st.pendingKey = null;
       } else if (diff === 0) {
         st.pendingKey = null;
+        st.unexplained = new Set();
         if (!st.hasCommit) {
           st.hasCommit = true;
           st.pieces = [];
@@ -3044,23 +3094,36 @@
           st.pendingKey = key;
           st.pendingSince = now;
           st.pendingWhole = null;
+          st.pendingTries = 0;
           st.pendingChecks = 0;
         } else {
           const maxOrder = Math.max(...pieceTypesFor(info).map((t) => t.cells.length));
           const large = diff > 2 * maxOrder + 2;
           const wait = !st.hasCommit ? TUNING.settleSmall : added > 0 || large ? TUNING.settleLarge : TUNING.settleSmall;
           if (now - st.pendingSince >= wait) {
-            if (!st.pendingWhole) st.pendingWhole = wholeFor(info, tiles);
+            // (a search that ran out of time is made again on the next
+            // frames, a few times: the first ones on a board also fill the
+            // tables the later ones use)
+            if (!st.pendingWhole || (st.pendingWhole.late && st.pendingTries < TUNING.searchTries)) {
+              st.pendingWhole = wholeFor(info, tiles);
+              st.pendingTries += 1;
+            }
             const w = st.pendingWhole;
-            const fresh = w.complete && hasNewPieces(w.pieces);
-            const looks = w.complete && (!fresh || newPiecesLookRight(image, info, H, w.pieces, w.covered));
-            st.pendingChecks = looks ? st.pendingChecks + 1 : 0;
-            const trust = looks && (!fresh || st.pendingChecks >= TUNING.pieceChecks);
-            if (trust || (!st.hasCommit && !looks) || now - st.pendingSince >= TUNING.doubtMs) {
-              commit(info, w, trust);
-              changed = true;
-            } else {
-              doubtful = !looks;
+            // (the cells a state leaves unexplained are reported until a
+            // state is accepted or the view is back to the accepted one, so
+            // they do not blink while the cells read flicker)
+            st.unexplained = w.complete ? new Set() : w.unexplained;
+            if (w.complete) {
+              const fresh = hasNewPieces(w.pieces);
+              const looks = !fresh || newPiecesLookRight(image, info, H, w.pieces, w.covered);
+              st.pendingChecks = looks ? st.pendingChecks + 1 : 0;
+              const trust = looks && (!fresh || st.pendingChecks >= TUNING.pieceChecks);
+              if (trust || (!st.hasCommit && !looks) || now - st.pendingSince >= TUNING.doubtMs) {
+                commit(info, w, trust);
+                changed = true;
+              } else {
+                doubtful = !looks;
+              }
             }
           }
         }
@@ -3078,7 +3141,7 @@
         handsLikely,
         fresh: trusted,
         changed,
-        doubtful,
+        doubtful: doubtful || st.unexplained.size > 0,
       });
     }
 
@@ -3176,7 +3239,10 @@
    * hold the tiles read even when the other cells are not whole pieces
    * (`piecesComplete` false). A piece no tile mark vouches for must also
    * look like a cut piece (see looksLikePiece), or it is left out and
-   * `piecesComplete` is false. */
+   * `piecesComplete` is false. When no set of the kit's pieces explains the
+   * covered cells, `analysis` is null (no verdict: the page asks for another
+   * photo), `occupied` holds the cells as they were read and `unexplained`
+   * those of them no tile explains; otherwise `unexplained` is empty. */
   function snapshot(image, options) {
     const opts = options || {};
     const stillDetector = createDetector(); // its buffers go with it once the photo is read
@@ -3227,6 +3293,7 @@
       fresh: false,
       changed: false,
       pieces: null,
+      unexplained: new Set(),
     };
     if (!boardId) return base;
     const info = boardInfo(boardId);
@@ -3310,7 +3377,9 @@
       const s = scores[info.index.get(k)];
       return Number.isNaN(s) ? 0 : s;
     };
-    const whole = wholePieces(info, raw, maybe, tiles, score, TUNING.photoSearchMs);
+    let whole = wholePieces(info, raw, maybe, tiles, score, TUNING.photoSearchMs);
+    // (once more when the search ran out of time)
+    if (whole.late) whole = wholePieces(info, raw, maybe, tiles, score, TUNING.photoSearchMs);
     const occupied = whole.occupied;
     let pieces = whole.pieces;
     let piecesComplete = whole.complete;
@@ -3327,7 +3396,8 @@
         if (!pieces.length) pieces = null;
       }
     }
-    const analysis = dep("FenceAnalysis").analyze({ board: info.board, lattice: info.lattice, occupied });
+    // (cells no set of the kit's pieces explains are never judged)
+    const analysis = whole.complete ? dep("FenceAnalysis").analyze({ board: info.board, lattice: info.lattice, occupied }) : null;
 
     return Object.assign(base, {
       markers: fit.used.map((u) => ({ id: u.marker.id, corner: u.corner, imageCorners: u.marker.corners })),
@@ -3345,6 +3415,7 @@
       changed: true,
       pieces,
       piecesComplete,
+      unexplained: whole.unexplained,
     });
   }
 

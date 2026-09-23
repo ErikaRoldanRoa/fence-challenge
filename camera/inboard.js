@@ -941,6 +941,7 @@
 
     function deliver(result) {
       if (!s.locked || result.boardId !== boardId || !result.stable || !result.piecesComplete) return;
+      if (result.unexplained && result.unexplained.size) return;
       if (!Array.isArray(result.pieces) || result.pieces.length === 0) return;
       const list = result.pieces.map((p) => ({ typeId: p.typeId, variantIndex: p.variantIndex, marker: Object.assign({}, p.marker) }));
       const sig = list
@@ -1325,6 +1326,9 @@
       };
 
       const a = s.locked && s.result ? s.result.analysis : null;
+      // Cells in view that the kit's pieces do not explain: the state drawn
+      // is the last one explained, held and dimmed, and it does not glow.
+      const doubt = !!(s.result && s.result.unexplained && s.result.unexplained.size);
       let pulsing = false;
       if (a) {
         ctx.save();
@@ -1333,8 +1337,10 @@
           const clean = !a.cornerLeak && a.regionCount === 1;
           ctx.save();
           if (clean) {
-            ctx.shadowBlur = 15 * px;
-            ctx.shadowColor = STYLE.fenceGlow;
+            if (!doubt) {
+              ctx.shadowBlur = 15 * px;
+              ctx.shadowColor = STYLE.fenceGlow;
+            }
             cells(a.enclosedSet, STYLE.fenceFill, STYLE.fenceStroke, 1.8);
           } else {
             cells(a.enclosedSet, STYLE.mutedFill, STYLE.mutedStroke, 1.1);

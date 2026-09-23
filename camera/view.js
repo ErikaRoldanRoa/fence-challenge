@@ -849,8 +849,18 @@
     el.body.dataset.fcHeld = st.held ? "1" : "0";
   }
 
+  // A photo gives no verdict when no set of the kit's pieces explains what
+  // covers the board ("pieces": a pen or a scrap on it, a piece well off its
+  // cells). The player takes another photo.
+  function photoDoubt(result) {
+    if (!result || !result.H) return null;
+    if (!result.analysis || (result.unexplained && result.unexplained.size)) return "pieces";
+    return null;
+  }
+
   function analysisOf(result) {
-    return (result && result.analysis) || null;
+    if (!result || !result.analysis) return null;
+    return st.mode === "photo" && photoDoubt(result) ? null : result.analysis;
   }
 
   function isRealFence(a) {
@@ -863,6 +873,7 @@
     // for a moment so the line stays calm instead of flickering.
     const handsShown = st.status && st.status.key === "hands" && performance.now() < st.handsUntil;
     if (!photo && (result.handsLikely || handsShown)) return { key: "hands" };
+    if (photo && photoDoubt(result)) return { key: photoDoubt(result) };
     if (!photo && !result.stable) {
       // While the view settles again (a piece moved), the board shown is the
       // last steady one: keep describing it rather than flashing "hold steady".
@@ -897,6 +908,7 @@
     photoError: "cam.err.photo",
     photoFile: "cam.err.photoFile",
     reader: "cam.err.reader",
+    pieces: "cam.why.pieces",
   };
 
   function sameStatus(a, b) {
@@ -1154,7 +1166,8 @@
       return;
     }
     st.steadyResult = result;
-    const whole = eligible && !!result && Array.isArray(result.pieces) && result.pieces.length > 0 && result.piecesComplete !== false;
+    const whole = eligible && !!result && Array.isArray(result.pieces) && result.pieces.length > 0 && result.piecesComplete !== false &&
+      !(photo && photoDoubt(result));
     setPlacements(whole ? result.pieces : null, whole ? result.boardId : null);
   }
 
@@ -1184,7 +1197,9 @@
     el.body.dataset.fcContinue = ok ? "1" : "0";
     el.continueWhy.hidden = el.continueBtn.hidden;
     el.continueWhy.dataset.key = why;
-    el.continueWhy.textContent = why ? t("cam.why." + why) : "";
+    // (not twice: the status line may already say it)
+    const said = !!st.status && STATUS_TEXT[st.status.key] === "cam.why." + why;
+    el.continueWhy.textContent = why && !said ? t("cam.why." + why) : "";
   }
 
   function homeUrl(boardId, paper) {
