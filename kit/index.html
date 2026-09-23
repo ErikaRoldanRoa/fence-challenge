@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'"
+    />
+    <title data-i18n="kit.pageTitle">Kit à imprimer · Fence Challenge</title>
+    <meta
+      name="description"
+      content="Imprime un plateau du Fence Challenge et ses pièces, construis ta barrière sur la table, puis laisse la caméra allumer l’intérieur que tu enfermes sur l’image de ton plateau."
+    />
+    <meta name="theme-color" content="#07060a" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../fonts/manrope.css" />
+    <link rel="stylesheet" href="kit.css" />
+    <style id="kitPageRule">@page { size: A4 portrait; margin: 10mm; }</style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="top">
+        <a class="home" href="../index.html" data-i18n-aria-label="kit.homeAria" aria-label="Retour à l’accueil du Fence Challenge"
+          ><span aria-hidden="true">←</span> <span data-i18n="kit.home">Fence Challenge</span></a
+        >
+        <nav class="langSel" data-i18n-aria-label="common.langLabel" aria-label="Langue">
+          <button type="button" data-lang-btn="fr" aria-pressed="false">FR</button>
+          <button type="button" data-lang-btn="de" aria-pressed="false">DE</button>
+          <button type="button" data-lang-btn="en" aria-pressed="false">EN</button>
+        </nav>
+      </header>
+
+      <main>
+        <section class="intro">
+          <p class="kicker" data-i18n="kit.kicker">Kit à imprimer</p>
+          <h1 data-i18n="kit.h1">Jouer sur papier</h1>
+          <p class="lede" data-i18n="kit.lede">Imprime un plateau et ses pièces, construis ta barrière sur la table, puis laisse la caméra la regarder.</p>
+        </section>
+
+        <ol class="steps" data-i18n-aria-label="kit.stepsAria" aria-label="En quatre étapes">
+          <li>
+            <span class="num" aria-hidden="true">1</span>
+            <h2 data-i18n="kit.step1Title">Imprime à 100 %</h2>
+            <p data-i18n="kit.step1Body">Taille réelle, sans « ajuster à la page ». La barre d’échelle doit mesurer 5 cm.</p>
+          </li>
+          <li>
+            <span class="num" aria-hidden="true">2</span>
+            <h2 data-i18n="kit.step2Title">Découpe les pièces</h2>
+            <p data-i18n="kit.step2Body">Suis les traits noirs. Garde le plateau entier, avec ses quatre carrés noirs : la caméra les lit.</p>
+          </li>
+          <li>
+            <span class="num" aria-hidden="true">3</span>
+            <h2 data-i18n="kit.step3Title">Pose-les sur le plateau</h2>
+            <p data-i18n="kit.step3Body">Case sur case, arête contre arête, jusqu’à fermer une barrière.</p>
+          </li>
+          <li>
+            <span class="num" aria-hidden="true">4</span>
+            <h2 data-i18n="kit.step4Title">Ouvre la caméra</h2>
+            <p data-i18n="kit.step4Body">Scanne le code en bas du plateau, puis tiens le téléphone au-dessus, les quatre carrés noirs bien visibles.</p>
+            <a class="camLink" id="cameraLink" href="../camera/?board=sq9"
+              ><span data-i18n="kit.cameraLink">Ouvrir la caméra</span> <span aria-hidden="true">→</span></a
+            >
+          </li>
+        </ol>
+
+        <section class="picker" aria-labelledby="pickT">
+          <h2 id="pickT" data-i18n="kit.pickBoard">Choisis un plateau</h2>
+          <div class="group">
+            <h3 id="grpStart" data-i18n="kit.groupStart">Pour commencer</h3>
+            <div class="boards" id="boardsStart" role="group" aria-labelledby="grpStart"></div>
+          </div>
+          <div class="group">
+            <h3 id="grpBig" data-i18n="kit.groupBig">Grands défis</h3>
+            <div class="boards" id="boardsBig" role="group" aria-labelledby="grpBig"></div>
+          </div>
+        </section>
+
+        <section class="options" data-i18n-aria-label="kit.optionsAria" aria-label="Réglages d’impression">
+          <div class="optRow">
+            <div class="seg" role="group" aria-labelledby="paperL">
+              <span class="segLabel" id="paperL" data-i18n="kit.paper">Papier</span>
+              <button type="button" data-paper="A4" aria-pressed="true">A4</button>
+              <button type="button" data-paper="A3" aria-pressed="false">A3</button>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="backs" checked />
+              <span class="track" aria-hidden="true"></span>
+              <span data-i18n="kit.backs">Dos colorés (recto verso)</span>
+            </label>
+            <div class="printWrap">
+              <button type="button" class="printBtn" id="printBtn"><span data-i18n="kit.print">Imprimer</span></button>
+              <span class="keys" data-i18n="kit.printKeys">ou Ctrl+P, ⌘P</span>
+            </div>
+          </div>
+          <p class="paperNote" id="paperNote" hidden>
+            <span data-i18n="kit.a3Note">Astuce : sur A4, ce grand plateau a de toutes petites cases. Sur du papier A3, elles sont plus grandes et plus faciles à lire pour la caméra. L’A4 marche aussi.</span>
+            <button type="button" class="linkBtn" id="useA3" data-i18n="kit.useA3">Passer en A3</button>
+          </p>
+          <p class="tip" data-i18n="kit.tip">Imprime les pièces en recto verso (retournement sur le bord long) ou colorie le dos de chaque pièce : la caméra doit aussi voir une pièce retournée.</p>
+        </section>
+
+        <section class="previewHead">
+          <h2 data-i18n="kit.previewTitle">Aperçu des feuilles</h2>
+          <p class="note" data-i18n="kit.previewNote">L’aperçu est réduit. L’impression est à taille réelle.</p>
+        </section>
+      </main>
+    </div>
+
+    <div class="sheets" id="sheets"></div>
+
+    <script src="../i18n.js"></script>
+    <script src="./i18n.js"></script>
+    <script src="../lattice-square.js"></script>
+    <script src="../lattice-hex.js"></script>
+    <script src="../lattice-triangular.js"></script>
+    <script src="../camera/boards.js"></script>
+    <script src="../vendor/js-aruco2/cv.js"></script>
+    <script src="../vendor/js-aruco2/aruco.js"></script>
+    <script src="../vendor/js-aruco2/dictionaries/aruco_4x4_1000.js"></script>
+    <script src="../vendor/qrcode-generator/qrcode.js"></script>
+    <script src="./kit.js"></script>
+  </body>
+</html>
