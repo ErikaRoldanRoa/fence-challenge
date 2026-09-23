@@ -9,10 +9,13 @@
 
   // "Continue on screen" from the camera page (see ../camera/view.js).
   const PAPER_IMPORT_KEY = "fc-paper-import";
+  // Printed boards whose pieces can land here: the 20 x 20 kit with its own
+  // corner marks, and the classic kit (corner ids 50 to 53).
   const PAPER_BOARDS = new Set(["sq20", "sq20-classic"]);
+  const CAMERA_BOARD = "sq20";
 
-  // Landscape layout (side column); must match the media query in styles.css.
-  const SIDE_LAYOUT_QUERY = "(min-width: 560px) and (min-aspect-ratio: 1/1)";
+  // One column below this width; must match the media query in styles.css.
+  const COMPACT_LAYOUT_QUERY = "(max-width: 1180px)";
 
   // Board cells for ../fence-analysis.js, built on first use.
   let fenceBoard = null;
@@ -39,19 +42,19 @@
       [0, 3],
       [1, 3],
     ],
-    N: [
-      [0, 0],
-      [0, 1],
-      [1, 1],
-      [1, 2],
-      [1, 3],
-    ],
     P: [
       [0, 0],
       [1, 0],
       [0, 1],
       [1, 1],
       [0, 2],
+    ],
+    N: [
+      [0, 0],
+      [0, 1],
+      [1, 1],
+      [1, 2],
+      [1, 3],
     ],
     T: [
       [0, 0],
@@ -120,17 +123,19 @@
     Z: "#ffa8a8",
   };
 
-  // Pieces are named by the letters used in the paper, in the paper's order.
+  // Pieces are named by the letters used in the paper.
   const PENTOMINOES = Object.keys(PIECE_DEFINITIONS).map((id) => ({
     id,
     color: PIECE_COLORS[id],
     cells: PIECE_DEFINITIONS[id],
   }));
 
-  // The enclosed inside (see drawInsideFill).
-  const INSIDE_BASE = "rgba(255, 210, 74, 0.14)";
-  const INSIDE_HATCH = "rgba(255, 210, 74, 0.9)";
-  const INSIDE_EDGE = "#ffd24a";
+  // The enclosed inside glows neon green; cells the outside reaches through
+  // a corner are tinted violet.
+  const INSIDE_FILL = "rgba(46, 207, 153, 0.55)";
+  const INSIDE_GLOW = "rgba(46, 207, 153, 0.85)";
+  const INSIDE_GLOW_FILL = "rgba(46, 207, 153, 0.5)";
+  const LEAK_FILL = "rgba(178, 120, 255, 0.35)";
 
   const PIECE_BY_ID = new Map(PENTOMINOES.map((piece) => [piece.id, piece]));
 
@@ -144,6 +149,10 @@
     clearBoard: document.getElementById("clear-board"),
     detectGameArea: document.getElementById("detect-game-area"),
     gameBoard: document.getElementById("game-board"),
+    gameToolbar: document.querySelector("#panel-game .game-toolbar"),
+    cameraToggle: document.getElementById("camera-toggle"),
+    cameraFrame: document.getElementById("board-camera-frame"),
+    cameraHost: document.getElementById("board-camera-host"),
   };
 
   const gameCtx = dom.gameBoard.getContext("2d");
@@ -164,38 +173,44 @@
 
   const pieceButtons = new Map();
 
+  // The camera view inside the board (../camera/inboard.js), while it is open.
+  const cameraState = {
+    view: null,
+    frameKey: "",
+  };
+
   init();
 
   function init() {
     buildPieceTray();
     bindLanguageButtons();
     bindGameControls();
+    bindCamera();
     updatePieceTrayState();
     updateGameMetrics();
     setStatus("sq.s.start");
-    syncGameLayoutSize();
-    renderGameBoard();
+    relayout();
 
-    window.addEventListener("resize", () => {
-      syncGameLayoutSize();
-      renderGameBoard();
-    });
+    window.addEventListener("resize", relayout);
     if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(() => {
-        syncGameLayoutSize();
-        renderGameBoard();
-      });
+      document.fonts.ready.then(relayout);
     }
 
     document.addEventListener("fc-langchange", () => {
       localizePieceTray();
+      localizeCameraToggle();
       renderStatus();
-      syncGameLayoutSize();
-      renderGameBoard();
+      relayout();
     });
 
     window.addEventListener("hashchange", importFromPaper);
     importFromPaper();
+  }
+
+  function relayout() {
+    syncGameLayoutSize();
+    renderGameBoard();
+    placeCameraFrame();
   }
 
   function t(key, vars) {
@@ -610,86 +625,55 @@
     gameState.leakKeys.clear();
   }
 
-  // Landscape screens get a side column and a board as tall as the screen;
-  // portrait screens stack everything in one column. styles.css gives the
-  // first sizes; they are set here again in pixels on every resize, because
-  // some browsers keep stale viewport units inside custom properties.
+  // Wide screens: the board is as large as the screen allows, with the
+  // pieces on its left and the credit on its right (sizes in styles.css).
+  // Narrow screens stack everything in one column and need no sizes here.
   function syncGameLayoutSize() {
     const panel = dom.gamePanel;
-    if (!panel) {
+    const toolbar = dom.gameToolbar;
+    if (!panel || !toolbar) {
       return;
     }
-    if (window.matchMedia(SIDE_LAYOUT_QUERY).matches) {
-      panel.style.removeProperty("--compact-board");
-      const sizes = sideLayoutSizes(panel);
-      panel.style.setProperty("--board-size", `${sizes.board}px`);
-      panel.style.setProperty("--side-width", `${sizes.side}px`);
+
+    if (window.matchMedia(COMPACT_LAYOUT_QUERY).matches) {
+      panel.style.removeProperty("--board-size");
+      panel.style.removeProperty("--toolbar-height");
       return;
     }
-    panel.style.removeProperty("--board-size");
-    panel.style.removeProperty("--side-width");
-    panel.style.setProperty("--compact-board", `${compactBoardSize()}px`);
-  }
 
-  // Same rule as styles.css: the board is as tall as the screen, as long as
-  // the side column keeps its minimum width.
-  function sideLayoutSizes(panel) {
-    const styles = getComputedStyle(panel);
-    const px = (name, fallback) => Number.parseFloat(styles.getPropertyValue(name)) || fallback;
-    const pad = Number.parseFloat(styles.paddingTop) || 0;
-    const padX = (Number.parseFloat(styles.paddingLeft) || 0) + (Number.parseFloat(styles.paddingRight) || 0);
-    const gap = px("--col-gap", 16);
-    const sideMin = px("--side-min", 260);
-    const sideMax = px("--side-max", 360);
-    const width = document.documentElement.clientWidth;
-    const height = window.innerHeight;
-    const board = Math.max(240, Math.floor(Math.min(height - 2 * pad, width - padX - gap - sideMin)));
-    const side = clamp(Math.floor(width - padX - gap - board), sideMin, sideMax);
-    return { board, side };
-  }
-
-  // One column: the board takes the height the rest of the page leaves in the
-  // visible viewport, so the tray and Rotate/Flip stay on screen, never wider
-  // than the column and never smaller than a playable size. The credit line
-  // may sit below the fold.
-  function compactBoardSize() {
-    const layout = dom.gamePanel.querySelector(".game-layout");
-    const main = dom.gamePanel.querySelector(".game-main");
-    const credit = document.getElementById("side-brand-link");
-    const width = Math.floor(layout.clientWidth);
-    const viewport = window.innerHeight;
-    const shell = getComputedStyle(dom.gamePanel);
-    const rowGap = Number.parseFloat(getComputedStyle(layout).rowGap) || 0;
-    let others = (Number.parseFloat(shell.paddingTop) || 0) + (Number.parseFloat(shell.paddingBottom) || 0);
-    let rows = 0;
-    for (const child of layout.children) {
-      if (child === credit) {
-        continue;
-      }
-      if (child === main) {
-        rows += 1;
-        continue;
-      }
-      const height = child.getBoundingClientRect().height;
-      if (height > 0) {
-        others += height;
-        rows += 1;
-      }
+    const panelRect = panel.getBoundingClientRect();
+    if (!panelRect.width || !panelRect.height) {
+      return;
     }
-    others += rowGap * Math.max(0, rows - 1);
-    const minimum = Math.min(width, 280);
-    return clamp(Math.floor(viewport - others - 2), minimum, width);
+
+    const panelStyles = getComputedStyle(panel);
+    const labelWidth = Number.parseFloat(panelStyles.getPropertyValue("--label-width")) || 26;
+    const dockWidth = Number.parseFloat(panelStyles.getPropertyValue("--dock-width")) || 58;
+    const dockGap = Number.parseFloat(panelStyles.getPropertyValue("--dock-gap")) || 6;
+    const paddingX = (Number.parseFloat(panelStyles.paddingLeft) || 0) + (Number.parseFloat(panelStyles.paddingRight) || 0);
+    const paddingY = (Number.parseFloat(panelStyles.paddingTop) || 0) + (Number.parseFloat(panelStyles.paddingBottom) || 0);
+
+    const toolbarHeight = Math.ceil(toolbar.getBoundingClientRect().height) || 38;
+    const rowGap = 6;
+    const safetyPad = 6;
+    const sideWidth = labelWidth + dockWidth + dockGap * 2;
+    const availableWidth = panelRect.width - paddingX - sideWidth - safetyPad;
+    const availableHeight = panelRect.height - paddingY - toolbarHeight - rowGap - safetyPad;
+    const boardSize = clamp(Math.floor(Math.min(availableWidth, availableHeight)), 320, 1200);
+
+    panel.style.setProperty("--board-size", `${boardSize}px`);
+    panel.style.setProperty("--toolbar-height", `${toolbarHeight}px`);
   }
 
   function renderGameBoard() {
-    const view = prepareCanvas(dom.gameBoard, gameCtx, 240);
-    const pad = 8;
+    const view = prepareCanvas(dom.gameBoard, gameCtx, 320);
+    const pad = 14;
     const cellSize = Math.max(8, Math.floor(Math.min((view.width - pad * 2) / BOARD_SIZE, (view.height - pad * 2) / BOARD_SIZE)));
     const boardPx = cellSize * BOARD_SIZE;
     const originX = Math.floor((view.width - boardPx) / 2);
     const originY = Math.floor((view.height - boardPx) / 2);
 
-    gameState.layout = { originX, originY, cellSize, boardPx };
+    gameState.layout = { originX, originY, cellSize, boardPx, viewWidth: view.width, viewHeight: view.height };
 
     gameCtx.clearRect(0, 0, view.width, view.height);
     gameCtx.fillStyle = "#0f151f";
@@ -705,8 +689,10 @@
         if (occupant) {
           const piece = PIECE_BY_ID.get(occupant);
           gameCtx.fillStyle = piece ? piece.color : "#888";
+        } else if (gameState.interiorKeys.has(key)) {
+          gameCtx.fillStyle = INSIDE_FILL;
         } else if (gameState.leakKeys.has(key)) {
-          gameCtx.fillStyle = "rgba(178, 120, 255, 0.35)";
+          gameCtx.fillStyle = LEAK_FILL;
         } else {
           gameCtx.fillStyle = "#121a26";
         }
@@ -715,7 +701,17 @@
       }
     }
 
-    drawInsideFill(originX, originY, cellSize);
+    if (gameState.interiorKeys.size > 0) {
+      gameCtx.save();
+      gameCtx.shadowBlur = 10;
+      gameCtx.shadowColor = INSIDE_GLOW;
+      gameCtx.fillStyle = INSIDE_GLOW_FILL;
+      for (const key of gameState.interiorKeys) {
+        const [x, y] = key.split(",").map(Number);
+        gameCtx.fillRect(originX + x * cellSize + 1, originY + y * cellSize + 1, cellSize - 2, cellSize - 2);
+      }
+      gameCtx.restore();
+    }
 
     gameCtx.strokeStyle = "#2a374a";
     gameCtx.lineWidth = 1;
@@ -734,78 +730,12 @@
       gameCtx.stroke();
     }
 
-    drawInsideEdge(originX, originY, cellSize);
     drawActivePieceOutline();
     drawDraggingPieceOnBoard();
 
     gameCtx.strokeStyle = "#5a708f";
     gameCtx.lineWidth = 1.6;
     gameCtx.strokeRect(originX + 0.5, originY + 0.5, boardPx, boardPx);
-  }
-
-  // The enclosed inside is hatched in amber, with an amber contour, so it
-  // never looks like a piece (pieces are solid colours).
-  function drawInsideFill(originX, originY, cellSize) {
-    if (gameState.interiorKeys.size === 0) {
-      return;
-    }
-    const boardPx = cellSize * BOARD_SIZE;
-    gameCtx.save();
-    gameCtx.beginPath();
-    for (const key of gameState.interiorKeys) {
-      const [x, y] = key.split(",").map(Number);
-      gameCtx.rect(originX + x * cellSize + 1, originY + y * cellSize + 1, cellSize - 2, cellSize - 2);
-    }
-    gameCtx.fillStyle = INSIDE_BASE;
-    gameCtx.fill();
-    gameCtx.clip();
-    gameCtx.strokeStyle = INSIDE_HATCH;
-    gameCtx.lineWidth = Math.max(1.5, cellSize * 0.1);
-    const step = Math.max(5, cellSize / 3);
-    gameCtx.beginPath();
-    for (let d = -boardPx; d <= boardPx; d += step) {
-      gameCtx.moveTo(originX + d, originY + boardPx);
-      gameCtx.lineTo(originX + d + boardPx, originY);
-    }
-    gameCtx.stroke();
-    gameCtx.restore();
-  }
-
-  function drawInsideEdge(originX, originY, cellSize) {
-    if (gameState.interiorKeys.size === 0) {
-      return;
-    }
-    const inside = gameState.interiorKeys;
-    gameCtx.save();
-    gameCtx.strokeStyle = INSIDE_EDGE;
-    gameCtx.lineWidth = 2;
-    gameCtx.lineCap = "square";
-    gameCtx.beginPath();
-    for (const key of inside) {
-      const [x, y] = key.split(",").map(Number);
-      const left = originX + x * cellSize + 1;
-      const top = originY + y * cellSize + 1;
-      const right = left + cellSize - 2;
-      const bottom = top + cellSize - 2;
-      if (!inside.has(keyOf(x, y - 1))) {
-        gameCtx.moveTo(left, top);
-        gameCtx.lineTo(right, top);
-      }
-      if (!inside.has(keyOf(x, y + 1))) {
-        gameCtx.moveTo(left, bottom);
-        gameCtx.lineTo(right, bottom);
-      }
-      if (!inside.has(keyOf(x - 1, y))) {
-        gameCtx.moveTo(left, top);
-        gameCtx.lineTo(left, bottom);
-      }
-      if (!inside.has(keyOf(x + 1, y))) {
-        gameCtx.moveTo(right, top);
-        gameCtx.lineTo(right, bottom);
-      }
-    }
-    gameCtx.stroke();
-    gameCtx.restore();
   }
 
   function drawActivePieceOutline() {
@@ -1045,7 +975,14 @@
     if (!placements || placements.size === 0) {
       return;
     }
+    showPaperPieces(placements);
+  }
 
+  // Replaces the board with the pieces read from paper, then measures.
+  function showPaperPieces(placements) {
+    if (gameState.drag) {
+      finishDraggingPiece(true);
+    }
     gameState.placedPieces = placements;
     gameState.activePieceId = null;
     gameState.freshPieceId = null;
@@ -1053,19 +990,24 @@
     rebuildGameOccupancy();
     runGameAreaDetection();
     updatePieceTrayState();
-    gameState.status.prefix = { key: "sq.s.imported", vars: { count: placements.size } };
-    renderStatus();
+    if (placements.size > 0) {
+      gameState.status.prefix = { key: "sq.s.imported", vars: { count: placements.size } };
+      renderStatus();
+    }
   }
 
   // payload = { boardId, placements: [{ typeId, variantIndex, marker: {x, y} }] }
   // Returns a Map pieceId -> placed piece, or null when anything does not fit.
-  function placementsFromPaper(payload) {
+  // An empty list is refused unless allowEmpty (the live camera may see an
+  // empty board).
+  function placementsFromPaper(payload, allowEmpty = false) {
     const Boards = window.FenceBoards;
     const lattice = window.LatticeSquare;
     if (!Boards || !lattice || !payload || typeof payload !== "object") return null;
     if (!PAPER_BOARDS.has(payload.boardId)) return null;
     const list = payload.placements;
-    if (!Array.isArray(list) || list.length === 0 || list.length > PENTOMINOES.length) return null;
+    if (!Array.isArray(list) || list.length > PENTOMINOES.length) return null;
+    if (list.length === 0 && !allowEmpty) return null;
 
     const types = new Map(Boards.pieceTypes(payload.boardId).map((type) => [type.id, type]));
     const usedTypes = new Set();
@@ -1125,6 +1067,206 @@
       .map((cell) => keyOf(cell.x, cell.y))
       .sort()
       .join("|");
+  }
+
+  /* ------------------------------------------------ camera inside the board */
+
+  // The camera chip turns the board itself into the camera window: the
+  // printed board is straightened onto the drawn one, cell on cell, and once
+  // the view is steady its pieces are put on the digital board. Tapping the
+  // chip again closes the camera; the pieces stay.
+  function cameraSupported() {
+    try {
+      return Boolean(
+        window.FenceInboard &&
+          typeof window.FenceInboard.open === "function" &&
+          window.FenceInboard.supported() &&
+          window.FenceBoards &&
+          window.FenceBoards.get(CAMERA_BOARD),
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function bindCamera() {
+    const chip = dom.cameraToggle;
+    if (!chip) {
+      return;
+    }
+    chip.hidden = !cameraSupported();
+    chip.addEventListener("click", () => {
+      if (cameraState.view) {
+        closeCamera();
+      } else {
+        openCamera();
+      }
+    });
+    // Leaving the page always switches the camera off.
+    window.addEventListener("pagehide", () => closeCamera(true));
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        closeCamera(true);
+      }
+    });
+  }
+
+  function openCamera() {
+    if (cameraState.view || !cameraSupported()) {
+      return;
+    }
+    if (gameState.drag) {
+      finishDraggingPiece(true);
+    }
+    dom.cameraFrame.hidden = false;
+    cameraState.frameKey = "";
+    placeCameraFrame();
+    let view = null;
+    try {
+      view = window.FenceInboard.open({
+        host: dom.cameraHost,
+        boardId: CAMERA_BOARD,
+        worldToHost: cellToHost,
+        onPlacements: cameraPlacements,
+        onState: cameraStateChanged,
+        onClose: cameraClosed,
+      });
+    } catch (e) {
+      view = null;
+    }
+    if (!view) {
+      dom.cameraFrame.hidden = true;
+      setStatus("sq.s.camError");
+      return;
+    }
+    cameraState.view = view;
+    document.body.dataset.fcCamera = "starting";
+    localizeCameraToggle();
+  }
+
+  // quiet: the page is going away, no message.
+  function closeCamera(quiet = false) {
+    const view = cameraState.view;
+    if (!view) {
+      return;
+    }
+    cameraState.view = null;
+    try {
+      view.close();
+    } catch (e) {
+      /* already closed */
+    }
+    cameraClosed(quiet);
+  }
+
+  // Called when the camera view is gone, whoever closed it.
+  function cameraClosed(quiet) {
+    cameraState.view = null;
+    dom.cameraFrame.hidden = true;
+    document.body.dataset.fcCamera = "stopped";
+    localizeCameraToggle();
+    if (quiet !== true) {
+      setStatus("sq.s.camClosed");
+    }
+  }
+
+  function cameraStateChanged(state) {
+    if (!cameraState.view) {
+      return;
+    }
+    const value = String(state || "");
+    document.body.dataset.fcCamera = value;
+    if (value === "starting") {
+      setStatus("sq.s.camStarting");
+    } else if (value === "searching") {
+      setStatus("sq.s.camSearching");
+    } else if (value === "locked") {
+      setStatus("sq.s.camLocked");
+    } else if (value.indexOf("error") === 0) {
+      setStatus("sq.s.camError");
+    }
+  }
+
+  // A new steady set of pieces read on paper: checked with the same rules as
+  // "Continue on screen", then put on the board and measured.
+  function cameraPlacements(placements, result) {
+    if (!cameraState.view) {
+      return;
+    }
+    const boardId = result && result.boardId ? result.boardId : CAMERA_BOARD;
+    const pieces = placementsFromPaper({ boardId, placements }, true);
+    if (!pieces) {
+      return;
+    }
+    showPaperPieces(pieces);
+    document.body.dataset.fcArea = String(gameState.analysis ? gameState.analysis.totalArea : 0);
+  }
+
+  // World point of the square lattice (cell (x, y) is centred at (x, y)) to
+  // CSS pixels inside the camera host, which covers the drawn grid exactly.
+  function cellToHost(point) {
+    const layout = gameState.layout;
+    const size = layout ? cameraCellSize() : 0;
+    return {
+      x: (point.x + 0.5) * size,
+      y: (point.y + 0.5) * size,
+    };
+  }
+
+  // One cell in CSS pixels (the canvas is drawn at its CSS size).
+  function cameraCellSize() {
+    const layout = gameState.layout;
+    const scale = layout.viewWidth ? dom.gameBoard.clientWidth / layout.viewWidth : 1;
+    return layout.cellSize * scale;
+  }
+
+  // Lays the camera frame exactly over the drawn grid, and tells the camera
+  // view when that place changes.
+  function placeCameraFrame() {
+    const layout = gameState.layout;
+    if (!cameraState.view && dom.cameraFrame.hidden) {
+      return;
+    }
+    if (!layout) {
+      return;
+    }
+    const canvas = dom.gameBoard;
+    const scale = layout.viewWidth ? canvas.clientWidth / layout.viewWidth : 1;
+    const left = canvas.offsetLeft + canvas.clientLeft + layout.originX * scale;
+    const top = canvas.offsetTop + canvas.clientTop + layout.originY * scale;
+    const size = layout.boardPx * scale;
+    const key = [left, top, size].map((v) => v.toFixed(2)).join(",");
+    if (key === cameraState.frameKey) {
+      return;
+    }
+    cameraState.frameKey = key;
+    const style = dom.cameraFrame.style;
+    style.left = `${left}px`;
+    style.top = `${top}px`;
+    style.width = `${size}px`;
+    style.height = `${size}px`;
+    if (cameraState.view && typeof cameraState.view.refresh === "function") {
+      try {
+        cameraState.view.refresh();
+      } catch (e) {
+        /* the next resize tries again */
+      }
+    }
+  }
+
+  function localizeCameraToggle() {
+    const chip = dom.cameraToggle;
+    if (!chip) {
+      return;
+    }
+    const open = Boolean(cameraState.view);
+    const key = open ? "sq.cam.close" : "sq.cam.open";
+    chip.setAttribute("data-i18n-aria-label", key);
+    chip.setAttribute("data-i18n-title", key);
+    chip.setAttribute("aria-label", t(key));
+    chip.title = t(key);
+    chip.setAttribute("aria-pressed", open ? "true" : "false");
+    chip.classList.toggle("active", open);
   }
 
   /* ------------------------------------------------ helpers */

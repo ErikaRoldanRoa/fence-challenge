@@ -4,86 +4,93 @@
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'"
+      content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title data-i18n="sq.docTitle">Challenge 2 · 12 pentominoes · Fence Challenge</title>
-    <meta name="theme-color" content="#0d1117" />
+    <meta name="theme-color" content="#07060a" />
     <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="../fonts/manrope.css" />
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="../camera/inboard.css" />
     <script src="../i18n.js"></script>
     <script src="i18n.js"></script>
   </head>
   <body>
-    <main class="app-shell" id="panel-game">
-      <div class="game-layout">
-        <header class="lab-header">
-          <a class="back-link" href="../index.html" data-i18n-aria-label="sq.back.aria" aria-label="Back to the Fence Challenge home page"><span aria-hidden="true">←</span> <span class="back-text">Fence Challenge</span></a>
-          <h1 class="lab-title" data-i18n="sq.title">Challenge 2 · 12 pentominoes</h1>
-          <div class="header-end">
-            <a
-              id="paper-link"
-              class="camera-chip paper-link"
-              href="../camera/?board=sq20"
-              data-i18n-title="sq.paper.title"
-              data-i18n-aria-label="sq.paper.title"
-              title="Play on paper"
-              aria-label="Play on paper"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path
-                  d="M9 5.5 10.2 4h3.6L15 5.5h2.7A2.3 2.3 0 0 1 20 7.8v8.5a2.3 2.3 0 0 1-2.3 2.2H6.3A2.3 2.3 0 0 1 4 16.3V7.8a2.3 2.3 0 0 1 2.3-2.3H9Zm3 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 1.8a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4Z"
-                />
-              </svg>
-              <span class="paper-label" data-i18n="sq.paper.label" aria-hidden="true">Play on paper</span>
-            </a>
-            <nav class="langSel" aria-label="Language / Langue / Sprache">
-              <button type="button" data-lang-btn="fr" aria-pressed="false" lang="fr">FR</button>
-              <button type="button" data-lang-btn="de" aria-pressed="false" lang="de">DE</button>
-              <button type="button" data-lang-btn="en" aria-pressed="false" lang="en">EN</button>
-            </nav>
-          </div>
-        </header>
-        <div class="game-toolbar">
-          <div class="game-controls">
-            <button id="detect-game-area" class="btn btn-primary" type="button" data-i18n="sq.measure">Measure area</button>
-            <div class="metrics" id="game-metrics">
-              <span id="area-label" data-i18n="sq.areaLabel">Area</span>
-              <strong id="area-value">0</strong>
+    <nav class="langSel" aria-label="Language / Langue / Sprache">
+      <button type="button" data-lang-btn="fr" aria-pressed="false" lang="fr">FR</button>
+      <button type="button" data-lang-btn="de" aria-pressed="false" lang="de">DE</button>
+      <button type="button" data-lang-btn="en" aria-pressed="false" lang="en">EN</button>
+    </nav>
+
+    <main class="app-shell">
+      <section class="panel active" id="panel-game" data-i18n-aria-label="sq.title" aria-label="Challenge 2 · 12 pentominoes">
+        <h1 class="visually-hidden" data-i18n="sq.title">Challenge 2 · 12 pentominoes</h1>
+        <div class="game-layout">
+          <a
+            id="side-brand-link"
+            class="side-brand"
+            href="https://doi.org/10.1515/dmvm-2025-0056"
+            target="_blank"
+            rel="noopener"
+            data-i18n="sq.brand.line"
+            data-i18n-title="sq.brand.citeTitle"
+            title="Cite: Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025, doi:10.1515/dmvm-2025-0056"
+          >Fence Challenge · LRMR25 · Dr. Erika Roldán</a>
+          <div class="game-toolbar">
+            <div class="game-controls">
+              <button id="detect-game-area" class="btn btn-primary" type="button" data-i18n="sq.measure">Measure area</button>
+              <div class="metrics" id="game-metrics">
+                <div><span data-i18n="sq.areaPrefix">Area:</span> <strong id="area-value">0</strong></div>
+              </div>
+              <button id="clear-board" class="btn btn-danger" type="button" data-i18n="sq.clear">Clear</button>
             </div>
-            <button id="clear-board" class="btn btn-danger" type="button" data-i18n="sq.clear">Clear</button>
+          </div>
+          <aside class="dock-panel">
+            <div id="piece-tray" class="piece-tray piece-dock" role="group" data-i18n-aria-label="sq.pieceDock.aria" aria-label="Piece tray"></div>
+            <div class="piece-actions">
+              <button id="rotate-piece" class="btn" type="button" aria-keyshortcuts="R" data-i18n-title="sq.rotateTip" title="Rotate the selected piece (R key)"><span data-i18n="sq.rotate">Rotate</span> (R)</button>
+              <button id="flip-piece" class="btn" type="button" aria-keyshortcuts="F" data-i18n-title="sq.flipTip" title="Flip the selected piece (F key)"><span data-i18n="sq.flip">Flip</span> (F)</button>
+            </div>
+          </aside>
+          <div class="game-main">
+            <div class="board-stage">
+              <button
+                id="camera-toggle"
+                class="camera-chip board-camera-chip"
+                type="button"
+                aria-pressed="false"
+                data-i18n-aria-label="sq.cam.open"
+                data-i18n-title="sq.cam.open"
+                aria-label="Open the camera on the board"
+                title="Open the camera on the board"
+                hidden
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path
+                    d="M9 5.5 10.2 4h3.6L15 5.5h2.7A2.3 2.3 0 0 1 20 7.8v8.5a2.3 2.3 0 0 1-2.3 2.2H6.3A2.3 2.3 0 0 1 4 16.3V7.8a2.3 2.3 0 0 1 2.3-2.3H9Zm3 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 1.8a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4Z"
+                  />
+                </svg>
+              </button>
+              <canvas id="game-board" width="900" height="900" role="img" data-i18n-aria-label="sq.board.aria" aria-label="Fence board, 20 by 20 cells"></canvas>
+              <div class="board-camera-frame" id="board-camera-frame" hidden>
+                <div class="board-camera-host" id="board-camera-host"></div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="game-main">
-          <div class="board-stage">
-            <canvas id="game-board" width="900" height="900" role="img" data-i18n-aria-label="sq.board.aria" aria-label="Fence board, 20 by 20 cells"></canvas>
-          </div>
-        </div>
-        <p class="status-line" id="game-status" role="status" aria-live="polite"></p>
-        <aside class="dock-panel">
-          <div id="piece-tray" class="piece-tray piece-dock" role="group" data-i18n-aria-label="sq.pieceDock.aria" aria-label="Piece tray"></div>
-          <div class="piece-actions">
-            <button id="rotate-piece" class="btn" type="button" aria-keyshortcuts="R" data-i18n-title="sq.rotateTip" title="Rotate the selected piece (R key)"><span data-i18n="sq.rotate">Rotate</span><span class="key-hint"> (R)</span></button>
-            <button id="flip-piece" class="btn" type="button" aria-keyshortcuts="F" data-i18n-title="sq.flipTip" title="Flip the selected piece (F key)"><span data-i18n="sq.flip">Flip</span><span class="key-hint"> (F)</span></button>
-          </div>
-        </aside>
-        <a
-          id="side-brand-link"
-          class="side-brand"
-          href="https://doi.org/10.1515/dmvm-2025-0056"
-          target="_blank"
-          rel="noopener"
-          data-i18n="sq.brand.line"
-          data-i18n-title="sq.brand.citeTitle"
-          title="Cite: Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025, doi:10.1515/dmvm-2025-0056"
-        >Fence Challenge · LRMR25 · Dr. Erika Roldán</a>
-      </div>
+        <p class="visually-hidden" id="game-status" role="status" aria-live="polite"></p>
+      </section>
     </main>
 
     <script defer src="../lattice-square.js"></script>
     <script defer src="../fence-analysis.js"></script>
+    <script defer src="../vendor/js-aruco2/cv.js"></script>
+    <script defer src="../vendor/js-aruco2/aruco.js"></script>
+    <script defer src="../vendor/js-aruco2/dictionaries/aruco_4x4_1000.js"></script>
     <script defer src="../camera/boards.js"></script>
+    <script defer src="../camera/core.js"></script>
+    <script defer src="../camera/inboard.js"></script>
     <script defer src="app.js"></script>
   </body>
 </html>

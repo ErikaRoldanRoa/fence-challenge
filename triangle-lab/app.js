@@ -6,6 +6,8 @@ const BOARD_EXTRA_TRIANGLE_LAYERS = 2;
 const BOARD_HEX_SIDE = BOARD_BASE_HEX_SIDE + BOARD_EXTRA_TRIANGLE_LAYERS;
 const SQRT3 = Math.sqrt(3);
 const SQRT3_HALF = SQRT3 / 2;
+// The board the camera reads for this lab (see ../camera/boards.js).
+const CAMERA_BOARD = "tri13";
 const MARKER_COLORS = [
   "#ff5b7f",
   "#ff9d1e",
@@ -20,6 +22,9 @@ const MARKER_COLORS = [
   "#ff5fb3",
   "#ff9f8e",
 ];
+const RING_EDGE_SLOTS = [0.18, 0.4, 0.62, 0.84];
+// Space kept between the piece chips, the screen edges and the controls.
+const EDGE_GAP = 4;
 const ROTATE_60 = { reflect: false, rot: 1 };
 const REFLECT = { reflect: true, rot: 0 };
 
@@ -31,8 +36,8 @@ for (let rot = 0; rot < 6; rot += 1) {
   SYMMETRIES.push({ reflect: true, rot });
 }
 
-// Names and order as in the paper (Abbildung 5), keyed by the canonical shape.
-const HEXIAMOND_NAMES = [
+// Names as in the paper (Abbildung 5), keyed by the canonical shape.
+const HEXIAMOND_NAMES = new Map([
   ["0,0,0|0,0,1|0,1,0|0,1,1|0,2,0|0,2,1", "rhomboid"],
   ["0,0,1|0,1,0|0,1,1|0,2,0|0,2,1|1,0,0", "crook"],
   ["0,0,1|0,1,0|0,1,1|0,2,0|0,2,1|1,1,0", "crown"],
@@ -45,30 +50,36 @@ const HEXIAMOND_NAMES = [
   ["0,0,0|0,0,1|0,1,0|0,1,1|1,0,1|1,1,0", "shoe"],
   ["0,0,1|0,1,0|0,1,1|1,0,0|1,0,1|1,1,0", "hexagon"],
   ["0,1,0|0,1,1|0,2,0|1,0,1|1,1,0|1,1,1", "butterfly"],
-];
+]);
 
 const dom = {
-  stage: document.getElementById("stage"),
   boardWrap: document.getElementById("board-wrap"),
   canvas: document.getElementById("board-canvas"),
   tray: document.getElementById("piece-tray"),
+  toolbar: document.querySelector(".toolbar"),
+  actions: document.querySelector(".board-actions"),
   detectAreaBtn: document.getElementById("detect-area"),
   clearBtn: document.getElementById("clear-board"),
   rotateBtn: document.getElementById("rotate-piece"),
   flipBtn: document.getElementById("flip-piece"),
-  areaValue: document.getElementById("area-value"),
+  areaChip: document.getElementById("area-chip"),
+  cameraChip: document.getElementById("camera-chip"),
+  cameraHost: document.getElementById("camera-host"),
+  sideBrand: document.querySelector(".side-brand"),
   status: document.getElementById("status"),
 };
 
 const state = {
   ctx: dom.canvas.getContext("2d"),
+  board: null,
   boardCells: [],
   boardCellMap: new Map(),
   boardCellEntries: [],
-  board: null,
   boardBounds: null,
-  view: { scale: 1, offsetX: 0, offsetY: 0, width: 0, height: 0 },
-  layout: { mode: "ring", cw: 0, ch: 0, padL: 0, padT: 0, slots: [] },
+  view: { scale: 1, offsetX: 0, offsetY: 0, width: 0, height: 0, dpr: 1 },
+  // "edges3": the chips on the three upper sides; "edges5": also down the
+  // two lower slanted sides, when the upper sides are too short for them.
+  ringMode: "edges3",
   pieceTypes: [],
   pieceTypeMap: new Map(),
   selectedTypeId: null,
@@ -81,25 +92,12 @@ const state = {
   leakCells: new Set(),
   enclosedRegionCount: 0,
   enclosedLargest: 0,
+  area: 0,
   status: null,
 };
 
-// Inner margin of the drawing, in CSS pixels.
-const CANVAS_PADDING = 10;
-// Outward normals (degrees, y down) of the six sides of the board outline.
-// The board is a flat-top hexagon.
-const OUTLINE_NORMALS = [30, 90, 150, 210, 270, 330];
-const RING_SIDE_SLOTS = [0.18, 0.4, 0.62, 0.84];
-const CHIP_CLEARANCE = 8;
-// Controls in a side column and the board filling the rest of the screen:
-// the same condition as in styles.css.
-const WIDE = window.matchMedia("(min-width: 640px) and (min-aspect-ratio: 5/4)");
-// Space between two chips, and between the chips and the board.
-const CHIP_GAP = 8;
-// Smallest board side tried, in CSS pixels.
-const MIN_BOARD = 160;
-// The ring is kept when its board is at least this share of the largest.
-const RING_PREFERENCE = 0.97;
+// The camera view inside the board (../camera/inboard.js), while it is open.
+const camera = { view: null };
 
 init();
 
@@ -108,10 +106,15 @@ function init() {
   buildPieces();
   wireEvents();
   useTouchTips();
+  resizeCanvas();
   refreshTray();
   updateAreaChip(0);
   setStatus("tri.s.ready");
-  fitLayout();
+  render();
+}
+
+function t(key, vars) {
+  return window.i18n ? window.i18n.t(key, vars) : key;
 }
 
 // Touch screens have no R or F key, so their tooltips leave the key out.
@@ -123,15 +126,12 @@ function useTouchTips() {
   }
 }
 
-function t(key, vars) {
-  return window.i18n ? window.i18n.t(key, vars) : key;
-}
-
 function pieceName(typeId) {
   const type = state.pieceTypeMap.get(typeId);
   return type ? type.name : typeId;
 }
 
+// Any change to the board makes the last measurement stale.
 function resetMeasure() {
   state.enclosedCells = new Set();
   state.leakCells = new Set();
@@ -139,25 +139,7 @@ function resetMeasure() {
 }
 
 function wireEvents() {
-  dom.detectAreaBtn.addEventListener("click", () => {
-    const result = computeEnclosedArea();
-    state.enclosedCells = result.enclosedSet;
-    state.enclosedRegionCount = result.regionCount;
-    state.enclosedLargest = result.largestRegion;
-    state.leakCells = result.leakCells;
-    updateAreaChip(result.area);
-    // "Fence closed" only for a real fence: one inside, and no corner the
-    // outside slips through.
-    const parts = [];
-    if (result.area === 0 && !result.cornerLeak) parts.push({ key: "tri.s.areaNone" });
-    else if (result.area === 0) parts.push({ key: "tri.s.leakOnly" });
-    else if (result.regionCount > 1) parts.push({ key: "tri.s.areaSplit", vars: { area: result.area, regions: result.regionCount } });
-    else if (result.cornerLeak) parts.push({ key: result.area === 1 ? "tri.s.area1" : "tri.s.area", vars: { area: result.area } });
-    else parts.push({ key: result.area === 1 ? "tri.s.fence1" : "tri.s.fence", vars: { area: result.area } });
-    if (result.cornerLeak && result.area > 0) parts.push({ key: "tri.s.leak" });
-    setStatusParts(parts);
-    render();
-  });
+  dom.detectAreaBtn.addEventListener("click", measure);
 
   dom.clearBtn.addEventListener("click", () => {
     state.placedPieces = [];
@@ -181,19 +163,25 @@ function wireEvents() {
   });
   document.addEventListener("fc-langchange", () => {
     renderStatus();
+    updateAreaChip(state.area);
+    localizeCameraChip();
     refreshTray();
-    fitLayout();
+    resizeCanvas();
   });
 
   dom.canvas.addEventListener("pointerdown", onPointerDown);
   dom.canvas.addEventListener("pointermove", onPointerMove);
   dom.canvas.addEventListener("pointerup", onPointerUp);
   dom.canvas.addEventListener("pointercancel", onPointerUp);
-  window.addEventListener("resize", fitLayout);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitLayout);
+  window.addEventListener("resize", resizeCanvas);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(resizeCanvas);
 
   window.addEventListener("keydown", (event) => {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.key === "Escape" && camera.view) {
+      closeCamera();
+      return;
+    }
     if (event.key === "r" || event.key === "R") {
       event.preventDefault();
       rotateSelection();
@@ -212,6 +200,28 @@ function wireEvents() {
       removePiece(state.selectedPieceId);
     }
   });
+
+  bindCamera();
+}
+
+function measure() {
+  const result = computeEnclosedArea();
+  state.enclosedCells = result.enclosedSet;
+  state.enclosedRegionCount = result.regionCount;
+  state.enclosedLargest = result.largestRegion;
+  state.leakCells = result.leakCells;
+  updateAreaChip(result.area);
+  // "Fence closed" only for a real fence: one inside, and no corner the
+  // outside slips through.
+  const parts = [];
+  if (result.area === 0 && !result.cornerLeak) parts.push({ key: "tri.s.areaNone" });
+  else if (result.area === 0) parts.push({ key: "tri.s.leakOnly" });
+  else if (result.regionCount > 1) parts.push({ key: "tri.s.areaSplit", vars: { area: result.area, regions: result.regionCount } });
+  else if (result.cornerLeak) parts.push({ key: result.area === 1 ? "tri.s.area1" : "tri.s.area", vars: { area: result.area } });
+  else parts.push({ key: result.area === 1 ? "tri.s.fence1" : "tri.s.fence", vars: { area: result.area } });
+  if (result.cornerLeak && result.area > 0) parts.push({ key: "tri.s.leak" });
+  setStatusParts(parts);
+  render();
 }
 
 function removePiece(pieceId) {
@@ -242,28 +252,17 @@ function buildBoard() {
 
 function buildPieces() {
   const freeHexiamonds = generateFreePolyiamonds(HEXIAMOND_ORDER);
-  const byKey = new Map(freeHexiamonds.map((shape) => [cellsKey(shape), shape]));
-  const named = HEXIAMOND_NAMES.filter(([key]) => byKey.has(key)).map(([key, name]) => ({ name, shape: byKey.get(key) }));
-  const known = new Set(HEXIAMOND_NAMES.map(([key]) => key));
-  freeHexiamonds
-    .filter((shape) => !known.has(cellsKey(shape)))
-    .forEach((shape, index) => named.push({ name: `H${index + 1}`, shape }));
+  freeHexiamonds.sort((a, b) => cellsKey(a).localeCompare(cellsKey(b)));
 
-  // Each piece keeps the colour it always had: colours follow the sorted
-  // shape keys, while the tray follows the paper's order.
-  const colourRank = new Map(
-    freeHexiamonds
-      .map((shape) => cellsKey(shape))
-      .sort((a, b) => a.localeCompare(b))
-      .map((key, rank) => [key, rank])
-  );
-  const types = named.map((entry) => {
-    const variantData = buildVariants(entry.shape);
-    const rank = colourRank.get(cellsKey(entry.shape));
+  const types = freeHexiamonds.map((shape, index) => {
+    const key = cellsKey(shape);
+    const name = HEXIAMOND_NAMES.get(key) || `H${index + 1}`;
+    const variantData = buildVariants(shape);
     return {
-      id: entry.name,
-      name: entry.name,
-      color: MARKER_COLORS[rank % MARKER_COLORS.length],
+      id: name,
+      name,
+      shapeKey: canonicalizeShape(shape).key,
+      color: MARKER_COLORS[index % MARKER_COLORS.length],
       variants: variantData.variants,
       rotateMap: variantData.rotateMap,
       flipMap: variantData.flipMap,
@@ -388,16 +387,20 @@ function transformAnchoredVariant(variant, symmetry) {
 }
 
 function refreshTray() {
+  const focusedType = document.activeElement && document.activeElement.dataset
+    ? document.activeElement.dataset.type
+    : null;
   dom.tray.innerHTML = "";
   state.pieceTypes.forEach((type) => {
     const chip = document.createElement("button");
-    chip.className = "piece-chip";
+    chip.className = "piece-chip piece-chip-ring";
     chip.type = "button";
-    chip.title = type.name;
     chip.dataset.type = type.id;
+    chip.title = type.name;
     chip.setAttribute("aria-label", t("tri.piece.aria", { name: type.name }));
     const selected = state.selectedTypeId === type.id;
     chip.setAttribute("aria-pressed", selected ? "true" : "false");
+
     if (selected) {
       chip.classList.add("is-selected");
     }
@@ -423,6 +426,10 @@ function refreshTray() {
     dom.tray.appendChild(chip);
   });
   layoutPieceRing();
+  if (focusedType) {
+    const again = dom.tray.querySelector(`[data-type="${focusedType}"]`);
+    if (again) again.focus();
+  }
 }
 
 function buildPiecePreviewSvg(type) {
@@ -577,12 +584,7 @@ function reorientPlacedPiece(piece, nextVariantIndex) {
   const oldMarkerEntry = state.boardCellMap.get(cellKey(piece.marker));
   const preferred = oldMarkerEntry ? oldMarkerEntry.centroid : cellCentroidWorld(piece.marker);
   const nextMarker = findBestMarkerCell(piece.typeId, nextVariantIndex, preferred, piece.id);
-  if (!nextMarker) {
-    setStatus("tri.s.noRoom", { name: pieceName(piece.typeId) });
-    return false;
-  }
-
-  if (!canPlace(piece.typeId, nextVariantIndex, nextMarker, piece.id)) {
+  if (!nextMarker || !canPlace(piece.typeId, nextVariantIndex, nextMarker, piece.id)) {
     setStatus("tri.s.noRoom", { name: pieceName(piece.typeId) });
     return false;
   }
@@ -665,7 +667,6 @@ function onPointerMove(event) {
   piece.marker = { i: nearest.i, j: nearest.j, o: nearest.o };
   state._didDrag = true;
   if (!state._moved) {
-    // The measurement no longer describes the board: say what happened.
     state._moved = true;
     setStatus("tri.s.moving", { name: pieceName(piece.typeId) });
   }
@@ -767,241 +768,55 @@ function computeEnclosedArea() {
   return FenceAnalysis.analyze({ board: state.board, lattice: LatticeTriangular, occupied });
 }
 
-/* ---------- layout ---------- */
+/* ---------- size and ring ---------- */
 
-function cssNumber(name, fallback) {
-  const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));
-  return Number.isFinite(v) ? v : fallback;
-}
-
-// Height of everything on the page except the board stage.
-function heightAroundStage() {
-  const main = dom.stage.parentElement;
-  const app = main.parentElement;
-  const px = (el, prop) => parseFloat(getComputedStyle(el)[prop]) || 0;
-  let h = px(app, "paddingTop") + px(app, "paddingBottom");
-  for (const el of app.children) if (el !== main) h += el.offsetHeight;
-  const kids = [...main.children];
-  h += px(main, "paddingTop") + px(main, "paddingBottom") + px(main, "rowGap") * (kids.length - 1);
-  for (const el of kids) if (el !== dom.stage) h += el.offsetHeight;
-  return h;
-}
-
-// Canvas size that fits the board into a box of w x h CSS pixels.
-function canvasForBox(w, h) {
-  const b = state.boardBounds;
-  const bw = Math.max(b.maxX - b.minX, 0.0001);
-  const bh = Math.max(b.maxY - b.minY, 0.0001);
-  const scale = Math.max(0.0001, Math.min((w - 2 * CANVAS_PADDING) / bw, (h - 2 * CANVAS_PADDING) / bh));
-  return { cw: Math.floor(bw * scale + 2 * CANVAS_PADDING), ch: Math.floor(bh * scale + 2 * CANVAS_PADDING) };
-}
-
-// Board transform for a canvas of cw x ch CSS pixels (same formula as
-// resizeCanvas, without the device pixel ratio).
-function viewForCanvas(cw, ch) {
-  const b = state.boardBounds;
-  const bw = Math.max(b.maxX - b.minX, 0.0001);
-  const bh = Math.max(b.maxY - b.minY, 0.0001);
-  const scale = Math.max(0.0001, Math.min((cw - 2 * CANVAS_PADDING) / bw, (ch - 2 * CANVAS_PADDING) / bh));
-  return {
-    scale,
-    offsetX: (cw - bw * scale) * 0.5 - b.minX * scale,
-    offsetY: (ch - bh * scale) * 0.5 - b.minY * scale,
-  };
-}
-
-// The board outline: the tightest hexagon around every cell, as support
-// lines {n, h} (outward normal, distance) and corners (line k meets k+1).
-function boardOutline(view) {
-  const lines = OUTLINE_NORMALS.map((deg) => {
-    const a = (deg * Math.PI) / 180;
-    const n = { x: Math.cos(a), y: Math.sin(a) };
-    let h = -Infinity;
-    for (const entry of state.boardCellEntries) {
-      for (const v of entry.vertices) {
-        h = Math.max(h, (v.x * view.scale + view.offsetX) * n.x + (v.y * view.scale + view.offsetY) * n.y);
-      }
-    }
-    return { n, h };
-  });
-  const corners = lines.map((l1, k) => {
-    const l2 = lines[(k + 1) % lines.length];
-    const det = l1.n.x * l2.n.y - l1.n.y * l2.n.x;
-    return {
-      x: (l1.h * l2.n.y - l2.h * l1.n.y) / det,
-      y: (l1.n.x * l2.h - l2.n.x * l1.h) / det,
-    };
-  });
-  return { lines, corners };
-}
-
-// Chip centres along the three upper sides, clockwise from the left corner.
-function ringSlots(view, chip) {
-  const { lines, corners } = boardOutline(view);
-  const half = chip / 2;
-  const slots = [];
-  for (const k of [3, 4, 5]) {
-    const a = corners[(k + lines.length - 1) % lines.length];
-    const b = corners[k];
-    const n = lines[k].n;
-    const off = (Math.abs(n.x) + Math.abs(n.y)) * half + CHIP_CLEARANCE;
-    for (const tt of RING_SIDE_SLOTS) {
-      slots.push({ x: a.x + (b.x - a.x) * tt + n.x * off, y: a.y + (b.y - a.y) * tt + n.y * off });
-    }
-  }
-  return slots;
-}
-
-// Chip centres in rows under a board of cw x ch pixels.
-function traySlots(cw, ch, chip, count) {
-  const perRow = Math.max(1, Math.floor((cw + CHIP_GAP) / (chip + CHIP_GAP)));
-  const rows = Math.ceil(count / perRow);
-  const slots = [];
-  for (let i = 0; i < count; i += 1) {
-    const row = Math.floor(i / perRow);
-    const inRow = row < rows - 1 ? perRow : count - perRow * (rows - 1);
-    const col = i - row * perRow;
-    const rowWidth = inRow * chip + (inRow - 1) * CHIP_GAP;
-    slots.push({
-      x: (cw - rowWidth) / 2 + chip / 2 + col * (chip + CHIP_GAP),
-      y: ch + CHIP_GAP + chip / 2 + row * (chip + CHIP_GAP),
-    });
-  }
-  return { slots, height: CHIP_GAP + rows * chip + (rows - 1) * CHIP_GAP };
-}
-
-// Three ways to set out the piece chips. Each returns the canvas box, the
-// padding around it for the chips, and the chip centres in canvas pixels.
-
-// Around the board outline.
-function ringLayout(availW, availH, chip) {
-  const half = chip / 2 + 2;
-  let pads = { l: 0, r: 0, t: 0, b: 0 };
-  let box = canvasForBox(availW, availH);
-  let slots = [];
-  for (let pass = 0; pass < 4; pass += 1) {
-    slots = ringSlots(viewForCanvas(box.cw, box.ch), chip);
-    pads = { l: 0, r: 0, t: 0, b: 0 };
-    for (const s of slots) {
-      pads.l = Math.max(pads.l, half - s.x);
-      pads.r = Math.max(pads.r, s.x + half - box.cw);
-      pads.t = Math.max(pads.t, half - s.y);
-      pads.b = Math.max(pads.b, s.y + half - box.ch);
-    }
-    // Keep the board centred horizontally.
-    pads.l = pads.r = Math.ceil(Math.max(pads.l, pads.r));
-    pads.t = Math.ceil(pads.t);
-    pads.b = Math.ceil(pads.b);
-    box = canvasForBox(Math.max(MIN_BOARD, availW - pads.l - pads.r), Math.max(MIN_BOARD, availH - pads.t - pads.b));
-  }
-  slots = ringSlots(viewForCanvas(box.cw, box.ch), chip);
-  return { mode: "ring", box, pads, slots };
-}
-
-// In columns on both sides of the board, centred on it.
-function railLayout(availW, availH, chip, count) {
-  const perCol = Math.max(1, Math.floor((availH + CHIP_GAP) / (chip + CHIP_GAP)));
-  const leftCount = Math.ceil(count / 2);
-  const cols = Math.ceil(leftCount / perCol);
-  const railW = cols * (chip + CHIP_GAP);
-  const box = canvasForBox(Math.max(MIN_BOARD, availW - 2 * railW), availH);
-  const slots = [];
-  const place = (start, n, side) => {
-    for (let k = 0; k < n; k += 1) {
-      const col = Math.floor(k / perCol);
-      const row = k - col * perCol;
-      const inCol = Math.min(perCol, n - col * perCol);
-      const colH = inCol * chip + (inCol - 1) * CHIP_GAP;
-      const dx = CHIP_GAP + chip / 2 + col * (chip + CHIP_GAP);
-      slots[start + k] = {
-        x: side < 0 ? -dx : box.cw + dx,
-        y: box.ch / 2 - colH / 2 + chip / 2 + row * (chip + CHIP_GAP),
-      };
-    }
-  };
-  place(0, leftCount, -1);
-  place(leftCount, count - leftCount, 1);
-  const rows = Math.min(perCol, leftCount);
-  const extra = Math.max(0, Math.ceil((rows * chip + (rows - 1) * CHIP_GAP - box.ch) / 2));
-  return { mode: "rails", box, pads: { l: railW, r: railW, t: extra, b: extra }, slots };
-}
-
-// In rows under the board.
-function trayLayout(availW, availH, chip, count) {
-  const trayH = (w) => traySlots(w, 0, chip, count).height;
-  let box = canvasForBox(availW, Math.max(MIN_BOARD, availH - trayH(availW)));
-  // A narrower board may need one more row of chips.
-  box = canvasForBox(availW, Math.max(MIN_BOARD, availH - trayH(box.cw)));
-  const tray = traySlots(box.cw, box.ch, chip, count);
-  return { mode: "tray", box, pads: { l: 0, r: 0, t: 0, b: tray.height }, slots: tray.slots };
-}
-
-// A layout is usable when no two chips overlap and it fits the space.
-function layoutFits(layout, availW, availH, chip) {
-  const { box, pads, slots } = layout;
-  if (box.cw + pads.l + pads.r > availW + 1) return false;
-  if (box.ch + pads.t + pads.b > availH + 1) return false;
-  const min = chip + 2;
-  for (let i = 0; i < slots.length; i += 1) {
-    for (let j = i + 1; j < slots.length; j += 1) {
-      if (Math.abs(slots[i].x - slots[j].x) < min && Math.abs(slots[i].y - slots[j].y) < min) return false;
-    }
-  }
-  return true;
-}
-
-// Size the board to the space the rest of the page leaves, and pick the chip
-// layout that gives the largest board. The ring around the board is kept
-// whenever it costs little.
-function fitLayout() {
-  const chip = cssNumber("--chip", 40);
-  const count = state.pieceTypes.length;
-  const wide = WIDE.matches;
-  if (wide) dom.stage.style.height = "";
-  const availW = dom.stage.clientWidth;
-  const availH = wide ? dom.stage.clientHeight : Math.max(260, window.innerHeight - heightAroundStage());
-
-  const candidates = [
-    ringLayout(availW, availH, chip),
-    railLayout(availW, availH, chip, count),
-    trayLayout(availW, availH, chip, count),
-  ];
-  const scaleOf = (l) => viewForCanvas(l.box.cw, l.box.ch).scale;
-  const usable = candidates.filter((l) => l.mode === "tray" || layoutFits(l, availW, availH, chip));
-  let chosen = usable[0];
-  for (const l of usable) if (scaleOf(l) > scaleOf(chosen)) chosen = l;
-  const ring = usable.find((l) => l.mode === "ring");
-  if (ring && scaleOf(ring) >= RING_PREFERENCE * scaleOf(chosen)) chosen = ring;
-
-  const { box, pads, slots } = chosen;
-  state.layout = { mode: chosen.mode, cw: box.cw, ch: box.ch, padL: pads.l, padT: pads.t, slots };
-  const wrapW = box.cw + pads.l + pads.r;
-  const wrapH = box.ch + pads.t + pads.b;
-  if (!wide) dom.stage.style.height = `${wrapH}px`;
-  dom.boardWrap.style.width = `${wrapW}px`;
-  dom.boardWrap.style.height = `${wrapH}px`;
-  dom.canvas.style.left = `${pads.l}px`;
-  dom.canvas.style.top = `${pads.t}px`;
-  dom.canvas.style.width = `${box.cw}px`;
-  dom.canvas.style.height = `${box.ch}px`;
-  resizeCanvas();
-}
-
+// The board keeps the size the stylesheet gives it. When the chips on the
+// three upper sides would leave the screen or overlap, they also go down the
+// two lower slanted sides, and the board shrinks or moves down only as much
+// as the ring needs.
 function resizeCanvas() {
-  const { cw, ch } = state.layout;
-  if (!cw || !ch) {
-    return;
+  for (const mode of ["edges3", "edges5"]) {
+    state.ringMode = mode;
+    fitBoard();
+    if (ringFits()) return;
   }
+}
+
+function fitBoard() {
+  const wrap = dom.boardWrap;
+  wrap.style.width = "";
+  wrap.style.height = "";
+  wrap.style.marginTop = "";
+  let size = wrap.getBoundingClientRect().width;
+  for (let pass = 0; pass < 6; pass += 1) {
+    drawAtSize();
+    const over = ringOverflow();
+    if (over.side <= 0.5 && over.below <= 0.5 && over.above <= 0.5) break;
+    if (over.above > 0.5 && over.side <= 0.5 && over.below <= 0.5 && over.room >= over.above) {
+      wrap.style.marginTop = `${Math.ceil(over.above)}px`;
+      drawAtSize();
+      break;
+    }
+    const next = Math.floor(size - 2 * over.side - Math.max(0, over.below + over.above - over.room) - 2);
+    if (next >= size || next < 120) break;
+    size = next;
+    wrap.style.width = `${size}px`;
+    wrap.style.height = `${size}px`;
+  }
+}
+
+function drawAtSize() {
   const dpr = Math.max(1, window.devicePixelRatio || 1);
-  const width = Math.max(1, Math.round(cw * dpr));
-  const height = Math.max(1, Math.round(ch * dpr));
+  const rect = dom.canvas.getBoundingClientRect();
+  const width = Math.max(1, Math.round(rect.width * dpr));
+  const height = Math.max(1, Math.round(rect.height * dpr));
 
   if (dom.canvas.width !== width || dom.canvas.height !== height) {
     dom.canvas.width = width;
     dom.canvas.height = height;
   }
 
-  const padding = CANVAS_PADDING * dpr;
+  const padding = 10 * dpr;
   const bounds = state.boardBounds;
   const boardWidth = bounds.maxX - bounds.minX;
   const boardHeight = bounds.maxY - bounds.minY;
@@ -1012,23 +827,323 @@ function resizeCanvas() {
   const offsetX = (width - boardWidth * scale) * 0.5 - bounds.minX * scale;
   const offsetY = (height - boardHeight * scale) * 0.5 - bounds.minY * scale;
 
-  state.view = { scale, offsetX, offsetY, width, height };
+  state.view = { scale, offsetX, offsetY, width, height, dpr };
   layoutPieceRing();
   render();
+  if (camera.view && typeof camera.view.refresh === "function") camera.view.refresh();
+}
+
+function ringItems() {
+  const items = [...dom.tray.querySelectorAll(".piece-chip")];
+  if (!dom.cameraChip.hidden) items.push(dom.cameraChip);
+  return items;
+}
+
+// How far the chips reach past the screen sides, below the screen, and up
+// into the toolbar; room = free space under the board for moving it down.
+function ringOverflow() {
+  const vw = document.documentElement.clientWidth;
+  const vh = window.innerHeight;
+  const top = dom.toolbar.getBoundingClientRect().bottom + EDGE_GAP;
+  let side = 0, below = 0, above = 0, lowest = -Infinity;
+  for (const el of ringItems()) {
+    const b = el.getBoundingClientRect();
+    if (b.width === 0) continue;
+    side = Math.max(side, EDGE_GAP - b.left, b.right - (vw - EDGE_GAP));
+    below = Math.max(below, b.bottom - (vh - EDGE_GAP));
+    above = Math.max(above, top - b.top);
+    lowest = Math.max(lowest, b.bottom);
+  }
+  lowest = Math.max(lowest, dom.boardWrap.getBoundingClientRect().bottom);
+  return { side, below, above, room: vh - EDGE_GAP - lowest };
+}
+
+// The ring fits when every chip is on screen, below the toolbar, and clear of
+// the other chips and of the controls on the board.
+function ringFits() {
+  const over = ringOverflow();
+  if (over.side > 0.5 || over.below > 0.5 || over.above > 0.5) return false;
+  const boxes = ringItems().map((el) => el.getBoundingClientRect());
+  const fixed = [dom.actions, dom.sideBrand]
+    .filter((el) => el && el.offsetParent !== null)
+    .map((el) => el.getBoundingClientRect())
+    .filter((b) => b.width > 0);
+  const meets = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+  for (let i = 0; i < boxes.length; i += 1) {
+    for (let j = i + 1; j < boxes.length; j += 1) if (meets(boxes[i], boxes[j])) return false;
+    for (const f of fixed) if (meets(boxes[i], f)) return false;
+  }
+  return true;
 }
 
 function layoutPieceRing() {
-  const chips = [...dom.tray.querySelectorAll(".piece-chip")];
-  const { slots, padL, padT } = state.layout;
-  if (chips.length === 0 || !slots || slots.length === 0) {
+  if (!state.boardCellEntries.length) {
     return;
   }
+
+  const rect = dom.canvas.getBoundingClientRect();
+  const boardHex = getBoardHexVerticesCss();
+  if (!boardHex || rect.width === 0) {
+    return;
+  }
+  layoutCameraChip(rect, boardHex);
+  layoutSideBrand(rect, boardHex);
+
+  const chips = [...dom.tray.querySelectorAll(".piece-chip-ring")];
+  if (chips.length === 0) {
+    return;
+  }
+  const center = {
+    x: (boardHex.left.x + boardHex.right.x) * 0.5,
+    y: (boardHex.topLeft.y + boardHex.bottomLeft.y) * 0.5,
+  };
+  const chipRect = chips[0].getBoundingClientRect();
+  const halfW = Math.max(16, chipRect.width * 0.5);
+  const halfH = Math.max(16, chipRect.height * 0.5);
+  const outwardOf = (a, b) => {
+    const edgeVec = { x: b.x - a.x, y: b.y - a.y };
+    const edgeLen = Math.hypot(edgeVec.x, edgeVec.y) || 1;
+    const midpoint = { x: (a.x + b.x) * 0.5, y: (a.y + b.y) * 0.5 };
+    const toOutside = { x: midpoint.x - center.x, y: midpoint.y - center.y };
+    const n1 = { x: -edgeVec.y / edgeLen, y: edgeVec.x / edgeLen };
+    const n2 = { x: edgeVec.y / edgeLen, y: -edgeVec.x / edgeLen };
+    const dot1 = n1.x * toOutside.x + n1.y * toOutside.y;
+    return { edgeVec, edgeLen, normal: dot1 >= 0 ? n1 : n2 };
+  };
+
+  let ordered = [];
+  if (state.ringMode === "edges3") {
+    const chipClearance = 14;
+    const edges = [
+      { a: boardHex.left, b: boardHex.topLeft },
+      { a: boardHex.topLeft, b: boardHex.topRight },
+      { a: boardHex.topRight, b: boardHex.right },
+    ];
+    for (const edgeDef of edges) {
+      const { edgeVec, normal } = outwardOf(edgeDef.a, edgeDef.b);
+      const outwardPx = Math.abs(normal.x) * halfW + Math.abs(normal.y) * halfH + chipClearance;
+      for (const tt of RING_EDGE_SLOTS) {
+        ordered.push({
+          x: edgeDef.a.x + edgeVec.x * tt + normal.x * outwardPx,
+          y: edgeDef.a.y + edgeVec.y * tt + normal.y * outwardPx,
+        });
+      }
+    }
+  } else {
+    // Evenly along the five sides that do not face the rotate and flip
+    // buttons, from low on the lower left side, over the top, to low on the
+    // lower right side; the top right corner is left free for the camera chip.
+    const chipClearance = 8;
+    const along = (a, b, tt) => ({ x: a.x + (b.x - a.x) * tt, y: a.y + (b.y - a.y) * tt });
+    const path = [
+      along(boardHex.bottomLeft, boardHex.left, 0.3),
+      boardHex.left,
+      boardHex.topLeft,
+      boardHex.topRight,
+      boardHex.right,
+      along(boardHex.bottomRight, boardHex.right, 0.3),
+    ];
+    const lens = [];
+    let total = 0;
+    for (let i = 0; i + 1 < path.length; i += 1) {
+      lens.push(Math.hypot(path[i + 1].x - path[i].x, path[i + 1].y - path[i].y));
+      total += lens[i];
+    }
+    // The camera chip takes the place of one more chip at the top right corner.
+    const withCamera = !dom.cameraChip.hidden;
+    const step = total / (chips.length + (withCamera ? 1 : 0));
+    const skip = withCamera ? Math.round((lens[0] + lens[1] + lens[2]) / step - 0.5) : -1;
+    for (let k = 0; ordered.length < chips.length; k += 1) {
+      if (k === skip) continue;
+      let d = (k + 0.5) * step;
+      let i = 0;
+      while (i < lens.length - 1 && d > lens[i]) {
+        d -= lens[i];
+        i += 1;
+      }
+      const a = path[i];
+      const b = path[i + 1];
+      const { edgeVec, edgeLen, normal } = outwardOf(a, b);
+      const tt = lens[i] > 0 ? d / lens[i] : 0;
+      const outwardPx = Math.abs(normal.x) * halfW + Math.abs(normal.y) * halfH + chipClearance;
+      ordered.push({
+        x: a.x + edgeVec.x * tt + normal.x * outwardPx,
+        y: a.y + edgeVec.y * tt + normal.y * outwardPx,
+        nx: normal.x,
+        ny: normal.y,
+        tx: edgeVec.x / edgeLen,
+        ty: edgeVec.y / edgeLen,
+      });
+    }
+    clearObstacles(ordered, Math.max(halfW, halfH), ringObstacles(rect));
+  }
+
   chips.forEach((chip, index) => {
-    const anchor = slots[index % slots.length];
-    chip.style.left = `${padL + anchor.x}px`;
-    chip.style.top = `${padT + anchor.y}px`;
+    const anchor = ordered[index % ordered.length];
+    chip.style.left = `${anchor.x}px`;
+    chip.style.top = `${anchor.y}px`;
   });
 }
+
+// The controls that sit on the board itself (camera chip, rotate and flip),
+// as boxes in canvas pixels.
+function ringObstacles(rect) {
+  const boxes = [];
+  for (const el of [dom.cameraChip, dom.actions]) {
+    if (!el || el.hidden) continue;
+    const b = el.getBoundingClientRect();
+    if (b.width === 0) continue;
+    boxes.push({ l: b.left - rect.left, t: b.top - rect.top, r: b.right - rect.left, b: b.bottom - rect.top });
+  }
+  return boxes;
+}
+
+// A chip that would touch one of these controls, or an earlier chip, slides
+// a little along its side or away from the board until it is clear.
+function clearObstacles(spots, half, boxes) {
+  const gap = 3;
+  const hits = (p, upto) => {
+    for (const b of boxes) {
+      if (p.x + half + gap > b.l && p.x - half - gap < b.r && p.y + half + gap > b.t && p.y - half - gap < b.b) return true;
+    }
+    for (let j = 0; j < upto; j += 1) {
+      if (Math.abs(spots[j].x - p.x) < 2 * half + gap && Math.abs(spots[j].y - p.y) < 2 * half + gap) return true;
+    }
+    return false;
+  };
+  spots.forEach((s, i) => {
+    if (!hits(s, i)) return;
+    const dirs = [
+      { x: s.nx, y: s.ny },
+      { x: s.tx, y: s.ty },
+      { x: -s.tx, y: -s.ty },
+    ];
+    for (let step = 2; step <= 48; step += 2) {
+      for (const d of dirs) {
+        const p = { x: s.x + d.x * step, y: s.y + d.y * step };
+        if (!hits(p, i)) {
+          s.x = p.x;
+          s.y = p.y;
+          return;
+        }
+      }
+    }
+  });
+}
+
+function layoutCameraChip(rect = dom.canvas.getBoundingClientRect(), boardHex = getBoardHexVerticesCss()) {
+  if (!boardHex) {
+    return;
+  }
+  const topRightVertex = boardHex.topRight;
+  const center = {
+    x: (boardHex.left.x + boardHex.right.x) * 0.5,
+    y: (boardHex.topLeft.y + boardHex.bottomLeft.y) * 0.5,
+  };
+  const vx = topRightVertex.x - center.x;
+  const vy = topRightVertex.y - center.y;
+  const len = Math.hypot(vx, vy) || 1;
+  const outward = 28;
+  const x = topRightVertex.x + (vx / len) * outward;
+  const y = topRightVertex.y + (vy / len) * outward;
+  const chipHalf = 16;
+  const clampedX = clamp(x, chipHalf, rect.width - chipHalf);
+  const clampedY = clamp(y, chipHalf, rect.height - chipHalf);
+  dom.cameraChip.style.left = `${clampedX}px`;
+  dom.cameraChip.style.top = `${clampedY}px`;
+  dom.cameraChip.style.right = "auto";
+}
+
+function layoutSideBrand(rect = dom.canvas.getBoundingClientRect(), boardHex = getBoardHexVerticesCss()) {
+  if (!dom.sideBrand || !boardHex) {
+    return;
+  }
+
+  const center = {
+    x: (boardHex.left.x + boardHex.right.x) * 0.5,
+    y: (boardHex.topLeft.y + boardHex.bottomLeft.y) * 0.5,
+  };
+
+  const a = boardHex.bottomRight;
+  const b = boardHex.right;
+  const edgeVec = { x: b.x - a.x, y: b.y - a.y };
+  const edgeLen = Math.hypot(edgeVec.x, edgeVec.y) || 1;
+  const anchorT = 0.52;
+  const edgePoint = {
+    x: a.x + edgeVec.x * anchorT,
+    y: a.y + edgeVec.y * anchorT,
+  };
+  const toOutside = {
+    x: edgePoint.x - center.x,
+    y: edgePoint.y - center.y,
+  };
+  const n1 = { x: -edgeVec.y / edgeLen, y: edgeVec.x / edgeLen };
+  const n2 = { x: edgeVec.y / edgeLen, y: -edgeVec.x / edgeLen };
+  const dot1 = n1.x * toOutside.x + n1.y * toOutside.y;
+  const normal = dot1 >= 0 ? n1 : n2;
+  const offset = 34;
+  const x = edgePoint.x + normal.x * offset;
+  const y = edgePoint.y + normal.y * offset;
+  const angleDeg = (Math.atan2(edgeVec.y, edgeVec.x) * 180) / Math.PI;
+
+  dom.sideBrand.style.left = `${x}px`;
+  dom.sideBrand.style.top = `${y}px`;
+  dom.sideBrand.style.transformOrigin = "50% 50%";
+  dom.sideBrand.style.transform = `translate(-50%, -50%) rotate(${angleDeg.toFixed(2)}deg)`;
+}
+
+function toCssFromScreen(point) {
+  const rect = dom.canvas.getBoundingClientRect();
+  const sx = rect.width / Math.max(state.view.width, 1);
+  const sy = rect.height / Math.max(state.view.height, 1);
+  return { x: point.x * sx, y: point.y * sy };
+}
+
+// World point to CSS pixels inside the canvas box (also the camera window).
+function worldToCss(point) {
+  const dpr = state.view.dpr || 1;
+  return {
+    x: (point.x * state.view.scale + state.view.offsetX) / dpr,
+    y: (point.y * state.view.scale + state.view.offsetY) / dpr,
+  };
+}
+
+function getBoardHexVerticesCss() {
+  const points = state.boardCellEntries.flatMap((entry) =>
+    entry.vertices.map((vertex) => toCssFromScreen(worldToScreen(vertex)))
+  );
+  const hull = convexHull(points);
+  if (hull.length < 6) {
+    return null;
+  }
+
+  const dirs = {
+    right: { x: 1, y: 0 },
+    topRight: { x: 0.5, y: -SQRT3_HALF },
+    topLeft: { x: -0.5, y: -SQRT3_HALF },
+    left: { x: -1, y: 0 },
+    bottomLeft: { x: -0.5, y: SQRT3_HALF },
+    bottomRight: { x: 0.5, y: SQRT3_HALF },
+  };
+
+  const extreme = (dir) =>
+    hull.reduce((best, point) => {
+      const scoreBest = best.x * dir.x + best.y * dir.y;
+      const scorePoint = point.x * dir.x + point.y * dir.y;
+      return scorePoint > scoreBest ? point : best;
+    }, hull[0]);
+
+  return {
+    left: extreme(dirs.left),
+    right: extreme(dirs.right),
+    topLeft: extreme(dirs.topLeft),
+    topRight: extreme(dirs.topRight),
+    bottomLeft: extreme(dirs.bottomLeft),
+    bottomRight: extreme(dirs.bottomRight),
+  };
+}
+
+/* ---------- drawing ---------- */
 
 function render() {
   const ctx = state.ctx;
@@ -1182,8 +1297,11 @@ function findNearestBoardCell(point, orientation = null) {
   return null;
 }
 
+/* ---------- area and status ---------- */
+
 function updateAreaChip(area) {
-  dom.areaValue.textContent = String(area);
+  state.area = area;
+  dom.areaChip.textContent = t("tri.areaChip", { area });
 }
 
 // Keeps the message as keys so a language switch can render it again.
@@ -1203,11 +1321,200 @@ function renderStatus() {
   dom.status.textContent = state.status.map((part) => t(part.key, part.vars || undefined)).join(" ");
 }
 
+/* ---------- camera inside the board ---------- */
+
+// The camera chip turns the board itself into the camera window, in the
+// board's hexagon: the printed board is straightened onto the drawn one, cell
+// on cell, and once the view is steady its pieces are put on this board and
+// measured. Tapping the chip again closes the camera; the pieces stay.
+function cameraSupported() {
+  try {
+    return Boolean(
+      window.FenceInboard &&
+        typeof window.FenceInboard.open === "function" &&
+        window.FenceInboard.supported() &&
+        window.FenceBoards &&
+        window.FenceBoards.get(CAMERA_BOARD)
+    );
+  } catch (e) {
+    return false;
+  }
+}
+
+function bindCamera() {
+  // The camera scripts load after this one (defer): decide once they ran.
+  const decide = () => {
+    dom.cameraChip.hidden = !cameraSupported();
+    resizeCanvas();
+  };
+  if (document.readyState === "complete") decide();
+  else window.addEventListener("load", decide);
+  dom.cameraChip.addEventListener("click", () => {
+    if (camera.view) closeCamera();
+    else openCamera();
+  });
+  // Leaving the page always switches the camera off.
+  window.addEventListener("pagehide", () => closeCamera(true));
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") closeCamera(true);
+  });
+}
+
+function localizeCameraChip() {
+  const key = camera.view ? "tri.cameraClose" : "tri.cameraOpen";
+  dom.cameraChip.setAttribute("data-i18n-title", key);
+  dom.cameraChip.setAttribute("data-i18n-aria-label", key);
+  dom.cameraChip.title = t(key);
+  dom.cameraChip.setAttribute("aria-label", t(key));
+  dom.cameraChip.setAttribute("aria-pressed", camera.view ? "true" : "false");
+  dom.cameraChip.classList.toggle("is-active", Boolean(camera.view));
+}
+
+function openCamera() {
+  if (camera.view || !cameraSupported()) return;
+  state.draggingPieceId = null;
+  dom.cameraHost.hidden = false;
+  dom.boardWrap.classList.add("camera-mode");
+  let view = null;
+  try {
+    view = window.FenceInboard.open({
+      host: dom.cameraHost,
+      boardId: CAMERA_BOARD,
+      worldToHost: worldToCss,
+      onPlacements: cameraPlacements,
+      onState: cameraStateChanged,
+      onClose: () => cameraClosed(false),
+    });
+  } catch (e) {
+    view = null;
+  }
+  if (!view) {
+    dom.cameraHost.hidden = true;
+    dom.boardWrap.classList.remove("camera-mode");
+    setStatus("tri.s.camError");
+    return;
+  }
+  camera.view = view;
+  document.body.dataset.fcCamera = "starting";
+  localizeCameraChip();
+}
+
+// quiet: the page is going away, no message.
+function closeCamera(quiet = false) {
+  const view = camera.view;
+  if (!view) return;
+  camera.view = null;
+  try {
+    view.close();
+  } catch (e) {
+    /* already closed */
+  }
+  cameraClosed(quiet);
+}
+
+// Called when the camera view is gone, whoever closed it.
+function cameraClosed(quiet) {
+  camera.view = null;
+  dom.cameraHost.hidden = true;
+  dom.boardWrap.classList.remove("camera-mode");
+  document.body.dataset.fcCamera = "stopped";
+  localizeCameraChip();
+  if (quiet !== true) setStatus("tri.s.camClosed");
+}
+
+function cameraStateChanged(value) {
+  if (!camera.view) return;
+  const s = String(value || "");
+  if (s === document.body.dataset.fcCamera) return;
+  document.body.dataset.fcCamera = s;
+  if (s === "starting") setStatus("tri.s.camStarting");
+  else if (s === "searching") setStatus("tri.s.camSearching");
+  else if (s === "locked") setStatus("tri.s.camLocked");
+  else if (s.indexOf("error") === 0) setStatus("tri.s.camError");
+}
+
+// A new steady set of pieces read on paper: checked like an import, then put
+// on the board and measured. Anything that does not fit is ignored.
+function cameraPlacements(placements, result) {
+  if (!camera.view) return;
+  const boardId = result && result.boardId ? result.boardId : CAMERA_BOARD;
+  const pieces = piecesFromPaper(boardId, placements);
+  if (!pieces) return;
+  state.placedPieces = pieces;
+  state.selectedPieceId = null;
+  state.freshPieceId = null;
+  state.draggingPieceId = null;
+  refreshTray();
+  measure();
+}
+
+// placements: [{ typeId, variantIndex, marker }] in the shared lattice's
+// terms (camera/boards.js piece types, lattice-triangular.js variants).
+// Returns the lab's own placed pieces, or null when anything does not check
+// out.
+function piecesFromPaper(boardId, list) {
+  const Boards = window.FenceBoards;
+  if (!Boards || boardId !== CAMERA_BOARD || !Array.isArray(list)) return null;
+  if (list.length > state.pieceTypes.length) return null;
+  let types;
+  try {
+    types = new Map(Boards.pieceTypes(boardId).map((type) => [type.id, type]));
+  } catch (e) {
+    return null;
+  }
+  const usedTypes = new Set();
+  const taken = new Set();
+  const pieces = [];
+  for (const item of list) {
+    if (!item || typeof item !== "object") return null;
+    const type = types.get(item.typeId);
+    if (!type || usedTypes.has(item.typeId)) return null;
+    usedTypes.add(item.typeId);
+    const variants = LatticeTriangular.buildVariants(type.cells.map((c) => ({ i: c.i, j: c.j, o: c.o }))).variants;
+    const vi = item.variantIndex;
+    if (!Number.isInteger(vi) || vi < 0 || vi >= variants.length) return null;
+    const m = item.marker;
+    if (!m || !Number.isInteger(m.i) || !Number.isInteger(m.j) || m.o !== variants[vi].markerO) return null;
+    const cells = variants[vi].cells.map((c) => ({ i: c.i + m.i, j: c.j + m.j, o: c.o }));
+    for (const cell of cells) {
+      const key = cellKey(cell);
+      if (!state.boardCellMap.has(key) || taken.has(key)) return null;
+      taken.add(key);
+    }
+    // The same shape among this lab's pieces, in the orientation that covers
+    // exactly these cells.
+    const shapeKey = canonicalizeShape(cells).key;
+    const own = state.pieceTypes.find((p) => p.shapeKey === shapeKey);
+    if (!own || pieces.some((p) => p.typeId === own.id)) return null;
+    const placed = ownPlacement(own, cells);
+    if (!placed) return null;
+    pieces.push({ id: state.nextPieceId++, typeId: own.id, variantIndex: placed.variantIndex, marker: placed.marker });
+  }
+  return pieces;
+}
+
+// The variant of a lab piece and its marker cell that cover exactly `cells`.
+function ownPlacement(type, cells) {
+  const target = cellsKey(cells);
+  const first = [...cells].sort(cellSort)[0];
+  for (let vi = 0; vi < type.variants.length; vi += 1) {
+    const v = type.variants[vi];
+    const r0 = v.cells[0];
+    if (r0.o !== first.o) continue;
+    const marker = { i: first.i - r0.i, j: first.j - r0.j, o: v.markerO };
+    const covered = v.cells.map((c) => ({ i: c.i + marker.i, j: c.j + marker.j, o: c.o }));
+    if (cellsKey(covered) === target) return { variantIndex: vi, marker };
+  }
+  return null;
+}
+
+/* ---------- lattice ---------- */
+
 function pointerToCanvas(event) {
   const rect = dom.canvas.getBoundingClientRect();
   return {
-    x: ((event.clientX - rect.left) * dom.canvas.width) / rect.width,
-    y: ((event.clientY - rect.top) * dom.canvas.height) / rect.height,
+    x: ((event.clientX - rect.left) * dom.canvas.width) / Math.max(1, rect.width),
+    y: ((event.clientY - rect.top) * dom.canvas.height) / Math.max(1, rect.height),
   };
 }
 
@@ -1391,4 +1698,8 @@ function convexHull(points) {
 
 function cross(a, b, c) {
   return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }

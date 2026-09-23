@@ -1,5 +1,5 @@
 /* Fence Challenge · hub page: the three cards, their engines, the reference
- * panels, the import from the camera page and the tooltips. */
+ * panels, the pieces read by the camera and the tooltips. */
 (() => {
   "use strict";
 
@@ -366,21 +366,18 @@
   renderPanel();
   document.addEventListener("fc-langchange", renderPanel);
 
-  // A board built on paper arrives from the camera page as
-  // index.html#paper=<card> with the pieces in sessionStorage. Every piece
-  // is checked against this card's own engine before anything changes;
-  // anything unexpected leaves the board as it was.
+  // Pieces read from a printed board reach a card in two ways: from the
+  // camera page (index.html#paper=<card> with the pieces in sessionStorage)
+  // and from the camera opened inside the card. Every piece is checked
+  // against this card's own engine before anything changes; anything
+  // unexpected leaves the board as it was.
   const PAPER_KEY = "fc-paper-import";
   const LANG_CLEARANCE = 72; // px, matches article.pCard scroll-margin-top
   const PAPER_BOARD = { sq: "sq9", hex: "hex4", tri: "tri4" };
-  function readPaperPlacements(card, raw) {
+  function checkPlacements(card, boardId, list) {
     const root = document.getElementById("engine-" + card);
     const engine = root && root._engine;
-    if (!engine) return null;
-    let data;
-    try { data = JSON.parse(raw); } catch (e) { return null; }
-    if (!data || typeof data !== "object" || data.boardId !== PAPER_BOARD[card]) return null;
-    const list = data.placements;
+    if (!engine || boardId !== PAPER_BOARD[card]) return null;
     const s = engine.state;
     const lattice = engine.lattice;
     if (!Array.isArray(list) || list.length < 1 || list.length > s.pieceTypes.length) return null;
@@ -410,6 +407,16 @@
     }
     return { engine, placed };
   }
+  function readPaperPlacements(card, raw) {
+    let data;
+    try { data = JSON.parse(raw); } catch (e) { return null; }
+    if (!data || typeof data !== "object") return null;
+    return checkPlacements(card, data.boardId, data.placements);
+  }
+  function placeOnCard(found) {
+    found.engine.setState({ placedPieces: found.placed, selectedPieceId: null });
+    found.engine.detectArea();
+  }
   function receivePaper() {
     const m = /^#paper=(sq|hex|tri)$/.exec(window.location.hash);
     if (!m) return;
@@ -424,8 +431,7 @@
     } catch (e) {}
     const found = raw ? readPaperPlacements(card, raw) : null;
     if (!found) return;
-    found.engine.setState({ placedPieces: found.placed, selectedPieceId: null });
-    found.engine.detectArea();
+    placeOnCard(found);
     const article = document.getElementById("engine-" + card).closest("article");
     const still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // Centre the card when it fits below the language switch, otherwise
@@ -440,6 +446,113 @@
   }
   receivePaper();
   window.addEventListener("hashchange", receivePaper);
+
+  // The camera inside a card: the small camera icon turns the card's board
+  // into the camera window (FenceInboard, loaded with defer after this file)
+  // and a second tap closes it. The board keeps the pieces it received.
+  // One card films at a time.
+  const cams = {};
+  let camOpen = null; // card whose camera is on
+  function camLabel(card) {
+    const btn = cams[card] && cams[card].btn;
+    if (!btn) return;
+    const on = camOpen === card;
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    btn.setAttribute("data-i18n-aria-label", on ? "hub.camClose" : "hub.camAria");
+    btn.setAttribute("aria-label", i18n.t(on ? "hub.camClose" : "hub.camAria"));
+    btn.setAttribute("data-i18n-data-tip", on ? "hub.camClose" : "hub.camTip");
+    btn.setAttribute("data-tip", i18n.t(on ? "hub.camClose" : "hub.camTip"));
+    if (tipAnchor === btn) showTip(btn);
+  }
+  function closeCam(card) {
+    const c = cams[card];
+    if (!c || !c.session) return;
+    const session = c.session;
+    c.session = null;
+    if (camOpen === card) camOpen = null;
+    if (c.observer) { c.observer.disconnect(); c.observer = null; }
+    try { session.close(); } catch (e) {}
+    camLabel(card);
+  }
+  function openCam(card) {
+    const c = cams[card];
+    const root = document.getElementById("engine-" + card);
+    const engine = root && root._engine;
+    if (!c || !engine || !window.FenceInboard) return;
+    if (camOpen && camOpen !== card) closeCam(camOpen);
+    const host = root.querySelector(".toy");
+    const canvas = root.querySelector("canvas");
+    // The engine draws in canvas pixels (world * scale + offset); the camera
+    // wants the same point in CSS pixels from the host's padding box.
+    const worldToHost = (p) => {
+      const v = engine.state.view;
+      const cr = canvas.getBoundingClientRect();
+      const hr = host.getBoundingClientRect();
+      const sx = cr.width / (canvas.width || 1);
+      const sy = cr.height / (canvas.height || 1);
+      return {
+        x: cr.left - hr.left - host.clientLeft + (p.x * v.scale + v.offsetX) * sx,
+        y: cr.top - hr.top - host.clientTop + (p.y * v.scale + v.offsetY) * sy,
+      };
+    };
+    let session = null;
+    const onClose = () => {
+      if (c.session === session) {
+        c.session = null;
+        if (camOpen === card) camOpen = null;
+        if (c.observer) { c.observer.disconnect(); c.observer = null; }
+        camLabel(card);
+      }
+    };
+    try {
+      session = window.FenceInboard.open({
+        host,
+        boardId: PAPER_BOARD[card],
+        worldToHost,
+        onPlacements: (placements) => {
+          if (c.session !== session) return;
+          const found = checkPlacements(card, PAPER_BOARD[card], placements);
+          if (found) placeOnCard(found);
+        },
+        onState: (state) => {
+          if (typeof state === "string" && state.indexOf("error") === 0) {
+            if (live) live.textContent = i18n.t("hub.camError");
+            closeCam(card);
+          }
+        },
+        onClose,
+      });
+    } catch (e) {
+      session = null;
+    }
+    if (!session) {
+      if (live) live.textContent = i18n.t("hub.camError");
+      return;
+    }
+    c.session = session;
+    camOpen = card;
+    // The board's size follows the card: keep the camera window on it.
+    if (typeof ResizeObserver === "function") {
+      c.observer = new ResizeObserver(() => { if (c.session) c.session.refresh(); });
+      c.observer.observe(host);
+    }
+    camLabel(card);
+  }
+  function mountCams() {
+    let ok = false;
+    try { ok = !!(window.FenceInboard && window.FenceInboard.supported()); } catch (e) { ok = false; }
+    document.querySelectorAll("[data-cam]").forEach((btn) => {
+      const card = btn.getAttribute("data-cam");
+      if (!PAPER_BOARD[card] || !ok) return;
+      cams[card] = { btn, session: null, observer: null };
+      btn.hidden = false;
+      camLabel(card);
+      btn.addEventListener("click", () => {
+        if (cams[card].session) closeCam(card);
+        else openCam(card);
+      });
+    });
+  }
 
   // Tooltips: one popover shared by every [data-tip], shown on mouse hover,
   // on keyboard focus, or on a tap for elements that do nothing else.
@@ -519,4 +632,9 @@
   window.addEventListener("scroll", hideTip, { passive: true });
   window.addEventListener("resize", hideTip);
   document.addEventListener("fc-langchange", () => { if (tipAnchor) showTip(tipAnchor); });
+
+  // The camera scripts load with defer: they are ready at DOMContentLoaded.
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountCams);
+  else mountCams();
+  document.addEventListener("fc-langchange", () => Object.keys(cams).forEach(camLabel));
 })();

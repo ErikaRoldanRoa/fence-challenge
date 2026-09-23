@@ -6,22 +6,21 @@
 (function () {
   "use strict";
   if (typeof DICT === "undefined") return;
-  var NB = "\u202F";
+  var NB = " ";
 
   Object.assign(DICT.fr, {
     "hx.pageTitle": "Défi 3 · 7 tétrahexes · Fence Challenge",
     "hx.h1": "Défi 3 · 7 tétrahexes",
-    "hx.goal": "Enferme la plus grande aire possible.",
-    "hx.homeAria": "Retour à l’accueil du Fence Challenge",
-    "hx.camera": "Jouer sur papier",
-    "hx.cameraTip": "Jouer sur papier" + NB + ": construis ta barrière avec de vraies pièces, la caméra la lit.",
+    "hx.areaChip": "Aire" + NB + ": {area}",
+    "hx.cameraOpen": "Ouvrir la caméra sur le plateau",
+    "hx.cameraClose": "Fermer la caméra",
     "hx.tray.ariaLabel": "Pièces tétrahexes",
     "hx.board.ariaLabel": "Plateau hexagonal",
     "hx.piece.aria": "Pièce {name}",
-    "hx.rotate": "Tourner",
+    "hx.rotate": "Tourner (R)",
     "hx.rotateTip": "Tourne la pièce choisie (touche R)",
     "hx.rotateTipTouch": "Tourne la pièce choisie",
-    "hx.flip": "Retourner",
+    "hx.flip": "Retourner (F)",
     "hx.flipTip": "Retourne la pièce choisie (touche F)",
     "hx.flipTipTouch": "Retourne la pièce choisie",
     "hx.cite.text": "Barrière Polyhex · LRMR25 · Dr. Erika Roldán",
@@ -43,23 +42,27 @@
     "hx.s.symRot": "La pièce {name} ne change pas quand tu la tournes.",
     "hx.s.symFlip": "Dans cette position, la pièce {name} est son propre reflet.",
     "hx.s.noRoom": "Pas de place ici pour réorienter la pièce {name}.",
-    "hx.s.noSpace": "Plus de place libre pour la pièce {name}."
+    "hx.s.noSpace": "Plus de place libre pour la pièce {name}.",
+    "hx.s.camStarting": "La caméra démarre. Montre le plateau imprimé avec ses quatre marques de coin.",
+    "hx.s.camSearching": "Montre les quatre marques de coin du plateau imprimé.",
+    "hx.s.camLocked": "Plateau trouvé. Tiens le téléphone immobile.",
+    "hx.s.camError": "La caméra ne s’ouvre pas ici. Vérifie l’autorisation de la caméra.",
+    "hx.s.camClosed": "Caméra fermée. Les pièces restent sur le plateau."
   });
 
   Object.assign(DICT.de, {
     "hx.pageTitle": "Rätsel 3 · 7 Tetrahexe · Fence Challenge",
     "hx.h1": "Rätsel 3 · 7 Tetrahexe",
-    "hx.goal": "Umschließe die größtmögliche Fläche.",
-    "hx.homeAria": "Zurück zur Startseite der Fence Challenge",
-    "hx.camera": "Auf Papier spielen",
-    "hx.cameraTip": "Auf Papier spielen: Bau deinen Zaun mit echten Teilen, die Kamera liest ihn.",
+    "hx.areaChip": "Fläche: {area}",
+    "hx.cameraOpen": "Kamera auf dem Spielfeld öffnen",
+    "hx.cameraClose": "Kamera schließen",
     "hx.tray.ariaLabel": "Tetrahex-Teile",
     "hx.board.ariaLabel": "Spielfeld aus Sechsecken",
     "hx.piece.aria": "Teil {name}",
-    "hx.rotate": "Drehen",
+    "hx.rotate": "Drehen (R)",
     "hx.rotateTip": "Dreh das gewählte Teil (Taste R)",
     "hx.rotateTipTouch": "Dreh das gewählte Teil",
-    "hx.flip": "Spiegeln",
+    "hx.flip": "Spiegeln (F)",
     "hx.flipTip": "Spiegle das gewählte Teil (Taste F)",
     "hx.flipTipTouch": "Spiegle das gewählte Teil",
     "hx.cite.text": "Polyhex-Zaun · LRMR25 · Dr. Erika Roldán",
@@ -81,23 +84,27 @@
     "hx.s.symRot": "Das Teil {name} ändert sich nicht, wenn du es drehst.",
     "hx.s.symFlip": "In dieser Lage ist das Teil {name} sein eigenes Spiegelbild.",
     "hx.s.noRoom": "Hier ist kein Platz, um das Teil {name} neu auszurichten.",
-    "hx.s.noSpace": "Kein freier Platz mehr für das Teil {name}."
+    "hx.s.noSpace": "Kein freier Platz mehr für das Teil {name}.",
+    "hx.s.camStarting": "Die Kamera startet. Zeig das gedruckte Spielfeld mit seinen vier Eckmarken.",
+    "hx.s.camSearching": "Zeig die vier Eckmarken des gedruckten Spielfelds.",
+    "hx.s.camLocked": "Spielfeld gefunden. Halte das Handy ruhig.",
+    "hx.s.camError": "Die Kamera lässt sich hier nicht öffnen. Prüf die Kamera-Erlaubnis.",
+    "hx.s.camClosed": "Kamera geschlossen. Die Teile bleiben auf dem Spielfeld."
   });
 
   Object.assign(DICT.en, {
     "hx.pageTitle": "Challenge 3 · 7 tetrahexes · Fence Challenge",
     "hx.h1": "Challenge 3 · 7 tetrahexes",
-    "hx.goal": "Find the largest area you can enclose.",
-    "hx.homeAria": "Back to the Fence Challenge home page",
-    "hx.camera": "Play on paper",
-    "hx.cameraTip": "Play on paper: build your fence with real pieces and let the camera read it.",
+    "hx.areaChip": "Area: {area}",
+    "hx.cameraOpen": "Open the camera on the board",
+    "hx.cameraClose": "Close the camera",
     "hx.tray.ariaLabel": "Tetrahex pieces",
     "hx.board.ariaLabel": "Hexagon board",
     "hx.piece.aria": "Piece {name}",
-    "hx.rotate": "Rotate",
+    "hx.rotate": "Rotate (R)",
     "hx.rotateTip": "Rotate the selected piece (R key)",
     "hx.rotateTipTouch": "Rotate the selected piece",
-    "hx.flip": "Flip",
+    "hx.flip": "Flip (F)",
     "hx.flipTip": "Flip the selected piece (F key)",
     "hx.flipTipTouch": "Flip the selected piece",
     "hx.cite.text": "Polyhex Fence · LRMR25 · Dr. Erika Roldán",
@@ -119,6 +126,11 @@
     "hx.s.symRot": "Piece {name} looks the same when you rotate it.",
     "hx.s.symFlip": "In this position, piece {name} is its own mirror image.",
     "hx.s.noRoom": "No room here to turn piece {name}.",
-    "hx.s.noSpace": "No free space left for piece {name}."
+    "hx.s.noSpace": "No free space left for piece {name}.",
+    "hx.s.camStarting": "The camera is starting. Show the printed board with its four corner marks.",
+    "hx.s.camSearching": "Show the four corner marks of the printed board.",
+    "hx.s.camLocked": "Board found. Hold the phone still.",
+    "hx.s.camError": "The camera cannot open here. Check the camera permission.",
+    "hx.s.camClosed": "Camera closed. The pieces stay on the board."
   });
 })();

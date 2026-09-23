@@ -1,0 +1,165 @@
+/* Fence Challenge · the camera inside a board (camera/inboard.js).
+ * The window covers its host; everything it shows is cut to the board's
+ * outline by the script, and only that shape catches taps. */
+
+.fc-inboard {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  border-radius: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fc-inboard-video,
+.fc-inboard-view,
+.fc-inboard-over,
+.fc-inboard-veil,
+.fc-inboard-shield {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: block;
+  pointer-events: none;
+}
+
+/* The camera picture, before the paper board is found (and under the
+   straightened board once it is). */
+.fc-inboard-video {
+  object-fit: cover;
+  background: transparent;
+}
+
+/* The paper board, straightened onto the digital one. */
+.fc-inboard-view {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.fc-inboard[data-view="board"] .fc-inboard-view {
+  opacity: 1;
+}
+
+.fc-inboard-veil {
+  background: rgba(7, 6, 10, 0.72);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.fc-inboard[data-state="starting"] .fc-inboard-veil,
+.fc-inboard[data-state^="error"] .fc-inboard-veil {
+  opacity: 1;
+}
+
+.fc-inboard[data-state="stopped"] .fc-inboard-veil {
+  opacity: 0.75;
+}
+
+.fc-inboard-shield {
+  pointer-events: auto;
+  background: transparent;
+}
+
+.fc-inboard[data-state="stopped"] .fc-inboard-shield,
+.fc-inboard[data-state^="error"] .fc-inboard-shield {
+  cursor: pointer;
+}
+
+.fc-inboard-busy,
+.fc-inboard-act {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  margin: 0;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: #d8fbff;
+}
+
+.fc-inboard-busy {
+  pointer-events: none;
+  animation: fc-inboard-breathe 1.6s ease-in-out infinite;
+}
+
+.fc-inboard-act {
+  pointer-events: auto;
+  cursor: pointer;
+  border: 1px solid rgba(72, 208, 255, 0.7);
+  background: rgba(7, 6, 10, 0.78);
+  box-shadow: 0 0 14px rgba(63, 216, 255, 0.3);
+  font: inherit;
+}
+
+.fc-inboard-act:hover {
+  background: rgba(20, 38, 60, 0.9);
+}
+
+.fc-inboard-act:focus-visible {
+  outline: 2px solid #d8fbff;
+  outline-offset: 2px;
+}
+
+.fc-inboard-busy[hidden],
+.fc-inboard-act[hidden] {
+  display: none;
+}
+
+.fc-inboard svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.fc-inboard svg .fill {
+  fill: currentColor;
+  stroke: none;
+}
+
+.fc-inboard-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes fc-inboard-breathe {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fc-inboard-view,
+  .fc-inboard-veil {
+    transition: none;
+  }
+
+  .fc-inboard-busy {
+    animation: none;
+    opacity: 0.85;
+  }
+}

@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'" />
     <title>Fence Challenge · Hub</title>
     <meta name="description" content="Construis des barrières de polyominos, de polyhexes et de polyiamonds, et enclos la plus grande aire, à l’écran ou sur papier avec la caméra. Le compagnon interactif de l’article « Maximale Zäune mit Polyformen » (DMVM 2025)." />
     <meta property="og:type" content="website" />
@@ -19,6 +19,7 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="preload" href="fonts/manrope-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="fonts/manrope.css" />
+    <link rel="stylesheet" href="camera/inboard.css" />
     <style>
       :root {
         --bg0:#07060a; --text:rgba(255,255,255,0.92); --muted:rgba(255,255,255,0.70); --muted2:rgba(255,255,255,0.52);
@@ -29,7 +30,7 @@
       }
       *{box-sizing:border-box;}
       html,body{margin:0;min-height:100dvh;background:var(--bg0);color:var(--text);font-family:var(--sans);line-height:1.55;}
-      main{max-width:1180px;margin:0 auto;padding:40px 24px 48px;}
+      main{max-width:1180px;margin:0 auto;padding:40px 24px 100px;}
       .hero{text-align:center;padding:8px 0 12px;}
       .hero h1{margin:0;font-size:clamp(28px,4vw,42px);font-weight:900;letter-spacing:-0.4px;line-height:1.08;}
       .hero .cite{display:inline-flex;gap:8px;margin-top:14px;padding:4px 12px;border-radius:999px;background:rgba(255,210,74,0.06);border:1px solid rgba(255,210,74,0.28);color:var(--amber);font-family:var(--mono);font-size:11px;letter-spacing:0.06em;text-decoration:none;}
@@ -140,34 +141,19 @@
       .tipPop.on{opacity:1;}
       @media(prefers-reduced-motion:reduce){.tipPop{transition:none;}}
 
-      /* Play on paper: the card's camera button and the section under the cards. */
-      /* The status bar stays on one line: the camera keeps its place at the
-         right end, and on narrow cards the corner pill's label takes two lines
-         inside the pill instead of pushing the camera down. */
-      .pStatus{gap:6px;flex-wrap:nowrap;}
-      .pStatus .pill{padding:0 12px;flex:0 0 auto;white-space:nowrap;}
-      .pStatus .pill.corner{flex:0 1 auto;min-width:0;white-space:normal;}
-      .pStatus .pill.corner .lab{line-height:1.2;text-wrap:balance;}
-      .pStatus .pill.cam{margin-left:auto;width:42px;min-height:42px;padding:0;justify-content:center;cursor:pointer;text-decoration:none;color:var(--accent);border-color:var(--accent-line);background:rgba(0,0,0,0.22);transition:transform .12s ease,background .12s ease,border-color .12s ease;}
-      .pill.cam:hover,.pill.cam:focus-visible{background:var(--accent-soft);border-color:var(--accent);transform:translateY(-1px);}
-      .pill.cam svg{width:20px;height:20px;display:block;}
-      @media(pointer:coarse){.pStatus .pill.cam{width:44px;min-height:44px;}}
+      /* Camera: a small icon next to the board tools. It opens the camera
+         inside this card's board and closes it on a second tap. */
       article.pCard.pink{--accent:var(--pink);--accent-line:rgba(255,59,212,0.50);--accent-soft:rgba(255,59,212,0.14);--accent-glow:rgba(255,59,212,0.45);}
       article.pCard.lime{--accent:var(--lime);--accent-line:rgba(112,255,122,0.50);--accent-soft:rgba(112,255,122,0.14);--accent-glow:rgba(112,255,122,0.40);}
       article.pCard.cyan{--accent:var(--cyan);--accent-line:rgba(47,243,255,0.50);--accent-soft:rgba(47,243,255,0.14);--accent-glow:rgba(47,243,255,0.40);}
-
-      .paper{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px 20px;margin-top:18px;padding:16px 20px;border-radius:20px;border:1px dashed rgba(47,243,255,0.30);background:linear-gradient(90deg,rgba(47,243,255,0.05),rgba(112,255,122,0.03) 60%,rgba(255,59,212,0.04));}
-      .paperArt{width:46px;height:56px;display:block;}
-      .paperTitle{margin:0 0 3px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--cyan);}
-      .paperBody{margin:0;color:var(--muted);font-size:13.5px;line-height:1.55;}
-      .paperLinks{display:flex;flex-wrap:wrap;gap:9px;justify-content:flex-end;}
-      .paperLink{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:999px;font-family:var(--sans);font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;border:1.5px solid rgba(47,243,255,0.55);color:var(--cyan);background:rgba(47,243,255,0.08);transition:transform .13s ease,background .13s ease,box-shadow .13s ease;}
-      .paperLink:hover,.paperLink:focus-visible{transform:translateY(-1px);background:rgba(47,243,255,0.16);box-shadow:0 6px 20px rgba(47,243,255,0.18);}
-      .paperLink.kit{border-color:rgba(112,255,122,0.55);color:var(--lime);background:rgba(112,255,122,0.07);}
-      .paperLink.kit:hover,.paperLink.kit:focus-visible{background:rgba(112,255,122,0.15);box-shadow:0 6px 20px rgba(112,255,122,0.16);}
-      .paperLink svg{width:18px;height:18px;flex:0 0 auto;}
-      @media(max-width:760px){.paper{grid-template-columns:auto minmax(0,1fr);padding:14px 16px;}.paperLinks{grid-column:1 / -1;justify-content:flex-start;}}
-      @media(prefers-reduced-motion:reduce){.pill.cam,.paperLink{transition:none;}.pill.cam:hover,.paperLink:hover{transform:none;}}
+      .icon.cam{cursor:pointer;width:26px;height:26px;padding:0;color:var(--muted2);}
+      .icon.cam svg{width:15px;height:15px;display:block;}
+      .icon.cam:hover{color:var(--text);}
+      .icon.cam[aria-pressed="true"]{color:var(--accent);border-color:var(--accent);background:var(--accent-soft);}
+      .toy{position:relative;}
+      .icon.cam[hidden]{display:none;}
+      /* Narrow cards: the extra icon still fits on the tool row. */
+      @media(max-width:520px){.pIconRow:has(.icon.cam:not([hidden])),.pIconRow:has(.icon.cam:not([hidden])) .pIconSet{gap:6px;}}
 
       /* A card that just received a board from the camera glows once. */
       @keyframes arrive{0%{box-shadow:0 18px 50px rgba(0,0,0,0.35),0 0 0 0 transparent;}25%{box-shadow:0 18px 50px rgba(0,0,0,0.35),0 0 0 2px var(--accent),0 0 42px var(--accent-glow);}100%{box-shadow:0 18px 50px rgba(0,0,0,0.35),0 0 0 0 transparent;}}
@@ -206,15 +192,16 @@
       .refPanel .pubMore{margin-top:10px;font-size:13px;color:var(--muted2);}
       .vocabPanel{color:var(--muted);font-size:13px;line-height:1.55;min-height:30px;}
 
-      /* Credit: at the end of the page. It floats in the bottom-left corner only
-         on screens wide enough for the side margin to hold it, so it never
-         covers the content. It ignores pointer events except on its link. */
-      .floatCredit{display:block;width:fit-content;margin:28px auto 0;padding:8px 14px;border-radius:999px;background:rgba(7,6,10,0.78);border:1px solid rgba(255,59,212,0.22);font-size:12.5px;color:var(--muted);letter-spacing:0.03em;pointer-events:none;}
-      .floatCredit a{color:var(--text);text-decoration:none;font-weight:800;pointer-events:auto;}
+      .floatCredit{position:fixed;bottom:14px;left:16px;z-index:500;padding:8px 14px;border-radius:999px;background:rgba(7,6,10,0.78);backdrop-filter:blur(10px);border:1px solid rgba(255,59,212,0.22);font-size:12.5px;color:var(--muted);letter-spacing:0.03em;}
+      .floatCredit a{color:var(--text);text-decoration:none;font-weight:800;}
       .floatCredit .ceo{color:var(--muted2);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;font-size:10.5px;}
-      .floatCredit .tlm{color:var(--pink);font-weight:900;letter-spacing:0.11em;white-space:nowrap;}
-      .floatCredit .who{white-space:nowrap;}
-      @media(min-width:1940px){main{padding-bottom:100px;}.floatCredit{position:fixed;bottom:14px;left:16px;z-index:500;margin:0;backdrop-filter:blur(10px);}}
+      .floatCredit .tlm{color:var(--pink);font-weight:900;letter-spacing:0.11em;}
+      /* Occlusion-safe: the pill ignores pointer events (taps pass through to
+         the page); only its link stays clickable. On narrow screens it drops
+         out of the fixed corner and flows at the end of the content. */
+      .floatCredit{pointer-events:none;}
+      .floatCredit a{pointer-events:auto;}
+      @media(max-width:900px){.floatCredit{position:static;margin:24px auto 0;display:block;width:fit-content;}}
       /* Language switch: fixed top-right, three equal chips. */
       .langSel{position:fixed;top:14px;right:16px;z-index:600;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(7,6,10,0.80);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.12);}
       .langSel button{cursor:pointer;border:none;background:transparent;color:var(--muted2);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.04em;padding:5px 9px;border-radius:999px;transition:color .12s ease,background .12s ease;}
@@ -222,13 +209,15 @@
       .langSel button[aria-pressed="true"]{color:var(--bg0);background:var(--amber);}
       /* A card scrolled into view stays clear of the fixed language switch. */
       article.pCard{scroll-margin-top:72px;}
-      /* With one column of cards (phones, tablets) the switch sits at the top
-         of the page and scrolls away, so it never covers a card. */
-      @media(max-width:900px){.langSel{position:static;width:fit-content;margin:10px 12px 0 auto;}main{padding-top:14px;}}
-      /* Touch screens: every button and tip holder is at least 44 px. */
+      @media(max-width:520px){.langSel{top:10px;right:10px;}}
+      /* With one column of cards (phones, tablets) the switch keeps its place
+         at the top of the page but scrolls away, so it never covers a card. */
+      @media(max-width:900px){.langSel{position:absolute;}}
+      /* Touch screens: every button and tip holder answers to a 44 px touch
+         area that reaches past its drawn edge, so the page looks the same. */
       @media(pointer:coarse){
-        .langSel button{min-width:44px;min-height:44px;padding:0 10px;}
-        .icon,.icon.act,.icon.reset{width:44px;height:44px;}
+        .icon,.langSel button{position:relative;}
+        .icon::before,.langSel button::before{content:"";position:absolute;left:50%;top:50%;width:44px;height:44px;transform:translate(-50%,-50%);}
       }
     </style>
     <script src="i18n.js"></script>
@@ -260,6 +249,7 @@
             <button class="icon act" data-rotate="sq" data-tip-pos="below" data-i18n-data-tip="hub.rotateTip" data-tip="Tourne la pièce choisie (touche R)" data-i18n-aria-label="hub.rotateAria" aria-label="Tourne la pièce choisie">⟳</button>
             <button class="icon act" data-flip="sq" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie">⇄</button>
             <button class="icon reset" data-reset="sq" data-tip-pos="below" data-i18n-data-tip="hub.resetTip" data-tip="Efface la barrière" data-i18n-aria-label="hub.resetAria" aria-label="Efface la barrière"><span class="glyph">🗑</span></button>
+            <button class="icon cam" type="button" data-cam="sq" aria-pressed="false" hidden data-tip-pos="below" data-i18n-data-tip="hub.camTip" data-tip="Caméra : filme ton plateau imprimé, tes pièces se posent ici" data-i18n-aria-label="hub.camAria" aria-label="Ouvrir la caméra dans ce plateau"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
             </span>
             <span class="pIconSet nav">
             <span class="icon help" tabindex="0"
@@ -281,7 +271,6 @@
                   data-i18n-data-tip="hub.coinSqTip" data-tip="Sur le pavage carré, deux cases peuvent se toucher par un coin sans partager d’arête. Si ta barrière ne se ferme que par un tel coin, l’extérieur se faufile par ce coin : le coin ne ferme rien. Ce témoin s’allume quand ça arrive sur ton plateau.">
               <span class="dot" aria-hidden="true"></span><span class="lab" data-i18n="hub.coinLabel">fuite par un coin</span>
             </span>
-            <a class="pill cam" href="camera/?board=sq9" data-tip-pos="right" data-i18n-data-tip="hub.camTip" data-tip="Jouer sur papier : la caméra lit ton plateau imprimé" data-i18n-aria-label="hub.camAria" aria-label="Jouer sur papier avec la caméra"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></a>
           </div>
         </article>
 
@@ -297,6 +286,7 @@
             <button class="icon act" data-rotate="hex" data-tip-pos="below" data-i18n-data-tip="hub.rotateTip" data-tip="Tourne la pièce choisie (touche R)" data-i18n-aria-label="hub.rotateAria" aria-label="Tourne la pièce choisie">⟳</button>
             <button class="icon act" data-flip="hex" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie">⇄</button>
             <button class="icon reset" data-reset="hex" data-tip-pos="below" data-i18n-data-tip="hub.resetTip" data-tip="Efface la barrière" data-i18n-aria-label="hub.resetAria" aria-label="Efface la barrière"><span class="glyph">🗑</span></button>
+            <button class="icon cam" type="button" data-cam="hex" aria-pressed="false" hidden data-tip-pos="below" data-i18n-data-tip="hub.camTip" data-tip="Caméra : filme ton plateau imprimé, tes pièces se posent ici" data-i18n-aria-label="hub.camAria" aria-label="Ouvrir la caméra dans ce plateau"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
             </span>
             <span class="pIconSet nav">
             <span class="icon help" tabindex="0"
@@ -314,7 +304,6 @@
           </div>
           <div class="pStatus">
             <span class="pill area" id="pill-hex" data-i18n-data-tip="hub.areaTip" data-tip="Aire actuellement enclose sur ton plateau"><span data-i18n="common.areaLabel">Aire</span> <span class="k" id="area-hex">0</span></span>
-            <a class="pill cam" href="camera/?board=hex4" data-tip-pos="right" data-i18n-data-tip="hub.camTip" data-tip="Jouer sur papier : la caméra lit ton plateau imprimé" data-i18n-aria-label="hub.camAria" aria-label="Jouer sur papier avec la caméra"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></a>
           </div>
         </article>
 
@@ -329,6 +318,7 @@
             <button class="icon act" data-rotate="tri" data-tip-pos="below" data-i18n-data-tip="hub.rotateTip" data-tip="Tourne la pièce choisie (touche R)" data-i18n-aria-label="hub.rotateAria" aria-label="Tourne la pièce choisie">⟳</button>
             <button class="icon act" data-flip="tri" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie">⇄</button>
             <button class="icon reset" data-reset="tri" data-tip-pos="below" data-i18n-data-tip="hub.resetTip" data-tip="Efface la barrière" data-i18n-aria-label="hub.resetAria" aria-label="Efface la barrière"><span class="glyph">🗑</span></button>
+            <button class="icon cam" type="button" data-cam="tri" aria-pressed="false" hidden data-tip-pos="below" data-i18n-data-tip="hub.camTip" data-tip="Caméra : filme ton plateau imprimé, tes pièces se posent ici" data-i18n-aria-label="hub.camAria" aria-label="Ouvrir la caméra dans ce plateau"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
             </span>
             <span class="pIconSet nav">
             <span class="icon help" tabindex="0"
@@ -347,29 +337,9 @@
           <div class="pStatus">
             <span class="pill area" id="pill-tri" data-i18n-data-tip="hub.areaTip" data-tip="Aire actuellement enclose sur ton plateau"><span data-i18n="common.areaLabel">Aire</span> <span class="k" id="area-tri">0</span></span>
             <span class="pill corner reactive" id="coin-tri" data-i18n-data-tip="hub.coinTriTip" data-tip="Sur le pavage triangulaire, 6 triangles se rencontrent à chaque coin ; deux d’entre eux peuvent donc s’y toucher sans partager d’arête. Si ta barrière ne se ferme que par un tel coin, l’extérieur se faufile par ce coin : le coin ne ferme rien. Ce témoin s’allume quand ça arrive sur ton plateau."><span class="dot" aria-hidden="true"></span><span class="lab" data-i18n="hub.coinLabel">fuite par un coin</span></span>
-            <a class="pill cam" href="camera/?board=tri4" data-tip-pos="right" data-i18n-data-tip="hub.camTip" data-tip="Jouer sur papier : la caméra lit ton plateau imprimé" data-i18n-aria-label="hub.camAria" aria-label="Jouer sur papier avec la caméra"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></a>
           </div>
         </article>
       </div>
-      </section>
-
-      <section class="paper" aria-labelledby="paperT">
-        <svg class="paperArt" viewBox="0 0 46 56" aria-hidden="true" focusable="false">
-            <rect x="1.5" y="1.5" width="43" height="53" rx="3" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"/>
-            <path d="M11 18h24M11 24h24M11 30h24M11 36h24M11 42h24M11 18v24M17 18v24M23 18v24M29 18v24M35 18v24" stroke="rgba(170,220,255,0.28)" stroke-width="0.8"/>
-            <rect x="17" y="24" width="12" height="12" fill="rgba(45,246,172,0.55)"/>
-            <path d="M11 18h6v6h-6zM29 18h6v6h-6zM11 36h6v6h-6zM29 36h6v6h-6zM17 18h12v6H17zM11 24h6v12h-6zM29 24h6v12h-6zM17 36h12v6H17z" fill="rgba(255,59,212,0.55)"/>
-            <rect x="5" y="5" width="7" height="7" fill="rgba(255,255,255,0.85)"/><rect x="34" y="5" width="7" height="7" fill="rgba(255,255,255,0.85)"/>
-            <rect x="5" y="44" width="7" height="7" fill="rgba(255,255,255,0.85)"/><rect x="34" y="44" width="7" height="7" fill="rgba(255,255,255,0.85)"/>
-          </svg>
-        <div class="paperText">
-          <h2 class="paperTitle" id="paperT" data-i18n="hub.paperTitle">Jouer sur papier</h2>
-          <p class="paperBody" data-i18n="hub.paperBody">Imprime un plateau et ses pièces, découpe-les et construis ta barrière sur la table. La caméra de ton téléphone suit tes pièces et allume l’intérieur enclos sur l’image de ton plateau ; l’image reste sur ton appareil.</p>
-        </div>
-        <div class="paperLinks">
-          <a class="paperLink kit" href="kit/?board=sq9"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 9V3.5h10V9M7 17.5H4.5v-8h15v8H17M7 14h10v6.5H7z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span data-i18n="hub.paperKit">Imprimer le kit</span></a>
-          <a class="paperLink" href="camera/"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg><span data-i18n="hub.paperCamera">Ouvrir la caméra</span></a>
-        </div>
       </section>
 
       <section class="refRack" data-i18n-aria-label="hub.refAria" aria-label="Pour aller plus loin">
@@ -382,10 +352,11 @@
         <div class="refPanel" id="refPanel"></div>
       </section>
 
-      <div class="floatCredit">
-        <span data-i18n="hub.credit">par</span> <span class="tlm">THE LEARNING MACHINE</span> · <span class="who"><span class="ceo">CEO</span> <a href="https://erikaroldan.net" target="_blank" rel="noopener">Dr. Erika Roldán</a></span>
-      </div>
     </main>
+
+    <div class="floatCredit">
+      <span data-i18n="hub.credit">par</span> <span class="tlm">THE LEARNING MACHINE</span> · <span class="ceo">CEO</span> <a href="https://erikaroldan.net" target="_blank" rel="noopener">Dr. Erika Roldán</a>
+    </div>
 
     <div id="hubLive" class="sr-only" role="status" aria-live="polite"></div>
 
@@ -397,5 +368,11 @@
     <script src="lattice-hex.js"></script>
     <script src="lattice-triangular.js"></script>
     <script src="hub.js"></script>
+    <script defer src="vendor/js-aruco2/cv.js"></script>
+    <script defer src="vendor/js-aruco2/aruco.js"></script>
+    <script defer src="vendor/js-aruco2/dictionaries/aruco_4x4_1000.js"></script>
+    <script defer src="camera/boards.js"></script>
+    <script defer src="camera/core.js"></script>
+    <script defer src="camera/inboard.js"></script>
   </body>
 </html>

@@ -2,67 +2,70 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title data-i18n="tri.pageTitle">Challenge 4 · 12 hexiamonds · Fence Challenge</title>
-  <meta name="theme-color" content="#060c18" />
-  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="../fonts/manrope.css" />
   <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="../camera/inboard.css" />
   <script src="../i18n.js"></script>
   <script src="./i18n.js"></script>
+  <meta name="theme-color" content="#07060a" />
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
 </head>
 <body>
-  <div class="app">
-    <header class="lab-header">
-      <a class="back-link" href="../index.html" data-i18n-aria-label="tri.homeAria" aria-label="Back to the Fence Challenge home page"><span aria-hidden="true">←</span> <span class="back-text">Fence Challenge</span></a>
-      <h1 class="lab-title" data-i18n="tri.h1">Challenge 4 · 12 hexiamonds</h1>
-      <div class="header-end">
-        <a id="camera-link" class="camera-link" href="../camera/?board=tri13" data-i18n-title="tri.cameraTip" title="Play on paper: build your fence with real pieces and let the camera read it." data-i18n-aria-label="tri.camera" aria-label="Play on paper">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M9 5.5 10.2 4h3.6L15 5.5h2.7A2.3 2.3 0 0 1 20 7.8v8.5a2.3 2.3 0 0 1-2.3 2.2H6.3A2.3 2.3 0 0 1 4 16.3V7.8a2.3 2.3 0 0 1 2.3-2.3H9Zm3 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 1.8a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4Z" />
-          </svg>
-          <span class="camera-text" data-i18n="tri.camera">Play on paper</span>
-        </a>
-        <nav class="langSel" data-i18n-aria-label="common.langLabel" aria-label="Language">
-          <button type="button" data-lang-btn="fr" aria-pressed="false" lang="fr">FR</button>
-          <button type="button" data-lang-btn="de" aria-pressed="false" lang="de">DE</button>
-          <button type="button" data-lang-btn="en" aria-pressed="false" lang="en">EN</button>
-        </nav>
-      </div>
-    </header>
+  <nav class="langSel" data-i18n-aria-label="common.langLabel" aria-label="Language">
+    <button type="button" data-lang-btn="fr" aria-pressed="false" lang="fr">FR</button>
+    <button type="button" data-lang-btn="de" aria-pressed="false" lang="de">DE</button>
+    <button type="button" data-lang-btn="en" aria-pressed="false" lang="en">EN</button>
+  </nav>
 
-    <main class="main" id="main">
-      <p class="goal" data-i18n="tri.goal">Find the largest area you can enclose.</p>
-
-      <div class="toolbar">
+  <div class="app-shell">
+    <main class="main-stage">
+      <h1 class="visually-hidden" data-i18n="tri.h1">Challenge 4 · 12 hexiamonds</h1>
+      <header class="toolbar">
         <button id="detect-area" class="chip chip-primary" type="button" data-i18n="common.detectArea">Measure area</button>
-        <div id="area-chip" class="chip chip-area"><span data-i18n="common.areaLabel">Area</span> <span id="area-value" class="area-value">0</span></div>
+        <div id="area-chip" class="chip chip-area">Area: 0</div>
         <button id="clear-board" class="chip chip-danger" type="button" data-i18n="common.clear">Clear</button>
-      </div>
+      </header>
 
-      <section class="stage" id="stage">
-        <div class="board-wrap" id="board-wrap">
-          <canvas id="board-canvas" width="600" height="600" role="img" data-i18n-aria-label="tri.board.ariaLabel" aria-label="Triangle board"></canvas>
-          <div id="piece-tray" class="piece-tray" role="group" data-i18n-aria-label="tri.tray.ariaLabel" aria-label="Hexiamond pieces"></div>
-        </div>
+      <section class="play-zone">
+        <section class="board-wrap" id="board-wrap">
+          <button id="camera-chip" class="chip icon-chip board-camera-chip" type="button" aria-pressed="false" data-i18n-aria-label="tri.cameraOpen" aria-label="Open the camera on the board" data-i18n-title="tri.cameraOpen" title="Open the camera on the board">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path
+                d="M9 5.5 10.2 4h3.6L15 5.5h2.7A2.3 2.3 0 0 1 20 7.8v8.5a2.3 2.3 0 0 1-2.3 2.2H6.3A2.3 2.3 0 0 1 4 16.3V7.8a2.3 2.3 0 0 1 2.3-2.3H9Zm3 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 1.8a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4Z"
+              />
+            </svg>
+          </button>
+          <div id="piece-tray" class="piece-ring" role="group" data-i18n-aria-label="tri.tray.ariaLabel" aria-label="Hexiamond pieces"></div>
+          <div class="board-actions">
+            <button id="rotate-piece" class="chip action-chip" type="button" data-i18n="tri.rotate" data-i18n-title="tri.rotateTip" title="Rotate the selected piece (R key)">Rotate (R)</button>
+            <button id="flip-piece" class="chip action-chip" type="button" data-i18n="tri.flip" data-i18n-title="tri.flipTip" title="Flip the selected piece (F key)">Flip (F)</button>
+          </div>
+          <canvas id="board-canvas" width="1200" height="980" role="img" data-i18n-aria-label="tri.board.ariaLabel" aria-label="Triangle board"></canvas>
+          <div id="camera-host" class="camera-host" hidden></div>
+          <a
+            class="side-brand"
+            href="https://doi.org/10.1515/dmvm-2025-0056"
+            target="_blank"
+            rel="noreferrer"
+            data-i18n-title="tri.cite.title" title="Cite: Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025, doi:10.1515/dmvm-2025-0056"
+            data-i18n="tri.cite.text">Hexiamond Fence · LRMR25 · Dr. Erika Roldán</a>
+        </section>
       </section>
-
-      <div class="board-actions">
-        <button id="rotate-piece" class="chip action-chip" type="button" data-i18n="tri.rotate" data-i18n-title="tri.rotateTip" title="Rotate the selected piece (R key)">Rotate</button>
-        <button id="flip-piece" class="chip action-chip" type="button" data-i18n="tri.flip" data-i18n-title="tri.flipTip" title="Flip the selected piece (F key)">Flip</button>
-      </div>
-
-      <p id="status" class="status" role="status" aria-live="polite"></p>
+      <p id="status" class="visually-hidden" role="status" aria-live="polite"></p>
     </main>
-
-    <footer class="cite-bar">
-      <a class="cite" href="https://doi.org/10.1515/dmvm-2025-0056" target="_blank" rel="noreferrer" data-i18n-title="tri.cite.title" title="Cite: Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025, doi:10.1515/dmvm-2025-0056"><span data-i18n="tri.cite.text">Hexiamond Fence · LRMR25 · Dr. Erika Roldán</span></a>
-    </footer>
   </div>
 
   <script src="../lattice-triangular.js"></script>
   <script src="../fence-analysis.js"></script>
   <script src="./app.js"></script>
+  <script defer src="../vendor/js-aruco2/cv.js"></script>
+  <script defer src="../vendor/js-aruco2/aruco.js"></script>
+  <script defer src="../vendor/js-aruco2/dictionaries/aruco_4x4_1000.js"></script>
+  <script defer src="../camera/boards.js"></script>
+  <script defer src="../camera/core.js"></script>
+  <script defer src="../camera/inboard.js"></script>
 </body>
 </html>
