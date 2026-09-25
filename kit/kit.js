@@ -11,7 +11,7 @@
  *
  * Sheets are SVG in millimetres: one world unit (cell side) is `scale` mm on
  * the board and on the pieces alike. Corner marks are standard ArUco 4x4
- * markers (ARUCO_4X4_1000, id k = entry k): a black frame one module wide
+ * markers (ARUCO_4X4_1000, id k = entry k): a dark frame one module wide
  * around 4 x 4 bits, bit 1 = white, bits read row by row from the marker's
  * top-left, drawn upright so each mark's reading order matches the corner
  * order stored in the board registry.
@@ -39,18 +39,15 @@
   const SLACK = 1; // mm kept free at the bottom so a sheet never spills onto a second page
   const HEADER = 9; // mm reserved at the top of every sheet for the title line
   const QR_SIZE = 16; // mm, side of the QR code on the board sheet (about 0.43 mm per module)
-  const FOOTER = QR_SIZE + 3; // mm reserved at the bottom of the board sheet (scale bar, address, QR code)
-  const TEXT_FOOTER = 15; // mm from the bottom where the scale bar row starts
+  const FOOTER = QR_SIZE + 3; // mm reserved at the bottom of the board sheet (credit, QR code)
   const CLEAR_MODULES = 2; // white margin kept around the marks, in marker modules
   const SCALE_STEP = 0.5; // the scale is a whole number of half millimetres per unit
-  const SCALE_BAR = 50; // mm
   const PIECE_GAP = 6; // mm between pieces (at least)
   const BLEED = 1; // mm the coloured backs reach past the cut line
   const FALLBACK_BASE = "erikaroldanroa.github.io/fence-challenge/";
   const FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-  const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
-  const INK = "#111111";
+  const INK = "#0000ff"; // pure blue: marks, text and cut lines print from the colour cartridge alone
   const GRID = "#2563eb"; // strong blue: printed from the colour cartridge alone
   const OUTLINE = "#1e3a8a";
 
@@ -79,7 +76,7 @@
     return rows;
   }
 
-  // One path holding every black module, so adjacent modules merge without seams.
+  // One path holding every dark module, so adjacent modules merge without seams.
   function markerPath(id, x, y, size) {
     const bits = markerBits(id);
     const n = bits.length + 2;
@@ -468,7 +465,15 @@
     return (
       '<text class="kit-title" x="0" y="5.6" font-family="' + FONT + '" font-size="3.9" fill="' + INK + '">' +
       '<tspan font-weight="800">Fence Challenge</tspan>' +
-      '<tspan fill="#444"> · ' + esc(title) + (tag ? " · " + esc(tag) : "") + "</tspan></text>"
+      '<tspan fill="' + GRID + '"> · ' + esc(title) + (tag ? " · " + esc(tag) : "") + "</tspan></text>"
+    );
+  }
+
+  // The credit, as on the site: by The Learning Machine, CEO Dr. Erika Roldán.
+  function creditLine(x, y, by) {
+    return (
+      '<text class="kit-credit" x="' + fmt(x) + '" y="' + fmt(y) + '" font-family="' + FONT + '" font-size="2.6" fill="' + INK + '">' +
+      esc(by) + ' <tspan font-weight="800">THE LEARNING MACHINE</tspan> · CEO <tspan font-weight="700">Dr. Erika Roldán</tspan></text>'
     );
   }
 
@@ -497,22 +502,14 @@
       const m = g.markers[corner];
       const tl = tx(m.corners[0]);
       const br = tx(m.corners[2]);
-      svg += '<path class="kit-mark" data-corner="' + corner + '" data-id="' + m.id + '" fill="#000" d="' +
+      svg += '<path class="kit-mark" data-corner="' + corner + '" data-id="' + m.id + '" fill="' + INK + '" d="' +
         markerPath(m.id, tl.x, tl.y, br.x - tl.x) + '"/>';
     }
-    // Footer: a 5 cm bar in 1 cm blocks, its caption, the camera address and,
-    // in the bottom right corner, a QR code that opens the same address.
-    const barY = L.ch - TEXT_FOOTER + 2.5;
-    const barH = 2.4;
-    svg += '<g class="kit-scale" data-length-mm="' + SCALE_BAR + '">';
-    svg += '<rect x="0" y="' + fmt(barY) + '" width="' + SCALE_BAR + '" height="' + barH + '" fill="#fff" stroke="' + INK + '" stroke-width="0.2"/>';
-    let d = "";
-    for (let i = 0; i < SCALE_BAR / 10; i += 2) d += "M" + i * 10 + " " + fmt(barY) + "h10v" + barH + "h-10Z";
-    svg += '<path d="' + d + '" fill="' + INK + '"/>';
-    svg += "</g>";
-    svg += '<text x="' + (SCALE_BAR + 4) + '" y="' + fmt(barY + 2.1) + '" font-family="' + FONT + '" font-size="2.9" fill="' + INK + '">' + esc(opts.scaleText) + "</text>";
-    svg += '<text x="0" y="' + fmt(L.ch - 2) + '" font-family="' + FONT + '" font-size="2.9" fill="' + INK + '">' +
-      esc(opts.cameraLabel) + ' <tspan font-family="' + MONO + '" font-weight="600">' + esc(opts.address) + "</tspan></text>";
+    // Footer: the credit and, in the bottom right corner, a QR code that
+    // opens the camera for this board. (The camera measures the board from
+    // its corner marks, so the printed size does not matter; the board and
+    // its pieces only need to be printed together, at the same size.)
+    svg += creditLine(0, L.ch - 2, opts.by);
     const qr = qrPath(opts.url, L.cw - QR_SIZE, L.ch - QR_SIZE, QR_SIZE);
     if (qr) {
       svg += '<path class="kit-qr" data-url="' + esc(opts.url) + '" data-modules="' + qr.modules + '" fill="' + INK +
@@ -527,6 +524,7 @@
     const innerW = Math.min(0.3, Math.max(0.18, 0.02 * s));
     let svg = svgOpen(L, opts.title, "kit-sheet " + (back ? "kit-backs" : "kit-pieces"));
     svg += titleLine(opts.title, back ? opts.backsTag : opts.piecesTag);
+    svg += creditLine(0, HEADER + 1.1, opts.by);
     // The backs are the fronts seen through the paper: mirrored left to right about the page centre.
     svg += back ? '<g transform="translate(' + fmt(L.cw) + ' 0) scale(-1 1)">' : "<g>";
     L.shapes.forEach((shape, i) => {
@@ -568,8 +566,7 @@
       title,
       piecesTag: t("kit.sheet.pieces"),
       backsTag: t("kit.sheet.backs"),
-      scaleText: t("kit.sheet.scale"),
-      cameraLabel: t("kit.sheet.camera"),
+      by: t("kit.sheet.by"),
       address: o.address || cameraAddress(boardId),
     };
     opts.url = cameraUrl(boardId, opts.address);
@@ -595,7 +592,7 @@
     svg += '<path d="' + loopsPath(loopsOf(edges.filter((e) => e.count === 1)), id) + '" fill="none" stroke="' + OUTLINE + '" stroke-width="' + fmt(w * 2) + '"/>';
     for (const corner of FenceBoards.CORNERS) {
       const m = g.markers[corner];
-      svg += '<path fill="#000" d="' + markerPath(m.id, m.corners[0].x, m.corners[0].y, g.markerSize) + '"/>';
+      svg += '<path fill="' + INK + '" d="' + markerPath(m.id, m.corners[0].x, m.corners[0].y, g.markerSize) + '"/>';
     }
     return svg + "</svg>";
   }
@@ -606,7 +603,6 @@
     PAPERS,
     QR_SIZE,
     MARGIN,
-    SCALE_BAR,
     markerBits,
     layout,
     sheets,
