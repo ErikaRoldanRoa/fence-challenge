@@ -883,6 +883,8 @@
     // A verdict carries the area it shows on the pill, so the number and the
     // line always change together.
     const a = analysisOf(result);
+    // (pieces in view that the kit's pieces do not explain: no verdict)
+    if (!photo && !a && result.occupied && result.occupied.size) return { key: "livePieces", area: 0 };
     if (!result.occupied || result.occupied.size === 0 || !a) return { key: "empty", area: 0 };
     if (a.cornerLeak) return { key: "leak", area: a.area };
     if (a.regionCount >= 2) return { key: "pockets", vars: { n: a.regionCount }, area: a.area };
@@ -909,6 +911,7 @@
     photoFile: "cam.err.photoFile",
     reader: "cam.err.reader",
     notKit: "cam.s.notKit",
+    livePieces: "cam.why.pieces",
   };
 
   function sameStatus(a, b) {

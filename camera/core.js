@@ -107,7 +107,8 @@
     optionalShare: 4, // a search looks at most at this many times the pieces' area in optional cells
     photoSearchMs: 250, // all the searches for one photo together (again once if they run out of time)
     liveSearchMs: 25, // the same for a live frame that accepts a new state
-    coverCheckMs: 8, // time to look for a second set of pieces covering the same cells (a photo gets 5 times more)
+    coverCheckSteps: 5000, // search steps to look for a second set of pieces covering the same cells (the same answer on every device)
+    coverCheckMs: 60, // and a time limit for a very slow device, never reached otherwise
     searchTries: 3, // searches for a live state waiting to be accepted, while they run out of time
   };
 
@@ -2377,7 +2378,8 @@
       const n = reconstruct(info.geometry, others.flatMap((p) => p.cells), free, {
         maxEachType: 1,
         countTo: 2,
-        timeLimit: TUNING.coverCheckMs * (timeLimit >= TUNING.photoSearchMs ? 5 : 1),
+        budget: TUNING.coverCheckSteps,
+        timeLimit: TUNING.coverCheckMs,
       });
       ambiguous = !!n && n.count >= 2;
     }
@@ -2622,7 +2624,11 @@
    *                      false while it is in view, so the page holds that
    *                      state.
    *   analysis           FenceAnalysis of `occupied` (so never of cells the
-   *                      kit's pieces do not explain)
+   *                      kit's pieces do not explain), or null when the
+   *                      accepted state has no verdict: no set of the kit's
+   *                      pieces explains it and cells of the state accepted
+   *                      before it are empty (a piece of the fence moved away
+   *                      or turned), so the old verdict could not be kept
    *   pieces             whole pieces for `occupied` (see reconstruct) that
    *                      the camera vouches for, or null
    *   piecesComplete     true when `pieces` cover `occupied` exactly and the
@@ -2695,6 +2701,7 @@
         trusted: new Set(), // pieces accepted as cut pieces of the kit (pieceKey)
         doubt: null, // { pieces, covered, checks }: whole pieces accepted without trusting the new ones
         unexplained: new Set(), // cells of the latest state waiting that no set of pieces explains
+        unknown: null, // the unexplained cells of the accepted state when it has no verdict
         switchTo: null,
         switchCount: 0,
       };
@@ -2724,6 +2731,7 @@
       st.trusted = new Set();
       st.doubt = null;
       st.unexplained = new Set();
+      st.unknown = null;
       st.seen = new Map();
       st.missing = new Map();
       st.readSince = new Map();
@@ -2867,6 +2875,30 @@
       st.pendingChecks = 0;
       st.hasCommit = true;
       st.unexplained = new Set();
+      st.unknown = null;
+    }
+
+    // Accept, without a verdict, a state that no set of the kit's pieces
+    // explains once cells of the accepted state are empty in it (a piece of
+    // the fence was moved away, turned or lifted): the old verdict no longer
+    // holds and none can be given for the new state. Its unexplained cells
+    // stay reported while it is in view; the next state that the kit's
+    // pieces explain is accepted as usual.
+    function commitUnknown(w, unexplained) {
+      st.committedOn.set(st.on);
+      st.committed = w.occupied;
+      st.pieces = null;
+      st.piecesComplete = false;
+      st.trusted = new Set();
+      st.doubt = null;
+      st.analysis = null;
+      st.pendingKey = null;
+      st.pendingWhole = null;
+      st.pendingTries = 0;
+      st.pendingChecks = 0;
+      st.hasCommit = true;
+      st.unexplained = unexplained;
+      st.unknown = unexplained;
     }
 
     function process(image, frameOptions) {
@@ -3102,7 +3134,7 @@
         st.pendingKey = null;
       } else if (diff === 0) {
         st.pendingKey = null;
-        st.unexplained = new Set();
+        st.unexplained = st.unknown || new Set();
         if (!st.hasCommit) {
           st.hasCommit = true;
           st.pieces = [];
@@ -3145,7 +3177,14 @@
             // (the cells a state leaves unexplained are reported until a
             // state is accepted or the view is back to the accepted one, so
             // they do not blink while the cells read flicker)
-            st.unexplained = w.complete ? new Set() : w.unexplained;
+            // (cells of accepted pieces still lying in place are not the
+            // unexplained part: what was moved or added is)
+            if (w.complete) st.unexplained = new Set();
+            else {
+              const still = new Set();
+              for (const p of st.pieces || []) if (p.cells.every((k) => w.occupied.has(k))) for (const k of p.cells) still.add(k);
+              st.unexplained = new Set([...w.unexplained].filter((k) => !still.has(k)));
+            }
             if (w.complete) {
               const fresh = hasNewPieces(w.pieces);
               const looks = !fresh || newPiecesLookRight(image, info, H, w.pieces, w.covered);
@@ -3157,6 +3196,10 @@
               } else {
                 doubtful = !looks;
               }
+            } else if (st.hasCommit && diff > added) {
+              // cells of the accepted state are empty now: its verdict is gone
+              commitUnknown(w, st.unexplained);
+              changed = true;
             }
           }
         }
