@@ -47,7 +47,7 @@
   const FALLBACK_BASE = "erikaroldanroa.github.io/fence-challenge/";
   const FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
-  const INK = "#0000ff"; // pure blue: marks, text and cut lines print from the colour cartridge alone
+  const INK = "#111111"; // marks, text and cut lines
   const GRID = "#2563eb"; // strong blue: printed from the colour cartridge alone
   const OUTLINE = "#1e3a8a";
 
@@ -555,8 +555,40 @@
     return svgOpen(L, "", "kit-sheet kit-blank") + "</svg>";
   }
 
+  /* The pieces of a board laid out at the board's own scale on another paper
+   * (the pieces of an A3 board on A4 sheets, for instance), on as many pages
+   * as they need. Each page is a layout of its own, drawn by piecesSheet. */
+  function piecesLayouts(L, paperName) {
+    if (!isPaper(paperName)) throw new Error("Unknown paper: " + paperName);
+    const paper = PAPERS[paperName];
+    const cw = paper.w - 2 * MARGIN;
+    const ch = paper.h - 2 * MARGIN - SLACK;
+    const pages = [];
+    let rest = L.shapes.map((s, i) => i);
+    while (rest.length) {
+      // as many of the remaining pieces as fit on one page, largest first
+      let take = rest.slice();
+      let place = null;
+      while (take.length && !(place = packPieces(take.map((i) => L.shapes[i]), L.scale, cw, HEADER + 3, ch))) take = take.slice(0, -1);
+      if (!take.length) throw new Error("A piece does not fit on " + paperName + " at this scale");
+      pages.push(Object.assign({}, L, {
+        paper: paperName,
+        pageW: paper.w,
+        pageH: paper.h,
+        cw,
+        ch,
+        shapes: take.map((i) => L.shapes[i]),
+        place,
+      }));
+      rest = rest.filter((i) => take.indexOf(i) < 0);
+    }
+    return pages;
+  }
+
   /* The pages to print, in order. With coloured backs, a blank page follows the
-   * board so the pieces and their backs share one sheet of paper. */
+   * board so the pieces and their backs share one sheet of paper. With
+   * `piecesPaper` (another paper size), only the pieces are printed, at the
+   * board's scale on that paper, each page followed by its backs. */
   function sheets(boardId, paperName, options) {
     const o = options || {};
     const t = o.t || fallbackT;
@@ -570,6 +602,15 @@
       address: o.address || cameraAddress(boardId),
     };
     opts.url = cameraUrl(boardId, opts.address);
+    if (o.piecesPaper && o.piecesPaper !== paperName) {
+      const pages = [];
+      const parts = piecesLayouts(L, o.piecesPaper);
+      for (const P of parts) {
+        pages.push({ kind: "pieces", svg: piecesSheet(P, opts, false) });
+        if (o.backs) pages.push({ kind: "backs", svg: piecesSheet(P, opts, true) });
+      }
+      return { layout: parts[0], boardLayout: L, pages };
+    }
     const pages = [{ kind: "board", svg: boardSheet(L, opts) }];
     if (o.backs) pages.push({ kind: "blank", svg: blankSheet(L) });
     pages.push({ kind: "pieces", svg: piecesSheet(L, opts, false) });
@@ -640,6 +681,8 @@
       board: BOARD_IDS.indexOf(params.get("board")) >= 0 ? params.get("board") : "sq9",
       paper: null,
       backs: store.get("fc-kit-backs") !== "0",
+      // the pieces of an A3 board printed alone on A4, at the board's scale
+      piecesA4: params.get("pieces") === "A4" || store.get("fc-kit-pieces-a4") === "1",
     };
     const qp = (params.get("paper") || "").toUpperCase();
     const savedPaper = store.get("fc-kit-paper");
@@ -650,6 +693,8 @@
     const sheetsEl = $("#sheets");
     const cameraLink = $("#cameraLink");
     const backsInput = $("#backs");
+    const piecesA4Input = $("#piecesA4");
+    const piecesA4Wrap = $("#piecesA4Wrap");
     const paperNote = $("#paperNote");
     const metaDescription = $('meta[name="description"]');
     const boardButtons = new Map();
@@ -694,29 +739,29 @@
 
     function renderSheets() {
       const lang = i18n.get();
-      const out = sheets(state.board, state.paper, { t, lang, backs: state.backs });
+      const piecesPaper = state.paper === "A3" && state.piecesA4 ? "A4" : null;
+      const out = sheets(state.board, state.paper, { t, lang, backs: state.backs, piecesPaper });
       const L = out.layout;
       const root = doc.documentElement;
       root.style.setProperty("--sheet-w", L.cw + "mm");
       root.style.setProperty("--sheet-h", L.ch + "mm");
       root.style.setProperty("--page-ratio", L.pageW + " / " + L.pageH);
       root.style.setProperty("--margin-pct", ((100 * MARGIN) / L.pageW).toFixed(4) + "%");
-      pageRule.textContent = "@page { size: " + state.paper + " portrait; margin: " + MARGIN + "mm; }";
-      const piecesPage = out.pages.findIndex((p) => p.kind === "pieces") + 1;
+      pageRule.textContent = "@page { size: " + L.paper + " portrait; margin: " + MARGIN + "mm; }";
       const caps = {
         board: t("kit.capBoard"),
         blank: t("kit.capBlank"),
         pieces: t("kit.capPieces"),
-        backs: t("kit.capBacks", { n: piecesPage }),
       };
       sheetsEl.dataset.board = state.board;
-      sheetsEl.dataset.paper = state.paper;
+      sheetsEl.dataset.paper = L.paper;
       sheetsEl.dataset.mmPerUnit = String(L.scale);
       sheetsEl.innerHTML = out.pages
         .map(
           (p, i) =>
             '<figure class="sheetBox ' + p.kind + '"><div class="paper">' + p.svg + "</div>" +
-            '<figcaption><b>' + esc(t("kit.pageN", { n: i + 1 })) + "</b> · " + esc(caps[p.kind]) + "</figcaption></figure>"
+            '<figcaption><b>' + esc(t("kit.pageN", { n: i + 1 })) + "</b> · " +
+            esc(p.kind === "backs" ? t("kit.capBacks", { n: i }) : caps[p.kind]) + "</figcaption></figure>"
         )
         .join("");
     }
@@ -725,12 +770,15 @@
       for (const [id, btn] of boardButtons) btn.setAttribute("aria-pressed", id === state.board ? "true" : "false");
       doc.querySelectorAll("[data-paper]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.paper === state.paper ? "true" : "false"));
       backsInput.checked = state.backs;
+      piecesA4Input.checked = state.piecesA4;
+      piecesA4Wrap.hidden = state.paper !== "A3";
       cameraLink.href = "../camera/?board=" + state.board;
       paperNote.hidden = !(state.paper === "A4" && A3_BOARDS.indexOf(state.board) >= 0);
       renderSheets();
       if (fromUser) {
         store.set("fc-kit-paper", state.paper);
         store.set("fc-kit-backs", state.backs ? "1" : "0");
+        store.set("fc-kit-pieces-a4", state.piecesA4 ? "1" : "0");
         syncUrl();
       }
     }
@@ -745,6 +793,10 @@
     );
     backsInput.addEventListener("change", () => {
       state.backs = backsInput.checked;
+      update(true);
+    });
+    piecesA4Input.addEventListener("change", () => {
+      state.piecesA4 = piecesA4Input.checked;
       update(true);
     });
     $("#useA3").addEventListener("click", () => {
