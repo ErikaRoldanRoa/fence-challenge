@@ -107,6 +107,7 @@
     optionalShare: 4, // a search looks at most at this many times the pieces' area in optional cells
     photoSearchMs: 250, // all the searches for one photo together (again once if they run out of time)
     liveSearchMs: 25, // the same for a live frame that accepts a new state
+    coverCheckMs: 8, // time to look for a second set of pieces covering the same cells (a photo gets 5 times more)
     searchTries: 3, // searches for a live state waiting to be accepted, while they run out of time
   };
 
@@ -1966,9 +1967,14 @@
    * for first (unless `exactFirst` is false); otherwise, among the covers
    * found in time, the one that needs the fewest and clearest of them wins
    * (`score(key)`, a cell's reading in [0, 1], says how covered a cell
-   * looks). */
+   * looks).
+   * Option `countTo`: count the distinct exact covers instead (distinct sets
+   * of types on cells, no optional cell), up to that many, and return
+   * { count, sure }, where `sure` is false when the search ran out of time
+   * before it could tell. */
   function reconstruct(geometry, occupied, pieceTypes, options) {
     const opts = options || {};
+    const countTo = opts.countTo > 1 ? opts.countTo : 0;
     const maxEach = opts.maxEachType == null ? 1 : opts.maxEachType;
     const budget = opts.budget || 200000;
     const deadline = opts.deadline != null ? opts.deadline : clock() + (opts.timeLimit == null ? TUNING.searchMs : opts.timeLimit);
@@ -1976,7 +1982,7 @@
     const board = geometry.board;
     const required = [...new Set(occupied)];
     for (const k of required) if (!board.map.has(k)) return null;
-    if (required.length === 0) return [];
+    if (required.length === 0) return countTo ? { count: 1, sure: true } : [];
     // More covered cells than all the pieces can cover: no need to search.
     const capacity = pieceTypes.reduce((sum, t) => sum + maxEach * t.cells.length, 0);
     if (required.length > capacity) return null;
@@ -2107,6 +2113,7 @@
     let nodes = 0;
     let stopped = false;
     let stopAt = deadline;
+    const distinct = new Set(); // (countTo) the covers found, as sets of types on cells
     const viable = (ci) => {
       const c = cands[ci];
       if (used[c.t] >= maxEach) return false;
@@ -2172,6 +2179,11 @@
         }
       }
       if (!bestList) {
+        if (countTo) {
+          distinct.add(chosen.map((ci) => cands[ci].t + ":" + cands[ci].cells.slice().sort((a, b) => a - b).join(",")).sort().join("|"));
+          if (distinct.size >= countTo) stopped = true;
+          return;
+        }
         if (!cover) {
           // A first cover: look a little longer for a cheaper one.
           const now = clock();
@@ -2196,6 +2208,11 @@
         if (stopped || coverCost <= 0) return;
       }
     };
+    if (countTo) {
+      coverCost = 1e-9;
+      solve(0);
+      return { count: distinct.size, sure: distinct.size >= countTo || !stopped };
+    }
     // First a cover that needs no optional cell at all (with part of the
     // time), then any cover.
     let phaseStart = clock();
@@ -2292,7 +2309,8 @@
    * is taken even if some of its pieces read faintly: it adds and drops no
    * cell, and each of its cells already looks covered. `score(key)` is a
    * cell's reading in [0, 1]; all the searches share `timeLimit`
-   * milliseconds. Returns { occupied, pieces, complete, unexplained, late }:
+   * milliseconds. Returns { occupied, pieces, complete, ambiguous, unexplained, late }
+   * (`ambiguous`: another set of the board's pieces covers the same cells):
    * without a cover (`complete` false), `occupied` holds the covered cells as
    * they were read, `unexplained` those of them no tile explains (empty when
    * complete), and `late` is true when a search ran out of time before it
@@ -2351,6 +2369,18 @@
     }
     if (!others && exact) others = exact;
     const complete = others !== null;
+    // Several sets of pieces may cover the same cells (two tetrominoes
+    // swapped for two others, a piece turned into another): the shape is
+    // then right, but which pieces lie there cannot be told from it.
+    let ambiguous = false;
+    if (others && others.length > 1) {
+      const n = reconstruct(info.geometry, others.flatMap((p) => p.cells), free, {
+        maxEachType: 1,
+        countTo: 2,
+        timeLimit: TUNING.coverCheckMs * (timeLimit >= TUNING.photoSearchMs ? 5 : 1),
+      });
+      ambiguous = !!n && n.count >= 2;
+    }
     const pieces = complete || placed.length ? placed.concat(others || []) : null;
     namePieces(info, pieces);
     const occupied = new Set(taken);
@@ -2361,7 +2391,7 @@
       for (const k of onSet) occupied.add(k);
       for (const k of rest) unexplained.add(k);
     }
-    return { occupied, pieces, complete, unexplained, late: !complete && late };
+    return { occupied, pieces, complete, ambiguous, unexplained, late: !complete && late };
   }
 
   /* Weak covered cells that touch a clearly covered cell (or a tile), in
@@ -2598,7 +2628,9 @@
    *   piecesComplete     true when `pieces` cover `occupied` exactly and the
    *                      camera vouches for all of them (only then may they
    *                      be carried on screen). Pieces accepted in doubt are
-   *                      vouched for later, once they look right.
+   *                      vouched for later, once they look right. Never true
+   *                      when another set of the kit's pieces covers the same
+   *                      cells: the cells are known then, not the pieces.
    *   doubtful           a new state is waiting because it does not look like
    *                      whole pieces of the kit (it is accepted only after
    *                      `doubtMs`, and without those pieces), or because no
@@ -2815,7 +2847,7 @@
     function commit(info, w, trust) {
       st.committedOn.set(st.on);
       st.committed = w.occupied;
-      if (trust) {
+      if (trust && !w.ambiguous) {
         st.pieces = w.pieces;
         st.piecesComplete = true;
         st.trusted = new Set(w.pieces.map(pieceKey));
@@ -2825,7 +2857,8 @@
         st.pieces = kept.length ? kept : null;
         st.piecesComplete = false;
         st.trusted = new Set(kept.map(pieceKey));
-        st.doubt = { pieces: w.pieces, covered: w.covered, checks: 0 };
+        // (pieces another set could replace are never vouched for later)
+        st.doubt = w.ambiguous ? null : { pieces: w.pieces, covered: w.covered, checks: 0 };
       }
       st.analysis = dep("FenceAnalysis").analyze({ board: info.board, lattice: info.lattice, occupied: st.committed });
       st.pendingKey = null;
@@ -3382,7 +3415,9 @@
     if (whole.late) whole = wholePieces(info, raw, maybe, tiles, score, TUNING.photoSearchMs);
     const occupied = whole.occupied;
     let pieces = whole.pieces;
-    let piecesComplete = whole.complete;
+    // (when another set of pieces covers the same cells, the pieces are not
+    // known, only the cells)
+    let piecesComplete = whole.complete && !whole.ambiguous;
     // Pieces no tile mark vouches for must look like cut pieces: a fingertip
     // or a pen in the photo is never carried on screen as a piece.
     if (whole.complete) {
