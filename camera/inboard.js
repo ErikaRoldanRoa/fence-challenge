@@ -72,6 +72,8 @@
     leakFill: "rgba(178, 120, 255, 0.20)",
     leakStroke: "rgba(200, 150, 255, 0.85)",
     outline: "rgba(72, 208, 255, 0.9)",
+    doubtFill: "rgba(255, 255, 255, 0.12)",
+    doubtStroke: "rgba(255, 255, 255, 0.9)",
   };
 
   // Words for screen readers and tooltips (the window itself shows icons only).
@@ -80,7 +82,7 @@
     fr: {
       "cam.videoLabel": "Image de la caméra, avec ta barrière dessinée par-dessus",
       "cam.starting": "La caméra s’ouvre…",
-      "cam.s.find": "Montre les quatre carrés noirs des coins.",
+      "cam.s.find": "Montre les quatre carrés des coins.",
       "cam.boardFound": "Plateau reconnu" + NB + ":",
       "cam.board.square": "Carrés · {w} × {h}",
       "cam.board.cells": "{lattice} · {n} cases",
@@ -98,7 +100,7 @@
     de: {
       "cam.videoLabel": "Kamerabild, dein Zaun ist darüber gezeichnet",
       "cam.starting": "Die Kamera öffnet sich…",
-      "cam.s.find": "Zeig alle vier schwarzen Eckquadrate.",
+      "cam.s.find": "Zeig alle vier Eckquadrate.",
       "cam.boardFound": "Spielfeld erkannt:",
       "cam.board.square": "Quadrate · {w} × {h}",
       "cam.board.cells": "{lattice} · {n} Felder",
@@ -116,7 +118,7 @@
     en: {
       "cam.videoLabel": "Camera picture with your fence drawn over it",
       "cam.starting": "Opening the camera…",
-      "cam.s.find": "Show all four black corner squares.",
+      "cam.s.find": "Show all four corner squares.",
       "cam.boardFound": "Board found:",
       "cam.board.square": "Squares · {w} × {h}",
       "cam.board.cells": "{lattice} · {n} cells",
@@ -1380,6 +1382,18 @@
             ctx.fill();
           }
         }
+        ctx.restore();
+      }
+
+      // Cells the kit's pieces do not explain (a crooked piece, a pencil on
+      // the board): a soft pulse on them, so the player sees what to put
+      // straight. Still when motion is reduced.
+      if (s.locked && doubt) {
+        const phase = reduceMotion.matches ? 1 : 0.5 + 0.5 * Math.sin((performance.now() / 1100) * Math.PI * 2);
+        if (!reduceMotion.matches) pulsing = true;
+        ctx.save();
+        ctx.globalAlpha = 0.3 + 0.5 * phase;
+        cells(s.result.unexplained, STYLE.doubtFill, STYLE.doubtStroke, 1.6);
         ctx.restore();
       }
 
