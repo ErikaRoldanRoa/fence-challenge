@@ -63,11 +63,13 @@
 
   // The digital board's colours (piece-engine.js): a real fence glows neon,
   // an inside that leaks or is not alone stays muted, leaking cells are violet.
+  // Inside a fence the paper opens onto the digital board: dark cells with
+  // neon edges, so the lit area is never mistaken for a coloured piece.
   const STYLE = {
-    fenceFill: "rgba(45, 246, 172, 0.52)",
+    fenceFill: "rgba(8, 14, 26, 0.9)",
     fenceStroke: "rgba(140, 255, 214, 0.95)",
     fenceGlow: "rgba(45, 246, 172, 0.85)",
-    mutedFill: "rgba(45, 246, 172, 0.24)",
+    mutedFill: "rgba(8, 14, 26, 0.62)",
     mutedStroke: "rgba(45, 246, 172, 0.5)",
     leakFill: "rgba(178, 120, 255, 0.20)",
     leakStroke: "rgba(200, 150, 255, 0.85)",
@@ -1340,10 +1342,13 @@
           ctx.save();
           if (clean) {
             if (!doubt) {
-              ctx.shadowBlur = 15 * px;
+              // the glow breathes slowly: no piece on the paper ever does
+              const breath = reduceMotion.matches || s.held ? 0.5 : 0.5 + 0.5 * Math.sin((performance.now() / 1600) * Math.PI * 2);
+              if (!reduceMotion.matches && !s.held) pulsing = true;
+              ctx.shadowBlur = (10 + 14 * breath) * px;
               ctx.shadowColor = STYLE.fenceGlow;
             }
-            cells(a.enclosedSet, STYLE.fenceFill, STYLE.fenceStroke, 1.8);
+            cells(a.enclosedSet, STYLE.fenceFill, STYLE.fenceStroke, 2.2);
           } else {
             cells(a.enclosedSet, STYLE.mutedFill, STYLE.mutedStroke, 1.1);
           }
