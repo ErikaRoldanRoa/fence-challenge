@@ -850,11 +850,11 @@
   }
 
   // A photo gives no verdict when no set of the kit's pieces explains what
-  // covers the board ("pieces": a pen or a scrap on it, a piece well off its
-  // cells). The player takes another photo.
+  // covers the board (a pen or a scrap on it, a piece well off its cells).
+  // The player takes another photo.
   function photoDoubt(result) {
     if (!result || !result.H) return null;
-    if (!result.analysis || (result.unexplained && result.unexplained.size)) return "pieces";
+    if (!result.analysis || (result.unexplained && result.unexplained.size)) return "notKit";
     return null;
   }
 
@@ -908,7 +908,7 @@
     photoError: "cam.err.photo",
     photoFile: "cam.err.photoFile",
     reader: "cam.err.reader",
-    pieces: "cam.why.pieces",
+    notKit: "cam.s.notKit",
   };
 
   function sameStatus(a, b) {
@@ -1198,7 +1198,7 @@
     el.continueWhy.hidden = el.continueBtn.hidden;
     el.continueWhy.dataset.key = why;
     // (not twice: the status line may already say it)
-    const said = !!st.status && STATUS_TEXT[st.status.key] === "cam.why." + why;
+    const said = !!st.status && (STATUS_TEXT[st.status.key] === "cam.why." + why || (st.status.key === "notKit" && why === "pieces"));
     el.continueWhy.textContent = why && !said ? t("cam.why." + why) : "";
   }
 
