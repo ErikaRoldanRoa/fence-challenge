@@ -19,6 +19,13 @@
  *      and never as pieces. Covered cells that no set of the board's pieces
  *      explains (a pen or a scrap of paper on the board, a piece well off
  *      its cells) are never judged: the last state explained is kept.
+ * A kit printed in colour, each piece type in its own ink, is read by its
+ * colours instead of step 5: each piece is found where its ink lies on the
+ * paper, turned or pushed as the child left it, and snaps to the cells it
+ * lies nearest (see colourPieces). A piece half way between two places,
+ * and colour that no piece explains (a pencil, a scrap, a pen), give no
+ * verdict. A kit whose colours do not tell its pieces apart (printed in
+ * black and white, pieces coloured by hand) is read by its cells.
  * The classic 20 x 20 kit (corner ids 50-53, one mark on every tile) is
  * located by its printed grid lines, checked against the print, and its
  * tiles are read from their marks.
@@ -110,6 +117,50 @@
     coverCheckSteps: 5000, // search steps to look for a second set of pieces covering the same cells (the same answer on every device)
     coverCheckMs: 60, // and a time limit for a very slow device, never reached otherwise
     searchTries: 3, // searches for a live state waiting to be accepted, while they run out of time
+    // Reading pieces by their colour (see readColours, fitPose and colourPieces).
+    colourPoints: 64, // points read per cell (before those near its outline are left out)
+    colourLine: 0.05, // half a grid line's width, and a little more (world units)
+    colourOutline: 0.08, // the same for the board's outline
+    colourBlur: 2, // pixels a frame blurs the grid lines over
+    colourFewest: 8, // points read in a cell however blurred the frame (the innermost)
+    colourRim: 1, // width of the paper read around the board (cells side by side)
+    colourSolidReach: 2.2, // a point's neighbours lie this many point spacings around it
+    colourSolid: 0.45, // share of them that must show its colour (else it is a thin line)
+    colourRaster: 20, // points per world unit of the map from points to cells
+    colourFloor: 9, // chroma (L*a*b*, after white balance) below which a point is paper or grey
+    colourDark: 50, // L* below which such a point is dark
+    hueSpread: 8, // degrees of hue an ink's points spread over
+    hueOther: 26, // a point this far in hue from the inks is as likely another colour
+    hueReach: 40, // an ink never takes a point further in hue
+    hueGroup: 18, // inks closer in hue than this are told apart by the shape of their pieces only
+    hueLine: 20, // inks closer in hue than this to the blue of the kit's lines may be taken for them
+    colourStrength: 0.45, // share of an ink's chroma at which a point counts as fully that ink
+    colourNoise: 0.06, // a cell's share in an ink below this is left out
+    colourPresent: 0.35, // ink of a type worth this share of its piece: the piece is on the board
+    colourWhole: 0.7, // share of a piece's ink in view that shows the whole piece
+    colourMisfit: 0.6, // and a piece fitting its whole ink worse than this is not that piece (coloured by hand)
+    colourHand: 0.6, // colour beyond the pieces worth this share of the smallest piece: not a kit read by its colours
+    colourStray: 0.3, // share of a cell in colour no piece explains that stops the reading
+    colourDarkShare: 0.4, // the same for colourless dark
+    colourChoices: 6, // places weighed per piece when taking the pieces together
+    colourFit: 0.6, // overlap of a piece found on the paper with its ink that it needs
+    colourMargin: 0.12, // the next place must be this much farther (cells side by side)
+    colourSharp: 8, // pixels across a cell below which a frame is coarse
+    poseTurn: 0.45, // radians a piece may be found turned
+    poseShift: 0.8, // and shifted (cells side by side)
+    poseStarts: 4, // variants of a piece's shape its place is fitted from
+    poseStartShare: 0.75, // a variant whose best placement covers less ink than this share of the best one's is not fitted
+    poseNeat: 0.92, // a placement overlapping its piece's ink this much is where the piece lies (no fit)
+    poseGood: 0.94, // a fit this good is not tried again from another start
+    poseTolerance: 0.05, // a variant fitting worse than the best by this much does not show the piece
+    poseSamples: 12, // points per cell a piece's fit needs (every so many of those read)
+    poseHidden: 0.3, // a point of another piece's ink under a piece found counts this little against it (that piece may lie on top)
+    poseMate: 0.5, // how much a point of an ink of close hue counts as the piece's own
+    poseFar: 0.75, // a piece farther than this from every place (cells side by side) is not snapped
+    poseFarCoarse: 0.55, // the same on a coarse frame
+    poseRim: 0, // how far beyond the rim a cell's centre may be pushed (cells side by side)
+    poseSlack: 0.1, // ink beyond a piece found on the paper that still counts as its own (share of a cell)
+    poseNear: 0.25, // and next to a piece of that colour, this much more
   };
 
   // ---------------------------------------------------------------------------
@@ -915,6 +966,7 @@
       boardLandings(info.board, info.lattice);
       for (const t of info.types) variantsOf(info.lattice, t);
       rimEdges(info);
+      if (inkTable(info)) colourSamples(info);
       ensureDictionary(dep("AR"));
       info.ready = true;
     }
@@ -1529,7 +1581,9 @@
       queue: new Int32Array(info.n),
       paperLike: new Uint8Array(info.n),
       factor: new Float64Array(info.n),
+      tint: new Float64Array(info.n), // the same with grey cells kept (see readColours)
       vals: new Float64Array(256),
+      valsAll: new Float64Array(256),
       scores: new Float32Array(info.n),
       cR: null, // the paper's colour surfaces of the last frame (see inkAt)
       cG: null,
@@ -1755,24 +1809,32 @@
         for (let i = 0; i < tail; i += 1) grey[queue[i]] = keep;
       }
     }
+    // (on a colour kit a dark patch without colour is never a piece: the
+    // colour reading takes its local white from every paper-like cell, grey
+    // ones included, in `tint`)
     const near = info.near;
     const nearStart = info.nearStart;
+    const { tint, valsAll } = sc;
+    const localWhite = (list, cnt) => {
+      median(list, cnt); // sorts the first cnt values
+      const f = list[Math.floor(TUNING.shadeRank * (cnt - 1))];
+      return f < 0.5 ? 0.5 : f > 1.05 ? 1.05 : f;
+    };
     for (let c = 0; c < n; c += 1) {
       let cnt = 0;
-      for (let k = nearStart[c]; k < nearStart[c + 1] && cnt < vals.length; k += 1) {
+      let all = 0;
+      for (let k = nearStart[c]; k < nearStart[c + 1] && all < vals.length; k += 1) {
         const j = near[k];
-        if (paperLike[j] && !grey[j]) {
+        if (!paperLike[j]) continue;
+        valsAll[all] = shade[j];
+        all += 1;
+        if (!grey[j]) {
           vals[cnt] = shade[j];
           cnt += 1;
         }
       }
-      if (cnt < 4) {
-        factor[c] = 1;
-        continue;
-      }
-      median(vals, cnt); // sorts the first cnt values
-      const f = vals[Math.floor(TUNING.shadeRank * (cnt - 1))];
-      factor[c] = f < 0.5 ? 0.5 : f > 1.05 ? 1.05 : f;
+      factor[c] = cnt < 4 ? 1 : localWhite(vals, cnt);
+      tint[c] = all < 4 ? 1 : localWhite(valsAll, all);
     }
 
     // (inkOf's rule, written out: this loop runs for every sample of every frame)
@@ -2310,8 +2372,8 @@
    * is taken even if some of its pieces read faintly: it adds and drops no
    * cell, and each of its cells already looks covered. `score(key)` is a
    * cell's reading in [0, 1]; all the searches share `timeLimit`
-   * milliseconds. Returns { occupied, pieces, complete, ambiguous, unexplained, late }
-   * (`ambiguous`: another set of the board's pieces covers the same cells):
+   * milliseconds. Returns { occupied, pieces, complete, coverAmbiguous, unexplained, late }
+   * (`coverAmbiguous`: another set of the board's pieces covers the same cells):
    * without a cover (`complete` false), `occupied` holds the covered cells as
    * they were read, `unexplained` those of them no tile explains (empty when
    * complete), and `late` is true when a search ran out of time before it
@@ -2373,7 +2435,7 @@
     // Several sets of pieces may cover the same cells (two tetrominoes
     // swapped for two others, a piece turned into another): the shape is
     // then right, but which pieces lie there cannot be told from it.
-    let ambiguous = false;
+    let coverAmbiguous = false;
     if (others && others.length > 1) {
       const n = reconstruct(info.geometry, others.flatMap((p) => p.cells), free, {
         maxEachType: 1,
@@ -2381,7 +2443,7 @@
         budget: TUNING.coverCheckSteps,
         timeLimit: TUNING.coverCheckMs,
       });
-      ambiguous = !!n && n.count >= 2;
+      coverAmbiguous = !!n && n.count >= 2;
     }
     const pieces = complete || placed.length ? placed.concat(others || []) : null;
     namePieces(info, pieces);
@@ -2393,7 +2455,7 @@
       for (const k of onSet) occupied.add(k);
       for (const k of rest) unexplained.add(k);
     }
-    return { occupied, pieces, complete, ambiguous, unexplained, late: !complete && late };
+    return { occupied, pieces, complete, coverAmbiguous, unexplained, late: !complete && late };
   }
 
   /* Weak covered cells that touch a clearly covered cell (or a tile), in
@@ -2443,6 +2505,1184 @@
       }
     }
     return placements;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pieces read by their colour
+
+  /* The printable kit (kit/kit.js) prints each piece type in an ink of its
+   * own, all at the same lightness: a hub set in its types' own hues, a
+   * lab set in hues spread for the eye. Its rule, written again here so the
+   * camera needs only the board registry. */
+  function hexToHsl(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    const r = ((n >> 16) & 255) / 255;
+    const g = ((n >> 8) & 255) / 255;
+    const b = (n & 255) / 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const l = (max + min) / 2;
+    if (max === min) return { h: 0, s: 0, l };
+    const d = max - min;
+    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    let h;
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+    else if (max === g) h = ((b - r) / d + 2) * 60;
+    else h = ((r - g) / d + 4) * 60;
+    return { h, s, l };
+  }
+
+  function hslToHex(h, s, l) {
+    const f = (n) => {
+      const k = (n + h / 30) % 12;
+      const a = s * Math.min(l, 1 - l);
+      const v = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+      return Math.round(v * 255).toString(16).padStart(2, "0");
+    };
+    return "#" + f(0) + f(8) + f(4);
+  }
+
+  // sRGB (0..1 per channel) -> CIE L*a*b* (D65; white 1, 1, 1 gives L* 100)
+  const SRGB_LINEAR = new Float32Array(1537); // index: value * 1024, up to 1.5
+  for (let i = 0; i < SRGB_LINEAR.length; i += 1) {
+    const v = i / 1024;
+    SRGB_LINEAR[i] = v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  }
+  function linear(v) {
+    const x = v * 1024;
+    if (!(x > 0)) return 0;
+    if (x >= 1536) return SRGB_LINEAR[1536];
+    const i = x | 0;
+    return SRGB_LINEAR[i] + (SRGB_LINEAR[i + 1] - SRGB_LINEAR[i]) * (x - i);
+  }
+  const LAB = [0, 0, 0];
+  function toLab(r, g, b, out) {
+    const R = linear(r);
+    const G = linear(g);
+    const B = linear(b);
+    const f = (t) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+    const fx = f((0.4124 * R + 0.3576 * G + 0.1805 * B) / 0.95047);
+    const fy = f(0.2126 * R + 0.7152 * G + 0.0722 * B);
+    const fz = f((0.0193 * R + 0.1192 * G + 0.9505 * B) / 1.08883);
+    out[0] = 116 * fy - 16;
+    out[1] = 500 * (fx - fy);
+    out[2] = 200 * (fy - fz);
+    return out;
+  }
+
+  function hexLab(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    return toLab(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, [0, 0, 0]);
+  }
+
+  // CIE L* (0 black .. 100 white) of an sRGB colour.
+  function lightnessOf(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    const lin = (v) => {
+      const c = v / 255;
+      return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    };
+    const y = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+    return y > 0.008856 ? 116 * Math.cbrt(y) - 16 : 903.3 * y;
+  }
+
+  // Strong, mid-dark ink for white paper: every hue at the same perceived lightness.
+  const INK_LIGHTNESS = 47;
+  function inkForHue(h) {
+    let lo = 0.05;
+    let hi = 0.6;
+    for (let i = 0; i < 30; i += 1) {
+      const mid = (lo + hi) / 2;
+      if (lightnessOf(hslToHex(h, 0.85, mid)) < INK_LIGHTNESS) lo = mid;
+      else hi = mid;
+    }
+    return hslToHex(h, 0.85, (lo + hi) / 2);
+  }
+
+  // The pure blue the kit prints its lines and marks in.
+  const LINE_INK = "#0000ff";
+
+  // Hues of a set without colours of its own, spread for the eye.
+  const INK_HUES = [0, 24, 45, 80, 135, 170, 195, 215, 245, 275, 300, 330];
+
+  function kitColours(types) {
+    const n = types.length;
+    return types.map((t, i) => {
+      if (t.color) return inkForHue(hexToHsl(t.color).h);
+      return inkForHue(INK_HUES[Math.floor((i * INK_HUES.length) / n) % INK_HUES.length]);
+    });
+  }
+
+  /* A board's inks in L*a*b* (hue h in degrees), made once per board; null
+   * for the classic kit, whose tiles carry pictures. */
+  function inkTable(info) {
+    if (info.inks !== undefined) return info.inks;
+    let inks = null;
+    if (!info.classic) {
+      const hexes = kitColours(info.types);
+      const T = hexes.length;
+      inks = { T, hex: hexes, L: new Float64Array(T), C: new Float64Array(T), h: new Float64Array(T), size: new Int32Array(T) };
+      hexes.forEach((hex, t) => {
+        const [L, a, b] = hexLab(hex);
+        inks.L[t] = L;
+        inks.C[t] = Math.hypot(a, b);
+        inks.h[t] = (Math.atan2(b, a) * 180) / Math.PI;
+        inks.size[t] = info.types[t].cells.length;
+      });
+      inks.smallest = Math.min(...inks.size);
+      // inks of close hues, which a camera cannot always tell apart
+      inks.group = Int32Array.from({ length: T }, (_, t) => t);
+      const root = (t) => (inks.group[t] === t ? t : (inks.group[t] = root(inks.group[t])));
+      for (let a = 0; a < T; a += 1) {
+        for (let b = a + 1; b < T; b += 1) {
+          let dh = Math.abs(inks.h[a] - inks.h[b]);
+          if (dh > 180) dh = 360 - dh;
+          if (dh < TUNING.hueGroup) inks.group[root(b)] = root(a);
+        }
+      }
+      for (let t = 0; t < T; t += 1) inks.group[t] = root(t);
+      // inks close in hue to the blue the kit prints its lines in (cut
+      // lines, marks, grid): a thin line of that blue can pass for them
+      const line = hexLab(LINE_INK);
+      const lineHue = (Math.atan2(line[2], line[1]) * 180) / Math.PI;
+      inks.lineLike = Uint8Array.from(inks.h, (h) => {
+        let dh = Math.abs(h - lineHue);
+        if (dh > 180) dh = 360 - dh;
+        return dh < TUNING.hueLine ? 1 : 0;
+      });
+    }
+    info.inks = inks;
+    return inks;
+  }
+
+  /* Points spread evenly over each cell, with their distance to its
+   * outline (where the grid lines are printed: readColours leaves out the
+   * points too close to it for the frame's sharpness): world x, y pairs,
+   * each cell's first point, `edge` the distances. Then points on the
+   * paper just around the board, each given to the nearest cell on the rim
+   * (`rimStart`, `rim`; `edge` their distance to the board): a piece partly
+   * off the board shows there where it lies. */
+  function colourSamples(info) {
+    if (info.colourPts) return info.colourPts;
+    let seed = 12345;
+    const jitter = () => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+    const toSegment = (x, y, a, b) => {
+      const ex = b.x - a.x;
+      const ey = b.y - a.y;
+      const u = Math.max(0, Math.min(1, ((x - a.x) * ex + (y - a.y) * ey) / (ex * ex + ey * ey)));
+      return Math.hypot(x - a.x - u * ex, y - a.y - u * ey);
+    };
+    const pts = [];
+    const edge = [];
+    const start = new Int32Array(info.n + 1);
+    const rims = rimEdges(info);
+    const widen = TUNING.colourOutline - TUNING.colourLine;
+    info.board.cells.forEach((cell, i) => {
+      start[i] = pts.length / 2;
+      const v = cell.vertices;
+      let area = 0;
+      let x0 = Infinity;
+      let y0 = Infinity;
+      let x1 = -Infinity;
+      let y1 = -Infinity;
+      for (let k = 0; k < v.length; k += 1) {
+        const a = v[k];
+        const b = v[(k + 1) % v.length];
+        area += a.x * b.y - b.x * a.y;
+        x0 = Math.min(x0, a.x);
+        y0 = Math.min(y0, a.y);
+        x1 = Math.max(x1, a.x);
+        y1 = Math.max(y1, a.y);
+      }
+      const sign = area > 0 ? 1 : -1;
+      const step = Math.sqrt(Math.abs(area / 2) / TUNING.colourPoints);
+      const inside = (x, y) => {
+        for (let k = 0; k < v.length; k += 1) {
+          const a = v[k];
+          const b = v[(k + 1) % v.length];
+          if (sign * ((b.x - a.x) * (y - a.y) - (b.y - a.y) * (x - a.x)) < 0) return false;
+        }
+        return true;
+      };
+      // (the grid is centred on the cell so that no cell gets a thin row,
+      // and each point is moved at random within its square of the grid,
+      // the same way every time: a piece moved a little then covers a few
+      // points more or less, never a whole row at once)
+      const nx = Math.floor((x1 - x0) / step);
+      const ny = Math.floor((y1 - y0) / step);
+      const ox = (x0 + x1) / 2 - (nx / 2) * step;
+      const oy = (y0 + y1) / 2 - (ny / 2) * step;
+      const mine = [];
+      for (let iy = 0; iy <= ny; iy += 1) {
+        for (let ix = 0; ix <= nx; ix += 1) {
+          const x = ox + (ix + 0.8 * (jitter() - 0.5)) * step;
+          const y = oy + (iy + 0.8 * (jitter() - 0.5)) * step;
+          if (!inside(x, y)) continue;
+          // (the board's outline is printed wider than the grid lines)
+          let d = Infinity;
+          for (let k = 0; k < v.length; k += 1) d = Math.min(d, toSegment(x, y, v[k], v[(k + 1) % v.length]));
+          for (const e of rims[i]) d = Math.min(d, toSegment(x, y, e.a, e.b) - widen);
+          mine.push([x, y, d]);
+        }
+      }
+      // (innermost first: a frame too blurred for the cell's size still
+      // reads its few innermost points)
+      mine.sort((p, q) => q[2] - p[2]);
+      for (const [x, y, d] of mine) {
+        pts.push(x, y);
+        edge.push(d);
+      }
+    });
+    start[info.n] = pts.length / 2;
+    // around the board: a grid of the same spacing as the cells' points
+    const R = cellRaster(info);
+    const onBoard = (x, y) => {
+      const px = Math.floor((x - R.x0) * R.ppu);
+      const py = Math.floor((y - R.y0) * R.ppu);
+      return px >= 0 && py >= 0 && px < R.w && py < R.h && R.idx[py * R.w + px] > 0;
+    };
+    const spacing = Math.sqrt(Math.abs(cellArea(info.board.cells[0])) / TUNING.colourPoints);
+    const band = TUNING.colourRim * R.step;
+    const b = info.board.bounds;
+    // (the rim's edges in squares one band wide: a point near the board has
+    // its nearest edge in its own square)
+    const buckets = new Map();
+    const bkey = (i, j) => i * 100003 + j;
+    rims.forEach((edges, c) => {
+      for (const e of edges) {
+        const i0 = Math.floor((Math.min(e.a.x, e.b.x) - band) / band);
+        const i1 = Math.floor((Math.max(e.a.x, e.b.x) + band) / band);
+        const j0 = Math.floor((Math.min(e.a.y, e.b.y) - band) / band);
+        const j1 = Math.floor((Math.max(e.a.y, e.b.y) + band) / band);
+        for (let i = i0; i <= i1; i += 1) {
+          for (let j = j0; j <= j1; j += 1) {
+            let list = buckets.get(bkey(i, j));
+            if (!list) buckets.set(bkey(i, j), (list = []));
+            list.push([c, e]);
+          }
+        }
+      }
+    });
+    // (not on the corner marks, printed dark or in a strong blue)
+    const marks = Object.values(info.nominal).map((q) => ({
+      x0: Math.min(...q.map((p) => p.x)) - TUNING.colourOutline,
+      y0: Math.min(...q.map((p) => p.y)) - TUNING.colourOutline,
+      x1: Math.max(...q.map((p) => p.x)) + TUNING.colourOutline,
+      y1: Math.max(...q.map((p) => p.y)) + TUNING.colourOutline,
+    }));
+    const onMark = (x, y) => marks.some((m) => x >= m.x0 && x <= m.x1 && y >= m.y0 && y <= m.y1);
+    const owners = [];
+    const extra = [];
+    for (let yy = b.minY - band; yy <= b.maxY + band; yy += spacing) {
+      for (let xx = b.minX - band; xx <= b.maxX + band; xx += spacing) {
+        const x = xx + 0.8 * (jitter() - 0.5) * spacing;
+        const y = yy + 0.8 * (jitter() - 0.5) * spacing;
+        const list = buckets.get(bkey(Math.floor(x / band), Math.floor(y / band)));
+        if (!list || onBoard(x, y) || onMark(x, y)) continue;
+        let bestD = Infinity;
+        let owner = -1;
+        for (const [c, e] of list) {
+          const d = toSegment(x, y, e.a, e.b);
+          if (d < bestD) {
+            bestD = d;
+            owner = c;
+          }
+        }
+        if (bestD > band) continue;
+        extra.push(x, y);
+        edge.push(bestD);
+        owners.push(owner);
+      }
+    }
+    const rimStart = new Int32Array(info.n + 1);
+    for (const o of owners) rimStart[o + 1] += 1;
+    for (let i = 0; i < info.n; i += 1) rimStart[i + 1] += rimStart[i];
+    const base = pts.length / 2;
+    const rim = new Int32Array(owners.length);
+    const fill = rimStart.slice(0, info.n);
+    owners.forEach((o, k) => {
+      rim[fill[o]] = base + k;
+      fill[o] += 1;
+    });
+    for (const x of extra) pts.push(x);
+    // each point's neighbours (points within a few spacings, rim ones too)
+    const total = pts.length / 2;
+    const reach = TUNING.colourSolidReach * spacing;
+    const grid = new Map();
+    const gkey = (x, y) => Math.floor(x / reach) * 100003 + Math.floor(y / reach);
+    for (let i = 0; i < total; i += 1) {
+      const k = gkey(pts[2 * i], pts[2 * i + 1]);
+      let list = grid.get(k);
+      if (!list) grid.set(k, (list = []));
+      list.push(i);
+    }
+    const nbStart = new Int32Array(total + 1);
+    const nb = [];
+    for (let i = 0; i < total; i += 1) {
+      nbStart[i] = nb.length;
+      const x = pts[2 * i];
+      const y = pts[2 * i + 1];
+      const gx = Math.floor(x / reach);
+      const gy = Math.floor(y / reach);
+      for (let dx = -1; dx <= 1; dx += 1) {
+        for (let dy = -1; dy <= 1; dy += 1) {
+          const list = grid.get((gx + dx) * 100003 + gy + dy);
+          if (!list) continue;
+          for (const j of list) if (j !== i && Math.hypot(pts[2 * j] - x, pts[2 * j + 1] - y) <= reach) nb.push(j);
+        }
+      }
+    }
+    nbStart[total] = nb.length;
+    info.colourPts = { pts: Float64Array.from(pts), edge: Float32Array.from(edge), start, rimStart, rim, total, nb: Int32Array.from(nb), nbStart };
+    return info.colourPts;
+  }
+
+  function cellArea(cell) {
+    const v = cell.vertices;
+    let area = 0;
+    for (let k = 0; k < v.length; k += 1) {
+      const a = v[k];
+      const b = v[(k + 1) % v.length];
+      area += a.x * b.y - b.x * a.y;
+    }
+    return area / 2;
+  }
+
+  /* Each cell's share in each of the board's inks, in colours that are not
+   * the kit's, and in colourless dark (a shadow, a pencil line, a sleeve),
+   * read at the points of colourSamples against the paper found by the
+   * last measureCells on this scratch (its colour of the light removed, and
+   * its local shading with grey cells kept: see `tint`). A point is paper
+   * or grey when it has little colour; otherwise it goes to the ink nearest
+   * in hue (with the share of all the inks of that one's group, see
+   * inkTable), unless it is as likely another colour; and an ink only takes
+   * a point that is no brighter for its colour than the ink thinned with
+   * paper (a yellow pencil is far brighter than the kit's ochre). A point
+   * few of whose neighbours show the same (a thin line: a cut line printed
+   * in blue, a pencil stroke) counts as paper, unless it shows an ink unlike
+   * that blue. Also sets each point's ink (`sampleInk`: its index, -1 none,
+   * -2 not read), weight (`sampleW`) and kind (`sampleKind`) for fitPose,
+   * rim points included. Returns a
+   * Float32Array of n * (T + 2) shares (T inks, then other colours, then
+   * dark), NaN in the first slot of a cell too little of which is in the
+   * image; null without the paper's colour or on the classic kit. */
+  function readColours(img, info, sc, H) {
+    const inks = inkTable(info);
+    if (!inks || !sc.cR) return null;
+    const { pts, edge, start, rimStart, rim, total, nb, nbStart } = colourSamples(info);
+    const T = inks.T;
+    const W = T + 2;
+    const n = info.n;
+    if (!sc.colour || sc.colour.length !== n * W) {
+      sc.colour = new Float32Array(n * W);
+      sc.colourE = new Float64Array(T);
+      sc.sampleInk = new Int8Array(total);
+      sc.sampleW = new Float32Array(total);
+      sc.sampleKind = new Uint8Array(total);
+    }
+    const out = sc.colour;
+    const E = sc.colourE;
+    const sampleInk = sc.sampleInk;
+    const sampleW = sc.sampleW;
+    const kind = sc.sampleKind; // 0 paper or grey, 1 an ink, 2 another colour, 3 dark, 4 a thin line
+    out.fill(0);
+    sampleInk.fill(-2);
+    sampleW.fill(0);
+    kind.fill(0);
+    const d = img.data;
+    const w = img.width;
+    const h = img.height;
+    const xmax = w - 1.001;
+    const ymax = h - 1.001;
+    const { colourFloor, colourDark, hueSpread, hueOther, hueReach, colourStrength } = TUNING;
+    const eOther = Math.exp(-0.5 * (hueOther / hueSpread) * (hueOther / hueSpread));
+    const inkL = inks.L;
+    const inkC = inks.C;
+    const inkH = inks.h;
+    const group = inks.group;
+    const px = INK_RGB;
+    let wr = 0;
+    let wg = 0;
+    let wb = 0;
+    // one point: what it shows; false outside the image
+    const sample = (i) => {
+      const X = pts[2 * i];
+      const Y = pts[2 * i + 1];
+      const iw = H[6] * X + H[7] * Y + H[8];
+      const x = (H[0] * X + H[1] * Y + H[2]) / iw;
+      const y = (H[3] * X + H[4] * Y + H[5]) / iw;
+      if (!(iw > 0 && x >= 0 && y >= 0 && x <= xmax && y <= ymax)) return false;
+      sampleInk[i] = -1;
+      readRGB(d, w, h, x, y, px, 0);
+      toLab(px[0] / wr, px[1] / wg, px[2] / wb, LAB);
+      const L = LAB[0];
+      const C = Math.hypot(LAB[1], LAB[2]);
+      if (C < colourFloor) {
+        if (L < colourDark) kind[i] = 3;
+        return true;
+      }
+      const hue = (Math.atan2(LAB[2], LAB[1]) * 180) / Math.PI;
+      let sum = eOther;
+      for (let t = 0; t < T; t += 1) {
+        E[t] = 0;
+        let dh = Math.abs(hue - inkH[t]);
+        if (dh > 180) dh = 360 - dh;
+        if (dh > hueReach) continue;
+        const room = L > inkL[t] ? (100 - L) / (100 - inkL[t]) : 1;
+        if (C > 1.4 * inkC[t] * room + 12) continue;
+        const z = dh / hueSpread;
+        E[t] = Math.exp(-0.5 * z * z);
+        sum += E[t];
+      }
+      // (the point goes to the ink nearest in hue, with the share of all
+      // the inks of its group, or else to another colour)
+      let top = -1;
+      for (let t = 0; t < T; t += 1) if (E[t] > eOther && (top < 0 || E[t] > E[top])) top = t;
+      if (top >= 0) {
+        let share = 0;
+        for (let t = 0; t < T; t += 1) if (group[t] === group[top]) share += E[t];
+        const r = C / (colourStrength * inkC[top]);
+        sampleInk[i] = top;
+        sampleW[i] = (share / sum) * (r < 1 ? r : 1);
+        kind[i] = 1;
+      } else {
+        const so = (C - colourFloor) / 15;
+        sampleW[i] = so < 1 ? so : 1;
+        kind[i] = 2;
+      }
+      return true;
+    };
+    // Points closer to a cell's outline than a grid line's half width and
+    // the blur of this frame (a few pixels, in world units at the board's
+    // centre) are left out: there the grid's blue could pass for an ink.
+    const bx = info.norm.cx;
+    const by = info.norm.cy;
+    const p0 = project(H, { x: bx, y: by });
+    const px1 = project(H, { x: bx + 1, y: by });
+    const py1 = project(H, { x: bx, y: by + 1 });
+    const scale = Math.sqrt(Math.abs((px1.x - p0.x) * (py1.y - p0.y) - (px1.y - p0.y) * (py1.x - p0.x))) || 1;
+    sc.colourScale = scale;
+    const blur = TUNING.colourBlur / scale;
+    const clearCell = TUNING.colourLine + blur;
+    const clearRim = TUNING.colourOutline + blur;
+    const used = sc.colourUsed && sc.colourUsed.length === n ? sc.colourUsed : (sc.colourUsed = new Int32Array(n));
+    for (let c = 0; c < n; c += 1) {
+      const o = c * 6;
+      const f = sc.tint[c];
+      wr = Math.max(8, evalQuad(sc.cR, info.basis, o) * f);
+      wg = Math.max(8, evalQuad(sc.cG, info.basis, o) * f);
+      wb = Math.max(8, evalQuad(sc.cB, info.basis, o) * f);
+      let u = 0;
+      for (let i = start[c]; i < start[c + 1]; i += 1) {
+        if (edge[i] < clearCell && u >= TUNING.colourFewest) break;
+        u += 1;
+        sample(i);
+      }
+      used[c] = u;
+      for (let r = rimStart[c]; r < rimStart[c + 1]; r += 1) if (edge[rim[r]] >= clearRim) sample(rim[r]);
+    }
+    // Thin lines are not pieces: a point whose colour few of its neighbours
+    // share (a cut line printed in blue, a pencil stroke, the edge of a
+    // shadow) is taken for paper, unless it shows an ink unlike the lines'
+    // blue (then it may be the corner of a piece turned a little).
+    const lineLike = inks.lineLike;
+    for (let i = 0; i < total; i += 1) {
+      const k = kind[i];
+      if (!k || (k === 1 && !lineLike[sampleInk[i]])) continue;
+      let same = 0;
+      let read = 0;
+      let beside = false;
+      for (let q = nbStart[i]; q < nbStart[i + 1]; q += 1) {
+        const j = nb[q];
+        if (sampleInk[j] === -2) continue;
+        read += 1;
+        if (kind[j] === k && (k !== 1 || group[sampleInk[j]] === group[sampleInk[i]])) same += 1;
+        else if (kind[j] === 1 && sampleInk[j] >= 0) beside = true;
+      }
+      // (an ink like the lines' blue only when it runs along another ink:
+      // the cut line around a piece; the tip of a piece of that ink stays)
+      if (read && same < TUNING.colourSolid * read && (k !== 1 || beside)) kind[i] = 4;
+    }
+    // (such a point still says something lies there: a piece's fit counts
+    // it as it counts another piece's ink)
+    for (let i = 0; i < total; i += 1) {
+      if (kind[i] === 4) {
+        sampleInk[i] = -1;
+        sampleW[i] = 0;
+      }
+    }
+    for (let c = 0; c < n; c += 1) {
+      const base = c * W;
+      let seen = 0;
+      for (let i = start[c]; i < start[c] + used[c]; i += 1) {
+        if (sampleInk[i] === -2) continue;
+        seen += 1;
+        const k = kind[i];
+        if (k === 1) out[base + sampleInk[i]] += sampleW[i];
+        else if (k === 2) out[base + T] += sampleW[i];
+        else if (k === 3) out[base + T + 1] += 1;
+      }
+      if (!used[c] || seen < used[c] * TUNING.minValidShare) {
+        out[base] = NaN;
+        continue;
+      }
+      for (let k = 0; k < W; k += 1) out[base + k] /= seen;
+    }
+    return out;
+  }
+
+
+  /* The board's cells drawn on a grid of world points (`colourRaster` per
+   * unit): which cell holds a point, in one look. Cell index + 1, 0 off the
+   * board. Also the distance between the centres of two cells side by side. */
+  function cellRaster(info) {
+    if (info.raster) return info.raster;
+    const ppu = TUNING.colourRaster;
+    const b = info.board.bounds;
+    const x0 = b.minX - 1;
+    const y0 = b.minY - 1;
+    const w = Math.ceil((b.maxX - b.minX + 2) * ppu);
+    const h = Math.ceil((b.maxY - b.minY + 2) * ppu);
+    const idx = new Int32Array(w * h);
+    info.board.cells.forEach((cell, i) => {
+      const v = cell.vertices;
+      let area = 0;
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+      for (let k = 0; k < v.length; k += 1) {
+        const a = v[k];
+        const q = v[(k + 1) % v.length];
+        area += a.x * q.y - q.x * a.y;
+        minX = Math.min(minX, a.x);
+        minY = Math.min(minY, a.y);
+        maxX = Math.max(maxX, a.x);
+        maxY = Math.max(maxY, a.y);
+      }
+      const sign = area > 0 ? 1 : -1;
+      for (let py = Math.max(0, Math.floor((minY - y0) * ppu)); py < Math.min(h, Math.ceil((maxY - y0) * ppu)); py += 1) {
+        const Y = y0 + (py + 0.5) / ppu;
+        for (let px = Math.max(0, Math.floor((minX - x0) * ppu)); px < Math.min(w, Math.ceil((maxX - x0) * ppu)); px += 1) {
+          const X = x0 + (px + 0.5) / ppu;
+          let inside = true;
+          for (let k = 0; k < v.length && inside; k += 1) {
+            const a = v[k];
+            const q = v[(k + 1) % v.length];
+            if (sign * ((q.x - a.x) * (Y - a.y) - (q.y - a.y) * (X - a.x)) < 0) inside = false;
+          }
+          if (inside) idx[py * w + px] = i + 1;
+        }
+      }
+    });
+    const c0 = info.board.cells[0];
+    const nb = info.adj[info.adjStart[0]];
+    const step = Math.hypot(info.board.cells[nb].centroid.x - c0.centroid.x, info.board.cells[nb].centroid.y - c0.centroid.y);
+    info.raster = { x0, y0, ppu, w, h, idx, step, mark: new Uint8Array(info.n), region: new Int32Array(1024) };
+    return info.raster;
+  }
+
+  /* Where a piece lies on the paper: its placement `cells` (board indices)
+   * turned by `a` radians about its centre and shifted by dx, dy (world
+   * units), chosen so that the piece covers as many of the samples of its
+   * ink t near it and as few others as it can (their overlap, as in
+   * colourPieces; a sample of another piece's ink counts little, as that
+   * piece may lie on top). A few starts, then steps that shrink. Returns
+   * { a, dx, dy, cx, cy, fit } (cx, cy: the placement's centre). */
+  function fitPose(info, sc, t, cells) {
+    const R = cellRaster(info);
+    const { pts, start, rimStart, rim } = colourSamples(info);
+    const ink = sc.sampleInk;
+    const wt = sc.sampleW;
+    const thin = sc.sampleKind;
+    const mark = R.mark;
+    const board = info.board.cells;
+    let cx = 0;
+    let cy = 0;
+    for (const c of cells) {
+      cx += board[c].centroid.x;
+      cy += board[c].centroid.y;
+    }
+    cx /= cells.length;
+    cy /= cells.length;
+    // the samples near the piece (its cells, the cells touching them, the
+    // paper beyond the rim next to them), every other one
+    const near = new Set(cells);
+    for (const c of cells) for (let k = info.touchStart[c]; k < info.touchStart[c + 1]; k += 1) near.add(info.touch[k]);
+    let count = 0;
+    for (const c of near) count += start[c + 1] - start[c] + rimStart[c + 1] - rimStart[c];
+    if (!R.rx || R.rx.length < count) {
+      R.rx = new Float64Array(2 * count);
+      R.ry = new Float64Array(2 * count);
+      R.rv = new Float32Array(2 * count); // the sample's weight in its ink
+      R.rk = new Uint8Array(2 * count); // 1 ink t, 2 an ink of t's group, 3 another piece's ink, 0 none
+    }
+    const { rx, ry, rv, rk } = R;
+    const group = info.inks.group;
+    let m = 0;
+    let mass = 0;
+    // (enough samples per cell for the fit, not more: every so many)
+    let usable = 0;
+    for (const c of cells) for (let s = start[c]; s < start[c + 1]; s += 1) if (ink[s] !== -2) usable += 1;
+    const stride = Math.max(1, Math.floor(usable / cells.length / TUNING.poseSamples));
+    const add = (s) => {
+      const k = ink[s];
+      if (k === -2) return;
+      rx[m] = pts[2 * s] - cx;
+      ry[m] = pts[2 * s + 1] - cy;
+      rv[m] = k >= 0 ? wt[s] : 0;
+      rk[m] = k === t ? 1 : k >= 0 ? (group[k] === group[t] ? 2 : 3) : thin[s] === 4 ? 3 : 0;
+      if (k === t) mass += wt[s];
+      m += 1;
+    };
+    let skip = 0;
+    for (const c of near) {
+      for (let s = start[c]; s < start[c + 1]; s += 1) if (ink[s] !== -2 && (skip = (skip + 1) % stride) === 0) add(s);
+      for (let r = rimStart[c]; r < rimStart[c + 1]; r += 1) if (ink[rim[r]] !== -2 && (skip = (skip + 1) % stride) === 0) add(rim[r]);
+    }
+    for (const c of cells) mark[c] = 1;
+    const ox = (cx - R.x0) * R.ppu;
+    const oy = (cy - R.y0) * R.ppu;
+    const ppu = R.ppu;
+    const W = R.w;
+    const Hh = R.h;
+    const idx = R.idx;
+    const hidden = TUNING.poseHidden;
+    const mate = TUNING.poseMate;
+    const score = (a, dx, dy) => {
+      // (each sample taken back to where it sat before the piece moved)
+      const cos = Math.cos(a) * ppu;
+      const sin = Math.sin(a) * ppu;
+      let inside = 0;
+      let own = 0;
+      let covered = 0;
+      for (let i = 0; i < m; i += 1) {
+        const X = rx[i] - dx;
+        const Y = ry[i] - dy;
+        const x = cos * X + sin * Y + ox;
+        const y = cos * Y - sin * X + oy;
+        if (!(x >= 0 && y >= 0 && x < W && y < Hh)) continue;
+        const k = idx[(y | 0) * W + (x | 0)] - 1;
+        if (k < 0 || !mark[k]) continue;
+        const kind = rk[i];
+        if (kind === 1) {
+          inside += rv[i];
+          own += rv[i];
+          covered += 1;
+        } else if (kind === 2) {
+          // (an ink of close hue may be this piece's, read a little off, or
+          // the piece of that hue next to it)
+          inside += mate * rv[i];
+          covered += 1;
+        } else {
+          // (another piece may lie on top of this one there)
+          covered += kind === 3 ? hidden : 1;
+        }
+      }
+      return inside / (covered + mass - own);
+    };
+    const step = R.step;
+    const maxA = TUNING.poseTurn;
+    const maxD = TUNING.poseShift * step;
+    let best = null;
+    const tryPose = (a, dx, dy) => {
+      if (Math.abs(a) > maxA || Math.hypot(dx, dy) > maxD) return false;
+      const v = score(a, dx, dy);
+      if (best && v <= best.fit + 1e-9) return false;
+      best = { a, dx, dy, fit: v };
+      return true;
+    };
+    // (moves in eight directions: on a triangular grid a piece pushed
+    // aslant can read worse when moved along either axis alone)
+    const DIRS = [[1, 0], [0.7071, 0.7071], [0, 1], [-0.7071, 0.7071], [-1, 0], [-0.7071, -0.7071], [0, -1], [0.7071, -0.7071]];
+    const climb = (start) => {
+      best = start;
+      let sa = 0.12;
+      let sd = 0.15 * step;
+      for (let it = 0; it < 60 && (sa > 0.015 || sd > 0.02 * step); it += 1) {
+        const b = best;
+        let moved = tryPose(b.a + sa, b.dx, b.dy) || tryPose(b.a - sa, b.dx, b.dy);
+        for (let k = 0; k < 8 && !moved; k += 1) moved = tryPose(b.a, b.dx + DIRS[k][0] * sd, b.dy + DIRS[k][1] * sd);
+        if (!moved) {
+          sa /= 2;
+          sd /= 2;
+        }
+      }
+      return best;
+    };
+    // Starts: turned either way, or pushed; the pose climbs from the best,
+    // and again from the best start turned otherwise (a piece turned one
+    // way can first look better pushed, or turned the other way).
+    // (and from the ink's own centre and slant against the placement's:
+    // for a lone piece this is nearly where it lies)
+    let im = 0;
+    let ix = 0;
+    let iy = 0;
+    let pm = 0;
+    let qx = 0;
+    let qy = 0;
+    for (let i = 0; i < m; i += 1) {
+      if (rk[i] === 1) {
+        im += rv[i];
+        ix += rv[i] * rx[i];
+        iy += rv[i] * ry[i];
+      }
+      const x = rx[i] * ppu + ox;
+      const y = ry[i] * ppu + oy;
+      if (x >= 0 && y >= 0 && x < W && y < Hh && mark[idx[(y | 0) * W + (x | 0)] - 1]) {
+        pm += 1;
+        qx += rx[i];
+        qy += ry[i];
+      }
+    }
+    const moments = [];
+    if (im > 0 && pm > 0) {
+      ix /= im;
+      iy /= im;
+      qx /= pm;
+      qy /= pm;
+      let a1 = 0;
+      let b1 = 0;
+      let c1 = 0;
+      let a2 = 0;
+      let b2 = 0;
+      let c2 = 0;
+      for (let i = 0; i < m; i += 1) {
+        if (rk[i] === 1) {
+          const u = rx[i] - ix;
+          const v = ry[i] - iy;
+          a1 += rv[i] * u * u;
+          b1 += rv[i] * u * v;
+          c1 += rv[i] * v * v;
+        }
+        const x = rx[i] * ppu + ox;
+        const y = ry[i] * ppu + oy;
+        if (x >= 0 && y >= 0 && x < W && y < Hh && mark[idx[(y | 0) * W + (x | 0)] - 1]) {
+          const u = rx[i] - qx;
+          const v = ry[i] - qy;
+          a2 += u * u;
+          b2 += u * v;
+          c2 += v * v;
+        }
+      }
+      // (the slant only when the placement is clearly longer one way)
+      const spread = Math.hypot(a2 - c2, 2 * b2) / (a2 + c2 || 1);
+      let turn = 0;
+      if (spread > 0.25) {
+        turn = 0.5 * (Math.atan2(2 * b1, a1 - c1) - Math.atan2(2 * b2, a2 - c2));
+        while (turn > Math.PI / 2) turn -= Math.PI;
+        while (turn <= -Math.PI / 2) turn += Math.PI;
+      }
+      moments.push([turn, ix - qx, iy - qy], [0, ix - qx, iy - qy]);
+    }
+    const s0 = 0.3 * step;
+    const starts = [];
+    for (const [a, dx, dy] of moments) {
+      if (Math.abs(a) <= maxA && Math.hypot(dx, dy) <= maxD) starts.push({ a, dx, dy, fit: score(a, dx, dy) });
+    }
+    for (const a of [-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3]) starts.push({ a, dx: 0, dy: 0, fit: score(a, 0, 0) });
+    for (const [ux, uy] of DIRS) starts.push({ a: 0, dx: ux * s0, dy: uy * s0, fit: score(0, ux * s0, uy * s0) });
+    starts.sort((x, y) => y.fit - x.fit);
+    let top = climb(Object.assign({}, starts[0]));
+    const other = starts.find((q) => Math.abs(q.a - top.a) >= 0.15 && q.fit >= starts[0].fit - 0.15);
+    if (other && top.fit < TUNING.poseGood) {
+      const again = climb(Object.assign({}, other));
+      if (again.fit > top.fit) top = again;
+    }
+    best = top;
+    for (const c of cells) mark[c] = 0;
+    return Object.assign(best, { cx, cy, from: cells });
+  }
+
+  /* How far a piece lying at `pose` (fitted to a placement of one variant
+   * of its shape, see fitPose) is from placement `to` of the same variant:
+   * the root mean square distance between the centres of its cells and
+   * those of `to` (cells in the same order), in cells side by side. */
+  function poseDistance(info, pose, to) {
+    const board = info.board.cells;
+    const from = pose.from;
+    const cos = Math.cos(pose.a);
+    const sin = Math.sin(pose.a);
+    let sum = 0;
+    for (let k = 0; k < from.length; k += 1) {
+      const p = board[from[k]].centroid;
+      const q = board[to[k]].centroid;
+      const X = p.x - pose.cx;
+      const Y = p.y - pose.cy;
+      const dx = cos * X - sin * Y + pose.cx + pose.dx - q.x;
+      const dy = sin * X + cos * Y + pose.cy + pose.dy - q.y;
+      sum += dx * dx + dy * dy;
+    }
+    return Math.sqrt(sum / from.length) / cellRaster(info).step;
+  }
+
+  /* Whole pieces from the inks (readColours: each cell's share f in each
+   * ink, and each sample's ink). For each piece type whose ink is on the
+   * board:
+   *   1. the placements of its shape (variant and anchor, as the engine
+   *      places them) that cover most of its ink, by the overlap
+   *        sum of f over the placement's cells
+   *        / (cells of the piece + all of its ink - that sum);
+   *   2. where the paper piece really lies: one of those placements turned
+   *      a little and shifted (fitPose), from each shape among them that
+   *      is not just another place of the same one; the best overlap wins;
+   *   3. how far that is from each placement (poseDistance): the piece
+   *      snaps to the nearest, the place the child meant.
+   * The pieces are then taken together (no two on one cell), the nearest
+   * set first. A piece is ambiguous when another place is nearly as near
+   * (a piece pushed half a cell), when it lies far from every place, or
+   * when its ink does not look like the piece (fit too low).
+   * Returns null when the colours cannot tell the pieces apart (no ink of
+   * the kit in view, or much colour that is not the kit's: pieces coloured
+   * by hand, or a kit printed in black and white), otherwise
+   *   { pieces, occupied, complete, unexplained, ambiguous }:
+   * `ambiguous` lists the ambiguous pieces ({ typeId, cells, other }: its
+   * nearest place and the next one, which the child may have meant),
+   * `unexplained` their cells and the cells showing colour that no piece
+   * lying where it was found explains (ink of a piece beyond it, a second
+   * piece of one type, another colour, or much colourless dark, such as a
+   * sleeve), and `complete` is true when both are empty: only then are the
+   * pieces a reading of the board. */
+  function colourPieces(info, frac, sc) {
+    const inks = info.inks;
+    const T = inks.T;
+    const W = T + 2;
+    const n = info.n;
+    const types = info.types;
+    const { colourNoise, colourPresent, colourFit, colourMargin, colourStray, colourHand } = TUNING;
+    let kit = 0;
+    let other = 0;
+    for (let c = 0; c < n; c += 1) {
+      const base = c * W;
+      if (Number.isNaN(frac[base])) return null;
+      for (let t = 0; t < T; t += 1) kit += frac[base + t];
+      // (a little colour in every cell is noise, not a thing on the board)
+      other += Math.max(0, frac[base + T] - colourNoise);
+    }
+    if (kit < colourPresent * inks.smallest || other > colourHand * inks.smallest) return null;
+
+    const lattice = info.lattice;
+    const board = info.board;
+    const bl = boardLandings(board, lattice);
+    const found = []; // per piece found: { t, pose, list: [{ cells, sum, d, vi, a }] }
+    const seen = new Int32Array(n).fill(-1);
+    for (let t = 0; t < T; t += 1) {
+      const size = inks.size[t];
+      const seeds = [];
+      let mass = 0;
+      for (let c = 0; c < n; c += 1) {
+        const f = frac[c * W + t];
+        if (f < colourNoise) continue;
+        mass += f;
+        if (f >= 0.3) seeds.push(c);
+      }
+      if (mass < colourPresent * size || !seeds.length) continue;
+      // anchors of every placement that reaches a cell well inked
+      const anchors = seeds.slice();
+      for (const c of seeds) seen[c] = t;
+      for (let head = 0, depth = 0, end = anchors.length; depth < size - 1; depth += 1) {
+        for (; head < end; head += 1) {
+          for (const j of bl.adj[anchors[head]]) {
+            if (seen[j] === t) continue;
+            seen[j] = t;
+            anchors.push(j);
+          }
+        }
+        end = anchors.length;
+      }
+      const { shape, variants } = variantsOf(lattice, types[t]);
+      const table = landingsOf(bl, board, shape, variants);
+      const V = table.V;
+      const list = [];
+      for (const a of anchors) {
+        if (!table.done[a]) fillLandings(table, a, board, lattice, variants, bl.index);
+        for (let vi = 0; vi < V; vi += 1) {
+          if (!table.fits[a * V + vi]) continue;
+          const o = (a * V + vi) * size;
+          let sum = 0;
+          for (let k = 0; k < size; k += 1) {
+            const f = frac[table.cells[o + k] * W + t];
+            if (f >= colourNoise) sum += f;
+          }
+          if (sum > 0) list.push({ sum, a, vi, o });
+        }
+      }
+      list.sort((x, y) => y.sum - x.sum);
+      const keep = [];
+      const keys = new Set();
+      for (const p of list) {
+        if (keep.length >= TUNING.colourChoices) break;
+        const cells = Array.from(table.cells.subarray(p.o, p.o + size));
+        const key = cells.slice().sort((x, y) => x - y).join(",");
+        if (keys.has(key)) continue;
+        keys.add(key);
+        keep.push({ sum: p.sum, a: p.a, vi: p.vi, cells, iou: p.sum / (size + mass - p.sum) });
+      }
+      if (!keep.length) continue;
+      // Where the paper piece lies, fitted from the best placement of each
+      // of the first few variants of its shape (another place of one
+      // variant gives the same fit). A variant that fits clearly worse
+      // than the best does not show the piece as it lies (another turn, the
+      // piece flipped); the places of the others are measured from their
+      // fit (see poseDistance).
+      const poses = new Map();
+      let pose = null;
+      // (a piece lying neatly on its cells needs no fit: it lies there)
+      if (keep[0].iou >= TUNING.poseNeat) {
+        const p = keep[0];
+        let cx = 0;
+        let cy = 0;
+        for (const c of p.cells) {
+          cx += board.cells[c].centroid.x;
+          cy += board.cells[c].centroid.y;
+        }
+        pose = { a: 0, dx: 0, dy: 0, fit: p.iou, cx: cx / size, cy: cy / size, from: p.cells };
+        poses.set(p.vi, pose);
+      }
+      for (const p of keep) {
+        if (poses.size && pose.fit >= TUNING.poseNeat && !pose.a && !pose.dx && !pose.dy) break;
+        if (poses.has(p.vi) || poses.size >= TUNING.poseStarts || p.sum < TUNING.poseStartShare * keep[0].sum) continue;
+        const q = fitPose(info, sc, t, p.cells);
+        poses.set(p.vi, q);
+        if (!pose || q.fit > pose.fit) pose = q;
+      }
+      const places = [];
+      for (const p of keep) {
+        const q = poses.get(p.vi);
+        if (!q || q.fit < pose.fit - TUNING.poseTolerance) continue;
+        p.d = poseDistance(info, q, p.cells);
+        places.push(p);
+      }
+      // (and every other place of those variants near the piece, so the
+      // next place is always weighed)
+      for (const [vi, q] of poses) {
+        if (q.fit < pose.fit - TUNING.poseTolerance) continue;
+        const from = keep.find((p) => p.vi === vi);
+        const around = [from.a];
+        const near = new Set(around);
+        for (let ring = 0, head = 0; ring < 2; ring += 1) {
+          const end = around.length;
+          for (; head < end; head += 1) {
+            for (const j of bl.adj[around[head]]) {
+              if (near.has(j)) continue;
+              near.add(j);
+              around.push(j);
+            }
+          }
+        }
+        for (const a of around) {
+          if (!table.done[a]) fillLandings(table, a, board, lattice, variants, bl.index);
+          if (!table.fits[a * V + vi]) continue;
+          const o = (a * V + vi) * size;
+          const cells = Array.from(table.cells.subarray(o, o + size));
+          const key = cells.slice().sort((x, y) => x - y).join(",");
+          if (keys.has(key)) continue;
+          keys.add(key);
+          places.push({ sum: 0, a, vi, cells, d: poseDistance(info, q, cells) });
+        }
+      }
+      places.sort((x, y) => x.d - y.d);
+      places.length = Math.min(places.length, TUNING.colourChoices);
+      // (all of a piece's ink in view, in a shape unlike the piece: the
+      // colours do not tell which piece this is, as on pieces coloured by
+      // hand)
+      if (pose.fit < TUNING.colourMisfit && mass >= TUNING.colourWhole * size) return null;
+      found.push({ t, pose, from: pose.from, list: places });
+    }
+
+    // The set of places, one per piece found and no two on one cell, that
+    // lies nearest the pieces; then, for each piece, the nearest set in which
+    // it lies elsewhere: how much farther that is says how sure its place is.
+    const F = found.length;
+    const taken = new Uint8Array(n);
+    const pick = new Int32Array(F);
+    const bound = new Float64Array(F + 1);
+    for (let i = F - 1; i >= 0; i -= 1) bound[i] = bound[i + 1] + found[i].list[0].d;
+    const bestSet = (ban, banK) => {
+      let top = null;
+      let topCost = Infinity;
+      const walk = (i, cost) => {
+        if (cost + bound[i] >= topCost) return;
+        if (i === F) {
+          top = Int32Array.from(pick);
+          topCost = cost;
+          return;
+        }
+        const list = found[i].list;
+        for (let k = 0; k < list.length; k += 1) {
+          if (i === ban && k === banK) continue;
+          const cells = list[k].cells;
+          let free = true;
+          for (const c of cells) if (taken[c]) free = false;
+          if (!free) continue;
+          for (const c of cells) taken[c] = 1;
+          pick[i] = k;
+          walk(i + 1, cost + list[k].d);
+          for (const c of cells) taken[c] = 0;
+        }
+      };
+      walk(0, 0);
+      return top ? { pick: top, cost: topCost } : null;
+    };
+    const best = bestSet(-1, -1);
+
+    // (a piece pushed over the board's rim, a cell of it more off the board
+    // than on it: the child may be taking it away; a piece only turned
+    // keeps its cells where they were)
+    const R0 = cellRaster(info);
+    const offBoard = (pose) => {
+      const len = Math.hypot(pose.dx, pose.dy);
+      if (len <= 0) return false;
+      const back = Math.max(0, len - TUNING.poseRim * R0.step) / len;
+      for (const c of pose.from) {
+        const q = board.cells[c].centroid;
+        const px = Math.floor((q.x + back * pose.dx - R0.x0) * R0.ppu);
+        const py = Math.floor((q.y + back * pose.dy - R0.y0) * R0.ppu);
+        if (!(px >= 0 && py >= 0 && px < R0.w && py < R0.h) || !R0.idx[py * R0.w + px]) return true;
+      }
+      return false;
+    };
+    // (cells only a few pixels wide in this frame: a piece must lie nearer
+    // its place, and further from the next, to be snapped)
+    const cellPx = sc.colourScale * Math.sqrt(Math.abs(cellArea(board.cells[0])));
+    const coarse = cellPx < TUNING.colourSharp;
+    const needMargin = coarse ? 2 * colourMargin : colourMargin;
+    // (and colour there is read with less certainty)
+    const strayLimit = coarse ? 1.5 * colourStray : colourStray;
+    const farthest = coarse ? TUNING.poseFarCoarse : TUNING.poseFar;
+    const unexplained = new Set();
+    const ambiguous = [];
+    const pieces = [];
+    const occupied = new Set();
+    if (!best) {
+      // no set of places without overlaps: every piece's ink is in doubt
+      for (const { t } of found) for (let c = 0; c < n; c += 1) if (frac[c * W + t] >= colourStray) unexplained.add(info.keys[c]);
+      return { pieces: null, occupied, complete: false, unexplained, ambiguous };
+    }
+    // (a piece far from every place of its shape, however it is turned,
+    // is not a piece of that shape: the colours do not tell the pieces apart)
+    if (found.some(({ list }, i) => list[best.pick[i]].d > TUNING.poseFar)) return null;
+    found.forEach(({ t, pose, list }, i) => {
+      const p = list[best.pick[i]];
+      const type = types[t];
+      const placement = { typeId: type.id, variantIndex: p.vi, marker: lattice.bareCell(board.cells[p.a]), cells: p.cells.map((c) => info.keys[c]) };
+      if (type.name) placement.name = type.name;
+      pieces.push(placement);
+      for (const k of placement.cells) occupied.add(k);
+      const alt = bestSet(i, best.pick[i]);
+      const margin = alt ? alt.cost - best.cost : Infinity;
+      const other = alt ? list[alt.pick[i]].cells : null;
+      if (pose.fit < colourFit || p.d > farthest || margin < needMargin || offBoard(pose)) {
+        ambiguous.push({ typeId: type.id, cells: placement.cells, other: other ? other.map((c) => info.keys[c]) : null });
+        for (const k of placement.cells) unexplained.add(k);
+        if (other) for (const c of other) unexplained.add(info.keys[c]);
+      }
+    });
+
+    // Colour no piece explains: each cell's ink beyond what the pieces,
+    // lying where they were found, cover of it; other colours; and much
+    // colourless dark where no piece lies.
+    const cover = new Float32Array(n * T);
+    const R = cellRaster(info);
+    const { pts, start } = colourSamples(info);
+    const ink = sc.sampleInk;
+    for (const { t, pose, from } of found) {
+      const mark = R.mark;
+      for (const c of from) mark[c] = 1;
+      const cos = Math.cos(pose.a);
+      const sin = Math.sin(pose.a);
+      const reach = (TUNING.poseShift + 2) * R.step;
+      for (let c = 0; c < n; c += 1) {
+        const q = board.cells[c].centroid;
+        if (Math.hypot(q.x - pose.cx - pose.dx, q.y - pose.cy - pose.dy) > reach + 3 * R.step) continue;
+        let inside = 0;
+        let used = 0;
+        for (let s = start[c]; s < start[c + 1]; s += 1) {
+          if (ink[s] === -2) continue;
+          used += 1;
+          const X = pts[2 * s] - pose.cx - pose.dx;
+          const Y = pts[2 * s + 1] - pose.cy - pose.dy;
+          const x = (cos * X + sin * Y + pose.cx - R.x0) * R.ppu;
+          const y = (-sin * X + cos * Y + pose.cy - R.y0) * R.ppu;
+          if (!(x >= 0 && y >= 0 && x < R.w && y < R.h)) continue;
+          const k = R.idx[(y | 0) * R.w + (x | 0)] - 1;
+          if (k >= 0 && mark[k]) inside += 1;
+        }
+        cover[c * T + t] = inside / Math.max(1, used);
+      }
+      for (const c of from) mark[c] = 0;
+    }
+    const group = inks.group;
+    const placedG = new Uint8Array(T);
+    for (const { t } of found) placedG[group[t]] = 1;
+    // (the cells each group's pieces lie on, for the ink they leave next to them)
+    const onG = new Int32Array(n).fill(-1);
+    for (const { t, list } of found) for (const c of list[0].cells) onG[c] = group[t];
+    for (let c = 0; c < n; c += 1) for (let t = 0; t < T; t += 1) if (cover[c * T + t] >= 0.5) onG[c] = group[t];
+    const inkG = new Float64Array(T);
+    const coverG = new Float64Array(T);
+    let strayInk = 0;
+    let foreign = 0;
+    for (let c = 0; c < n; c += 1) {
+      const base = c * W;
+      let stray = 0;
+      let covered = 0;
+      for (let t = 0; t < T; t += 1) covered += cover[c * T + t];
+      // (where a piece lies, another's colour at its edge is the two
+      // pieces meeting or one lying a little on the other)
+      const slack = TUNING.poseSlack + (covered >= 0.5 ? TUNING.poseSlack : 0);
+      inkG.fill(0);
+      coverG.fill(0);
+      for (let t = 0; t < T; t += 1) {
+        const f = frac[base + t];
+        if (f >= colourNoise) inkG[group[t]] += f;
+        coverG[group[t]] += cover[c * T + t];
+      }
+      for (let g = 0; g < T; g += 1) {
+        if (inkG[g] <= 0) continue;
+        if (!placedG[g]) {
+          // (where a piece lies, a little of a colour between its own and
+          // a neighbour's is the two meeting)
+          stray += Math.max(0, inkG[g] - (covered >= 0.5 ? slack : 0));
+          continue;
+        }
+        // (next to a piece of this colour, a little more of it is that piece
+        // found a little off where it lies)
+        let near = false;
+        for (let k = info.touchStart[c]; k < info.touchStart[c + 1] && !near; k += 1) near = onG[info.touch[k]] === g;
+        stray += Math.max(0, inkG[g] - coverG[g] - slack - (near ? TUNING.poseNear : 0));
+      }
+      strayInk += stray;
+      foreign += Math.max(0, frac[base + T] + frac[base + T + 1] - colourNoise) * Math.max(0, 1 - covered);
+      if (stray + frac[base + T] >= strayLimit || (frac[base + T + 1] >= TUNING.colourDarkShare && covered < 0.5)) unexplained.add(info.keys[c]);
+    }
+    // (as much colour beyond the pieces found as a whole piece, in the
+    // kit's inks or not, or colourless and dark: pieces coloured by hand,
+    // more pieces of one colour than the kit has, a kit printed in black
+    // and white)
+    if (strayInk + foreign >= colourHand * inks.smallest) return null;
+    const complete = ambiguous.length === 0 && unexplained.size === 0;
+    return { pieces, occupied, complete, unexplained, ambiguous };
+  }
+
+  /* inkColours(boardId) -> the colour the printable kit gives each piece
+   * type of the board, in the order of FenceBoards.pieceTypes ("#rrggbb");
+   * null for the classic kit or an unknown board. */
+  function inkColours(boardId) {
+    if (!dep("FenceBoards").get(boardId)) return null;
+    const inks = inkTable(boardInfo(boardId));
+    return inks ? inks.hex.slice() : null;
+  }
+
+  // The pieces of a coloured kit read by their colours in one image, or null
+  // (the classic kit, colours that cannot tell the pieces apart).
+  function colourWhole(img, info, sc, H) {
+    if (info.classic) return null;
+    const frac = readColours(img, info, sc, H);
+    return frac ? colourPieces(info, frac, sc) : null;
   }
 
   // ---------------------------------------------------------------------------
@@ -2613,8 +3853,17 @@
    *                      pieces look like cut pieces in `pieceChecks` frames
    *                      in a row (well covered, and nothing of their colour
    *                      in their notches or beyond the rim: see
-   *                      looksLikePiece). A new state made of whole pieces
-   *                      that do not look like cut pieces is accepted only
+   *                      looksLikePiece). On a kit printed in colour the
+   *                      pieces are read by their colours instead (see
+   *                      colourPieces): the same pieces in `pieceChecks`
+   *                      frames in a row are accepted, as the cells they
+   *                      snap to, and vouched for; a reading with a piece
+   *                      that could lie on two places, or with colour no
+   *                      piece explains, is never accepted, and a reading
+   *                      with the pieces accepted leaves them as they are
+   *                      (the cells read only flickered). A new state made
+   *                      of whole pieces that do not look like cut pieces
+   *                      is accepted only
    *                      once it has not changed for `doubtMs` (the first
    *                      state excepted: nothing was accepted before). A
    *                      state that no set of the kit's pieces explains (a
@@ -2643,9 +3892,14 @@
    *                      set of the kit's pieces explains it (see unexplained)
    *   unexplained        the covered cells of the latest state waiting that no
    *                      set of the kit's pieces explains (for the classic kit:
-   *                      those no tile read explains), until a state is
-   *                      accepted or the view is back to the accepted one;
-   *                      empty otherwise
+   *                      those no tile read explains; read by colour: the
+   *                      cells of the ambiguous pieces and of colour no piece
+   *                      explains), until a state is accepted or the view is
+   *                      back to the accepted one; empty otherwise
+   *   ambiguous          read by colour: the pieces of that state that could
+   *                      lie on two places [{ typeId, cells, other }], the
+   *                      cells of the nearest place and of the next one (null
+   *                      when there is none); empty otherwise
    *   stable             this frame agrees with `occupied` and nothing moves
    *   handsLikely        something moved over the board a moment ago; while a
    *                      corner mark has been hidden for a few frames in a row,
@@ -2702,6 +3956,8 @@
         doubt: null, // { pieces, covered, checks }: whole pieces accepted without trusting the new ones
         unexplained: new Set(), // cells of the latest state waiting that no set of pieces explains
         unknown: null, // the unexplained cells of the accepted state when it has no verdict
+        ambiguous: [], // pieces of the latest state waiting that could lie on two places
+        pendingSig: null, // the pieces the colours gave for it in the last frame
         switchTo: null,
         switchCount: 0,
       };
@@ -2732,6 +3988,8 @@
       st.doubt = null;
       st.unexplained = new Set();
       st.unknown = null;
+      st.ambiguous = [];
+      st.pendingSig = null;
       st.seen = new Map();
       st.missing = new Map();
       st.readSince = new Map();
@@ -2767,6 +4025,7 @@
           changed: false,
           doubtful: st.unexplained.size > 0,
           unexplained: new Set(st.unexplained),
+          ambiguous: st.ambiguous.slice(),
         },
         extra
       );
@@ -2855,7 +4114,7 @@
     function commit(info, w, trust) {
       st.committedOn.set(st.on);
       st.committed = w.occupied;
-      if (trust && !w.ambiguous) {
+      if (trust && !w.coverAmbiguous) {
         st.pieces = w.pieces;
         st.piecesComplete = true;
         st.trusted = new Set(w.pieces.map(pieceKey));
@@ -2866,16 +4125,18 @@
         st.piecesComplete = false;
         st.trusted = new Set(kept.map(pieceKey));
         // (pieces another set could replace are never vouched for later)
-        st.doubt = w.ambiguous ? null : { pieces: w.pieces, covered: w.covered, checks: 0 };
+        st.doubt = w.coverAmbiguous ? null : { pieces: w.pieces, covered: w.covered, checks: 0 };
       }
       st.analysis = dep("FenceAnalysis").analyze({ board: info.board, lattice: info.lattice, occupied: st.committed });
       st.pendingKey = null;
       st.pendingWhole = null;
       st.pendingTries = 0;
       st.pendingChecks = 0;
+      st.pendingSig = null;
       st.hasCommit = true;
       st.unexplained = new Set();
       st.unknown = null;
+      st.ambiguous = [];
     }
 
     // Accept, without a verdict, a state that no set of the kit's pieces
@@ -2896,9 +4157,11 @@
       st.pendingWhole = null;
       st.pendingTries = 0;
       st.pendingChecks = 0;
+      st.pendingSig = null;
       st.hasCommit = true;
       st.unexplained = unexplained;
       st.unknown = unexplained;
+      st.ambiguous = [];
     }
 
     function process(image, frameOptions) {
@@ -3135,6 +4398,7 @@
       } else if (diff === 0) {
         st.pendingKey = null;
         st.unexplained = st.unknown || new Set();
+        st.ambiguous = [];
         if (!st.hasCommit) {
           st.hasCommit = true;
           st.pieces = [];
@@ -3161,11 +4425,52 @@
           st.pendingWhole = null;
           st.pendingTries = 0;
           st.pendingChecks = 0;
+          st.pendingSig = null;
         } else {
           const maxOrder = Math.max(...pieceTypesFor(info).map((t) => t.cells.length));
           const large = diff > 2 * maxOrder + 2;
           const wait = !st.hasCommit ? TUNING.settleSmall : added > 0 || large ? TUNING.settleLarge : TUNING.settleSmall;
-          if (now - st.pendingSince >= wait) {
+          // A coloured kit is read by its colours, in every frame of the
+          // wait (a few milliseconds): the same pieces in `pieceChecks`
+          // frames in a row are accepted, vouched for by their colours; the
+          // same pieces as the state accepted leave it as it is (the cells
+          // read only flickered); pieces that could lie on two places, or
+          // colour no piece explains, are never accepted.
+          const cw = now - st.pendingSince >= wait ? colourWhole(image, info, st.holder.scratch, H) : null;
+          if (cw) {
+            const sig = cw.complete ? cw.pieces.map(pieceKey).sort().join("/") : null;
+            st.pendingChecks = sig === null ? 0 : sig === st.pendingSig ? st.pendingChecks + 1 : 1;
+            st.pendingSig = sig;
+            // (cells of accepted pieces still lying in place are not the
+            // unexplained part: what was moved or added is)
+            // (the cells read, as they are, when the colours explain them not)
+            const onCells = new Set();
+            if (!cw.complete) for (let c = 0; c < n; c += 1) if (st.on[c]) onCells.add(info.keys[c]);
+            if (cw.complete) st.unexplained = cw.unexplained;
+            else {
+              const still = new Set();
+              for (const p of st.pieces || []) if (p.cells.every((k) => onCells.has(k))) for (const k of p.cells) still.add(k);
+              st.unexplained = new Set([...cw.unexplained].filter((k) => !still.has(k)));
+            }
+            st.ambiguous = cw.ambiguous;
+            const same = sig !== null && st.piecesComplete && st.pieces && st.pieces.map(pieceKey).sort().join("/") === sig;
+            if (same) {
+              st.committedOn.set(st.on);
+              st.pendingKey = null;
+              st.pendingSig = null;
+              st.pendingChecks = 0;
+              diff = 0;
+            } else if (sig !== null && st.pendingChecks >= TUNING.pieceChecks) {
+              commit(info, cw, true);
+              changed = true;
+            } else if (sig === null && st.hasCommit && diff > added) {
+              // cells of the accepted state are empty now: its verdict is gone
+              commitUnknown({ occupied: onCells }, st.unexplained);
+              changed = true;
+            } else {
+              doubtful = sig === null;
+            }
+          } else if (now - st.pendingSince >= wait) {
             // (a search that ran out of time is made again on the next
             // frames, a few times: the first ones on a board also fill the
             // tables the later ones use)
@@ -3318,7 +4623,12 @@
    * `piecesComplete` is false. When no set of the kit's pieces explains the
    * covered cells, `analysis` is null (no verdict: the page asks for another
    * photo), `occupied` holds the cells as they were read and `unexplained`
-   * those of them no tile explains; otherwise `unexplained` is empty. */
+   * those of them no tile explains; otherwise `unexplained` is empty. A kit
+   * printed in colour is read by its colours (see colourPieces): `pieces`
+   * are the pieces snapped to the cells they lie nearest; with a piece that
+   * could lie on two places (listed in `ambiguous`, as for a tracker) or
+   * colour no piece explains, there is no verdict either, `pieces` is null
+   * and `unexplained` holds those cells. */
   function snapshot(image, options) {
     const opts = options || {};
     const stillDetector = createDetector(); // its buffers go with it once the photo is read
@@ -3370,6 +4680,7 @@
       changed: false,
       pieces: null,
       unexplained: new Set(),
+      ambiguous: [],
     };
     if (!boardId) return base;
     const info = boardInfo(boardId);
@@ -3446,6 +4757,30 @@
       else if (s >= TUNING.cellMaybe) maybe.add(key);
     });
 
+    // A coloured kit: the pieces read by their colours (see colourPieces).
+    const cw = colourWhole(work.img, info, holder.scratch, Hw);
+    if (cw) {
+      return Object.assign(base, {
+        markers: fit.used.map((u) => ({ id: u.marker.id, corner: u.corner, imageCorners: u.marker.corners })),
+        tiles,
+        H,
+        Hinv,
+        quality: { markerCount: fit.used.length, reprojError: fit.reprojError },
+        cells,
+        occupied: cw.complete ? cw.occupied : raw,
+        raw,
+        analysis: cw.complete ? dep("FenceAnalysis").analyze({ board: info.board, lattice: info.lattice, occupied: cw.occupied }) : null,
+        stable: !covered,
+        handsLikely: covered,
+        fresh: true,
+        changed: true,
+        pieces: cw.complete ? cw.pieces : null,
+        piecesComplete: cw.complete,
+        unexplained: cw.unexplained,
+        ambiguous: cw.ambiguous,
+      });
+    }
+
     // Pieces for the digital board (pale corners of pieces recovered, colour
     // spilled next to a piece left out).
     const score = (k) => {
@@ -3460,7 +4795,7 @@
     let pieces = whole.pieces;
     // (when another set of pieces covers the same cells, the pieces are not
     // known, only the cells)
-    let piecesComplete = whole.complete && !whole.ambiguous;
+    let piecesComplete = whole.complete && !whole.coverAmbiguous;
     // Pieces no tile mark vouches for must look like cut pieces: a fingertip
     // or a pen in the photo is never carried on screen as a piece.
     if (whole.complete) {
@@ -3506,6 +4841,7 @@
     createTracker,
     snapshot,
     reconstruct,
+    inkColours,
     TILE_CELLS,
   };
 });
