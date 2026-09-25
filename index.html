@@ -152,8 +152,17 @@
       .icon.cam[aria-pressed="true"]{color:var(--accent);border-color:var(--accent);background:var(--accent-soft);}
       .toy{position:relative;}
       .icon.cam[hidden]{display:none;}
+      /* Print: the same small icon, opening this card's printable sheets. */
+      .icon.kit{cursor:pointer;width:26px;height:26px;padding:0;color:var(--muted2);}
+      .icon.kit svg{width:15px;height:15px;display:block;}
+      .icon.kit:hover{color:var(--text);}
       /* Narrow cards: the extra icon still fits on the tool row. */
-      @media(max-width:520px){.pIconRow:has(.icon.cam:not([hidden])),.pIconRow:has(.icon.cam:not([hidden])) .pIconSet{gap:6px;}}
+      /* With the camera and print icons the tool row stays on one line: on a
+         narrow card its icons shrink a little, together, instead of wrapping. */
+      .pIconRow:has(.icon.kit),.pIconRow:has(.icon.kit) .pIconSet{flex-wrap:nowrap;gap:clamp(3px,1.1vw,8px);min-width:0;}
+      .pIconRow:has(.icon.kit) .pIconSet{flex:0 1 auto;}
+      .pIconRow:has(.icon.kit){contain:inline-size;}
+      .pIconRow:has(.icon.kit) .icon{flex:0 1 auto;min-width:22px;height:auto;aspect-ratio:1;}
 
       /* A card that just received a board from the camera glows once. */
       @keyframes arrive{0%{box-shadow:0 18px 50px rgba(0,0,0,0.35),0 0 0 0 transparent;}25%{box-shadow:0 18px 50px rgba(0,0,0,0.35),0 0 0 2px var(--accent),0 0 42px var(--accent-glow);}100%{box-shadow:0 18px 50px rgba(0,0,0,0.35),0 0 0 0 transparent;}}
@@ -250,6 +259,7 @@
             <button class="icon act" data-flip="sq" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie">⇄</button>
             <button class="icon reset" data-reset="sq" data-tip-pos="below" data-i18n-data-tip="hub.resetTip" data-tip="Efface la barrière" data-i18n-aria-label="hub.resetAria" aria-label="Efface la barrière"><span class="glyph">🗑</span></button>
             <button class="icon cam" type="button" data-cam="sq" aria-pressed="false" hidden data-tip-pos="below" data-i18n-data-tip="hub.camTip" data-tip="Caméra : filme ton plateau imprimé, tes pièces se posent ici" data-i18n-aria-label="hub.camAria" aria-label="Ouvrir la caméra dans ce plateau"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
+            <a class="icon kit" href="kit/?board=sq9" data-tip-pos="below" data-i18n-data-tip="hub.kitTip" data-tip="Imprimer : le plateau et ses pièces à découper" data-i18n-aria-label="hub.kitAria" aria-label="Imprimer ce plateau et ses pièces"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 8.6V3.8h10v4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6.9 17.2H4V9h16v8.2h-2.9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 13.6h10v6.6H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></a>
             </span>
             <span class="pIconSet nav">
             <span class="icon help" tabindex="0"
@@ -287,6 +297,7 @@
             <button class="icon act" data-flip="hex" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie">⇄</button>
             <button class="icon reset" data-reset="hex" data-tip-pos="below" data-i18n-data-tip="hub.resetTip" data-tip="Efface la barrière" data-i18n-aria-label="hub.resetAria" aria-label="Efface la barrière"><span class="glyph">🗑</span></button>
             <button class="icon cam" type="button" data-cam="hex" aria-pressed="false" hidden data-tip-pos="below" data-i18n-data-tip="hub.camTip" data-tip="Caméra : filme ton plateau imprimé, tes pièces se posent ici" data-i18n-aria-label="hub.camAria" aria-label="Ouvrir la caméra dans ce plateau"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
+            <a class="icon kit" href="kit/?board=hex4" data-tip-pos="below" data-i18n-data-tip="hub.kitTip" data-tip="Imprimer : le plateau et ses pièces à découper" data-i18n-aria-label="hub.kitAria" aria-label="Imprimer ce plateau et ses pièces"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 8.6V3.8h10v4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6.9 17.2H4V9h16v8.2h-2.9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 13.6h10v6.6H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></a>
             </span>
             <span class="pIconSet nav">
             <span class="icon help" tabindex="0"
@@ -319,6 +330,7 @@
             <button class="icon act" data-flip="tri" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie">⇄</button>
             <button class="icon reset" data-reset="tri" data-tip-pos="below" data-i18n-data-tip="hub.resetTip" data-tip="Efface la barrière" data-i18n-aria-label="hub.resetAria" aria-label="Efface la barrière"><span class="glyph">🗑</span></button>
             <button class="icon cam" type="button" data-cam="tri" aria-pressed="false" hidden data-tip-pos="below" data-i18n-data-tip="hub.camTip" data-tip="Caméra : filme ton plateau imprimé, tes pièces se posent ici" data-i18n-aria-label="hub.camAria" aria-label="Ouvrir la caméra dans ce plateau"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
+            <a class="icon kit" href="kit/?board=tri4" data-tip-pos="below" data-i18n-data-tip="hub.kitTip" data-tip="Imprimer : le plateau et ses pièces à découper" data-i18n-aria-label="hub.kitAria" aria-label="Imprimer ce plateau et ses pièces"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 8.6V3.8h10v4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6.9 17.2H4V9h16v8.2h-2.9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 13.6h10v6.6H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></a>
             </span>
             <span class="pIconSet nav">
             <span class="icon help" tabindex="0"
