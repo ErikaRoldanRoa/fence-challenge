@@ -38,8 +38,7 @@
   const MARGIN = 10; // mm, same as the @page margin
   const SLACK = 1; // mm kept free at the bottom so a sheet never spills onto a second page
   const HEADER = 9; // mm reserved at the top of every sheet for the title line
-  const QR_SIZE = 16; // mm, side of the QR code on the board sheet (about 0.43 mm per module)
-  const FOOTER = QR_SIZE + 3; // mm reserved at the bottom of the board sheet (credit, QR code)
+  const QR_SIZE = 14; // mm, side of the QR code on the board sheet (at most; less where the room between the marks is small)
   const CLEAR_MODULES = 2; // white margin kept around the marks, in marker modules
   const SCALE_STEP = 0.5; // the scale is a whole number of half millimetres per unit
   const PIECE_GAP = 6; // mm between pieces (at least)
@@ -368,8 +367,10 @@
     const pad = CLEAR_MODULES * module;
     const W = ext.maxX - ext.minX + 2 * pad;
     const H = ext.maxY - ext.minY + 2 * pad;
-    const areaTop = HEADER;
-    const areaH = ch - HEADER - FOOTER;
+    // The board sheet keeps no strip for text: the title, the credit and the
+    // QR code sit between the corner marks, so the board takes the whole page.
+    const areaTop = 0;
+    const areaH = ch;
     let scale = Math.floor(Math.min(cw / W, areaH / H) / SCALE_STEP) * SCALE_STEP;
     const shapes = pieceShapes(boardId);
     let place = null;
@@ -477,6 +478,45 @@
     );
   }
 
+  // Text between two corner marks is fitted to the room there (a rough
+  // width per character, on the safe side, since nothing can be measured).
+  const fitFont = (size, text, room, wide) => Math.min(size, room / ((wide ? 0.74 : 0.62) * Math.max(1, text.length)));
+
+  // The room between two corner marks (sheet frame): a and b are the boxes of
+  // the left and the right mark, `pad` their light margin.
+  function bandBetween(a, b, pad) {
+    return { x0: a.x1 + pad, x1: b.x0 - pad, y0: Math.min(a.y0, b.y0), y1: Math.max(a.y1, b.y1) };
+  }
+
+  // The title, in two lines, centred between the top marks.
+  function titleBetween(band, title) {
+    const w = band.x1 - band.x0;
+    const cx = (band.x0 + band.x1) / 2;
+    const f1 = fitFont(3.9, "Fence Challenge", w);
+    const f2 = fitFont(2.9, title, w);
+    const cy = (band.y0 + band.y1) / 2;
+    return (
+      '<text class="kit-title" x="' + fmt(cx) + '" y="' + fmt(cy - 0.3) + '" text-anchor="middle" font-family="' + FONT + '" font-size="' + fmt(f1) +
+      '" font-weight="800" fill="' + INK + '">Fence Challenge</text>' +
+      '<text x="' + fmt(cx) + '" y="' + fmt(cy + 0.3 + f2 * 1.1) + '" text-anchor="middle" font-family="' + FONT + '" font-size="' + fmt(f2) +
+      '" fill="' + GRID + '">' + esc(title) + "</text>"
+    );
+  }
+
+  // The credit, in two lines, from the left edge of the room between the bottom marks.
+  function creditBetween(band, room, by) {
+    const l1 = by + " THE LEARNING MACHINE";
+    const l2 = "CEO Dr. Erika Roldán";
+    const f = fitFont(2.6, l1, room, true); // (bold capitals are wide)
+    const cy = (band.y0 + band.y1) / 2;
+    return (
+      '<text class="kit-credit" x="' + fmt(band.x0) + '" y="' + fmt(cy - 0.4) + '" font-family="' + FONT + '" font-size="' + fmt(f) + '" fill="' + INK + '">' +
+      esc(by) + ' <tspan font-weight="800">THE LEARNING MACHINE</tspan></text>' +
+      '<text class="kit-credit" x="' + fmt(band.x0) + '" y="' + fmt(cy + 0.4 + f * 1.1) + '" font-family="' + FONT + '" font-size="' + fmt(f) + '" fill="' + INK + '">' +
+      'CEO <tspan font-weight="700">' + esc(l2.slice(4)) + "</tspan></text>"
+    );
+  }
+
   // Grid lines and cut lines share one width. Every line is centred on the cell
   // boundary, so a piece cut along the middle of its cut line covers exactly half
   // of the grid line under each of its edges, and its neighbour covers the other half.
@@ -493,24 +533,29 @@
     const outer = edges.filter((e) => e.count === 1);
     const lineW = gridLineWidth(s);
     let svg = svgOpen(L, opts.title, "kit-sheet kit-board");
-    svg += titleLine(opts.title);
     svg += '<g class="kit-cells" data-cells="' + g.board.cells.length + '" fill="none" stroke-linecap="round">';
     svg += '<path d="' + segmentsPath(inner, tx) + '" stroke="' + GRID + '" stroke-width="' + fmt(lineW) + '"/>';
     svg += '<path d="' + loopsPath(loopsOf(outer), tx) + '" stroke="' + OUTLINE + '" stroke-width="' + fmt(lineW * 1.6) + '" stroke-linejoin="round"/>';
     svg += "</g>";
+    const box = {};
     for (const corner of FenceBoards.CORNERS) {
       const m = g.markers[corner];
       const tl = tx(m.corners[0]);
       const br = tx(m.corners[2]);
+      box[corner] = { x0: tl.x, y0: tl.y, x1: br.x, y1: br.y };
       svg += '<path class="kit-mark" data-corner="' + corner + '" data-id="' + m.id + '" fill="' + INK + '" d="' +
         markerPath(m.id, tl.x, tl.y, br.x - tl.x) + '"/>';
     }
-    // Footer: the credit and, in the bottom right corner, a QR code that
-    // opens the camera for this board. (The camera measures the board from
-    // its corner marks, so the printed size does not matter; the board and
-    // its pieces only need to be printed together, at the same size.)
-    svg += creditLine(0, L.ch - 2, opts.by);
-    const qr = qrPath(opts.url, L.cw - QR_SIZE, L.ch - QR_SIZE, QR_SIZE);
+    // Between the top marks the title; between the bottom marks the credit
+    // and a QR code that opens the camera for this board. (The camera
+    // measures the board from its corner marks, so the printed size does not
+    // matter; the board and its pieces only need to be printed at the same size.)
+    const pad = CLEAR_MODULES * L.module * s;
+    svg += titleBetween(bandBetween(box.tl, box.tr, pad), opts.title);
+    const low = bandBetween(box.bl, box.br, pad);
+    const q = Math.min(QR_SIZE, low.y1 - low.y0, (low.x1 - low.x0) / 3);
+    svg += creditBetween(low, low.x1 - low.x0 - q - 4, opts.by);
+    const qr = qrPath(opts.url, low.x1 - q, (low.y0 + low.y1) / 2 - q / 2, q);
     if (qr) {
       svg += '<path class="kit-qr" data-url="' + esc(opts.url) + '" data-modules="' + qr.modules + '" fill="' + INK +
         '" shape-rendering="crispEdges" d="' + qr.d + '"/>';
