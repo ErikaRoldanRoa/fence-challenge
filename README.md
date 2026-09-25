@@ -43,12 +43,18 @@ To run locally, serve the folder with any static file server (for example
 
 Fences can also be built by hand on the table, with a phone watching.
 
-- **Printable kit:** [kit/](kit/) prints a board and its pieces at actual size
-  (A4 or A3), for the three hub boards and the three full challenges.
-- **Camera:** [camera/](camera/) follows the paper board through the phone's
-  camera and lights up the enclosed area right on the picture. A board built on
-  paper (the three hub boards and the 20 x 20 square board) can then be
-  continued on screen.
+- **Printable kit:** [kit/](kit/) prints a board and its pieces on A4 or A3,
+  with colour ink only, for the three hub boards and the three full
+  challenges. The print icon on each hub card opens its sheets.
+- **Camera in the board:** the camera icon on each hub card and lab turns the
+  board itself into the camera window. Once the four corner marks are found,
+  the paper board is straightened cell on cell under the digital one, the
+  enclosed area lights up, and the pieces read on paper are placed on the
+  board when they hold still. [camera/](camera/) is the same camera as a page
+  of its own, with a photo mode.
+- **No guessing:** covered cells that no set of the kit's pieces explains (a
+  pencil or a scrap of paper on the board, a piece far off its cells) are
+  never judged; the camera keeps the last state it could explain.
 - **Private by design:** the picture is analysed on the device and is never
   uploaded or saved. After loading, the page makes no network connections of
   its own (its security policy forbids scripts to open any), so the picture
