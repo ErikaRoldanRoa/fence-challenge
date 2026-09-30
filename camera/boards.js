@@ -7,12 +7,18 @@
  * y pointing down), so the printed sheet, the camera and the digital board
  * all agree cell by cell.
  *
- * Marker placement rule (boards printed from this file):
- *   side  m = max(1.2, 0.2 * max(W, H))   (W, H: board bounding box)
+ * Two sheet layouts. Both place the marks the same way:
  *   gap   g = 0.3 * m                      (white quiet zone, > one module)
  *   tl/tr sit above the board, bl/br below it, flush with the left/right
  *   edges of the bounding box. Marker corners are listed in the marker's own
  *   reading order: top-left, top-right, bottom-right, bottom-left.
+ * They differ in the mark side m:
+ *   layout 1  m = max(1.2, 0.2 * max(W, H))   (W, H: board bounding box).
+ *             The sheets printed so far. Their entries keep their ids, sizes
+ *             and marks so those sheets keep working; they are never printed
+ *             again. `current` names the board such a sheet is played on today.
+ *   layout 2  m = the entry's `mark`: one fixed side per board, in world
+ *             units. The kit prints these sheets.
  *
  * The classic 20 x 20 kit (six taped A4 sheets, ids 50-53 on the corners and
  * 20-43 on the pentomino tiles) predates this file. Its grid position relative
@@ -41,21 +47,24 @@
   //          add other ways to cover the same cells.
   //   free-*: every free polyform of the given order (the full lab challenges)
   const BOARDS = [
+    // Layout 2: the sheets the kit prints.
     {
       id: "sq9",
       lattice: "square",
       spec: { size: 9 },
       pieces: { kind: "hub", set: "TETROMINO_SET" },
-      markers: { tl: 100, tr: 101, br: 102, bl: 104 },
+      markers: { tl: 230, tr: 270, br: 569, bl: 637 },
+      layout: { v: 2, mark: 1.25 },
       geometry: "printed",
       home: { page: "hub", card: "sq" },
     },
     {
-      id: "hex4",
+      id: "hex5",
       lattice: "hexagonal",
-      spec: { radius: 4 },
+      spec: { radius: 5 },
       pieces: { kind: "hub", set: "TETRAHEX_SET", print: "TETRAHEX_FULL_SET" },
-      markers: { tl: 106, tr: 110, br: 118, bl: 123 },
+      markers: { tl: 242, tr: 527, br: 622, bl: 744 },
+      layout: { v: 2, mark: 2.45 },
       geometry: "printed",
       home: { page: "hub", card: "hex" },
     },
@@ -64,7 +73,8 @@
       lattice: "triangular",
       spec: { hexSide: 4 },
       pieces: { kind: "hub", set: "PENTIAMOND_SET" },
-      markers: { tl: 137, tr: 138, br: 142, bl: 147 },
+      markers: { tl: 45, tr: 57, br: 58, bl: 387 },
+      layout: { v: 2, mark: 1.05 },
       geometry: "printed",
       home: { page: "hub", card: "tri" },
     },
@@ -73,7 +83,8 @@
       lattice: "square",
       spec: { size: 20 },
       pieces: { kind: "free", order: 5 },
-      markers: { tl: 149, tr: 150, br: 158, bl: 159 },
+      markers: { tl: 210, tr: 280, br: 429, bl: 801 },
+      layout: { v: 2, mark: 2.8 },
       geometry: "printed",
       home: { page: "square-lab" },
     },
@@ -82,7 +93,76 @@
       lattice: "hexagonal",
       spec: { radius: 6 },
       pieces: { kind: "free", order: 4 },
+      markers: { tl: 69, tr: 216, br: 255, bl: 600 },
+      layout: { v: 2, mark: 2.95 },
+      geometry: "printed",
+      home: { page: "hex-lab" },
+    },
+    {
+      id: "tri10",
+      lattice: "triangular",
+      spec: { hexSide: 10 },
+      pieces: { kind: "free", order: 6 },
+      markers: { tl: 66, tr: 293, br: 309, bl: 339 },
+      layout: { v: 2, mark: 2.8 },
+      geometry: "printed",
+      home: { page: "triangle-lab" },
+    },
+    // Layout 1: the sheets printed so far. Their printed QR codes open
+    // camera/?board=sq9|hex4|tri4|sq20|hex6|tri13, so those ids still resolve.
+    // The hexiamond triangle kit is read and judged, but its pieces are not
+    // the ones the triangle card is played with, so it hands nothing over.
+    {
+      id: "sq9-v1",
+      current: "sq9",
+      lattice: "square",
+      spec: { size: 9 },
+      pieces: { kind: "hub", set: "TETROMINO_SET" },
+      markers: { tl: 100, tr: 101, br: 102, bl: 104 },
+      layout: { v: 1 },
+      geometry: "printed",
+      home: { page: "hub", card: "sq" },
+    },
+    {
+      id: "hex4",
+      lattice: "hexagonal",
+      spec: { radius: 4 },
+      pieces: { kind: "hub", set: "TETRAHEX_SET" },
+      markers: { tl: 106, tr: 110, br: 118, bl: 123 },
+      layout: { v: 1 },
+      geometry: "printed",
+      home: { page: "hub", card: "hex" },
+    },
+    {
+      id: "tri4-v1",
+      current: "tri4",
+      lattice: "triangular",
+      spec: { hexSide: 4 },
+      pieces: { kind: "hub", set: "HEXIAMOND_SET" },
+      markers: { tl: 137, tr: 138, br: 142, bl: 147 },
+      layout: { v: 1 },
+      geometry: "printed",
+      home: { page: "hub", card: "tri" },
+    },
+    {
+      id: "sq20-v1",
+      current: "sq20",
+      lattice: "square",
+      spec: { size: 20 },
+      pieces: { kind: "free", order: 5 },
+      markers: { tl: 149, tr: 150, br: 158, bl: 159 },
+      layout: { v: 1 },
+      geometry: "printed",
+      home: { page: "square-lab" },
+    },
+    {
+      id: "hex6-v1",
+      current: "hex6",
+      lattice: "hexagonal",
+      spec: { radius: 6 },
+      pieces: { kind: "free", order: 4 },
       markers: { tl: 160, tr: 164, br: 166, bl: 167 },
+      layout: { v: 1 },
       geometry: "printed",
       home: { page: "hex-lab" },
     },
@@ -92,6 +172,7 @@
       spec: { hexSide: 13 },
       pieces: { kind: "free", order: 6 },
       markers: { tl: 170, tr: 171, br: 182, bl: 197 },
+      layout: { v: 1 },
       geometry: "printed",
       home: { page: "triangle-lab" },
     },
