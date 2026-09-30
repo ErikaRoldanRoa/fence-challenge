@@ -937,7 +937,7 @@
         pts.push({ x: t, y: -1.05 }, { x: t, y: size + 0.05 }, { x: -1.05, y: t }, { x: size + 0.05, y: t });
       }
     } else {
-      const gap = dep("FenceBoards").markerLayout(b).gap;
+      const gap = info.geometry.markerGap != null ? info.geometry.markerGap : dep("FenceBoards").markerLayout(b).gap;
       const count = Math.max(4, Math.round(b.maxX - b.minX));
       for (let i = 0; i < count; i += 1) {
         const x = b.minX + ((i + 0.5) * (b.maxX - b.minX)) / count;

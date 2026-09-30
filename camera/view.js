@@ -103,6 +103,11 @@
   const params = new URLSearchParams(location.search);
   const hint = Boards && Boards.get(params.get("board")) ? params.get("board") : null;
 
+  // The board a sheet's pieces go to on the screen (null when they cannot go
+  // anywhere), and the board a sheet is played on today.
+  const handsOver = (id) => (Boards && Boards.handsOverTo ? Boards.handsOverTo(id) : id);
+  const currentBoard = (id) => (Boards && Boards.current ? Boards.current(id) || id : id);
+
   const reduceMotion = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : { matches: false };
   const homeScreenIOS = window.navigator.standalone === true;
   const cameraApi = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
@@ -1158,7 +1163,7 @@
   // button as it was); it changes only when a steady view changes the pieces.
   function updatePlacements(result, photo) {
     const boardId = (result && result.boardId) || hint;
-    const eligible = !!boardId && CONTINUE_BOARDS.has(boardId);
+    const eligible = !!boardId && CONTINUE_BOARDS.has(handsOver(boardId));
     el.continueBtn.hidden = !eligible;
     if (st.placementsBoard && result && result.boardId && result.boardId !== st.placementsBoard) {
       st.steadyResult = null;
@@ -1214,7 +1219,7 @@
   }
 
   function continueOnScreen() {
-    const boardId = st.placementsBoard;
+    const boardId = handsOver(st.placementsBoard);
     if (!boardId || !st.placements || continueReason()) return;
     const payload = { boardId, placements: st.placements };
     try {
@@ -1682,11 +1687,11 @@
     if (hint) {
       el.body.dataset.fcBoard = hint;
       if (hint === "sq20-classic") el.kitLink.hidden = true;
-      else el.kitLink.href = "../kit/?board=" + encodeURIComponent(hint);
+      else el.kitLink.href = "../kit/?board=" + encodeURIComponent(currentBoard(hint));
     }
     el.countBtn.setAttribute("aria-pressed", st.countFirst ? "true" : "false");
     // Keep the button's place from the start, so the picture does not move when it appears.
-    el.continueBtn.hidden = !(hint && CONTINUE_BOARDS.has(hint));
+    el.continueBtn.hidden = !(hint && CONTINUE_BOARDS.has(handsOver(hint)));
     if (framed) {
       el.body.dataset.fcFramed = "1";
       sheetMessage("cam.err.framed");

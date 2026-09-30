@@ -901,6 +901,12 @@
 
     function accept(result, got, now) {
       s.readFails = 0;
+      // An older sheet of this board counts as this board; `sheetId` keeps
+      // the sheet that was seen.
+      const B = root.FenceBoards;
+      if (result.boardId && result.boardId !== boardId && B && B.handsOverTo && B.handsOverTo(result.boardId) === boardId) {
+        result = Object.assign({}, result, { boardId, sheetId: result.boardId });
+      }
       const ours = result.boardId === boardId;
       if (ours) s.result = result;
       const q = result.quality || {};

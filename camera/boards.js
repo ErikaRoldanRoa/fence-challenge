@@ -118,12 +118,16 @@
 
   // Marker id -> what it is.
   const markerIndex = new Map();
+  function addMarker(id, what) {
+    if (markerIndex.has(id)) throw new Error("Marker id used twice: " + id);
+    markerIndex.set(id, what);
+  }
   for (const b of BOARDS) {
-    for (const c of CORNERS) markerIndex.set(b.markers[c], { kind: "corner", boardId: b.id, corner: c });
+    for (const c of CORNERS) addMarker(b.markers[c], { kind: "corner", boardId: b.id, corner: c });
     if (b.tileMarkers) {
       b.tileMarkers.order.forEach((name, i) => {
-        markerIndex.set(b.tileMarkers.front + i, { kind: "tile", boardId: b.id, piece: name, side: "front" });
-        markerIndex.set(b.tileMarkers.back + i, { kind: "tile", boardId: b.id, piece: name, side: "back" });
+        addMarker(b.tileMarkers.front + i, { kind: "tile", boardId: b.id, piece: name, side: "front" });
+        addMarker(b.tileMarkers.back + i, { kind: "tile", boardId: b.id, piece: name, side: "back" });
       });
     }
   }
@@ -132,10 +136,18 @@
     return Math.round(v * 10000) / 10000;
   }
 
-  function markerLayout(bounds) {
-    const W = bounds.maxX - bounds.minX;
-    const H = bounds.maxY - bounds.minY;
-    const m = round4(Math.max(1.2, 0.2 * Math.max(W, H)));
+  /* Corner marks around a board's bounding box. Layout 1 (an entry with no
+   * layout field, or layout { v: 1 }) sizes the marks from the board; layout
+   * { v: 2, mark } gives them one fixed side, in world units. */
+  function markerLayout(bounds, layout) {
+    let m;
+    if (layout && layout.v === 2) {
+      m = round4(layout.mark);
+    } else {
+      const W = bounds.maxX - bounds.minX;
+      const H = bounds.maxY - bounds.minY;
+      m = round4(Math.max(1.2, 0.2 * Math.max(W, H)));
+    }
     const g = round4(0.3 * m);
     const top = bounds.minY - g - m;
     const bottom = bounds.maxY + g;
@@ -180,13 +192,14 @@
     const lattice = LATTICES[def.lattice];
     if (!lattice) throw new Error("Lattice module not loaded: " + def.lattice);
     const board = lattice.buildBoard(def.spec);
-    const out = { def, lattice, board, markers: null, extent: { ...board.bounds }, markerSize: null };
+    const out = { def, lattice, board, markers: null, extent: { ...board.bounds }, markerSize: null, markerGap: null };
     if (def.geometry === "printed") {
-      const layout = markerLayout(board.bounds);
+      const layout = markerLayout(board.bounds, def.layout);
       out.markers = {};
       for (const c of CORNERS) out.markers[c] = { id: def.markers[c], corners: layout.corners[c] };
       out.extent = layout.extent;
       out.markerSize = layout.size;
+      out.markerGap = layout.gap;
     }
     geometryCache.set(boardId, out);
     return out;
@@ -221,6 +234,32 @@
     return pieceTypes(boardId);
   }
 
+  /* The board a sheet is played on today: the entry's `current` when an
+   * older sheet names one, otherwise the entry itself (null when unknown). */
+  function current(boardId) {
+    const def = byId.get(boardId);
+    if (!def) return null;
+    return def.current || def.id;
+  }
+
+  /* The board a sheet's pieces can be handed to: current(id) when both are
+   * played with the same pieces, otherwise null. */
+  function handsOverTo(boardId) {
+    const to = current(boardId);
+    if (to === null) return null;
+    const a = byId.get(boardId).pieces;
+    const b = byId.get(to) ? byId.get(to).pieces : null;
+    if (!b || a.kind !== b.kind || a.set !== b.set || a.order !== b.order) return null;
+    return to;
+  }
+
+  /* Sheets of layout 1 are recognised but never printed again. */
+  function isPrintable(boardId) {
+    const def = byId.get(boardId);
+    if (!def) return false;
+    return !(def.layout && def.layout.v === 1);
+  }
+
   return {
     BOARDS,
     CORNERS,
@@ -232,5 +271,8 @@
     pieceTypes,
     printTypes,
     markerLayout,
+    current,
+    handsOverTo,
+    isPrintable,
   };
 });
