@@ -380,6 +380,39 @@
     },
   };
 
+  // The four free pentiamonds, named as in LRMR25 (Abbildung 9: a maximal
+  // pentiamond fence encloses 5). The hub's triangle card plays with all four.
+  const PENTIAMOND_CELLS = {
+    pbar: [[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 1, 1], [0, 2, 0]],
+    crook: [[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 1, 1], [1, 1, 0]],
+    sphinx: [[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 1, 1], [1, 0, 0]],
+    hexa: [[0, 0, 1], [0, 1, 0], [0, 1, 1], [1, 0, 0], [1, 0, 1]],
+  };
+
+  const PENTIAMOND_NAMES = ["pbar", "crook", "sphinx", "hexa"];
+  const PENTIAMOND_COLORS = { pbar: "#2ff3ff", crook: "#b278ff", sphinx: "#ffd84a", hexa: "#ff5b7f" };
+
+  const PENTIAMOND_SET = {
+    order: 5,
+    prefix: "P",
+    shapes: PENTIAMOND_NAMES.map((n) =>
+      PENTIAMOND_CELLS[n].map(([i, j, o]) => ({ i, j, o }))
+    ),
+    build(shapes) {
+      const byCanonical = new Map(
+        PENTIAMOND_NAMES.map((n) => [
+          canonicalizeShape(PENTIAMOND_CELLS[n].map(([i, j, o]) => ({ i, j, o }))).key,
+          n,
+        ])
+      );
+      return shapes.map((cells) => {
+        const name = byCanonical.get(canonicalizeShape(cells).key);
+        if (!name) throw new Error("lattice-triangular: unrecognised pentiamond shape.");
+        return { id: name, name, cells, color: PENTIAMOND_COLORS[name] };
+      });
+    },
+  };
+
   const TRI_BOARD_HEXSIDE_DEFAULT = 4;
 
   const latticeTriangular = {
@@ -401,6 +434,7 @@
     regionSplitNeighborKeys,
     findNearestBoardCell,
     HEXIAMOND_SET,
+    PENTIAMOND_SET,
     BOARD_HEXSIDE_DEFAULT: TRI_BOARD_HEXSIDE_DEFAULT,
     _internals: {
       SYMMETRIES,

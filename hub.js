@@ -266,7 +266,7 @@
     const engine = window.PieceEngine.createPieceEngine({
       root,
       lattice: window.LatticeTriangular,
-      pieceSet: window.LatticeTriangular.HEXIAMOND_SET,
+      pieceSet: window.LatticeTriangular.PENTIAMOND_SET,
       board: { hexSide: window.LatticeTriangular.BOARD_HEXSIDE_DEFAULT },
       padding: 5,
       callbacks: {

@@ -35,7 +35,10 @@
   const LATTICES = { square: LatticeSquare, hexagonal: LatticeHex, triangular: LatticeTriangular };
 
   // Piece sets are named here and resolved lazily, so this file stays a pure description.
-  //   hub-*: the small sets of the three hub cards (defined by the lattice modules)
+  //   hub-*: the small sets of the three hub cards (defined by the lattice modules);
+  //          `print` names a larger family printed on the kit sheet. The camera
+  //          reads only the card's set: pieces the card cannot hold would only
+  //          add other ways to cover the same cells.
   //   free-*: every free polyform of the given order (the full lab challenges)
   const BOARDS = [
     {
@@ -51,7 +54,7 @@
       id: "hex4",
       lattice: "hexagonal",
       spec: { radius: 4 },
-      pieces: { kind: "hub", set: "TETRAHEX_SET" },
+      pieces: { kind: "hub", set: "TETRAHEX_SET", print: "TETRAHEX_FULL_SET" },
       markers: { tl: 106, tr: 110, br: 118, bl: 123 },
       geometry: "printed",
       home: { page: "hub", card: "hex" },
@@ -60,7 +63,7 @@
       id: "tri4",
       lattice: "triangular",
       spec: { hexSide: 4 },
-      pieces: { kind: "hub", set: "HEXIAMOND_SET" },
+      pieces: { kind: "hub", set: "PENTIAMOND_SET" },
       markers: { tl: 137, tr: 138, br: 142, bl: 147 },
       geometry: "printed",
       home: { page: "hub", card: "tri" },
@@ -207,6 +210,17 @@
     }));
   }
 
+  /* The piece types printed on the board's kit sheet: the `print` family when
+   * the board names one, otherwise the pieces it is played with. */
+  function printTypes(boardId) {
+    const def = byId.get(boardId);
+    if (def.pieces.kind === "hub" && def.pieces.print) {
+      const set = LATTICES[def.lattice][def.pieces.print];
+      return set.build(set.shapes);
+    }
+    return pieceTypes(boardId);
+  }
+
   return {
     BOARDS,
     CORNERS,
@@ -216,6 +230,7 @@
     markerIds: () => [...markerIndex.keys()].sort((a, b) => a - b),
     geometry,
     pieceTypes,
+    printTypes,
     markerLayout,
   };
 });

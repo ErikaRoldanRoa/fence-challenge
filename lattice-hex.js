@@ -304,11 +304,38 @@
     },
   };
 
+  // All seven tetrahexes, for the printed sheet and the camera: the card's four
+  // keep their colours, the other three get hues far from them.
+  const ALL_TETRAHEX_NAMES = ["arc", "bar", "bee", "pistol", "propeller", "wave", "worm"];
+  const ALL_TETRAHEX_COLORS = Object.assign({}, TETRAHEX_COLORS, { bee: "#4d7cff", pistol: "#b278ff", propeller: "#ff5bd0" });
+
+  const TETRAHEX_FULL_SET = {
+    order: 4,
+    prefix: "H",
+    shapes: ALL_TETRAHEX_NAMES.map((name) =>
+      TETRAHEX_CELLS[name].map(([q, r]) => ({ q, r }))
+    ),
+    build(shapes) {
+      const byCanonical = new Map(
+        ALL_TETRAHEX_NAMES.map((name) => [
+          canonicalizeShape(TETRAHEX_CELLS[name].map(([q, r]) => ({ q, r }))).key,
+          name,
+        ])
+      );
+      return shapes.map((cells) => {
+        const name = byCanonical.get(canonicalizeShape(cells).key);
+        if (!name) throw new Error("lattice-hex: unrecognised tetrahex shape.");
+        return { id: name, name, cells, color: ALL_TETRAHEX_COLORS[name] };
+      });
+    },
+  };
+
   const BOARD_RADIUS_DEFAULT = 4;
 
   const latticeHex = {
     name: "hexagonal",
     TETRAHEX_SET,
+    TETRAHEX_FULL_SET,
     TETRAHEX_CELLS,
     BOARD_RADIUS_DEFAULT,
     cellKey,

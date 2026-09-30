@@ -289,7 +289,7 @@
   function pieceShapes(boardId) {
     const g = FenceBoards.geometry(boardId);
     const lattice = g.lattice;
-    const types = FenceBoards.pieceTypes(boardId);
+    const types = FenceBoards.printTypes(boardId);
     const colors = pieceColors(types);
     return types.map((type, i) => {
       // The orientation with the smallest bounding box, lying flat if possible.
@@ -430,7 +430,7 @@
 
   function piecesName(boardId, t) {
     const def = FenceBoards.get(boardId);
-    const types = FenceBoards.pieceTypes(boardId);
+    const types = FenceBoards.printTypes(boardId);
     const order = types[0].cells.length;
     return t("kit.pc." + def.lattice + order, { n: types.length });
   }
