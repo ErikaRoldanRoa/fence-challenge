@@ -161,6 +161,7 @@
     poseRim: 0, // how far beyond the rim a cell's centre may be pushed (cells side by side)
     poseSlack: 0.1, // ink beyond a piece found on the paper that still counts as its own (share of a cell)
     poseNear: 0.25, // and next to a piece of that colour, this much more
+    coverClear: 0.1, // a cell read below this is bare paper, one read above 1 minus this is surely covered
   };
 
   // ---------------------------------------------------------------------------
@@ -3677,6 +3678,21 @@
     return inks ? inks.hex.slice() : null;
   }
 
+  // The pieces read by their colours must not lie on cells read as bare
+  // paper: that means the colours were matched to the wrong places (inks of
+  // close hue are told apart by the shape of their pieces only). (A cell
+  // read covered that none of them lies on is often a piece lying turned,
+  // its corner over the next cell, which the colours place right.)
+  // `level(c)`: a cell's reading, null where it was not measured.
+  function coverAgrees(info, occupied, level) {
+    for (let c = 0; c < info.n; c += 1) {
+      if (!occupied.has(info.keys[c])) continue;
+      const v = level(c);
+      if (v !== null && v < TUNING.coverClear) return false;
+    }
+    return true;
+  }
+
   // The pieces of a coloured kit read by their colours in one image, or null
   // (the classic kit, colours that cannot tell the pieces apart).
   function colourWhole(img, info, sc, H) {
@@ -4435,8 +4451,19 @@
           // frames in a row are accepted, vouched for by their colours; the
           // same pieces as the state accepted leave it as it is (the cells
           // read only flickered); pieces that could lie on two places, or
-          // colour no piece explains, are never accepted.
-          const cw = now - st.pendingSince >= wait ? colourWhole(image, info, st.holder.scratch, H) : null;
+          // colour no piece explains, are never accepted. A reading the cells
+          // read contradict (coverAgrees) gives way to the cells read when
+          // they make whole pieces of the kit.
+          const level = (c) => (Number.isNaN(scores[c]) ? null : st.p[c]);
+          let cw = now - st.pendingSince >= wait ? colourWhole(image, info, st.holder.scratch, H) : null;
+          if (cw && cw.complete && !coverAgrees(info, cw.occupied, level)) {
+            // (when they make whole pieces of the kit)
+            if (!st.pendingWhole) {
+              st.pendingWhole = wholeFor(info, tiles);
+              st.pendingTries += 1;
+            }
+            if (st.pendingWhole.complete) cw = null;
+          }
           if (cw) {
             const sig = cw.complete ? cw.pieces.map(pieceKey).sort().join("/") : null;
             st.pendingChecks = sig === null ? 0 : sig === st.pendingSig ? st.pendingChecks + 1 : 1;
@@ -4757,8 +4784,28 @@
       else if (s >= TUNING.cellMaybe) maybe.add(key);
     });
 
-    // A coloured kit: the pieces read by their colours (see colourPieces).
-    const cw = colourWhole(work.img, info, holder.scratch, Hw);
+    // Pieces for the digital board (pale corners of pieces recovered, colour
+    // spilled next to a piece left out).
+    const score = (k) => {
+      if (tileCells.has(k)) return 1;
+      const s = scores[info.index.get(k)];
+      return Number.isNaN(s) ? 0 : s;
+    };
+    let cellsWhole = null;
+    const wholeOfCells = () => {
+      if (!cellsWhole) {
+        cellsWhole = wholePieces(info, raw, maybe, tiles, score, TUNING.photoSearchMs);
+        // (once more when the search ran out of time)
+        if (cellsWhole.late) cellsWhole = wholePieces(info, raw, maybe, tiles, score, TUNING.photoSearchMs);
+      }
+      return cellsWhole;
+    };
+
+    // A coloured kit: the pieces read by their colours (see colourPieces),
+    // unless the cells read contradict them and make whole pieces of the kit.
+    const level = (c) => (Number.isNaN(scores[c]) ? null : scores[c]);
+    let cw = colourWhole(work.img, info, holder.scratch, Hw);
+    if (cw && cw.complete && !coverAgrees(info, cw.occupied, level) && wholeOfCells().complete) cw = null;
     if (cw) {
       return Object.assign(base, {
         markers: fit.used.map((u) => ({ id: u.marker.id, corner: u.corner, imageCorners: u.marker.corners })),
@@ -4781,16 +4828,8 @@
       });
     }
 
-    // Pieces for the digital board (pale corners of pieces recovered, colour
-    // spilled next to a piece left out).
-    const score = (k) => {
-      if (tileCells.has(k)) return 1;
-      const s = scores[info.index.get(k)];
-      return Number.isNaN(s) ? 0 : s;
-    };
-    let whole = wholePieces(info, raw, maybe, tiles, score, TUNING.photoSearchMs);
-    // (once more when the search ran out of time)
-    if (whole.late) whole = wholePieces(info, raw, maybe, tiles, score, TUNING.photoSearchMs);
+    // The pieces read from the cells.
+    const whole = wholeOfCells();
     const occupied = whole.occupied;
     let pieces = whole.pieces;
     // (when another set of pieces covers the same cells, the pieces are not
