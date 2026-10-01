@@ -3708,6 +3708,32 @@
     return true;
   }
 
+  // A reading by the colours whose only doubt is where some pieces lie,
+  // between places the cells read settle: both places of each such piece
+  // lie on cells read surely covered (the cells are the same either way),
+  // or the cells read tell them apart (the cells of one read surely
+  // covered, those of the other bare). The cells read then decide, as they
+  // do when the colours cannot tell the pieces apart.
+  function cellsSettle(info, cw, level) {
+    if (!cw.ambiguous.length) return false;
+    const sure = (k, on) => {
+      const v = level(info.index.get(k));
+      return v !== null && (on ? v > 1 - TUNING.coverClear : v < TUNING.coverClear);
+    };
+    const places = new Set();
+    for (const a of cw.ambiguous) {
+      if (!a.other) return false;
+      for (const k of a.cells) places.add(k);
+      for (const k of a.other) places.add(k);
+      const same = a.cells.every((k) => sure(k, true)) && a.other.every((k) => sure(k, true));
+      const told = a.cells.every((k) => a.other.includes(k) || sure(k, true)) && a.other.every((k) => a.cells.includes(k) || sure(k, false));
+      if (!same && !told) return false;
+    }
+    // (and colour no piece explains only on cells read surely covered)
+    for (const k of cw.unexplained) if (!places.has(k) && !sure(k, true)) return false;
+    return true;
+  }
+
   // The pieces of a coloured kit read by their colours in one image, or null
   // (the classic kit, colours that cannot tell the pieces apart).
   function colourWhole(img, info, sc, H) {
@@ -4469,11 +4495,12 @@
           // same pieces as the state accepted leave it as it is (the cells
           // read only flickered); pieces that could lie on two places, or
           // colour no piece explains, are never accepted. A reading the cells
-          // read contradict (coverAgrees) gives way to the cells read when
-          // they make whole pieces of the kit.
+          // read contradict (coverAgrees), or one whose doubt the cells read
+          // settle (cellsSettle), gives way to the cells read when they make
+          // whole pieces of the kit.
           const level = (c) => (Number.isNaN(scores[c]) ? null : st.p[c]);
           let cw = now - st.pendingSince >= wait ? colourWhole(image, info, st.holder.scratch, H) : null;
-          if (cw && cw.complete && !coverAgrees(info, cw.occupied, level)) {
+          if (cw && (cw.complete ? !coverAgrees(info, cw.occupied, level) : cellsSettle(info, cw, level))) {
             // (when they make whole pieces of the kit)
             if (!st.pendingWhole) {
               st.pendingWhole = wholeFor(info, tiles, cellPixels(info, H) < TUNING.faintCellPx);
@@ -4821,10 +4848,11 @@
     };
 
     // A coloured kit: the pieces read by their colours (see colourPieces),
-    // unless the cells read contradict them and make whole pieces of the kit.
+    // unless the cells read contradict them or settle their doubt, and make
+    // whole pieces of the kit.
     const level = (c) => (Number.isNaN(scores[c]) ? null : scores[c]);
     let cw = colourWhole(work.img, info, holder.scratch, Hw);
-    if (cw && cw.complete && !coverAgrees(info, cw.occupied, level) && wholeOfCells().complete) cw = null;
+    if (cw && (cw.complete ? !coverAgrees(info, cw.occupied, level) : cellsSettle(info, cw, level)) && wholeOfCells().complete) cw = null;
     if (cw) {
       return Object.assign(base, {
         markers: fit.used.map((u) => ({ id: u.marker.id, corner: u.corner, imageCorners: u.marker.corners })),
