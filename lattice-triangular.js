@@ -238,7 +238,7 @@
   }
 
   function buildBoard(spec = {}) {
-    const hexSide = spec.hexSide ?? 13; // hexiamond: 11 base + 2 extra layers
+    const hexSide = spec.hexSide ?? 10; // the triangle lab board
     const scanRange = hexSide + 4;
 
     const isInsideBoardHex = (v) => Math.max(Math.abs(v.i), Math.abs(v.j), Math.abs(v.i + v.j)) <= hexSide;

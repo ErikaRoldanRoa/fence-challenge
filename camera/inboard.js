@@ -18,7 +18,7 @@
  * is recorded or sent.
  *
  *   host         positioned element exactly covering the board's drawing area
- *   boardId      the board the page plays (camera/boards.js): sq9, hex5, tri4, sq20, hex6, tri13
+ *   boardId      the board the page plays (camera/boards.js): sq9, hex5, tri4, sq20, hex6, tri10
  *   worldToHost  {x, y} in the board's world units -> CSS pixels from the
  *                host's padding box; call refresh() when it changes
  *   onState      "starting" | "searching" | "locked" | "stopped" | "error:<kind>"
@@ -457,6 +457,7 @@
       lastVideoTime: -1,
       readFails: 0,
       result: null, // last result read for this board
+      outside: false, // that result is an older sheet with pieces beyond this board
       locked: false,
       lastGoodAt: 0,
       steadySince: 0,
@@ -563,6 +564,9 @@
     } catch (e) {
       mesh = null;
     }
+    // The cells of this board: an older, larger sheet is played on them only
+    // while every piece lies on them.
+    const pageKeys = new Set(mesh ? mesh.cellVerts.keys() : []);
 
     try {
       if (root.getComputedStyle && root.getComputedStyle(host).position === "static") {
@@ -908,7 +912,10 @@
         result = Object.assign({}, result, { boardId, sheetId: result.boardId });
       }
       const ours = result.boardId === boardId;
-      if (ours) s.result = result;
+      if (ours) {
+        s.result = result;
+        s.outside = !!result.sheetId && offBoard(result.occupied);
+      }
       const q = result.quality || {};
       const usable =
         ours && !!result.H &&
@@ -936,6 +943,11 @@
       deliver(result);
     }
 
+    function offBoard(keys) {
+      for (const k of keys || []) if (!pageKeys.has(k)) return true;
+      return false;
+    }
+
     // While hands move over the board, or the paper has not settled, the
     // drawing shows the last steady state, dimmed.
     function updateHeld(result, now) {
@@ -951,6 +963,7 @@
 
     function deliver(result) {
       if (!s.locked || result.boardId !== boardId || !result.stable || !result.piecesComplete) return;
+      if (s.outside) return;
       if (result.unexplained && result.unexplained.size) return;
       if (!Array.isArray(result.pieces) || result.pieces.length === 0) return;
       const list = result.pieces.map((p) => ({ typeId: p.typeId, variantIndex: p.variantIndex, marker: Object.assign({}, p.marker) }));
@@ -1335,7 +1348,8 @@
         }
       };
 
-      const a = s.locked && s.result ? s.result.analysis : null;
+      // An older sheet with pieces beyond this board: no verdict.
+      const a = s.locked && s.result && !s.outside ? s.result.analysis : null;
       // Cells in view that the kit's pieces do not explain: the state drawn
       // is the last one explained, held and dimmed, and it does not glow.
       const doubt = !!(s.result && s.result.unexplained && s.result.unexplained.size);

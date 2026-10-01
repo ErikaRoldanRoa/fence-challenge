@@ -1,13 +1,12 @@
 "use strict";
 
 const HEXIAMOND_ORDER = 6;
-const BOARD_BASE_HEX_SIDE = 11;
-const BOARD_EXTRA_TRIANGLE_LAYERS = 2;
-const BOARD_HEX_SIDE = BOARD_BASE_HEX_SIDE + BOARD_EXTRA_TRIANGLE_LAYERS;
+// The board: a hexagon of side 10 (600 triangles).
+const BOARD_HEX_SIDE = 10;
 const SQRT3 = Math.sqrt(3);
 const SQRT3_HALF = SQRT3 / 2;
 // The board the camera reads for this lab (see ../camera/boards.js).
-const CAMERA_BOARD = "tri13";
+const CAMERA_BOARD = "tri10";
 const MARKER_COLORS = [
   "#ff5b7f",
   "#ff9d1e",

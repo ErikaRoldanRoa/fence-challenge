@@ -111,6 +111,8 @@
     // Layout 1: the sheets printed so far. Their printed QR codes open
     // camera/?board=sq9|hex4|tri4|sq20|hex6|tri13, so those ids still resolve.
     // The side-5 hexagon sheet is played on the side-6 card, cell on cell.
+    // The side-13 triangle sheet is played in the side-10 lab, cell on cell,
+    // when every piece lies inside the lab's board.
     // The hexiamond triangle kit is read and judged, but its pieces are not
     // the ones the triangle card is played with, so it hands nothing over.
     {
@@ -170,6 +172,7 @@
     },
     {
       id: "tri13",
+      current: "tri10",
       lattice: "triangular",
       spec: { hexSide: 13 },
       pieces: { kind: "free", order: 6 },
