@@ -162,6 +162,7 @@
     poseSlack: 0.1, // ink beyond a piece found on the paper that still counts as its own (share of a cell)
     poseNear: 0.25, // and next to a piece of that colour, this much more
     coverClear: 0.1, // a cell read below this is bare paper, one read above 1 minus this is surely covered
+    faintCellPx: 3.5, // cells fewer pixels across than this: a faint reading never completes a piece
   };
 
   // ---------------------------------------------------------------------------
@@ -2841,6 +2842,20 @@
     return info.colourPts;
   }
 
+  // How many pixels across a cell is in the image, on average (a sample of
+  // the board's cells through the map H).
+  function cellPixels(info, H) {
+    const cells = info.board.cells;
+    const step = Math.max(1, Math.floor(cells.length / 24));
+    let sum = 0;
+    let k = 0;
+    for (let i = 0; i < cells.length; i += step) {
+      sum += Math.abs(cellArea({ vertices: cells[i].vertices.map((p) => project(H, p)) }));
+      k += 1;
+    }
+    return Math.sqrt(sum / k);
+  }
+
   function cellArea(cell) {
     const v = cell.vertices;
     let area = 0;
@@ -4085,14 +4100,16 @@
     }
 
     // The whole pieces of the state waiting to be accepted (at most once per
-    // state: the search takes a few milliseconds).
-    function wholeFor(info, tiles) {
+    // state: the search takes a few milliseconds). On cells only a few
+    // pixels across (`coarse`), a faint reading is no evidence of a piece:
+    // only the cells read covered are used.
+    function wholeFor(info, tiles, coarse) {
       const n = info.n;
       const onSet = new Set();
       const maybe = new Set();
       for (let c = 0; c < n; c += 1) {
         if (st.on[c]) onSet.add(info.keys[c]);
-        else if (st.p[c] >= TUNING.cellMaybe) maybe.add(info.keys[c]);
+        else if (!coarse && st.p[c] >= TUNING.cellMaybe) maybe.add(info.keys[c]);
       }
       const p = st.p;
       const index = info.index;
@@ -4459,7 +4476,7 @@
           if (cw && cw.complete && !coverAgrees(info, cw.occupied, level)) {
             // (when they make whole pieces of the kit)
             if (!st.pendingWhole) {
-              st.pendingWhole = wholeFor(info, tiles);
+              st.pendingWhole = wholeFor(info, tiles, cellPixels(info, H) < TUNING.faintCellPx);
               st.pendingTries += 1;
             }
             if (st.pendingWhole.complete) cw = null;
@@ -4502,7 +4519,7 @@
             // frames, a few times: the first ones on a board also fill the
             // tables the later ones use)
             if (!st.pendingWhole || (st.pendingWhole.late && st.pendingTries < TUNING.searchTries)) {
-              st.pendingWhole = wholeFor(info, tiles);
+              st.pendingWhole = wholeFor(info, tiles, cellPixels(info, H) < TUNING.faintCellPx);
               st.pendingTries += 1;
             }
             const w = st.pendingWhole;
@@ -4776,12 +4793,14 @@
     const cells = new Map();
     const raw = new Set();
     const maybe = new Set();
+    // (cells only a few pixels across: a faint reading completes no piece)
+    const coarse = cellPixels(info, Hw) < TUNING.faintCellPx;
     info.keys.forEach((key, c) => {
       const s = scores[c];
       const tile = tileCells.has(key);
       cells.set(key, { score: Number.isNaN(s) ? null : s, p: tile ? 1 : Number.isNaN(s) ? 0 : s });
       if (tile || s >= TUNING.cellOn) raw.add(key);
-      else if (s >= TUNING.cellMaybe) maybe.add(key);
+      else if (!coarse && s >= TUNING.cellMaybe) maybe.add(key);
     });
 
     // Pieces for the digital board (pale corners of pieces recovered, colour
