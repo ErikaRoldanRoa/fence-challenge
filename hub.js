@@ -373,7 +373,7 @@
   // unexpected leaves the board as it was.
   const PAPER_KEY = "fc-paper-import";
   const LANG_CLEARANCE = 72; // px, matches article.pCard scroll-margin-top
-  const PAPER_BOARD = { sq: "sq9", hex: "hex4", tri: "tri4" };
+  const PAPER_BOARD = { sq: "sq9", hex: "hex5", tri: "tri4" };
   function checkPlacements(card, boardId, list) {
     const root = document.getElementById("engine-" + card);
     const engine = root && root._engine;

@@ -37,7 +37,7 @@
   const READ_FAILS_MAX = 10; // frames in a row that could not be read before saying so
   const ZOOM_MARGIN = 0.06; // room around the board when a photo is zoomed on it
   const ZOOM_MIN_GAIN = 1.2; // zoom only when it makes the board clearly larger
-  const CONTINUE_BOARDS = new Set(["sq9", "hex4", "tri4", "sq20", "sq20-classic"]);
+  const CONTINUE_BOARDS = new Set(["sq9", "hex5", "tri4", "sq20", "sq20-classic"]);
   const IMPORT_KEY = "fc-paper-import";
   const COUNT_FIRST_KEY = "fc-paper-count-first";
   const CONSTRAINTS = {

@@ -110,6 +110,7 @@
     },
     // Layout 1: the sheets printed so far. Their printed QR codes open
     // camera/?board=sq9|hex4|tri4|sq20|hex6|tri13, so those ids still resolve.
+    // The side-5 hexagon sheet is played on the side-6 card, cell on cell.
     // The hexiamond triangle kit is read and judged, but its pieces are not
     // the ones the triangle card is played with, so it hands nothing over.
     {
@@ -125,6 +126,7 @@
     },
     {
       id: "hex4",
+      current: "hex5",
       lattice: "hexagonal",
       spec: { radius: 4 },
       pieces: { kind: "hub", set: "TETRAHEX_SET" },

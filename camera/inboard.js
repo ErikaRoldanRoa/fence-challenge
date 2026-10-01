@@ -18,7 +18,7 @@
  * is recorded or sent.
  *
  *   host         positioned element exactly covering the board's drawing area
- *   boardId      a board of camera/boards.js: sq9, hex4, tri4, sq20, hex6, tri13
+ *   boardId      the board the page plays (camera/boards.js): sq9, hex5, tri4, sq20, hex6, tri13
  *   worldToHost  {x, y} in the board's world units -> CSS pixels from the
  *                host's padding box; call refresh() when it changes
  *   onState      "starting" | "searching" | "locked" | "stopped" | "error:<kind>"
@@ -50,7 +50,7 @@
   const STEADY_MS = 200; // the drawing brightens again once the view is steady this long
   const READ_FAILS_MAX = 10; // frames in a row that could not be read before saying so
   const FIND_ANNOUNCE_MS = 1000; // "show the corners" is read out only if it lasts
-  const MESH_2D_MAX = 320; // Canvas 2D: more cell triangles than this use a coarser mesh
+  const MESH_2D_MAX = 400; // Canvas 2D: more cell triangles than this use a coarser mesh
   const MESH_2D_STEPS = 12; // that mesh's squares per side
   const SEAM_PX = 0.75; // Canvas 2D triangles overlap by this much, so no seam shows
   const CROP_PAD = 4; // frame pixels kept around the board for the texture

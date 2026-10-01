@@ -330,7 +330,8 @@
     },
   };
 
-  const BOARD_RADIUS_DEFAULT = 4;
+  // The hub card's board: radius 5, side 6 (91 cells).
+  const BOARD_RADIUS_DEFAULT = 5;
 
   const latticeHex = {
     name: "hexagonal",
