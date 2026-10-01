@@ -30,7 +30,7 @@
 
   const BOARD_IDS = ["sq9", "hex5", "tri4", "sq20", "hex6", "tri10"];
   // Big boards whose cells get small on A4: the page suggests A3 for them.
-  const A3_BOARDS = ["hex6", "tri10"];
+  const A3_BOARDS = ["sq20", "hex6", "tri10"];
   // No prototype: a paper name read from the URL or from storage ("constructor",
   // "__proto__", ...) can only match a real entry.
   const PAPERS = Object.freeze(Object.assign(Object.create(null), { A4: { w: 210, h: 297 }, A3: { w: 297, h: 420 } }));
@@ -722,8 +722,11 @@
     };
 
     const params = new URLSearchParams(win.location.search);
+    // A sheet printed before names its own id (old links, old QR codes):
+    // its kit is the one of the board it is played on today.
+    const asked = FenceBoards.current(params.get("board"));
     const state = {
-      board: BOARD_IDS.indexOf(params.get("board")) >= 0 ? params.get("board") : "sq9",
+      board: asked !== null && BOARD_IDS.indexOf(asked) >= 0 ? asked : "sq9",
       paper: null,
       backs: store.get("fc-kit-backs") !== "0",
       // the pieces of an A3 board printed alone on A4, at the board's scale
