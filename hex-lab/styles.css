@@ -1,14 +1,14 @@
 :root {
+  --accent: #70ff7a;
+  --accent-soft: rgba(112,255,122,0.14);
+  --accent-glow: rgba(112,255,122,0.40);
   --bg: #060c18;
   --line: #244263;
   --text: #d9f7ff;
   --cyan: #3fd8ff;
   --green: #2df6ac;
   --rose: #ff6e9d;
-  /* Reserve ~110px on each side of the viewport so the piece chips placed
-     outward of the hex perimeter (≈ 50–60px from the board edge) stay inside
-     the screen.  Heights subtract toolbar (~36) + action bar (~32) + margins. */
-  --board-size: min(calc(100dvh - 90px), calc(100vw - 130px));
+  --board-size: min(calc(100dvh - 150px), calc(100vw - 130px));
   --hex-window-path: polygon(23% 7%, 77% 7%, 96% 50%, 77% 93%, 23% 93%, 4% 50%);
 }
 
@@ -89,19 +89,20 @@ body {
   color: var(--text);
 }
 
+/* ---------- page: area on top, the board with its pieces, the board group
+   at the bottom (erase on the left, the camera on the right) ---------- */
+
 .app-shell {
   width: 100%;
   height: 100dvh;
-  display: grid;
-  place-items: center;
-  padding: 6px;
+  padding: 6px 10px;
 }
 
 .main-stage {
   width: 100%;
   height: 100%;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 6px;
   justify-items: center;
 }
@@ -110,15 +111,37 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 36px;
+  min-height: 44px;
 }
+
+/* The area, and the button that measures it: one quiet pill. */
+.measure {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--cyan) 50%, transparent);
+  background: linear-gradient(180deg, rgba(28, 143, 176, 0.30), rgba(22, 91, 114, 0.22));
+  box-shadow: inset 0 0 10px rgba(63, 216, 255, 0.16), 0 0 16px rgba(63, 216, 255, 0.16);
+  color: #ddfbff;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.measure svg { width: 18px; height: 18px; flex: 0 0 auto; color: var(--cyan); }
+.measure:active { transform: scale(0.97); }
+.measure:focus-visible { outline: 2px solid rgba(63, 216, 255, 0.6); outline-offset: 2px; }
 
 .play-zone {
   width: 100%;
   min-height: 0;
   display: grid;
-  justify-items: center;
+  place-items: center;
 }
 
 .board-wrap {
@@ -136,6 +159,8 @@ body {
   touch-action: none;
 }
 
+/* Wide screens: the pieces sit around the board (app.js places them),
+   rotate and flip at the top left of the board's square. */
 .piece-ring {
   position: absolute;
   inset: 0;
@@ -145,8 +170,8 @@ body {
 }
 
 .piece-chip {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   border: 1px solid var(--line);
   background: #172238;
@@ -154,12 +179,15 @@ body {
   place-items: center;
   padding: 0;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition: transform 0.12s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.piece-chip:hover {
-  transform: translate(-50%, -50%) translateY(-1px);
-  border-color: color-mix(in srgb, var(--cyan) 60%, white);
+@media (hover: hover) {
+  .piece-chip-ring:hover {
+    transform: translate(-50%, -50%) translateY(-1px);
+    border-color: color-mix(in srgb, var(--cyan) 60%, white);
+  }
 }
 
 .piece-chip.is-selected {
@@ -175,8 +203,8 @@ body {
 }
 
 .piece-chip svg {
-  width: 27px;
-  height: 27px;
+  width: 34px;
+  height: 34px;
   overflow: visible;
 }
 
@@ -190,100 +218,12 @@ body {
 
 .board-actions {
   position: absolute;
-  left: 50%;
-  bottom: 2%;
-  transform: translateX(-50%);
+  left: 0;
+  top: 0;
   z-index: 7;
   display: flex;
-  gap: 6px;
+  gap: 8px;
   transition: opacity 0.18s ease;
-}
-
-.chip {
-  appearance: none;
-  border: 1px solid var(--line);
-  border-radius: 11px;
-  background: #1a2740;
-  color: #d8f7ff;
-  font-size: 0.92rem;
-  font-weight: 700;
-  height: 34px;
-  padding: 0 12px;
-  display: inline-grid;
-  place-items: center;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.chip:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(63, 216, 255, 0.34);
-}
-
-.icon-chip {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border-radius: 999px;
-  color: #9dcde3;
-}
-
-.icon-chip svg {
-  width: 16px;
-  height: 16px;
-  fill: currentColor;
-}
-
-.action-chip {
-  height: 28px;
-  padding: 0 10px;
-  font-size: 0.78rem;
-  color: #9ad8ed;
-}
-
-.chip-primary {
-  border-color: color-mix(in srgb, var(--cyan) 56%, white);
-  background: color-mix(in srgb, var(--cyan) 20%, #15263f);
-  box-shadow:
-    inset 0 0 8px rgba(63, 216, 255, 0.19),
-    0 0 12px rgba(63, 216, 255, 0.16);
-}
-
-.chip-area {
-  min-width: 110px;
-  border-color: color-mix(in srgb, var(--cyan) 54%, white);
-  color: #ddfbff;
-  background: linear-gradient(180deg, rgba(28, 143, 176, 0.36), rgba(22, 91, 114, 0.34));
-  box-shadow:
-    inset 0 0 10px rgba(63, 216, 255, 0.2),
-    0 0 20px rgba(63, 216, 255, 0.22);
-}
-
-.chip-danger {
-  border-color: color-mix(in srgb, var(--rose) 50%, white);
-  color: #ffe6ef;
-  background: color-mix(in srgb, var(--rose) 20%, #2a1f32);
-}
-
-.board-camera-chip[hidden] {
-  display: none;
-}
-
-.board-camera-chip {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 8;
-  pointer-events: auto;
-}
-
-.board-camera-chip.is-active {
-  color: #d8fbff;
-  border-color: color-mix(in srgb, var(--cyan) 70%, white);
-  background: color-mix(in srgb, var(--cyan) 22%, #1a2740);
-  box-shadow:
-    inset 0 0 10px rgba(63, 216, 255, 0.22),
-    0 0 14px rgba(63, 216, 255, 0.3);
 }
 
 /* The camera window covers the board drawing exactly. */
@@ -303,73 +243,121 @@ body {
   pointer-events: none;
 }
 
+/* The board group, as wide as the board. */
+.boardbar {
+  width: min(100%, calc(var(--board-size) + 120px));
+  min-height: 56px;
+}
+
+/* The citation sits in the board group, between erase and the camera. */
 .side-brand {
-  position: absolute;
-  left: 50%;
-  bottom: -22px;
-  transform: translateX(-50%);
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
   text-decoration: none;
   color: rgba(134, 233, 255, 0.55);
   font-weight: 600;
   font-size: 0.7rem;
   letter-spacing: 0.05em;
-  white-space: nowrap;
-  pointer-events: auto;
-  z-index: 7;
 }
 
-@media (max-width: 900px) {
+/* ---------- narrow or portrait screens: rotate and flip at the top left,
+   the board, the pieces in two rows under it ---------- */
+
+@media (max-width: 700px), (max-aspect-ratio: 4/5) {
   :root {
-    /* Mobile: smaller chips (36×36 vs 40×40) need slightly less side margin.
-       Still reserve ~85px on each side so chips fit. */
-    --board-size: min(calc(100dvh - 132px), calc(100vw - 96px));
+    --board-size: min(calc(100vw - 20px), calc(100dvh - 356px));
   }
 
   .app-shell {
-    padding: 6px;
+    padding: 6px 10px max(8px, env(safe-area-inset-bottom));
   }
 
-  .main-stage {
-    gap: 6px;
-  }
-
+  /* The area pill shares the top strip with the language switch. */
   .toolbar {
-    gap: 6px;
-    min-height: 34px;
+    width: 100%;
+    justify-content: flex-start;
+    padding-right: 172px;
   }
 
-  .chip {
-    font-size: 0.8rem;
-    height: 30px;
-    padding: 0 9px;
+  .play-zone {
+    align-content: center;
   }
 
-  .chip-area {
-    min-width: 84px;
+  .board-wrap {
+    height: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "acts"
+      "board"
+      "tray"
+      "brand";
+    column-gap: 8px;
+    row-gap: 10px;
+    align-items: center;
   }
 
-  .piece-chip {
-    width: 36px;
-    height: 36px;
+  #board-canvas {
+    grid-area: board;
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+
+  /* The camera window covers the board's grid cell exactly. */
+  .camera-host {
+    grid-area: board;
+    inset: 0;
+  }
+
+  .piece-ring {
+    grid-area: tray;
+    position: static;
+    inset: auto;
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
+    gap: 8px;
+    pointer-events: auto;
+  }
+
+  .piece-chip-ring {
+    position: static;
+    transform: none;
+    width: 100%;
+    height: auto;
+    max-width: 58px;
+    aspect-ratio: 1 / 1;
+    justify-self: center;
+    border-radius: 10px;
   }
 
   .piece-chip svg {
-    width: 24px;
-    height: 24px;
+    width: 90%;
+    height: 90%;
   }
 
   .board-actions {
-    bottom: 1%;
+    grid-area: acts;
+    position: static;
+    justify-self: start;
   }
 
   .side-brand {
-    display: none;
+    grid-area: brand;
+    position: static;
+    transform: none !important;
+    justify-self: center;
+    font-size: 0.66rem;
+  }
+
+  .boardbar {
+    width: min(100%, var(--board-size));
   }
 }
 
-/* Narrow phones: the toolbar starts under the language switch. */
-@media (max-width: 600px) {
-  .app-shell {
-    padding-top: 50px;
+@media (max-width: 700px), (max-aspect-ratio: 4/5) {
+  .side-brand {
+    font-size: 0.62rem;
+    line-height: 1.35;
   }
 }

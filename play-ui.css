@@ -1,0 +1,164 @@
+/* Fence Challenge · the play controls shared by the three labs.
+ *
+ * Around every board:
+ *   - rotate and flip lead the play area at its top left, above the board
+ *     and the pieces, in the same place as on the hub cards;
+ *   - the board group (.boardbar): erase alone on the left, the camera on the
+ *     right, the camera the largest control of the page.
+ * Every control is a 44 x 44 px (or larger) touch box, at least 8 px from the
+ * next one; the ring drawn inside it can be smaller (--ink), so quiet
+ * controls stay discreet. */
+
+.ctl {
+  --ring: rgba(255, 255, 255, 0.2);
+  --fill: rgba(255, 255, 255, 0.045);
+  --fg: rgba(255, 255, 255, 0.9);
+  --ink: 3px;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ctl[hidden] { display: none !important; }
+.ctl::before {
+  content: "";
+  position: absolute;
+  inset: var(--ink);
+  border-radius: inherit;
+  border: 1px solid var(--ring);
+  background: var(--fill);
+  transition: border-color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+}
+.ctl > * { position: relative; }
+.ctl svg { width: 20px; height: 20px; display: block; }
+@media (hover: hover) {
+  .ctl:hover::before { border-color: rgba(255, 255, 255, 0.42); background: rgba(255, 255, 255, 0.09); }
+  .ctl.cam:hover::before { border-color: var(--accent, #2ff3ff); background: var(--fill); filter: brightness(1.2); }
+}
+.ctl:active::before { transform: scale(0.93); }
+.ctl:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.65); outline-offset: 1px; }
+
+/* Quiet: status and help, drawn small inside their touch box. */
+.ctl.quiet {
+  --ink: 8px;
+  --ring: rgba(255, 255, 255, 0.13);
+  --fill: transparent;
+  --fg: rgba(255, 255, 255, 0.58);
+  font-size: 13px;
+}
+.ctl.quiet svg { width: 16px; height: 16px; }
+
+/* Erase: quiet, and it asks for a second tap (play-ui.js). Armed, it turns
+   rose and shakes once; it disarms by itself after a moment. */
+.ctl.erase { --fg: rgba(255, 255, 255, 0.5); }
+.ctl.erase.is-armed {
+  --ring: rgba(255, 95, 143, 0.95);
+  --fill: rgba(255, 95, 143, 0.2);
+  --fg: #ff9cbc;
+  animation: ctlArm 0.34s ease-in-out;
+}
+.ctl.erase.is-armed::before { box-shadow: 0 0 14px rgba(255, 95, 143, 0.45); }
+@keyframes ctlArm {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(3px); }
+  75% { transform: translateX(-2px); }
+}
+
+/* The camera: the one bright control. Off, an accent outline; on, filled,
+   with a pulsing dot, so its state reads from across a table. */
+.ctl.cam {
+  --ink: 0px;
+  --ring: var(--accent, #2ff3ff);
+  --fill: var(--accent-soft, rgba(47, 243, 255, 0.14));
+  --fg: var(--accent, #2ff3ff);
+  width: 76px;
+  height: 56px;
+  border-radius: 28px;
+}
+.ctl.cam::before {
+  border-width: 1.5px;
+  box-shadow: 0 0 18px var(--accent-glow, rgba(47, 243, 255, 0.4)), inset 0 0 14px var(--accent-soft, rgba(47, 243, 255, 0.14));
+}
+.ctl.cam svg { width: 28px; height: 28px; }
+.ctl.cam[aria-pressed="true"] { --fill: var(--accent, #2ff3ff); --fg: #07060a; }
+.ctl.cam[aria-pressed="true"]::before { box-shadow: 0 0 26px var(--accent-glow, rgba(47, 243, 255, 0.4)); }
+.ctl.cam[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  right: 14px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #ff2d55;
+  box-shadow: 0 0 0 2px var(--accent, #2ff3ff), 0 0 10px #ff2d55;
+  animation: camLive 1.3s ease-in-out infinite;
+}
+@keyframes camLive { 50% { opacity: 0.35; } }
+
+/* Locked or not yet possible. */
+.ctl[aria-disabled="true"], .ctl.locked { opacity: 0.32; filter: grayscale(0.6); }
+
+/* The board group: erase far left, the camera far right. */
+.boardbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.boardbar .bar-gap { flex: 1 1 auto; }
+
+/* Language switch: three 44 x 44 px touch boxes, 8 px apart; the chosen
+   language keeps its small yellow pill. */
+.langSel { gap: 8px; padding: 0 4px; }
+.langSel button {
+  position: relative;
+  z-index: 0;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: transparent;
+  -webkit-tap-highlight-color: transparent;
+}
+.langSel button[aria-pressed="true"] { background: transparent; }
+.langSel button[aria-pressed="true"]::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 11px 3px;
+  border-radius: 999px;
+  background: #ffd24a;
+}
+
+/* The credit link: a 44 px tall touch box, never closer than 16 px to the
+   camera. */
+.side-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+}
+.boardbar .side-brand { margin: 0 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ctl.erase.is-armed, .ctl.cam[aria-pressed="true"]::after { animation: none; }
+}

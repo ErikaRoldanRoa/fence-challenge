@@ -65,6 +65,7 @@ const dom = {
   cameraChip: document.getElementById("camera-chip"),
   cameraHost: document.getElementById("camera-host"),
   sideBrand: document.querySelector(".side-brand"),
+  boardbar: document.querySelector(".boardbar"),
   status: document.getElementById("status"),
 };
 
@@ -452,7 +453,8 @@ function buildPiecePreviewSvg(type) {
   }
   const width = maxX - minX;
   const height = maxY - minY;
-  const scale = 24 / Math.max(width, height, 0.0001);
+  // The piece fills most of its chip, so its cells stay large on a phone.
+  const scale = 31 / Math.max(width, height, 0.0001);
   const offsetX = 17 - ((minX + maxX) * 0.5) * scale;
   const offsetY = 17 - ((minY + maxY) * 0.5) * scale;
 
@@ -774,6 +776,16 @@ function computeEnclosedArea() {
 // two lower slanted sides, and the board shrinks or moves down only as much
 // as the ring needs.
 function resizeCanvas() {
+  // Narrow screens: the pieces sit in rows under the board (styles.css),
+  // the board takes the width the stylesheet gives it.
+  if (piecesInRows()) {
+    const wrap = dom.boardWrap;
+    wrap.style.width = "";
+    wrap.style.height = "";
+    wrap.style.marginTop = "";
+    drawAtSize();
+    return;
+  }
   for (const mode of ["edges3", "edges5"]) {
     state.ringMode = mode;
     fitBoard();
@@ -832,29 +844,41 @@ function drawAtSize() {
   if (camera.view && typeof camera.view.refresh === "function") camera.view.refresh();
 }
 
-function ringItems() {
-  const items = [...dom.tray.querySelectorAll(".piece-chip")];
-  if (!dom.cameraChip.hidden) items.push(dom.cameraChip);
-  return items;
+// True when the stylesheet lays the pieces in rows under the board.
+function piecesInRows() {
+  return getComputedStyle(dom.tray).position === "static";
 }
 
-// How far the chips reach past the screen sides, below the screen, and up
-// into the toolbar; room = free space under the board for moving it down.
+function ringItems() {
+  return [...dom.tray.querySelectorAll(".piece-chip")];
+}
+
+// The lowest point the ring may reach: the top of the board group (erase and
+// the camera), or the bottom of the screen.
+function ringFloor() {
+  const vh = window.innerHeight;
+  const bar = dom.boardbar ? dom.boardbar.getBoundingClientRect() : null;
+  return (bar && bar.height > 0 ? Math.min(vh, bar.top) : vh) - EDGE_GAP;
+}
+
+// How far the chips (and rotate and flip, at the top left) reach past the
+// screen sides, below the floor, and up into the toolbar; room = free space
+// under the board for moving it down.
 function ringOverflow() {
   const vw = document.documentElement.clientWidth;
-  const vh = window.innerHeight;
+  const floor = ringFloor();
   const top = dom.toolbar.getBoundingClientRect().bottom + EDGE_GAP;
   let side = 0, below = 0, above = 0, lowest = -Infinity;
-  for (const el of ringItems()) {
+  for (const el of [...ringItems(), dom.actions]) {
     const b = el.getBoundingClientRect();
     if (b.width === 0) continue;
     side = Math.max(side, EDGE_GAP - b.left, b.right - (vw - EDGE_GAP));
-    below = Math.max(below, b.bottom - (vh - EDGE_GAP));
+    below = Math.max(below, b.bottom - floor);
     above = Math.max(above, top - b.top);
     lowest = Math.max(lowest, b.bottom);
   }
   lowest = Math.max(lowest, dom.boardWrap.getBoundingClientRect().bottom);
-  return { side, below, above, room: vh - EDGE_GAP - lowest };
+  return { side, below, above, room: floor - lowest };
 }
 
 // The ring fits when every chip is on screen, below the toolbar, and clear of
@@ -885,7 +909,16 @@ function layoutPieceRing() {
   if (!boardHex || rect.width === 0) {
     return;
   }
-  layoutCameraChip(rect, boardHex);
+  if (piecesInRows()) {
+    for (const el of [...dom.tray.querySelectorAll(".piece-chip-ring"), dom.sideBrand]) {
+      if (!el) continue;
+      el.style.left = "";
+      el.style.top = "";
+      el.style.transform = "";
+      el.style.transformOrigin = "";
+    }
+    return;
+  }
   layoutSideBrand(rect, boardHex);
 
   const chips = [...dom.tray.querySelectorAll(".piece-chip-ring")];
@@ -931,7 +964,7 @@ function layoutPieceRing() {
   } else {
     // Evenly along the five sides that do not face the rotate and flip
     // buttons, from low on the lower left side, over the top, to low on the
-    // lower right side; the top right corner is left free for the camera chip.
+    // lower right side.
     const chipClearance = 8;
     const along = (a, b, tt) => ({ x: a.x + (b.x - a.x) * tt, y: a.y + (b.y - a.y) * tt });
     const path = [
@@ -948,12 +981,8 @@ function layoutPieceRing() {
       lens.push(Math.hypot(path[i + 1].x - path[i].x, path[i + 1].y - path[i].y));
       total += lens[i];
     }
-    // The camera chip takes the place of one more chip at the top right corner.
-    const withCamera = !dom.cameraChip.hidden;
-    const step = total / (chips.length + (withCamera ? 1 : 0));
-    const skip = withCamera ? Math.round((lens[0] + lens[1] + lens[2]) / step - 0.5) : -1;
+    const step = total / chips.length;
     for (let k = 0; ordered.length < chips.length; k += 1) {
-      if (k === skip) continue;
       let d = (k + 0.5) * step;
       let i = 0;
       while (i < lens.length - 1 && d > lens[i]) {
@@ -984,11 +1013,10 @@ function layoutPieceRing() {
   });
 }
 
-// The controls that sit on the board itself (camera chip, rotate and flip),
-// as boxes in canvas pixels.
+// The controls next to the ring (rotate and flip), as boxes in canvas pixels.
 function ringObstacles(rect) {
   const boxes = [];
-  for (const el of [dom.cameraChip, dom.actions]) {
+  for (const el of [dom.actions]) {
     if (!el || el.hidden) continue;
     const b = el.getBoundingClientRect();
     if (b.width === 0) continue;
@@ -1028,29 +1056,6 @@ function clearObstacles(spots, half, boxes) {
       }
     }
   });
-}
-
-function layoutCameraChip(rect = dom.canvas.getBoundingClientRect(), boardHex = getBoardHexVerticesCss()) {
-  if (!boardHex) {
-    return;
-  }
-  const topRightVertex = boardHex.topRight;
-  const center = {
-    x: (boardHex.left.x + boardHex.right.x) * 0.5,
-    y: (boardHex.topLeft.y + boardHex.bottomLeft.y) * 0.5,
-  };
-  const vx = topRightVertex.x - center.x;
-  const vy = topRightVertex.y - center.y;
-  const len = Math.hypot(vx, vy) || 1;
-  const outward = 28;
-  const x = topRightVertex.x + (vx / len) * outward;
-  const y = topRightVertex.y + (vy / len) * outward;
-  const chipHalf = 16;
-  const clampedX = clamp(x, chipHalf, rect.width - chipHalf);
-  const clampedY = clamp(y, chipHalf, rect.height - chipHalf);
-  dom.cameraChip.style.left = `${clampedX}px`;
-  dom.cameraChip.style.top = `${clampedY}px`;
-  dom.cameraChip.style.right = "auto";
 }
 
 function layoutSideBrand(rect = dom.canvas.getBoundingClientRect(), boardHex = getBoardHexVerticesCss()) {

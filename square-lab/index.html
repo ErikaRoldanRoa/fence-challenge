@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="../fonts/manrope.css" />
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="../camera/inboard.css" />
+    <link rel="stylesheet" href="../play-ui.css" />
     <script src="../i18n.js"></script>
     <script src="i18n.js"></script>
   </head>
@@ -38,46 +39,28 @@
             title="Cite: Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025, doi:10.1515/dmvm-2025-0056"
           >Fence Challenge · LRMR25 · Dr. Erika Roldán</a>
           <div class="game-toolbar">
-            <div class="game-controls">
-              <button id="detect-game-area" class="btn btn-primary" type="button" data-i18n="sq.measure">Measure area</button>
-              <div class="metrics" id="game-metrics">
-                <div><span data-i18n="sq.areaPrefix">Area:</span> <strong id="area-value">0</strong></div>
-              </div>
-              <button id="clear-board" class="btn btn-danger" type="button" data-i18n="sq.clear">Clear</button>
-            </div>
+            <button id="detect-game-area" class="measure" type="button" data-i18n-aria-label="sq.measure" aria-label="Measure area" data-i18n-title="sq.measure" title="Measure area"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 4h16v16H4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-dasharray="3 2.2"/><path d="M8.5 8.5h7v7h-7z" fill="currentColor" opacity="0.85"/></svg><span id="game-metrics"><span data-i18n="sq.areaPrefix">Area:</span> <strong id="area-value">0</strong></span></button>
           </div>
           <aside class="dock-panel">
             <div id="piece-tray" class="piece-tray piece-dock" role="group" data-i18n-aria-label="sq.pieceDock.aria" aria-label="Piece tray"></div>
             <div class="piece-actions">
-              <button id="rotate-piece" class="btn" type="button" aria-keyshortcuts="R" data-i18n-title="sq.rotateTip" title="Rotate the selected piece (R key)"><span data-i18n="sq.rotate">Rotate</span> (R)</button>
-              <button id="flip-piece" class="btn" type="button" aria-keyshortcuts="F" data-i18n-title="sq.flipTip" title="Flip the selected piece (F key)"><span data-i18n="sq.flip">Flip</span> (F)</button>
+              <button id="rotate-piece" class="ctl act" type="button" aria-keyshortcuts="R" data-i18n-aria-label="sq.rotate" aria-label="Rotate" data-i18n-title="sq.rotateTip" title="Rotate the selected piece (R key)"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18.4 8.6A7.2 7.2 0 1 0 19.2 13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M19.6 4.4v4.8h-4.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <button id="flip-piece" class="ctl act" type="button" aria-keyshortcuts="F" data-i18n-aria-label="sq.flip" aria-label="Flip" data-i18n-title="sq.flipTip" title="Flip the selected piece (F key)"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 8.5h14.5M15.5 5l3.5 3.5-3.5 3.5M19.5 15.5H5M8.5 12 5 15.5 8.5 19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </div>
           </aside>
           <div class="game-main">
             <div class="board-stage">
-              <button
-                id="camera-toggle"
-                class="camera-chip board-camera-chip"
-                type="button"
-                aria-pressed="false"
-                data-i18n-aria-label="sq.cam.open"
-                data-i18n-title="sq.cam.open"
-                aria-label="Open the camera on the board"
-                title="Open the camera on the board"
-                hidden
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path
-                    d="M9 5.5 10.2 4h3.6L15 5.5h2.7A2.3 2.3 0 0 1 20 7.8v8.5a2.3 2.3 0 0 1-2.3 2.2H6.3A2.3 2.3 0 0 1 4 16.3V7.8a2.3 2.3 0 0 1 2.3-2.3H9Zm3 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 1.8a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4Z"
-                  />
-                </svg>
-              </button>
               <canvas id="game-board" width="900" height="900" role="img" data-i18n-aria-label="sq.board.aria" aria-label="Fence board, 20 by 20 cells"></canvas>
               <div class="board-camera-frame" id="board-camera-frame" hidden>
                 <div class="board-camera-host" id="board-camera-host"></div>
               </div>
             </div>
           </div>
+          <footer class="boardbar game-bar">
+            <button id="clear-board" class="ctl quiet erase" type="button" data-arm="common.clearConfirm" data-i18n-aria-label="sq.clear" aria-label="Clear" data-i18n-title="sq.clear" title="Clear"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 6.8h15M9.5 6.6V4.4h5v2.2M6.6 6.9l.9 12.7h9l.9-12.7M10.2 10.4v6M13.8 10.4v6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <span class="bar-gap"></span>
+            <button id="camera-toggle" class="ctl cam" type="button" aria-pressed="false" data-i18n-aria-label="sq.cam.open" data-i18n-title="sq.cam.open" aria-label="Open the camera on the board" title="Open the camera on the board" hidden><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
+          </footer>
         </div>
         <p class="visually-hidden" id="game-status" role="status" aria-live="polite"></p>
       </section>
@@ -91,6 +74,7 @@
     <script defer src="../camera/boards.js"></script>
     <script defer src="../camera/core.js"></script>
     <script defer src="../camera/inboard.js"></script>
+    <script defer src="../play-ui.js"></script>
     <script defer src="app.js"></script>
   </body>
 </html>

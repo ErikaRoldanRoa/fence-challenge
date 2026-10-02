@@ -355,8 +355,8 @@
       button.setAttribute("data-piece-id", piece.id);
 
       const preview = document.createElement("canvas");
-      preview.width = 42;
-      preview.height = 42;
+      preview.width = 64;
+      preview.height = 64;
       preview.className = "piece-preview";
       preview.setAttribute("aria-hidden", "true");
       drawPiecePreview(preview, piece);
@@ -385,7 +385,9 @@
     const cells = normalizeCells(piece.cells);
     const maxX = Math.max(...cells.map((cell) => cell.x));
     const maxY = Math.max(...cells.map((cell) => cell.y));
-    const cellSize = 7;
+    // Every piece at the same scale, the longest (5 cells) filling the chip.
+    const cellSize = Math.floor((canvas.width - 4) / 5);
+    canvas.dataset.cell = String(cellSize);
     const pieceWidth = (maxX + 1) * cellSize;
     const pieceHeight = (maxY + 1) * cellSize;
     const ox = Math.floor((canvas.width - pieceWidth) / 2);
@@ -398,6 +400,7 @@
       ctx.fillStyle = piece.color;
       ctx.fillRect(px + 1, py + 1, cellSize - 2, cellSize - 2);
       ctx.strokeStyle = "rgba(255,255,255,0.4)";
+      ctx.lineWidth = 1.5;
       ctx.strokeRect(px + 1.5, py + 1.5, cellSize - 3, cellSize - 3);
     }
   }
@@ -653,12 +656,14 @@
     const paddingX = (Number.parseFloat(panelStyles.paddingLeft) || 0) + (Number.parseFloat(panelStyles.paddingRight) || 0);
     const paddingY = (Number.parseFloat(panelStyles.paddingTop) || 0) + (Number.parseFloat(panelStyles.paddingBottom) || 0);
 
-    const toolbarHeight = Math.ceil(toolbar.getBoundingClientRect().height) || 38;
-    const rowGap = 6;
+    const toolbarHeight = Math.ceil(toolbar.getBoundingClientRect().height) || 44;
+    const bar = panel.querySelector(".game-bar");
+    const barHeight = bar ? Math.ceil(bar.getBoundingClientRect().height) || 56 : 0;
+    const rowGap = 8;
     const safetyPad = 6;
     const sideWidth = labelWidth + dockWidth + dockGap * 2;
     const availableWidth = panelRect.width - paddingX - sideWidth - safetyPad;
-    const availableHeight = panelRect.height - paddingY - toolbarHeight - rowGap - safetyPad;
+    const availableHeight = panelRect.height - paddingY - toolbarHeight - barHeight - rowGap * 2 - safetyPad;
     const boardSize = clamp(Math.floor(Math.min(availableWidth, availableHeight)), 320, 1200);
 
     panel.style.setProperty("--board-size", `${boardSize}px`);

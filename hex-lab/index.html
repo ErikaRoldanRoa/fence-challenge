@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="../fonts/manrope.css" />
   <link rel="stylesheet" href="./styles.css" />
   <link rel="stylesheet" href="../camera/inboard.css" />
+  <link rel="stylesheet" href="../play-ui.css" />
   <script src="../i18n.js"></script>
   <script src="./i18n.js"></script>
   <meta name="theme-color" content="#07060a" />
@@ -24,42 +25,39 @@
     <main class="main-stage">
       <h1 class="visually-hidden" data-i18n="hx.h1">Challenge 3 · 7 tetrahexes</h1>
       <header class="toolbar">
-        <button id="detect-area" class="chip chip-primary" type="button" data-i18n="common.detectArea">Measure area</button>
-        <div id="area-chip" class="chip chip-area">Area: 0</div>
-        <button id="clear-board" class="chip chip-danger" type="button" data-i18n="common.clear">Clear</button>
+        <button id="detect-area" class="measure" type="button" data-i18n-aria-label="common.detectArea" aria-label="Measure area" data-i18n-title="common.detectArea" title="Measure area"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 4h16v16H4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-dasharray="3 2.2"/><path d="M8.5 8.5h7v7h-7z" fill="currentColor" opacity="0.85"/></svg><span id="area-chip">Area: 0</span></button>
       </header>
 
       <section class="play-zone">
         <section class="board-wrap" id="board-wrap">
-          <button id="camera-chip" class="chip icon-chip board-camera-chip" type="button" aria-pressed="false" data-i18n-aria-label="hx.cameraOpen" aria-label="Open the camera on the board" data-i18n-title="hx.cameraOpen" title="Open the camera on the board">
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path
-                d="M9 5.5 10.2 4h3.6L15 5.5h2.7A2.3 2.3 0 0 1 20 7.8v8.5a2.3 2.3 0 0 1-2.3 2.2H6.3A2.3 2.3 0 0 1 4 16.3V7.8a2.3 2.3 0 0 1 2.3-2.3H9Zm3 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 1.8a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4Z"
-              />
-            </svg>
-          </button>
-          <div id="piece-tray" class="piece-ring" role="group" data-i18n-aria-label="hx.tray.ariaLabel" aria-label="Tetrahex pieces"></div>
-          <div class="board-actions">
-            <button id="rotate-piece" class="chip action-chip" type="button" data-i18n="hx.rotate" data-i18n-title="hx.rotateTip" title="Rotate the selected piece (R key)">Rotate (R)</button>
-            <button id="flip-piece" class="chip action-chip" type="button" data-i18n="hx.flip" data-i18n-title="hx.flipTip" title="Flip the selected piece (F key)">Flip (F)</button>
-          </div>
           <canvas id="board-canvas" width="1200" height="980" role="img" data-i18n-aria-label="hx.board.ariaLabel" aria-label="Hexagon board"></canvas>
           <div id="camera-host" class="camera-host" hidden></div>
-          <a
+          <div id="piece-tray" class="piece-ring" role="group" data-i18n-aria-label="hx.tray.ariaLabel" aria-label="Tetrahex pieces"></div>
+          <div class="board-actions">
+            <button id="rotate-piece" class="ctl act" type="button" aria-keyshortcuts="R" data-i18n-aria-label="hx.rotateTipTouch" aria-label="Rotate the selected piece" data-i18n-title="hx.rotateTip" title="Rotate the selected piece (R key)"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18.4 8.6A7.2 7.2 0 1 0 19.2 13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M19.6 4.4v4.8h-4.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <button id="flip-piece" class="ctl act" type="button" aria-keyshortcuts="F" data-i18n-aria-label="hx.flipTipTouch" aria-label="Flip the selected piece" data-i18n-title="hx.flipTip" title="Flip the selected piece (F key)"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 8.5h14.5M15.5 5l3.5 3.5-3.5 3.5M19.5 15.5H5M8.5 12 5 15.5 8.5 19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </section>
+      </section>
+
+      <footer class="boardbar">
+        <button id="clear-board" class="ctl quiet erase" type="button" data-arm="common.clearConfirm" data-i18n-aria-label="common.clear" aria-label="Clear" data-i18n-title="common.clear" title="Clear"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 6.8h15M9.5 6.6V4.4h5v2.2M6.6 6.9l.9 12.7h9l.9-12.7M10.2 10.4v6M13.8 10.4v6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <a
             class="side-brand"
             href="https://doi.org/10.1515/dmvm-2025-0056"
             target="_blank"
             rel="noreferrer"
             data-i18n-title="hx.cite.title" title="Cite: Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025, doi:10.1515/dmvm-2025-0056"
             data-i18n="hx.cite.text">Polyhex Fence · LRMR25 · Dr. Erika Roldán</a>
-        </section>
-      </section>
+        <button id="camera-chip" class="ctl cam" type="button" hidden aria-pressed="false" data-i18n-aria-label="hx.cameraOpen" aria-label="Open the camera on the board" data-i18n-title="hx.cameraOpen" title="Open the camera on the board"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
+      </footer>
       <p id="status" class="visually-hidden" role="status" aria-live="polite"></p>
     </main>
   </div>
 
   <script src="../lattice-hex.js"></script>
   <script src="../fence-analysis.js"></script>
+  <script src="../play-ui.js"></script>
   <script src="./app.js"></script>
   <script defer src="../vendor/js-aruco2/cv.js"></script>
   <script defer src="../vendor/js-aruco2/aruco.js"></script>

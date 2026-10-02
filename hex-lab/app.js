@@ -211,6 +211,7 @@ const dom = {
   areaChip: document.getElementById("area-chip"),
   cameraChip: document.getElementById("camera-chip"),
   cameraHost: document.getElementById("camera-host"),
+  boardbar: document.querySelector(".boardbar"),
   status: document.getElementById("status"),
 };
 
@@ -642,6 +643,12 @@ function resizeCanvas() {
   wrap.style.width = "";
   wrap.style.height = "";
   wrap.style.marginTop = "";
+  // Narrow screens: the pieces sit in rows under the board (styles.css),
+  // the board takes the width the stylesheet gives it.
+  if (piecesInRows()) {
+    drawAtSize();
+    return;
+  }
   let size = wrap.getBoundingClientRect().width;
   for (let pass = 0; pass < 6; pass += 1) {
     drawAtSize();
@@ -679,26 +686,38 @@ function drawAtSize() {
   if (camera.view && typeof camera.view.refresh === "function") camera.view.refresh();
 }
 
-// How far the chips reach past the screen sides, below the screen, and up
-// into the toolbar; room = free space under the board for moving it down.
-function ringOverflow() {
-  const items = [...dom.tray.querySelectorAll(".piece-chip")];
-  if (!dom.cameraChip.hidden) items.push(dom.cameraChip);
-  const vw = document.documentElement.clientWidth;
+// True when the stylesheet lays the pieces in rows under the board.
+function piecesInRows() {
+  return getComputedStyle(dom.tray).position === "static";
+}
+
+// The lowest point the ring may reach: the top of the board group (erase and
+// the camera), or the bottom of the screen.
+function ringFloor() {
   const vh = window.innerHeight;
+  const bar = dom.boardbar ? dom.boardbar.getBoundingClientRect() : null;
+  return (bar && bar.height > 0 ? Math.min(vh, bar.top) : vh) - EDGE_GAP;
+}
+
+// How far the chips (and rotate and flip, at the top left) reach past the
+// screen sides, below the floor, and up into the toolbar; room = free space
+// under the board for moving it down.
+function ringOverflow() {
+  const items = [...dom.tray.querySelectorAll(".piece-chip"), dom.actions];
+  const vw = document.documentElement.clientWidth;
+  const floor = ringFloor();
   const top = dom.toolbar.getBoundingClientRect().bottom + EDGE_GAP;
   let side = 0, below = 0, above = 0, lowest = -Infinity;
   for (const el of items) {
     const b = el.getBoundingClientRect();
     if (b.width === 0) continue;
     side = Math.max(side, EDGE_GAP - b.left, b.right - (vw - EDGE_GAP));
-    below = Math.max(below, b.bottom - (vh - EDGE_GAP));
+    below = Math.max(below, b.bottom - floor);
     above = Math.max(above, top - b.top);
     lowest = Math.max(lowest, b.bottom);
   }
-  const wrapBottom = dom.boardWrap.getBoundingClientRect().bottom + 24;
-  lowest = Math.max(lowest, wrapBottom);
-  return { side, below, above, room: vh - EDGE_GAP - lowest };
+  lowest = Math.max(lowest, dom.boardWrap.getBoundingClientRect().bottom);
+  return { side, below, above, room: floor - lowest };
 }
 
 // World point to CSS pixels inside the canvas box (also the camera window).
@@ -756,6 +775,10 @@ function boardCorners() {
 function layoutPieceRing() {
   const chips = [...dom.tray.querySelectorAll(".piece-chip")];
   if (chips.length === 0) return;
+  if (piecesInRows()) {
+    chips.forEach((chip) => { chip.style.left = ""; chip.style.top = ""; });
+    return;
+  }
   const rect = dom.canvas.getBoundingClientRect();
   if (rect.width === 0) return;
   const c = boardCorners();
@@ -777,11 +800,10 @@ function layoutPieceRing() {
   });
 }
 
-// The controls that sit on the board itself (camera chip, rotate and flip),
-// as boxes in canvas pixels.
+// The controls next to the ring (rotate and flip), as boxes in canvas pixels.
 function ringObstacles(rect) {
   const boxes = [];
-  for (const el of [dom.cameraChip, dom.actions]) {
+  for (const el of [dom.actions]) {
     if (!el || el.hidden) continue;
     const b = el.getBoundingClientRect();
     if (b.width === 0) continue;
@@ -986,7 +1008,8 @@ function buildPiecePreviewSvg(type) {
     polys.push(verts);
   }
   const w = maxX - minX, h = maxY - minY;
-  const scale = 24 / Math.max(w, h, 0.001);
+  // The piece fills most of its chip, so its cells stay large on a phone.
+  const scale = 31 / Math.max(w, h, 0.001);
   const ox = 17 - ((minX + maxX) / 2) * scale;
   const oy = 17 - ((minY + maxY) / 2) * scale;
   const ps = polys
@@ -1046,7 +1069,7 @@ function renderStatus() {
 
 /* ---------- camera inside the board ---------- */
 
-// The camera chip turns the board itself into the camera window: the printed
+// The camera button turns the board itself into the camera window: the printed
 // board is straightened onto the drawn one, cell on cell, and once the view
 // is steady its pieces are put on this board and measured. Tapping the chip
 // again closes the camera; the pieces stay.

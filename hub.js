@@ -458,6 +458,8 @@
     if (!btn) return;
     const on = camOpen === card;
     btn.setAttribute("aria-pressed", on ? "true" : "false");
+    const article = btn.closest("article");
+    if (article) article.classList.toggle("camLive", on);
     btn.setAttribute("data-i18n-aria-label", on ? "hub.camClose" : "hub.camAria");
     btn.setAttribute("aria-label", i18n.t(on ? "hub.camClose" : "hub.camAria"));
     btn.setAttribute("data-i18n-data-tip", on ? "hub.camClose" : "hub.camTip");
@@ -553,6 +555,48 @@
       });
     });
   }
+
+  // The "more" menu of each card: the rarely used chips (help, unlock, print,
+  // erase). It opens over the card's title, never over the board. One menu
+  // open at a time; a tap outside, Escape, or using print or erase closes it.
+  // The help and unlock chips only show their tip, so the menu stays open
+  // around them. Erase acts on its second tap (play-ui.js).
+  const menus = [...document.querySelectorAll(".icon.more")].map((btn) => ({
+    btn,
+    menu: document.getElementById(btn.getAttribute("aria-controls")),
+  })).filter((m) => m.menu);
+  function setMenu(entry, open) {
+    entry.menu.hidden = !open;
+    entry.btn.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  function closeMenus(except) {
+    menus.forEach((m) => { if (m !== except && !m.menu.hidden) setMenu(m, false); });
+  }
+  menus.forEach((m) => {
+    m.btn.addEventListener("click", () => {
+      const open = m.menu.hidden;
+      closeMenus(m);
+      setMenu(m, open);
+      if (open) {
+        const first = m.menu.querySelector("[tabindex='0'],a[href],button");
+        if (first && m.btn.matches(":focus-visible")) first.focus();
+      }
+    });
+    m.menu.addEventListener("click", (e) => {
+      if (e.target.closest("a[href],button")) setMenu(m, false);
+    });
+  });
+  document.addEventListener("pointerdown", (e) => {
+    if (!e.target.closest || e.target.closest(".pMenu,.icon.more")) return;
+    closeMenus(null);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    const open = menus.find((m) => !m.menu.hidden);
+    if (!open) return;
+    setMenu(open, false);
+    if (open.menu.contains(document.activeElement)) open.btn.focus();
+  });
 
   // Tooltips: one popover shared by every [data-tip], shown on mouse hover,
   // on keyboard focus, or on a tap for elements that do nothing else.

@@ -1,4 +1,6 @@
 :root {
+  --cam-accent: #ff3bd4;
+  --cam-glow: rgba(255, 59, 212, 0.45);
   --bg: #0d1117;
   --panel: #151b24;
   --panel-soft: #1a2330;
@@ -95,17 +97,13 @@ body {
   width: min(1600px, 100%);
   margin: 0 auto;
   height: 100dvh;
-  min-height: 100dvh;
   padding: 6px;
   display: grid;
   grid-template-rows: minmax(0, 1fr);
-  gap: 0;
 }
 
 .panel {
   display: none;
-  grid-template-columns: 360px 1fr;
-  gap: 8px;
 }
 
 .panel.active {
@@ -115,29 +113,30 @@ body {
 }
 
 #panel-game {
-  --label-width: 30px;
-  --dock-width: 58px;
-  --dock-gap: 8px;
-  --board-size: min(calc(100dvh - 34px), calc(100vw - 180px));
-  --toolbar-height: 38px;
+  --label-width: 44px;
+  --dock-width: 104px;
+  --dock-gap: 12px;
+  --board-size: min(calc(100dvh - 140px), calc(100vw - 200px));
+  --toolbar-height: 44px;
+  --bar-height: 56px;
   grid-template-columns: 1fr;
   align-items: center;
   justify-items: center;
 }
 
-/* Pieces on the left, the board in the middle, the credit on the right,
-   Measure / area / Clear above the board. */
+/* Wide screens: rotate and flip at the top left, above the pieces (two
+   columns) on the left, the board in the middle, the credit on the right;
+   the area above the board, erase and the camera under it. */
 .game-layout {
   display: grid;
   grid-template-columns: var(--dock-width) var(--board-size) var(--label-width);
-  grid-template-rows: var(--toolbar-height) var(--board-size);
+  grid-template-rows: var(--toolbar-height) var(--board-size) var(--bar-height);
   grid-template-areas:
-    ". toolbar ."
-    "dock main label";
+    "acts toolbar ."
+    "dock main label"
+    ". bar .";
   column-gap: var(--dock-gap);
-  row-gap: 6px;
-  width: calc(var(--label-width) + var(--dock-width) + (var(--dock-gap) * 2) + var(--board-size));
-  margin: 0;
+  row-gap: 8px;
   align-items: start;
   justify-content: center;
   align-content: center;
@@ -166,36 +165,56 @@ body {
   color: #d7f8ff;
 }
 
-.game-main {
-  grid-area: main;
-  width: var(--board-size);
-  height: var(--board-size);
-  min-height: 0;
-  display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 6px;
-  justify-items: center;
-  align-items: start;
-}
-
 .game-toolbar {
   grid-area: toolbar;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  width: var(--board-size);
+  width: 100%;
+  height: 100%;
 }
 
-.game-controls {
-  display: flex;
-  gap: 10px;
+/* The area, and the button that measures it: one pill. */
+.measure {
+  display: inline-flex;
   align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px 0 12px;
+  border-radius: 999px;
+  border: 1px solid #2c6786;
+  background: radial-gradient(circle at 50% 30%, rgba(0, 209, 255, 0.30), rgba(18, 27, 40, 0.9));
+  box-shadow: inset 0 0 16px rgba(0, 209, 255, 0.2), 0 0 14px rgba(0, 209, 255, 0.24);
+  color: #e6fdff;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.game-controls .btn {
-  padding: 5px 10px;
-  font-size: 0.8rem;
+.measure svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.measure strong {
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(0, 209, 255, 0.38), 0 0 20px rgba(179, 136, 255, 0.3);
+}
+
+.measure:active {
+  transform: scale(0.97);
+}
+
+.game-main {
+  grid-area: main;
+  width: var(--board-size);
+  height: var(--board-size);
+  min-height: 0;
 }
 
 /* ---------- board and camera ---------- */
@@ -208,41 +227,13 @@ body {
   overflow: hidden;
   width: var(--board-size);
   height: var(--board-size);
+  border-radius: 12px;
+  transition: box-shadow 0.2s ease;
 }
 
-.camera-chip {
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--panel-soft);
-  color: #9fbed2;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  padding: 0;
-}
-
-.camera-chip svg {
-  width: 18px;
-  height: 18px;
-  fill: currentColor;
-}
-
-.camera-chip.active {
-  color: #d8fbff;
-  border-color: color-mix(in srgb, var(--accent) 70%, white);
-  background: color-mix(in srgb, var(--accent) 22%, var(--panel-soft));
-  box-shadow:
-    inset 0 0 10px rgba(0, 209, 255, 0.22),
-    0 0 12px rgba(0, 209, 255, 0.28);
-}
-
-.board-camera-chip {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 6;
+/* While the camera films, the board wears the camera's colour. */
+body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
+  box-shadow: 0 0 0 2px var(--cam-accent), 0 0 26px var(--cam-glow);
 }
 
 /* The camera view: laid by app.js exactly over the drawn 20 x 20 grid. */
@@ -273,66 +264,36 @@ body {
 /* ---------- pieces ---------- */
 
 .dock-panel {
-  grid-area: dock;
-  width: var(--dock-width);
-  height: var(--board-size);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  padding: 2px 0 0;
-}
-
-.piece-tray {
-  display: grid;
-  gap: 5px;
-  max-height: calc(var(--board-size) - 126px);
-  overflow: visible;
-  padding-right: 0;
-  justify-items: center;
-  align-content: start;
+  display: contents;
 }
 
 .piece-dock {
-  grid-template-columns: 1fr;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-right: 0;
+  grid-area: dock;
+  width: var(--dock-width);
+  display: grid;
+  grid-template-columns: repeat(2, 48px);
+  gap: 8px;
+  justify-content: center;
 }
 
 .piece-btn {
   display: grid;
-  grid-template-columns: 1fr;
+  place-items: center;
   border: 1px solid var(--line);
   background: var(--panel-soft);
   color: var(--text);
   border-radius: 10px;
-  padding: 4px;
+  padding: 0;
   cursor: pointer;
-  width: 44px;
-  height: 44px;
-  align-items: center;
-  justify-items: center;
-}
-
-.piece-actions {
-  display: grid;
-  gap: 5px;
-  align-content: start;
-}
-
-.piece-actions .btn {
-  padding: 6px 3px;
-  font-size: 0.72rem;
+  width: 48px;
+  height: 48px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .piece-preview {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(0, 0, 0, 0.18);
+  width: 88%;
+  height: 88%;
+  display: block;
 }
 
 .piece-btn.selected {
@@ -344,189 +305,94 @@ body {
   opacity: 0.5;
 }
 
-/* ---------- buttons and the area ---------- */
-
-.btn {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--panel-soft);
-  color: #c7f7ff;
-  font-weight: 700;
-  padding: 10px;
-  cursor: pointer;
-  text-shadow: 0 0 8px rgba(0, 209, 255, 0.25);
+.piece-actions {
+  grid-area: acts;
+  align-self: center;
+  justify-self: start;
+  display: flex;
+  gap: 8px;
 }
 
-.btn:hover {
-  border-color: color-mix(in srgb, var(--accent) 45%, white);
+/* ---------- the board group ---------- */
+
+.game-bar {
+  --accent: var(--cam-accent);
+  --accent-soft: rgba(255, 59, 212, 0.14);
+  --accent-glow: var(--cam-glow);
+  grid-area: bar;
+  align-self: center;
+  width: 100%;
 }
 
-.btn-primary {
-  background: color-mix(in srgb, var(--accent) 28%, var(--panel-soft));
-  border-color: color-mix(in srgb, var(--accent) 60%, white);
-  box-shadow: 0 0 10px rgba(0, 209, 255, 0.25);
-}
-
-.btn-danger {
-  background: color-mix(in srgb, var(--danger) 22%, var(--panel-soft));
-  border-color: color-mix(in srgb, var(--danger) 58%, white);
-  text-shadow: 0 0 8px rgba(255, 95, 143, 0.22);
-}
-
-.metrics {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px;
-  color: var(--muted);
-  background: #121923;
-  display: grid;
-  gap: 5px;
-  font-size: 0.9rem;
-}
-
-#game-metrics {
-  min-width: 106px;
-  text-align: center;
-  white-space: nowrap;
-  color: #e6fdff;
-  border-color: #2c6786;
-  background: radial-gradient(circle at 50% 30%, rgba(0, 209, 255, 0.42), rgba(18, 27, 40, 0.9));
-  box-shadow:
-    inset 0 0 22px rgba(0, 209, 255, 0.28),
-    0 0 18px rgba(0, 209, 255, 0.38);
-}
-
-#game-metrics strong {
-  color: #ffffff;
-  text-shadow:
-    0 0 12px rgba(0, 209, 255, 0.38),
-    0 0 20px rgba(179, 136, 255, 0.3);
-}
-
-/* ---------- one column: toolbar, board, pieces, credit ---------- */
+/* ---------- narrow or portrait screens: area on top, rotate and flip, the
+   board, the pieces in two rows, then erase and the camera, then the
+   credit ---------- */
 
 @media (max-width: 1180px) {
-  html,
-  body {
-    overflow: auto;
-    overflow-x: hidden;
-  }
-
-  #panel-game,
-  #panel-game.panel.active {
-    justify-items: stretch;
-    align-items: start;
-  }
-
-  .panel {
-    grid-template-columns: 1fr;
+  #panel-game {
+    --board-size: min(calc(100vw - 20px), calc(100dvh - 384px));
+    align-items: center;
   }
 
   .app-shell {
-    height: auto;
-    min-height: 100dvh;
-    grid-template-rows: auto;
-    padding: 8px;
-  }
-
-  .camera-chip {
-    width: 32px;
-    height: 32px;
+    padding: 6px 10px max(8px, env(safe-area-inset-bottom));
   }
 
   .game-layout {
-    width: 100%;
-    max-width: 100%;
+    width: var(--board-size);
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: auto auto auto auto auto auto;
     grid-template-areas:
       "toolbar"
+      "acts"
       "main"
       "dock"
+      "bar"
       "label";
-    height: auto;
-    justify-items: center;
-    row-gap: 8px;
+    row-gap: 10px;
     column-gap: 0;
+    align-content: space-between;
+    height: 100%;
   }
 
   .side-brand {
     writing-mode: horizontal-tb;
     transform: none;
     justify-self: center;
-    align-self: start;
-    font-size: 0.68rem;
-  }
-
-  .game-main {
-    width: min(100%, calc(100vw - 18px));
-    max-width: 100%;
-    height: auto;
-  }
-
-  .game-controls {
-    flex-wrap: nowrap;
-    justify-content: center;
+    font-size: 0.66rem;
   }
 
   .game-toolbar {
-    width: min(100%, calc(100vw - 18px));
-    max-width: 100%;
-  }
-
-  #game-metrics {
-    min-width: 90px;
-    width: auto;
-    margin-left: 0;
-  }
-
-  .dock-panel {
-    height: auto;
-    width: min(100%, calc(100vw - 18px));
-    max-width: 100%;
-    justify-content: flex-start;
+    justify-content: center;
   }
 
   .piece-dock {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    max-height: none;
     width: 100%;
-    max-width: 100%;
     min-width: 0;
-    gap: 8px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
-  .piece-dock .piece-btn {
-    flex: 0 0 44px;
+  .piece-btn {
+    width: 100%;
+    height: auto;
+    max-width: 58px;
+    aspect-ratio: 1 / 1;
+    justify-self: center;
   }
 
   .piece-actions {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .board-stage {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1 / 1;
-  }
-
-  .board-camera-chip {
-    top: 7px;
-    right: 7px;
+    justify-self: start;
   }
 }
 
-/* Phones: the language switch gets its own strip above the toolbar, so it
-   never covers Clear. */
+/* Phones: the area pill shares the top strip with the language switch. */
 @media (max-width: 640px) {
   .langSel {
     position: absolute;
   }
 
-  .app-shell {
-    padding-top: 50px;
+  .game-toolbar {
+    justify-content: flex-start;
+    padding-right: 172px;
   }
 }
