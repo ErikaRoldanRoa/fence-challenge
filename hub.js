@@ -627,6 +627,9 @@
     let top = /below/.test(pos) ? below : above;
     if (top === below && below + h > vh - m && above >= m) top = above;
     if (top === above && above < m) top = below;
+    // In the open menu the tip goes over the title, never down onto the board.
+    const menu = el.closest(".pMenu");
+    if (menu) top = Math.max(m, menu.getBoundingClientRect().top - 10 - h);
     tip.style.left = Math.round(left) + "px";
     tip.style.top = Math.round(top) + "px";
   }
