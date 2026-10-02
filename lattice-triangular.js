@@ -380,8 +380,8 @@
     },
   };
 
-  // The four free pentiamonds, named as in LRMR25 (Abbildung 9: a maximal
-  // pentiamond fence encloses 5). The hub's triangle card plays with all four.
+  // The four free pentiamonds, named as in LRMR25 (Abbildung 9). The hub's
+  // triangle card plays with all four.
   const PENTIAMOND_CELLS = {
     pbar: [[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 1, 1], [0, 2, 0]],
     crook: [[0, 0, 0], [0, 0, 1], [0, 1, 0], [0, 1, 1], [1, 1, 0]],
