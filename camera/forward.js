@@ -4,8 +4,12 @@
  * played in its own place, a hub card or a lab: this page goes there at once,
  * and that place opens its camera inside the board (index.html#camera=<card>,
  * <lab>/index.html#camera). A sheet printed before goes to the board it is
- * played on today. camera/ without a board, and a board with no place of its
- * own, stay on this page; so does camera/?board=<id>&stay.
+ * played on today, when it is played with the same pieces. camera/ without a
+ * board, a board with no place of its own and an older sheet played with
+ * other pieces (tri4-v1, the hexiamond triangle sheet) stay on this page; so
+ * does camera/?board=<id>&stay. The QR code of tri4-v1 reads tri4, the id of
+ * the sheet that replaced it: it leads to the Mission III card, whose camera
+ * hands a tri4-v1 sheet it sees back to this page (hub.js, onSheet).
  *
  * The first script of the page, before any stylesheet, so that the forward
  * waits for nothing else. The table is the registry's answer
@@ -26,7 +30,6 @@
     tri10: "../triangle-lab/index.html#camera",
     "sq9-v1": HUB + "sq",
     hex4: HUB + "hex",
-    "tri4-v1": HUB + "tri",
     "sq20-v1": "../square-lab/index.html#camera",
     "hex6-v1": "../hex-lab/index.html#camera",
     tri13: "../triangle-lab/index.html#camera",

@@ -552,6 +552,16 @@
           const found = checkPlacements(card, PAPER_BOARD[card], placements);
           if (found) placeOnCard(found);
         },
+        // An older sheet of this card played with other pieces (the first
+        // triangle sheet, with hexiamonds): the camera page reads and judges
+        // it, its camera started at once.
+        onSheet: (sheetId) => {
+          const B = window.FenceBoards;
+          if (c.session !== session || !B || B.current(sheetId) !== PAPER_BOARD[card] || B.handsOverTo(sheetId)) return;
+          closeCam(card);
+          try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+          window.location.assign("camera/?board=" + encodeURIComponent(sheetId) + "&start");
+        },
         onState: (state) => {
           if (c.session !== session || typeof state !== "string") return;
           if (state === "searching" || state === "locked") auto = false;

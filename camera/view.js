@@ -1033,13 +1033,9 @@
     if (!def) return "";
     if (def.geometry === "measured") return t("cam.board.classic", { w: def.spec.size, h: def.spec.size });
     if (def.lattice === "square") return t("cam.board.square", { w: def.spec.size, h: def.spec.size });
-    let n = Boards.geometry(boardId).board.cells.length;
-    try {
-      n = new Intl.NumberFormat(window.i18n ? window.i18n.get() : "en").format(n);
-    } catch (e) {
-      n = String(n);
-    }
-    return t("cam.board.cells", { lattice: t("cam.lattice." + def.lattice), n });
+    // side: hexagons along one edge (radius + 1), triangle edges along one side
+    const n = def.lattice === "hexagonal" ? def.spec.radius + 1 : def.spec.hexSide;
+    return t("cam.board.side", { lattice: t("cam.lattice." + def.lattice), n });
   }
 
   // Name the board for a moment, so the player knows the right sheet is seen.
@@ -1776,6 +1772,9 @@
     setMode("start");
     translate();
     checkCameras();
+    // camera/?board=<id>&start: a board's own place handed this sheet over
+    // with the camera already allowed; the camera starts at once.
+    if (params.has("start") && !framed && cameraApi && Camera && !homeScreenIOS) startCamera();
 
     // Let the camera reader get the hinted board ready while the player reads
     // the sheet, once the page has painted.

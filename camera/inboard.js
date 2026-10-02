@@ -24,6 +24,10 @@
  *   onState      "starting" | "searching" | "locked" | "stopped" | "error:<kind>"
  *                (kind: denied, busy, none, unsupported, reader)
  *   onClose      runs once, when the window has closed
+ *   onSheet      (sheetId) runs once per sheet, when the marks of another
+ *                registered sheet are read clearly and its pieces cannot be
+ *                handed to this board (an older sheet of the same place
+ *                played with other pieces, for instance)
  *   announce     false when the page reads these states out itself (by default
  *                the window has its own polite line for screen readers)
  * Callbacks always run after open() has returned.
@@ -87,7 +91,7 @@
       "cam.s.find": "Montre les quatre carrés des coins.",
       "cam.boardFound": "Plateau reconnu" + NB + ":",
       "cam.board.square": "Carrés · {w} × {h}",
-      "cam.board.cells": "{lattice} · {n} cases",
+      "cam.board.side": "{lattice} · côté {n}",
       "cam.lattice.hexagonal": "Hexagones",
       "cam.lattice.triangular": "Triangles",
       "cam.s.stopped": "La caméra est éteinte. Touche «" + NB + "Reprendre" + NB + "» pour la rallumer.",
@@ -105,7 +109,7 @@
       "cam.s.find": "Zeig alle vier Eckquadrate.",
       "cam.boardFound": "Spielfeld erkannt:",
       "cam.board.square": "Quadrate · {w} × {h}",
-      "cam.board.cells": "{lattice} · {n} Felder",
+      "cam.board.side": "{lattice} · Seite {n}",
       "cam.lattice.hexagonal": "Sechsecke",
       "cam.lattice.triangular": "Dreiecke",
       "cam.s.stopped": "Die Kamera ist aus. Tipp auf „Weiter“, um sie wieder einzuschalten.",
@@ -123,7 +127,7 @@
       "cam.s.find": "Show all four corner squares.",
       "cam.boardFound": "Board found:",
       "cam.board.square": "Squares · {w} × {h}",
-      "cam.board.cells": "{lattice} · {n} cells",
+      "cam.board.side": "{lattice} · side {n}",
       "cam.lattice.hexagonal": "Hexagons",
       "cam.lattice.triangular": "Triangles",
       "cam.s.stopped": "The camera is off. Tap Resume to turn it back on.",
@@ -241,13 +245,9 @@
     const def = B && B.get(boardId);
     if (!def) return "";
     if (def.lattice === "square") return t("cam.board.square", { w: def.spec.size, h: def.spec.size });
-    let n = B.geometry(boardId).board.cells.length;
-    try {
-      n = new Intl.NumberFormat(language()).format(n);
-    } catch (e) {
-      n = String(n);
-    }
-    return t("cam.board.cells", { lattice: t("cam.lattice." + def.lattice), n });
+    // side: hexagons along one edge (radius + 1), triangle edges along one side
+    const n = def.lattice === "hexagonal" ? def.spec.radius + 1 : def.spec.hexSide;
+    return t("cam.board.side", { lattice: t("cam.lattice." + def.lattice), n });
   }
 
   /* ------------------------------------------------------ board geometry */
@@ -502,7 +502,7 @@
       const fn = o[name];
       if (typeof fn !== "function") return;
       later(() => {
-        if (name === "onPlacements" && s.closed) return;
+        if ((name === "onPlacements" || name === "onSheet") && s.closed) return;
         try {
           fn(...args);
         } catch (e) {
@@ -917,6 +917,14 @@
         s.outside = !!result.sheetId && offBoard(result.occupied);
       }
       const q = result.quality || {};
+      const clear = !!result.H && result.fresh && q.markerCount >= LOCK_MARKS && (q.reprojError == null || q.reprojError <= LOCK_ERROR);
+      if (!ours && clear && result.boardId && B && B.get && B.get(result.boardId)) {
+        if (!s.sheetsSeen) s.sheetsSeen = new Set();
+        if (!s.sheetsSeen.has(result.boardId)) {
+          s.sheetsSeen.add(result.boardId);
+          call("onSheet", result.boardId);
+        }
+      }
       const usable =
         ours && !!result.H &&
         (s.locked || (result.fresh && q.markerCount >= LOCK_MARKS && (q.reprojError == null || q.reprojError <= LOCK_ERROR)));
