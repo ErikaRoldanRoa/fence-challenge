@@ -325,6 +325,8 @@ body {
     grid-template-columns: repeat(var(--cols, 6), minmax(0, 1fr));
     gap: 8px;
     pointer-events: auto;
+    /* two rows of chips are kept from the start: filling the tray moves nothing */
+    min-height: calc(2 * min(58px, (var(--board-size) - 40px) / 6) + 8px);
   }
 
   .piece-chip-ring {

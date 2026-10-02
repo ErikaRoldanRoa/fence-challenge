@@ -671,6 +671,7 @@ function computeEnclosedArea() {
 // down a little, when the ring of chips would leave the screen or run into
 // the controls above it.
 function resizeCanvas() {
+  placeBrand();
   const wrap = dom.boardWrap;
   wrap.style.width = "";
   wrap.style.height = "";
@@ -696,6 +697,28 @@ function resizeCanvas() {
     size = next;
     wrap.style.width = `${size}px`;
     wrap.style.height = `${size}px`;
+  }
+}
+
+// The citation: in the board group on wide screens, under the pieces when
+// they sit in rows (the "brand" area of the stylesheet), where it has room
+// for one line.
+function placeBrand() {
+  const brand = document.querySelector(".side-brand");
+  if (!brand || !dom.boardbar) return;
+  if (!placeBrand.gap) {
+    placeBrand.gap = document.createElement("span");
+    placeBrand.gap.className = "bar-gap"; // keeps the camera at the right end
+  }
+  const barGap = placeBrand.gap;
+  if (piecesInRows()) {
+    if (brand.parentElement !== dom.boardWrap) {
+      dom.boardbar.replaceChild(barGap, brand);
+      dom.boardWrap.appendChild(brand);
+    }
+  } else if (brand.parentElement !== dom.boardbar) {
+    if (barGap.parentElement === dom.boardbar) dom.boardbar.replaceChild(brand, barGap);
+    else dom.boardbar.insertBefore(brand, dom.cameraChip);
   }
 }
 

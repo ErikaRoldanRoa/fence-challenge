@@ -113,7 +113,7 @@
   box-shadow: 0 0 0 2px var(--accent, #2ff3ff), 0 0 10px #ff2d55;
   animation: camLive 1.3s ease-in-out infinite;
 }
-@keyframes camLive { 50% { opacity: 0.35; } }
+@keyframes camLive { 50% { opacity: 0.6; } }
 /* Opened from a printed sheet's QR code, a camera that could not start by
    itself waits for a tap: a ring pulses out of it. */
 .ctl.cam.is-ready:not([aria-pressed="true"])::before {

@@ -370,6 +370,8 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
     width: 100%;
     min-width: 0;
     grid-template-columns: repeat(6, minmax(0, 1fr));
+    /* two rows of chips are kept from the start: filling the tray moves nothing */
+    min-height: calc(2 * min(58px, (var(--board-size) - 40px) / 6) + 8px);
   }
 
   .piece-btn {
