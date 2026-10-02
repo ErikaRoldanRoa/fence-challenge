@@ -352,3 +352,122 @@ body {
     width: min(100%, var(--board-size));
   }
 }
+
+/* ---------- phones held sideways: a top strip 56 px tall (rotate and flip
+   on the left, the area in the middle, back to the hub, print and the
+   language switch on the right); under it the board on the left, and on its
+   right the pieces in a grid, erase and the camera under them, the credit at
+   the bottom; as in the other two labs (app.js sizes the board and the chips,
+   the same query is in app.js) ---------- */
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .app-shell {
+    padding: 0;
+  }
+
+  .langSel {
+    top: 5px;
+  }
+
+  .toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 56px;
+    padding: 0 var(--sw-strip-right, 0px) 0 var(--sw-strip-left, 0px);
+    justify-content: center;
+    align-items: center;
+  }
+
+  .toolbar .measure {
+    align-self: center;
+  }
+
+  .board-wrap {
+    position: fixed;
+    left: 10px;
+    top: 64px;
+    width: var(--sw-board, min(calc(100dvh - 74px), 52vw));
+    height: var(--sw-board, min(calc(100dvh - 74px), 52vw));
+    display: block;
+    margin: 0;
+  }
+
+  #board-canvas {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+  }
+
+  .camera-host {
+    inset: 0;
+  }
+
+  .board-actions {
+    position: fixed;
+    left: 10px;
+    top: 6px;
+  }
+
+  .lab-nav {
+    position: fixed;
+    top: 6px;
+    right: 180px;
+  }
+
+  .piece-ring {
+    position: fixed;
+    inset: auto;
+    left: var(--sw-panel-left, calc(26px + min(calc(100dvh - 74px), 52vw)));
+    top: 64px;
+    display: grid;
+    grid-template-columns: repeat(var(--sw-cols, 6), var(--sw-chip, 44px));
+    grid-auto-rows: var(--sw-chip, 44px);
+    gap: 8px;
+    min-height: 0;
+    pointer-events: auto;
+  }
+
+  .piece-chip-ring {
+    position: static;
+    transform: none;
+    width: var(--sw-chip, 44px);
+    height: var(--sw-chip, 44px);
+    max-width: none;
+    border-radius: 10px;
+  }
+
+  .piece-chip svg {
+    width: 90%;
+    height: 90%;
+  }
+
+  .boardbar {
+    position: fixed;
+    left: var(--sw-panel-left, calc(26px + min(calc(100dvh - 74px), 52vw)));
+    top: var(--sw-bar-top, calc(100dvh - 126px));
+    width: var(--sw-panel-width, calc(100vw - 36px - min(calc(100dvh - 74px), 52vw)));
+    height: 56px;
+  }
+
+  /* The credit, centred under erase and the camera: one line when it fits,
+     else centred lines as wide as the room. */
+  .main-stage > .side-brand {
+    position: fixed;
+    left: calc(var(--sw-panel-left, calc(26px + min(calc(100dvh - 74px), 52vw))) + var(--sw-panel-width, calc(100vw - 36px - min(calc(100dvh - 74px), 52vw))) / 2);
+    bottom: 10px;
+    width: max-content;
+    max-width: var(--sw-panel-width, calc(100vw - 36px - min(calc(100dvh - 74px), 52vw)));
+    transform: translateX(-50%);
+    white-space: normal;
+    text-align: center;
+    text-wrap: balance;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) and (hover: hover) {
+  .piece-ring .piece-chip-ring:hover {
+    transform: translateY(-1px);
+  }
+}

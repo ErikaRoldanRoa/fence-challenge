@@ -26,6 +26,18 @@ const RING_EDGE_SLOTS = [0.18, 0.4, 0.62, 0.84];
 const EDGE_GAP = 4;
 // The least space between a chip and a control next to the ring.
 const CONTROL_GAP = 8;
+// When the ring only fits around a smaller board: the step, and the least
+// width of the drawn board.
+const RING_SHRINK_STEP = 2;
+const BOARD_MIN = 120;
+// Phones held sideways: the same query as in styles.css.
+const SIDEWAYS = window.matchMedia("(orientation: landscape) and (max-height: 500px)");
+// Sideways: the top strip, the space kept along the screen edges, between
+// the board and the pieces, between the chips, and between the board group
+// and the credit; the least chip, and the board group's height.
+const SW = { strip: 56, edge: 10, panelGap: 16, gap: 8, creditGap: 16, chip: 44, bar: 56 };
+// The smallest size ../play-ui.js gives the area's number.
+const AREA_NUM_MIN = 16;
 const ROTATE_60 = { reflect: false, rot: 1 };
 const REFLECT = { reflect: true, rot: 0 };
 
@@ -80,8 +92,15 @@ const state = {
   boardBounds: null,
   view: { scale: 1, offsetX: 0, offsetY: 0, width: 0, height: 0, dpr: 1 },
   // "edges3": the chips on the three upper sides; "edges5": also down the
-  // two lower slanted sides, when the upper sides are too short for them.
+  // two lower slanted sides, when the upper sides are too short for them;
+  // "edges5gap": as edges5, leaving out the stretch where a chip would come
+  // near rotate and flip.
   ringMode: "edges3",
+  // Extra room (CSS px) around the drawn board inside its square, when the
+  // ring only fits around a smaller board.
+  boardInset: 0,
+  // The board's six corners (world points), found once.
+  boardCorners: null,
   pieceTypes: [],
   pieceTypeMap: new Map(),
   selectedTypeId: null,
@@ -853,6 +872,13 @@ function computeEnclosedArea() {
 // two lower slanted sides, and the board shrinks or moves down only as much
 // as the ring needs.
 function resizeCanvas() {
+  state.boardInset = 0;
+  // Phones held sideways: the board on the left, the pieces in a grid on
+  // its right (styles.css).
+  if (sideways()) {
+    layoutSideways();
+    return;
+  }
   // Narrow screens: the pieces sit in rows under the board (styles.css),
   // the board takes the width the stylesheet gives it.
   if (piecesInRows()) {
@@ -868,6 +894,156 @@ function resizeCanvas() {
     fitBoard();
     if (ringFits()) return;
   }
+  // The five sides stay as they are while no chip comes near a control or
+  // another chip.
+  if (ringClear()) return;
+  shrinkForRing();
+}
+
+// A chip comes near a control or another chip: the board is drawn smaller
+// inside its square, step by step, until every chip keeps 8 px from the
+// controls and from the other chips, in the way that needs the least of it
+// (never below 120 px); at the same size, the ring all round before the ring
+// that leaves out the stretch by rotate and flip. Shrinking the square itself
+// would not help: rotate and flip sit on its corner and come closer with it.
+// When no size clears the ring, the one that comes nearest.
+function shrinkForRing() {
+  const wrap = dom.boardWrap;
+  // Each way of laying the ring, on the square fitBoard gives it; most: the
+  // largest extra room that keeps its drawn board at BOARD_MIN or more.
+  const ways = ["edges3", "edges5"].map((mode) => {
+    state.ringMode = mode;
+    fitBoard();
+    const box = dom.canvas.getBoundingClientRect();
+    return {
+      mode,
+      width: wrap.style.width,
+      height: wrap.style.height,
+      marginTop: wrap.style.marginTop,
+      most: Math.floor((Math.min(box.width, box.height) - 20 - BOARD_MIN) / 2),
+    };
+  });
+  ways.push({ ...ways[1], mode: "edges5gap" });
+  const lay = (way, inset, paint) => {
+    state.ringMode = way.mode;
+    wrap.style.width = way.width;
+    wrap.style.height = way.height;
+    wrap.style.marginTop = way.marginTop;
+    state.boardInset = inset;
+    drawAtSize(paint);
+  };
+  let best = { way: ways[1], inset: 0, room: ringRoom() };
+  const most = Math.max(...ways.map((way) => way.most));
+  for (let inset = 0; inset <= most; inset += RING_SHRINK_STEP) {
+    for (const way of ways) {
+      if (inset > way.most) continue;
+      lay(way, inset, false);
+      const room = ringRoom();
+      if (room >= CONTROL_GAP) {
+        lay(way, inset, true);
+        return;
+      }
+      if (room > best.room) best = { way, inset, room };
+    }
+  }
+  lay(best.way, best.inset, true);
+}
+
+/* ---------- phones held sideways ---------- */
+
+function sideways() {
+  return SIDEWAYS.matches;
+}
+
+// Top strip: rotate and flip on the left, the area pill in the middle, back
+// to the hub, print and the language switch on the right. Under it, the
+// board on the left in a square as tall as the room (at most 52 % of the
+// width); on its right the pieces in a grid of chips as large as fits, then
+// erase and the camera, then the credit at the bottom. When the chips would
+// fall under 44 px, the board gives up a little width.
+function layoutSideways() {
+  const root = document.documentElement.style;
+  const vw = document.documentElement.clientWidth;
+  const vh = window.innerHeight;
+  const wrap = dom.boardWrap;
+  wrap.style.width = "";
+  wrap.style.height = "";
+  wrap.style.marginTop = "";
+  const top = SW.strip + SW.gap;
+  const count = ringItems().length;
+  let board = Math.floor(Math.min(vh - top - SW.edge, 0.52 * vw));
+  let grid = null;
+  let height = 0;
+  let barTop = 0;
+  const lay = () => {
+    const left = SW.edge + board + SW.panelGap;
+    const width = vw - SW.edge - left;
+    root.setProperty("--sw-board", `${board}px`);
+    root.setProperty("--sw-panel-left", `${left}px`);
+    root.setProperty("--sw-panel-width", `${width}px`);
+    const brand = dom.sideBrand.getBoundingClientRect();
+    const floor = brand.height > 0 ? brand.top - SW.creditGap : vh - SW.edge;
+    barTop = Math.floor(floor - SW.bar);
+    height = barTop - SW.gap - top;
+    grid = chipGrid(count, width, height);
+  };
+  lay();
+  if (grid.size < SW.chip) {
+    // the widest board that leaves room for chips of 44 px in some grid
+    let roomier = 0;
+    for (let cols = 1; cols <= count; cols += 1) {
+      const rows = Math.ceil(count / cols);
+      if (rows * SW.chip + (rows - 1) * SW.gap > height) continue;
+      const width = cols * SW.chip + (cols - 1) * SW.gap;
+      roomier = Math.max(roomier, Math.min(board, Math.floor(vw - 2 * SW.edge - SW.panelGap - width)));
+    }
+    if (roomier > 0) {
+      board = Math.max(BOARD_MIN, roomier);
+      lay();
+    }
+  }
+  root.setProperty("--sw-chip", `${Math.max(SW.chip, grid.size)}px`);
+  root.setProperty("--sw-cols", String(grid.cols));
+  root.setProperty("--sw-bar-top", `${barTop}px`);
+  placeAreaPill(vw);
+  drawAtSize();
+}
+
+// The largest square chips that show all the pieces in width x height, 8 px
+// apart, and how many go in a row (the fewest that give that size).
+function chipGrid(count, width, height) {
+  let best = { size: 0, cols: Math.max(1, count) };
+  for (let cols = 1; cols <= count; cols += 1) {
+    const rows = Math.ceil(count / cols);
+    const size = Math.floor(Math.min((width + SW.gap) / cols - SW.gap, (height + SW.gap) / rows - SW.gap));
+    if (size > best.size) best = { size, cols };
+  }
+  return best;
+}
+
+// The area pill sits in the middle of the strip; it moves aside, just
+// enough, only where its number at its smallest, with room for three digits
+// as ../play-ui.js sizes it, would come closer than 8 px to flip or to back
+// to the hub. The toolbar's side padding centres it there.
+function placeAreaPill(vw) {
+  const root = document.documentElement.style;
+  root.removeProperty("--sw-strip-left");
+  root.removeProperty("--sw-strip-right");
+  const nav = dom.actions.querySelector(".lab-nav");
+  if (!nav) return;
+  const lo = dom.flipBtn.getBoundingClientRect().right + SW.gap;
+  const hi = nav.getBoundingClientRect().left - SW.gap;
+  const pill = dom.detectAreaBtn.getBoundingClientRect();
+  const num = dom.areaChip.getBoundingClientRect();
+  const px = parseFloat(getComputedStyle(dom.areaChip).fontSize) || AREA_NUM_MIN;
+  if (!pill.width || !num.width) return;
+  const digit = num.width / Math.max(1, dom.areaChip.textContent.length) / px;
+  const widest = pill.width - num.width + 3 * digit * AREA_NUM_MIN;
+  const middle = vw / 2;
+  const centre = hi - lo >= widest ? clamp(middle, lo + widest / 2, hi - widest / 2) : (lo + hi) / 2;
+  if (Math.abs(centre - middle) < 0.05) return;
+  if (centre < middle) root.setProperty("--sw-strip-right", `${Math.round((vw - 2 * centre) * 10) / 10}px`);
+  else root.setProperty("--sw-strip-left", `${Math.round((2 * centre - vw) * 10) / 10}px`);
 }
 
 function fitBoard() {
@@ -893,7 +1069,8 @@ function fitBoard() {
   }
 }
 
-function drawAtSize() {
+// paint: false lays everything out without drawing (while the ring is fitted).
+function drawAtSize(paint = true) {
   const dpr = Math.max(1, window.devicePixelRatio || 1);
   const rect = dom.canvas.getBoundingClientRect();
   const width = Math.max(1, Math.round(rect.width * dpr));
@@ -904,37 +1081,49 @@ function drawAtSize() {
     dom.canvas.height = height;
   }
 
-  const padding = 10 * dpr;
+  // sideways the board fills its box, keeping room for its outer line
+  const room = sideways() ? 2 : 10;
   const bounds = state.boardBounds;
   const boardWidth = bounds.maxX - bounds.minX;
   const boardHeight = bounds.maxY - bounds.minY;
-  const scale = Math.min(
+  const scaleFor = (padding) => Math.min(
     (width - padding * 2) / Math.max(boardWidth, 0.0001),
     (height - padding * 2) / Math.max(boardHeight, 0.0001)
   );
+  const scale = scaleFor((room + state.boardInset) * dpr);
   const offsetX = (width - boardWidth * scale) * 0.5 - bounds.minX * scale;
   const offsetY = (height - boardHeight * scale) * 0.5 - bounds.minY * scale;
 
-  state.view = { scale, offsetX, offsetY, width, height, dpr };
+  // full: the scale without the extra room (the board group keeps its width)
+  state.view = { scale, offsetX, offsetY, width, height, dpr, full: scaleFor(room * dpr) };
   placeBoardBar();
   layoutPieceRing();
+  if (!paint) return;
   render();
   if (camera.view && typeof camera.view.refresh === "function") camera.view.refresh();
 }
 
 // Wide screens: erase and the camera right under the drawn board (play-ui.js).
+// Phones, upright or sideways: where the stylesheet puts them.
 function placeBoardBar() {
   if (!window.FencePlay || !window.FencePlay.placeBar) return;
   let drawn = null;
-  if (!piecesInRows()) {
+  if (!piecesInRows() && !sideways()) {
     const rect = dom.canvas.getBoundingClientRect();
     const b = state.boardBounds;
-    const { scale, offsetX, offsetY, dpr } = state.view;
+    const { scale, offsetX, offsetY, dpr, full } = state.view;
     drawn = {
       left: rect.left + (b.minX * scale + offsetX) / dpr,
       right: rect.left + (b.maxX * scale + offsetX) / dpr,
       bottom: rect.top + (b.maxY * scale + offsetY) / dpr,
     };
+    // A board drawn smaller for the ring keeps the group as wide as the
+    // board at its full size, so the credit keeps its room.
+    if (state.boardInset > 0) {
+      const grow = ((b.maxX - b.minX) * (full - scale)) / dpr / 2;
+      drawn.left -= grow;
+      drawn.right += grow;
+    }
   }
   window.FencePlay.placeBar(dom.boardbar, dom.sideBrand, drawn);
 }
@@ -1000,6 +1189,56 @@ function ringFits() {
   return true;
 }
 
+// The controls the chips keep 8 px from: rotate, flip, the area (only its
+// strip: ../play-ui.js lets it reach lower only into free room), back to the
+// hub, print, the language switch, erase, the camera and the credit.
+function ringControls() {
+  const out = [];
+  const add = (el, tall) => {
+    if (!el || el.hidden) return;
+    const b = el.getBoundingClientRect();
+    if (b.width === 0 || b.height === 0) return;
+    out.push({ left: b.left, top: b.top, right: b.right, bottom: tall ? Math.min(b.bottom, b.top + tall) : b.bottom });
+  };
+  add(dom.rotateBtn);
+  add(dom.flipBtn);
+  add(dom.detectAreaBtn, dom.toolbar.getBoundingClientRect().height);
+  dom.actions.querySelectorAll(".lab-nav a").forEach((el) => add(el));
+  add(document.querySelector(".langSel"));
+  add(dom.clearBtn);
+  add(dom.cameraChip);
+  add(dom.sideBrand);
+  return out;
+}
+
+// The least space between a chip and a control or another chip (negative:
+// how deep two of them overlap); -Infinity when a chip leaves the screen.
+function ringRoom() {
+  const vw = document.documentElement.clientWidth;
+  const vh = window.innerHeight;
+  const boxes = ringItems().map((el) => el.getBoundingClientRect()).filter((b) => b.width > 0);
+  const controls = ringControls();
+  const apart = (a, b) => {
+    const dx = Math.max(a.left - b.right, b.left - a.right);
+    const dy = Math.max(a.top - b.bottom, b.top - a.bottom);
+    return dx < 0 && dy < 0 ? Math.max(dx, dy) : Math.hypot(Math.max(0, dx), Math.max(0, dy));
+  };
+  let room = Infinity;
+  for (let i = 0; i < boxes.length; i += 1) {
+    const a = boxes[i];
+    if (a.left < EDGE_GAP || a.top < EDGE_GAP || a.right > vw - EDGE_GAP || a.bottom > vh - EDGE_GAP) return -Infinity;
+    for (let j = i + 1; j < boxes.length; j += 1) room = Math.min(room, apart(a, boxes[j]));
+    for (const c of controls) room = Math.min(room, apart(a, c));
+  }
+  return room;
+}
+
+// The ring is clear when every chip is on screen and keeps 8 px from every
+// control and from every other chip.
+function ringClear() {
+  return ringRoom() >= CONTROL_GAP;
+}
+
 function layoutPieceRing() {
   if (!state.boardCellEntries.length) {
     return;
@@ -1010,7 +1249,7 @@ function layoutPieceRing() {
   if (!boardHex || rect.width === 0) {
     return;
   }
-  if (piecesInRows()) {
+  if (piecesInRows() || sideways()) {
     for (const el of dom.tray.querySelectorAll(".piece-chip-ring")) {
       el.style.left = "";
       el.style.top = "";
@@ -1084,9 +1323,9 @@ function layoutPieceRing() {
       lens.push(Math.hypot(path[i + 1].x - path[i].x, path[i + 1].y - path[i].y));
       total += lens[i];
     }
-    const step = total / chips.length;
-    for (let k = 0; ordered.length < chips.length; k += 1) {
-      let d = (k + 0.5) * step;
+    // The chip's place at distance dist along the path.
+    const spotAt = (dist) => {
+      let d = dist;
       let i = 0;
       while (i < lens.length - 1 && d > lens[i]) {
         d -= lens[i];
@@ -1097,14 +1336,34 @@ function layoutPieceRing() {
       const { edgeVec, edgeLen, normal } = outwardOf(a, b);
       const tt = lens[i] > 0 ? d / lens[i] : 0;
       const outwardPx = Math.abs(normal.x) * halfW + Math.abs(normal.y) * halfH + chipClearance;
-      ordered.push({
+      return {
         x: a.x + edgeVec.x * tt + normal.x * outwardPx,
         y: a.y + edgeVec.y * tt + normal.y * outwardPx,
         nx: normal.x,
         ny: normal.y,
         tx: edgeVec.x / edgeLen,
         ty: edgeVec.y / edgeLen,
-      });
+      };
+    };
+    if (state.ringMode === "edges5gap") {
+      // Evenly along the stretches of the path where a chip keeps 8 px from
+      // rotate and flip, one pixel at a time.
+      const half = Math.max(halfW, halfH);
+      const near = ringObstacles(rect);
+      const free = [];
+      for (let d = 0; d <= total; d += 1) {
+        const p = spotAt(d);
+        if (!nearBox(p, half, CONTROL_GAP, near)) free.push(d);
+      }
+      for (let k = 0; k < chips.length; k += 1) {
+        const at = free.length ? free[Math.min(free.length - 1, Math.floor(((k + 0.5) * free.length) / chips.length))] : ((k + 0.5) * total) / chips.length;
+        ordered.push(spotAt(at));
+      }
+    } else {
+      const step = total / chips.length;
+      for (let k = 0; ordered.length < chips.length; k += 1) {
+        ordered.push(spotAt((k + 0.5) * step));
+      }
     }
   }
   clearObstacles(ordered.slice(0, chips.length), Math.max(halfW, halfH), ringObstacles(rect));
@@ -1126,6 +1385,13 @@ function ringObstacles(rect) {
     boxes.push({ l: b.left - rect.left, t: b.top - rect.top, r: b.right - rect.left, b: b.bottom - rect.top });
   }
   return boxes;
+}
+
+// True when a chip centred on p (half its side) comes within gap of one of
+// these boxes.
+function nearBox(p, half, gap, boxes) {
+  const g = gap + 0.5;
+  return boxes.some((b) => p.x + half + g > b.l && p.x - half - g < b.r && p.y + half + g > b.t && p.y - half - g < b.b);
 }
 
 // A chip that would come within CONTROL_GAP of one of these controls, or
@@ -1179,11 +1445,28 @@ function worldToCss(point) {
   };
 }
 
+// The board's six corners, in CSS pixels inside the canvas box. They are
+// found once, among the cells' corners (the board never changes, and the
+// drawing only scales and moves it), so the ring can be laid many times.
 function getBoardHexVerticesCss() {
-  const points = state.boardCellEntries.flatMap((entry) =>
-    entry.vertices.map((vertex) => toCssFromScreen(worldToScreen(vertex)))
-  );
-  const hull = convexHull(points);
+  if (!state.boardCorners) state.boardCorners = findBoardCorners();
+  const c = state.boardCorners;
+  if (!c) {
+    return null;
+  }
+  const css = (vertex) => toCssFromScreen(worldToScreen(vertex));
+  return {
+    left: css(c.left),
+    right: css(c.right),
+    topLeft: css(c.topLeft),
+    topRight: css(c.topRight),
+    bottomLeft: css(c.bottomLeft),
+    bottomRight: css(c.bottomRight),
+  };
+}
+
+function findBoardCorners() {
+  const hull = convexHull(state.boardCellEntries.flatMap((entry) => entry.vertices));
   if (hull.length < 6) {
     return null;
   }

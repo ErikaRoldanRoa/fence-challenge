@@ -16,6 +16,21 @@
 
   // One column below this width; must match the media query in styles.css.
   const COMPACT_LAYOUT_QUERY = "(max-width: 1180px)";
+  // Phones held sideways: board on the left, pieces on its right; must match
+  // the media query in styles.css.
+  const SIDEWAYS_LAYOUT_QUERY = "(orientation: landscape) and (max-height: 500px)";
+  // Sideways sizes (see syncSidewaysLayout).
+  const SIDE_EDGE = 10;
+  const SIDE_STRIP = 56;
+  const SIDE_GAP = 8;
+  const SIDE_BOARD_GAP = 16;
+  const SIDE_BAR = 56;
+  const SIDE_BRAND_GAP = 16;
+  const SIDE_MIN_CHIP = 44;
+  const SIDE_BOARD_SHARE = 0.52;
+  // The area's room beside its neighbours, and its number's smallest size (as in play-ui.js).
+  const AREA_GAP = 8;
+  const AREA_NUM_MIN = 16;
 
   // Board cells for ../fence-analysis.js, built on first use.
   let fenceBoard = null;
@@ -196,6 +211,14 @@
     window.addEventListener("resize", relayout);
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(relayout);
+    }
+    // Sideways, the area moves aside when it grows (a longer word, more digits).
+    if (window.ResizeObserver) {
+      new ResizeObserver(() => {
+        if (window.matchMedia(SIDEWAYS_LAYOUT_QUERY).matches) {
+          centreSidewaysArea();
+        }
+      }).observe(dom.detectGameArea);
     }
 
     document.addEventListener("fc-langchange", () => {
@@ -746,6 +769,12 @@
       return;
     }
 
+    if (window.matchMedia(SIDEWAYS_LAYOUT_QUERY).matches) {
+      panel.style.removeProperty("--toolbar-height");
+      syncSidewaysLayout();
+      return;
+    }
+
     if (window.matchMedia(COMPACT_LAYOUT_QUERY).matches) {
       panel.style.removeProperty("--board-size");
       panel.style.removeProperty("--toolbar-height");
@@ -776,6 +805,99 @@
 
     panel.style.setProperty("--board-size", `${boardSize}px`);
     panel.style.setProperty("--toolbar-height", `${toolbarHeight}px`);
+  }
+
+  // Phones held sideways (styles.css): a strip 56 px tall on top; under it,
+  // 10 px from the left edge, the board in a square box as tall as the room
+  // allows and at most 52 % of the screen's width; 16 px to its right, the
+  // pieces' column: the chips as large as they fit (8 px apart), then erase
+  // and the camera, then the credit 16 px under them. Where chips of 44 px
+  // cannot all fit beside that board, the board gives them the room.
+  function syncSidewaysLayout() {
+    const panel = dom.gamePanel;
+    const rect = panel.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return;
+    }
+    const room = rect.height - SIDE_STRIP - SIDE_GAP - SIDE_EDGE;
+    const columnWidth = (board) => rect.width - 2 * SIDE_EDGE - SIDE_BOARD_GAP - board;
+    const brand = panel.querySelector(".side-brand");
+    const chipsHeight = () => {
+      const brandHeight = brand ? Math.ceil(brand.getBoundingClientRect().height) : 44;
+      return room - SIDE_GAP - SIDE_BAR - SIDE_BRAND_GAP - Math.max(44, brandHeight);
+    };
+
+    let board = Math.max(0, Math.floor(Math.min(room, SIDE_BOARD_SHARE * rect.width)));
+    panel.style.setProperty("--board-size", `${board}px`);
+    let grid = chipGrid(columnWidth(board), chipsHeight());
+
+    if (grid.size < SIDE_MIN_CHIP) {
+      const height = chipsHeight();
+      let roomier = 0;
+      for (let cols = 1; cols <= PENTOMINOES.length; cols += 1) {
+        const rows = Math.ceil(PENTOMINOES.length / cols);
+        if (rows * SIDE_MIN_CHIP + (rows - 1) * SIDE_GAP > height) {
+          continue;
+        }
+        const width = cols * SIDE_MIN_CHIP + (cols - 1) * SIDE_GAP;
+        roomier = Math.max(roomier, Math.min(board, Math.floor(columnWidth(0) - width)));
+      }
+      if (roomier > 0) {
+        board = roomier;
+        panel.style.setProperty("--board-size", `${board}px`);
+        grid = chipGrid(columnWidth(board), chipsHeight());
+      }
+    }
+
+    panel.style.setProperty("--side-chip", `${Math.max(1, grid.size)}px`);
+    panel.style.setProperty("--side-cols", String(grid.cols));
+    centreSidewaysArea();
+  }
+
+  // The largest square chips that show all the pieces in a box, 8 px apart,
+  // and how many go in a row.
+  function chipGrid(width, height) {
+    const count = PENTOMINOES.length;
+    let best = { size: 0, cols: count };
+    for (let cols = 1; cols <= count; cols += 1) {
+      const rows = Math.ceil(count / cols);
+      const size = Math.floor(Math.min((width - (cols - 1) * SIDE_GAP) / cols, (height - (rows - 1) * SIDE_GAP) / rows));
+      if (size > best.size) {
+        best = { size, cols };
+      }
+    }
+    return best;
+  }
+
+  // Sideways, the area sits in the middle of the strip; it moves aside, just
+  // enough, only where its number at its smallest (16 px) with room for three
+  // digits, as play-ui.js sizes it, would come closer than 8 px to flip or to
+  // back to the hub.
+  function centreSidewaysArea() {
+    const panel = dom.gamePanel;
+    const pill = dom.detectGameArea;
+    const num = dom.areaValue;
+    const nav = panel.querySelector(".lab-nav");
+    if (!pill || !num || !nav || !dom.flipPiece || !dom.gameToolbar) {
+      return;
+    }
+    const strip = dom.gameToolbar.getBoundingClientRect();
+    const p = pill.getBoundingClientRect();
+    const n = num.getBoundingClientRect();
+    const size = Number.parseFloat(getComputedStyle(num).fontSize) || 36;
+    if (!strip.width || !p.width || !n.width) {
+      return;
+    }
+    const digit = n.width / Math.max(1, num.textContent.length) / size;
+    const widest = p.width - n.width + 3 * digit * AREA_NUM_MIN;
+    const lo = dom.flipPiece.getBoundingClientRect().right + AREA_GAP;
+    const hi = nav.getBoundingClientRect().left - AREA_GAP;
+    const middle = (strip.left + strip.right) / 2;
+    const centre = hi - lo >= widest ? clamp(middle, lo + widest / 2, hi - widest / 2) : (lo + hi) / 2;
+    const shift = `${Math.round((centre - middle) * 10) / 10}px`;
+    if (panel.style.getPropertyValue("--side-shift") !== shift) {
+      panel.style.setProperty("--side-shift", shift);
+    }
   }
 
   function renderGameBoard() {
@@ -1487,7 +1609,7 @@
       return null;
     }
 
-    const point = canvasCssPointFromEvent(event, canvas);
+    const point = canvasCssPointFromEvent(event, canvas, layout);
     if (!point) {
       return null;
     }
@@ -1500,15 +1622,19 @@
     return { x, y };
   }
 
-  function canvasCssPointFromEvent(event, canvas) {
+  // A pointer's place in the drawing's own units: a board shown smaller than
+  // 320 px is drawn at 320 px (prepareCanvas) and scaled down.
+  function canvasCssPointFromEvent(event, canvas, layout) {
     const rect = canvas.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) {
       return null;
     }
+    const scaleX = layout && layout.viewWidth && canvas.clientWidth ? layout.viewWidth / canvas.clientWidth : 1;
+    const scaleY = layout && layout.viewHeight && canvas.clientHeight ? layout.viewHeight / canvas.clientHeight : 1;
 
     return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
+      x: (event.clientX - rect.left - canvas.clientLeft) * scaleX,
+      y: (event.clientY - rect.top - canvas.clientTop) * scaleY,
     };
   }
 

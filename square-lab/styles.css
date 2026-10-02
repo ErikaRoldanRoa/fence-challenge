@@ -300,7 +300,7 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
 
 @media (max-width: 1180px) {
   #panel-game {
-    --board-size: min(calc(100vw - 20px), calc(100dvh - 404px));
+    --board-size: max(96px, min(calc(100vw - 20px), calc(100dvh - 404px)));
     align-items: center;
   }
 
@@ -370,5 +370,130 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
   .game-toolbar {
     justify-content: flex-start;
     padding-right: 172px;
+  }
+}
+
+/* The narrowest phones: the board is narrower than the screen, so the top
+   strip takes the screen's width and the area keeps clear of the switch. */
+@media (max-width: 359px) {
+  .game-toolbar {
+    width: calc(100vw - 20px);
+    margin-left: calc((var(--board-size) - 100vw + 20px) / 2);
+  }
+}
+
+/* ---------- phones held sideways: a strip on top (rotate and flip on the
+   left, the area in the middle, back to the hub, print and the language
+   switch on the right), the board on the left under it, and on its right
+   the pieces, then erase and the camera, then the credit. app.js sizes the
+   board (--board-size) and the chips (--side-chip, --side-cols), and moves
+   the area off the middle (--side-shift) only when it lacks room there. The
+   query must match SIDEWAYS_LAYOUT_QUERY in app.js. ---------- */
+
+@media (orientation: landscape) and (max-height: 500px) {
+  #panel-game {
+    --board-size: min(calc(100dvh - 74px), 52vw);
+    --side-chip: 44px;
+    --side-cols: 6;
+    --side-shift: 0px;
+    align-items: stretch;
+    justify-items: stretch;
+  }
+
+  .app-shell {
+    padding: 0;
+  }
+
+  .game-layout {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    grid-template-columns: 10px var(--board-size) 16px minmax(0, 1fr) 10px;
+    /* the spare height goes between the pieces and erase / the camera, so
+       the credit ends 10 px above the bottom edge */
+    grid-template-rows: 56px 8px auto minmax(8px, 1fr) auto 16px auto 10px;
+    grid-template-areas:
+      "toolbar toolbar toolbar toolbar toolbar"
+      ". . . . ."
+      ". main . dock ."
+      ". main . . ."
+      ". main . bar ."
+      ". main . . ."
+      ". main . label ."
+      ". . . . .";
+    row-gap: 0;
+    column-gap: 0;
+    align-content: stretch;
+    justify-content: stretch;
+  }
+
+  .game-toolbar {
+    width: 100%;
+    height: 56px;
+    margin-left: 0;
+    padding: 0 max(0px, calc(-2 * var(--side-shift))) 0 max(0px, calc(2 * var(--side-shift)));
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .game-toolbar .measure {
+    align-self: center;
+    pointer-events: auto;
+  }
+
+  .piece-actions {
+    grid-area: auto;
+    position: absolute;
+    left: 10px;
+    top: 6px;
+    z-index: 2;
+  }
+
+  .lab-nav {
+    position: fixed;
+    top: 6px;
+    right: 180px;
+  }
+
+  .langSel {
+    top: 5px;
+  }
+
+  .game-main {
+    align-self: start;
+    justify-self: start;
+  }
+
+  .piece-dock {
+    width: auto;
+    min-height: 0;
+    justify-self: start;
+    align-self: start;
+    grid-template-columns: repeat(var(--side-cols), var(--side-chip));
+    justify-content: start;
+  }
+
+  .piece-btn {
+    width: var(--side-chip);
+    height: var(--side-chip);
+    max-width: none;
+    justify-self: start;
+  }
+
+  .game-bar {
+    width: 100%;
+  }
+
+  .side-brand {
+    grid-area: label;
+    justify-self: center;
+    align-self: start;
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+    text-wrap: balance;
   }
 }

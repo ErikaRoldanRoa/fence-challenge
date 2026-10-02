@@ -353,3 +353,126 @@ body {
     width: min(100%, var(--board-size));
   }
 }
+
+
+/* ---------- a phone held sideways: rotate and flip, the area and the links
+   in a strip along the top; under it the board on the left, and on the
+   right the pieces in a grid, erase and the camera under them, then the
+   credit; nothing scrolls. app.js sizes the chips (--chip, --chip-cols) and
+   moves the area off the middle (--area-shift) only when it lacks room
+   there. The same query is in app.js ---------- */
+
+@media (orientation: landscape) and (max-height: 500px) {
+  :root {
+    --board-size: min(calc(100dvh - 74px), 52vw);
+    /* the left edge of the room right of the board */
+    --panel-left: calc(var(--board-size) + 26px);
+  }
+
+  .toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 7;
+    width: 100%;
+    height: 56px;
+    padding: 0 max(0px, calc(-2 * var(--area-shift, 0px))) 0 max(0px, calc(2 * var(--area-shift, 0px)));
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .toolbar > .measure {
+    align-self: center;
+    pointer-events: auto;
+  }
+
+  .langSel {
+    top: 5px;
+  }
+
+  .board-actions {
+    position: fixed;
+    left: 10px;
+    top: 6px;
+  }
+
+  .lab-nav {
+    position: fixed;
+    top: 6px;
+    right: 180px;
+  }
+
+  .board-wrap {
+    position: fixed;
+    left: 10px;
+    top: 64px;
+    display: block;
+    width: var(--board-size);
+    height: var(--board-size);
+  }
+
+  #board-canvas {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+  }
+
+  .piece-ring {
+    position: fixed;
+    inset: 64px 10px auto var(--panel-left);
+    display: grid;
+    grid-template-columns: repeat(var(--chip-cols, 4), var(--chip, 44px));
+    gap: 8px;
+    justify-content: start;
+    align-content: start;
+    min-height: 0;
+    pointer-events: auto;
+  }
+
+  /* no sliding when the phone turns: the chips land in the grid at once */
+  .piece-chip-ring {
+    position: static;
+    transform: none;
+    width: var(--chip, 44px);
+    height: var(--chip, 44px);
+    max-width: none;
+    border-radius: 10px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .piece-chip svg {
+    width: 90%;
+    height: 90%;
+  }
+
+  @media (hover: hover) {
+    .piece-chip-ring:hover {
+      transform: translateY(-1px);
+    }
+  }
+
+  /* Erase and the camera, 16 px above the credit. */
+  .boardbar {
+    position: fixed;
+    left: var(--panel-left);
+    right: 10px;
+    bottom: 70px;
+    width: auto;
+    height: 56px;
+  }
+
+  /* The credit, centred under them: one line when it fits, else two. */
+  .main-stage > .side-brand {
+    position: fixed;
+    left: var(--panel-left);
+    right: 10px;
+    bottom: 10px;
+    width: fit-content;
+    max-width: none;
+    margin: 0 auto;
+    white-space: normal;
+    text-align: center;
+    text-wrap: balance;
+  }
+}

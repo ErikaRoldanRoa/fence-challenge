@@ -11,6 +11,13 @@ const CAMERA_BOARD = "hex6";
 const EDGE_GAP = 4;
 // The least space between a chip and a control next to the ring.
 const CONTROL_GAP = 8;
+// How much the board shrinks at a time while the ring runs into a control.
+const RING_STEP = 4;
+// The smallest size play-ui.js gives the area's number.
+const AREA_NUM_MIN = 16;
+// A phone held sideways: the pieces in a grid right of the board
+// (styles.css, the same query).
+const SIDEWAYS = window.matchMedia("(orientation: landscape) and (max-height: 500px)");
 
 const PIECE_COLORS = [
   "#3fd8ff", // bar: cyan
@@ -214,6 +221,9 @@ const dom = {
   cameraChip: document.getElementById("camera-chip"),
   cameraHost: document.getElementById("camera-host"),
   boardbar: document.querySelector(".boardbar"),
+  sideBrand: document.querySelector(".main-stage > .side-brand"),
+  labNav: document.querySelector(".lab-nav"),
+  langSel: document.querySelector(".langSel"),
   status: document.getElementById("status"),
 };
 
@@ -673,12 +683,17 @@ function computeEnclosedArea() {
 
 // The board keeps the size the stylesheet gives it; it only shrinks, or moves
 // down a little, when the ring of chips would leave the screen or run into
-// the controls above it.
+// the controls around it.
 function resizeCanvas() {
   const wrap = dom.boardWrap;
   wrap.style.width = "";
   wrap.style.height = "";
   wrap.style.marginTop = "";
+  // Sideways, the board group goes back to the place the stylesheet gives
+  // it before the chips are sized above it.
+  if (SIDEWAYS.matches) placeBoardBar();
+  sizeChips();
+  centreArea();
   // Narrow screens: the pieces sit in rows under the board (styles.css),
   // the board takes the width the stylesheet gives it.
   if (piecesInRows()) {
@@ -701,6 +716,74 @@ function resizeCanvas() {
     wrap.style.width = `${size}px`;
     wrap.style.height = `${size}px`;
   }
+  // Chips that still run into a control, or into each other: the board
+  // shrinks a step at a time until the ring clears them. When no size down
+  // to 120 px clears them, the board keeps the size it had.
+  if (ringFits()) return;
+  const kept = { width: wrap.style.width, height: wrap.style.height };
+  for (size = Math.floor(wrap.getBoundingClientRect().width) - RING_STEP; size >= 120; size -= RING_STEP) {
+    wrap.style.width = `${size}px`;
+    wrap.style.height = `${size}px`;
+    drawAtSize();
+    if (ringFits()) return;
+  }
+  wrap.style.width = kept.width;
+  wrap.style.height = kept.height;
+  drawAtSize();
+}
+
+// A phone held sideways: the chips in a grid right of the board, all of
+// them above erase and the camera, as large as fits, at least 44 px.
+function sizeChips() {
+  const tray = dom.tray;
+  if (!SIDEWAYS.matches) {
+    tray.style.removeProperty("--chip");
+    tray.style.removeProperty("--chip-cols");
+    return;
+  }
+  const n = state.pieceTypes.length;
+  const box = tray.getBoundingClientRect();
+  const gap = parseFloat(getComputedStyle(tray).columnGap) || 0;
+  const width = box.width;
+  const height = dom.boardbar.getBoundingClientRect().top - CONTROL_GAP - box.top;
+  let chip = 0, cols = n;
+  for (let c = 1; c <= n; c += 1) {
+    const rows = Math.ceil(n / c);
+    const side = Math.floor(Math.min((width - (c - 1) * gap) / c, (height - (rows - 1) * gap) / rows));
+    if (side > chip) { chip = side; cols = c; }
+  }
+  if (chip < 44) {
+    chip = 44;
+    cols = Math.max(1, Math.min(n, Math.floor((width + gap) / (chip + gap))));
+  }
+  tray.style.setProperty("--chip", `${chip}px`);
+  tray.style.setProperty("--chip-cols", String(cols));
+}
+
+// Sideways, the area sits in the middle of the strip; it moves aside, just
+// enough, only where its number at its smallest, with room for three digits
+// as play-ui.js sizes it, would come closer than CONTROL_GAP to flip or to
+// back to the hub.
+function centreArea() {
+  const strip = dom.toolbar;
+  if (!SIDEWAYS.matches) {
+    strip.style.removeProperty("--area-shift");
+    return;
+  }
+  const pill = dom.detectAreaBtn.getBoundingClientRect();
+  const num = dom.areaChip.getBoundingClientRect();
+  const size = parseFloat(getComputedStyle(dom.areaChip).fontSize) || 36;
+  if (!pill.width || !num.width || !dom.labNav) return;
+  const digit = num.width / Math.max(1, dom.areaChip.textContent.length) / size;
+  const widest = pill.width - num.width + 3 * digit * AREA_NUM_MIN;
+  const lo = dom.flipBtn.getBoundingClientRect().right + CONTROL_GAP;
+  const hi = dom.labNav.getBoundingClientRect().left - CONTROL_GAP;
+  const bar = strip.getBoundingClientRect();
+  const middle = (bar.left + bar.right) / 2;
+  const centre = hi - lo >= widest
+    ? Math.min(Math.max(middle, lo + widest / 2), hi - widest / 2)
+    : (lo + hi) / 2;
+  strip.style.setProperty("--area-shift", `${Math.round((centre - middle) * 10) / 10}px`);
 }
 
 function drawAtSize() {
@@ -710,7 +793,8 @@ function drawAtSize() {
   const h = Math.max(1, Math.round(rect.height * dpr));
   if (dom.canvas.width !== w) dom.canvas.width = w;
   if (dom.canvas.height !== h) dom.canvas.height = h;
-  const padding = 18 * dpr;
+  // sideways the board fills its box, keeping room for its outer lines
+  const padding = (SIDEWAYS.matches ? 2 : 18) * dpr;
   const bw = state.boardBounds.maxX - state.boardBounds.minX;
   const bh = state.boardBounds.maxY - state.boardBounds.minY;
   const scale = Math.min((w - 2 * padding) / bw, (h - 2 * padding) / bh);
@@ -734,12 +818,13 @@ function placeBoardBar() {
     const br = worldToCss({ x: b.maxX, y: b.maxY });
     drawn = { left: rect.left + tl.x, right: rect.left + br.x, bottom: rect.top + br.y };
   }
-  window.FencePlay.placeBar(dom.boardbar, document.querySelector(".main-stage > .side-brand"), drawn);
+  window.FencePlay.placeBar(dom.boardbar, dom.sideBrand, drawn);
 }
 
-// True when the stylesheet lays the pieces in rows under the board.
+// True when the stylesheet lays the pieces in rows: under the board on
+// narrow screens, right of it on a phone held sideways.
 function piecesInRows() {
-  return getComputedStyle(dom.tray).position === "static";
+  return SIDEWAYS.matches || getComputedStyle(dom.tray).position === "static";
 }
 
 // The lowest point the ring may reach: the top of the board group (erase and
@@ -775,6 +860,27 @@ function ringOverflow() {
     lowest = Math.max(lowest, bar.bottom);
   }
   return { side, below, above, room: vh - EDGE_GAP - lowest };
+}
+
+// The ring fits when every chip is on screen and below the toolbar, clear of
+// the other chips, and CONTROL_GAP away from rotate and flip, the area,
+// erase and the camera under the board, the credit and the links at the top.
+function ringFits() {
+  const over = ringOverflow();
+  if (over.side > 0.5 || over.below > 0.5 || over.above > 0.5) return false;
+  const chips = [...dom.tray.querySelectorAll(".piece-chip")]
+    .map((el) => el.getBoundingClientRect())
+    .filter((b) => b.width > 0);
+  const controls = [dom.actions, dom.detectAreaBtn, dom.clearBtn, dom.cameraChip, dom.sideBrand, dom.labNav, dom.langSel]
+    .filter(Boolean)
+    .map((el) => el.getBoundingClientRect())
+    .filter((b) => b.width > 0);
+  const meets = (a, b, m = 0) => a.left - m < b.right && b.left - m < a.right && a.top - m < b.bottom && b.top - m < a.bottom;
+  for (let i = 0; i < chips.length; i += 1) {
+    for (let j = i + 1; j < chips.length; j += 1) if (meets(chips[i], chips[j])) return false;
+    for (const c of controls) if (meets(chips[i], c, CONTROL_GAP)) return false;
+  }
+  return true;
 }
 
 // World point to CSS pixels inside the canvas box (also the camera window).
