@@ -1,7 +1,9 @@
 /* Fence Challenge · shared play controls.
  * Arrow keys (window.FencePlay): the cells a piece's reference cell may move
  * to for one arrow, nearest first; a cell counts when its direction from the
- * current one is within 60 degrees of the arrow's.
+ * current one is within 60 degrees of the arrow's. trayDrag follows a
+ * press on a piece chip: once it has moved and is over the board, over(e)
+ * runs on each move; done() runs on release after such a drag.
  * An erase control ([data-arm]) acts on its second tap only: the first tap
  * arms it (it turns rose and its accessible name asks for the second tap),
  * and it disarms by itself, or on any other tap or Escape. The guard runs in
@@ -72,5 +74,36 @@
     out.sort(function (a, b) { return (a.len - b.len) || (b.along - a.along); });
     return out.map(function (c) { return c.entry; });
   }
-  window.FencePlay = { ARROWS: ARROWS, arrowOf: arrowOf, towards: towards };
+  function trayDrag(event, board, over, done) {
+    if (event.button > 0) return;
+    var d = { id: event.pointerId, x: event.clientX, y: event.clientY, active: false, slop2: event.pointerType === "mouse" ? 36 : 100 };
+    function move(e) {
+      if (e.pointerId !== d.id) return;
+      if (!d.active) {
+        var dx = e.clientX - d.x, dy = e.clientY - d.y;
+        if (dx * dx + dy * dy <= d.slop2) return;
+        d.active = true;
+      }
+      var r = board.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
+      over(e);
+    }
+    function end(e) {
+      if (e.pointerId !== d.id) return;
+      window.removeEventListener("pointermove", move, true);
+      window.removeEventListener("pointerup", end, true);
+      window.removeEventListener("pointercancel", end, true);
+      if (d.active) {
+        trayDrag.until = Date.now() + 500; // the click that may follow is not a tap
+        done(e);
+      }
+    }
+    window.addEventListener("pointermove", move, true);
+    window.addEventListener("pointerup", end, true);
+    window.addEventListener("pointercancel", end, true);
+  }
+  trayDrag.until = 0;
+  // true while the click after a tray drag arrives
+  function afterTrayDrag() { return Date.now() < trayDrag.until; }
+  window.FencePlay = { ARROWS: ARROWS, arrowOf: arrowOf, towards: towards, trayDrag: trayDrag, afterTrayDrag: afterTrayDrag };
 })();

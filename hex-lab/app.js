@@ -987,6 +987,38 @@ function drawPlacedPieces() {
 
 /* ---------- tray ---------- */
 
+// A chip dragged onto the board: the piece lands on the nearest free place
+// under the finger and follows it until release.
+function onChipDown(event, type) {
+  if (!window.FencePlay || camera.view) return;
+  let pieceId = null;
+  window.FencePlay.trayDrag(event, dom.canvas, (e) => {
+    const nearest = findNearestBoardCell(pointerToCanvas(e));
+    if (!nearest) return;
+    if (!pieceId) {
+      state.selectedTypeId = type.id;
+      const existing = state.placedPieces.find((p) => p.typeId === type.id);
+      if (existing) state.selectedPieceId = existing.id;
+      else if (!spawnPiece(type.id, nearest)) return;
+      pieceId = state.selectedPieceId;
+      render();
+    }
+    const piece = state.placedPieces.find((p) => p.id === pieceId);
+    if (!piece || (piece.marker.q === nearest.q && piece.marker.r === nearest.r)) return;
+    if (!canPlace(piece.typeId, piece.variantIndex, nearest, piece.id)) return;
+    piece.marker = { q: nearest.q, r: nearest.r };
+    resetMeasure();
+    render();
+  }, () => {
+    const piece = pieceId ? state.placedPieces.find((p) => p.id === pieceId) : null;
+    if (!piece) return;
+    state.freshPieceId = piece.id; // the next tap on it only selects it
+    setStatus("hx.s.placed", { name: pieceName(piece.typeId) });
+    refreshTray();
+    render();
+  });
+}
+
 function refreshTray() {
   const focusedType = document.activeElement && document.activeElement.dataset
     ? document.activeElement.dataset.type
@@ -1004,7 +1036,9 @@ function refreshTray() {
     if (selected) chip.classList.add("is-selected");
     if (state.placedPieces.some((p) => p.typeId === type.id)) chip.classList.add("is-on-board");
     chip.innerHTML = buildPiecePreviewSvg(type);
+    chip.addEventListener("pointerdown", (event) => onChipDown(event, type));
     chip.addEventListener("click", () => {
+      if (window.FencePlay && window.FencePlay.afterTrayDrag()) return;
       state.selectedTypeId = type.id;
       const existing = state.placedPieces.find((p) => p.typeId === type.id);
       if (existing) {

@@ -376,7 +376,11 @@
       drawPiecePreview(preview, piece);
 
       button.append(preview);
+      button.addEventListener("pointerdown", (event) => onChipDown(event, piece.id));
       button.addEventListener("click", () => {
+        if (window.FencePlay && window.FencePlay.afterTrayDrag()) {
+          return;
+        }
         handlePieceSelection(piece.id);
       });
 
@@ -384,6 +388,58 @@
       dom.pieceTray.append(button);
     }
     localizePieceTray();
+  }
+
+  // A chip dragged onto the board: the piece lands under the finger, centred
+  // on it, at the nearest free place, and follows it until release.
+  function onChipDown(event, pieceId) {
+    if (!window.FencePlay || gameState.drag || cameraState.view) {
+      return;
+    }
+    let dragged = false;
+    window.FencePlay.trayDrag(event, dom.gameBoard, (e) => {
+      const cell = eventToCell(e, dom.gameBoard, gameState.layout);
+      if (!cell) {
+        return;
+      }
+      const piece = PIECE_BY_ID.get(pieceId);
+      const placed = gameState.placedPieces.get(pieceId);
+      const rotation = placed ? placed.rotation : 0;
+      const flipped = placed ? placed.flipped : false;
+      const relativeCells = getOrientedCells(piece.cells, rotation, flipped);
+      const w = Math.max(...relativeCells.map((c) => c.x));
+      const h = Math.max(...relativeCells.map((c) => c.y));
+      const ax = cell.x - Math.floor(w / 2);
+      const ay = cell.y - Math.floor(h / 2);
+      if (placed) {
+        gameState.placedPieces.delete(pieceId);
+        rebuildGameOccupancy();
+      }
+      if (canPlaceCells(relativeCells, ax, ay)) {
+        gameState.placedPieces.set(pieceId, buildPlacedPiece(piece, rotation, flipped, relativeCells, ax, ay));
+        dragged = true;
+      } else if (placed) {
+        gameState.placedPieces.set(pieceId, placed);
+      }
+      if (gameState.placedPieces.has(pieceId)) {
+        gameState.activePieceId = pieceId;
+      }
+      rebuildGameOccupancy();
+      clearGameAnalysis();
+      updateGameMetrics();
+      renderGameBoard();
+    }, () => {
+      if (!gameState.placedPieces.has(pieceId)) {
+        return;
+      }
+      gameState.activePieceId = pieceId;
+      if (dragged) {
+        gameState.freshPieceId = pieceId; // the next tap on it only selects it
+        setStatus("sq.s.added", { name: pieceId });
+      }
+      updatePieceTrayState();
+      renderGameBoard();
+    });
   }
 
   function localizePieceTray() {

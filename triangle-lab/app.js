@@ -398,6 +398,43 @@ function transformAnchoredVariant(variant, symmetry) {
   };
 }
 
+// A chip dragged onto the board: the piece lands on the nearest free place
+// under the finger and follows it until release.
+function onChipDown(event, type) {
+  if (!window.FencePlay || camera.view) return;
+  let pieceId = null;
+  window.FencePlay.trayDrag(event, dom.canvas, (e) => {
+    const point = pointerToCanvas(e);
+    if (!pieceId) {
+      state.selectedTypeId = type.id;
+      const existing = state.placedPieces.find((p) => p.typeId === type.id);
+      if (existing) {
+        state.selectedPieceId = existing.id;
+      } else {
+        const at = findNearestBoardCell(point, type.variants[type.spawnVariant].markerO);
+        if (!at || !spawnPiece(type.id, at)) return;
+      }
+      pieceId = state.selectedPieceId;
+      render();
+    }
+    const piece = state.placedPieces.find((p) => p.id === pieceId);
+    if (!piece) return;
+    const nearest = findNearestBoardCell(point, state.pieceTypeMap.get(piece.typeId).variants[piece.variantIndex].markerO);
+    if (!nearest || (piece.marker.i === nearest.i && piece.marker.j === nearest.j && piece.marker.o === nearest.o)) return;
+    if (!canPlace(piece.typeId, piece.variantIndex, nearest, piece.id)) return;
+    piece.marker = { i: nearest.i, j: nearest.j, o: nearest.o };
+    resetMeasure();
+    render();
+  }, () => {
+    const piece = pieceId ? state.placedPieces.find((p) => p.id === pieceId) : null;
+    if (!piece) return;
+    state.freshPieceId = piece.id; // the next tap on it only selects it
+    setStatus("tri.s.placed", { name: pieceName(piece.typeId) });
+    refreshTray();
+    render();
+  });
+}
+
 function refreshTray() {
   const focusedType = document.activeElement && document.activeElement.dataset
     ? document.activeElement.dataset.type
@@ -421,7 +458,9 @@ function refreshTray() {
     }
 
     chip.innerHTML = buildPiecePreviewSvg(type);
+    chip.addEventListener("pointerdown", (event) => onChipDown(event, type));
     chip.addEventListener("click", () => {
+      if (window.FencePlay && window.FencePlay.afterTrayDrag()) return;
       state.selectedTypeId = type.id;
       const existing = state.placedPieces.find((piece) => piece.typeId === type.id);
       if (existing) {

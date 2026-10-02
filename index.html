@@ -112,7 +112,7 @@
       
       .toy canvas{width:100%;height:100%;display:block;border-radius:9px;cursor:grab;touch-action:none;}
       .toy canvas:active{cursor:grabbing;}
-      .toyTray .piece-chip{cursor:pointer;width:44px;height:44px;padding:3px;border-radius:9px;background:rgba(0,0,0,0.30);border:1px solid rgba(255,255,255,0.14);transition:border-color 0.10s ease,transform 0.10s ease;}
+      .toyTray .piece-chip{cursor:pointer;touch-action:pan-y;width:44px;height:44px;padding:3px;border-radius:9px;background:rgba(0,0,0,0.30);border:1px solid rgba(255,255,255,0.14);transition:border-color 0.10s ease,transform 0.10s ease;}
       .toyTray .piece-chip:hover{transform:translateY(-1px);}
       .toyTray .piece-chip.is-selected{border-color:rgba(255,255,255,0.65);box-shadow:0 0 12px rgba(255,255,255,0.10);}
       .toyTray .piece-chip.is-on-board{opacity:0.35;}

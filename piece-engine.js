@@ -473,8 +473,79 @@
       emit.tray(chips);
     }
 
+    // A chip can also be dragged onto the board: once the finger or pointer
+    // is over the board, the piece lands on the nearest cell it may take and
+    // follows until release (a piece already on the board comes along).
+    function onChipDown(event, type) {
+      if (event.button > 0 || !viewReady()) return;
+      const drag = {
+        id: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        slop2: event.pointerType === "mouse" ? 36 : 100,
+        active: false,
+        pieceId: null,
+      };
+      const accept = (piece) => {
+        const t = state.pieceTypeMap.get(piece ? piece.typeId : type.id);
+        const variant = t.variants[piece ? piece.variantIndex : t.spawnVariant];
+        return (entry) => lattice.markerConstraint(variant, entry);
+      };
+      const move = (e) => {
+        if (e.pointerId !== drag.id || state.destroyed) return;
+        if (!drag.active) {
+          const dx = e.clientX - drag.x;
+          const dy = e.clientY - drag.y;
+          if (dx * dx + dy * dy <= drag.slop2) return;
+          drag.active = true;
+        }
+        const rect = dom.canvas.getBoundingClientRect();
+        if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) return;
+        const world = screenToWorld(pointerToCanvas(e));
+        if (!drag.pieceId) {
+          state.selectedTypeId = type.id;
+          const existing = state.placedPieces.find((p) => p.typeId === type.id);
+          if (existing) {
+            setSelectedPieceId(existing.id);
+            drag.pieceId = existing.id;
+          } else {
+            const at = lattice.findNearestBoardCell(world, state.board, accept(null));
+            if (!at || !spawnPiece(type.id, at)) return;
+            drag.pieceId = state.selectedPieceId;
+          }
+          render();
+        }
+        const piece = state.placedPieces.find((p) => p.id === drag.pieceId);
+        if (!piece) return;
+        const nearest = lattice.findNearestBoardCell(world, state.board, accept(piece));
+        if (!nearest || lattice.cellKey(nearest) === lattice.cellKey(piece.marker)) return;
+        if (!canPlace(piece.typeId, piece.variantIndex, nearest, piece.id)) return;
+        piece.marker = lattice.bareCell(nearest);
+        resetArea();
+        render();
+      };
+      const end = (e) => {
+        if (e.pointerId !== drag.id) return;
+        window.removeEventListener("pointermove", move, true);
+        window.removeEventListener("pointerup", end, true);
+        window.removeEventListener("pointercancel", end, true);
+        if (!drag.active || state.destroyed) return;
+        state._chipDragUntil = Date.now() + 500; // the click that may follow is not a tap
+        if (drag.pieceId) {
+          state.freshPieceId = drag.pieceId; // the next tap on it only selects it
+          refreshTray();
+          detectArea();
+        }
+      };
+      window.addEventListener("pointermove", move, true);
+      window.addEventListener("pointerup", end, true);
+      window.addEventListener("pointercancel", end, true);
+    }
+
     function bindChip(chip, type) {
+      chip.addEventListener("pointerdown", (event) => onChipDown(event, type));
       chip.addEventListener("click", () => {
+        if (state._chipDragUntil && Date.now() < state._chipDragUntil) return;
         state.selectedTypeId = type.id;
         const existing = state.placedPieces.find((p) => p.typeId === type.id);
         if (existing) {
