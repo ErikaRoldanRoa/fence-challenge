@@ -9,12 +9,12 @@
   var NB = "\u202F";
 
   Object.assign(DICT.fr, {
-    "tri.pageTitle": "Défi 4 · 12 hexiamonds · Fence Challenge",
-    "tri.h1": "Défi 4 · 12 hexiamonds",
+    "tri.pageTitle": "Défi 4 · 12 hexiamants · Fence Challenge",
+    "tri.h1": "Défi 4 · 12 hexiamants",
     "tri.areaChip": "Aire" + NB + ": {area}",
     "tri.cameraOpen": "Ouvrir la caméra sur le plateau",
     "tri.cameraClose": "Fermer la caméra",
-    "tri.tray.ariaLabel": "Pièces hexiamonds",
+    "tri.tray.ariaLabel": "Pièces hexiamants",
     "tri.board.ariaLabel": "Plateau de triangles",
     "tri.piece.aria": "Pièce {name}",
     "tri.rotate": "Tourner (R)",
@@ -23,7 +23,7 @@
     "tri.flip": "Retourner (F)",
     "tri.flipTip": "Retourne la pièce choisie (touche F)",
     "tri.flipTipTouch": "Retourne la pièce choisie",
-    "tri.cite.text": "Barrière Hexiamond · LRMR25 · Dr. Erika Roldán",
+    "tri.cite.text": "Barrière Hexiamant · LRMR25 · Dr. Erika Roldán",
     "tri.cite.title": "Citer" + NB + ": Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025, doi:10.1515/dmvm-2025-0056",
     "tri.s.ready": "Touche une pièce pour la poser. Glisse-la pour la déplacer. Touche une pièce choisie pour l’enlever. Une barrière se ferme arête contre arête, jamais par un simple coin.",
     "tri.s.leakOnly": "Pas encore d’intérieur" + NB + ": l’extérieur se faufile par un coin, les cases en pointillés restent ouvertes.",
