@@ -8,7 +8,12 @@
  * An erase control ([data-arm]) acts on its second tap only: the first tap
  * arms it (it turns rose and its accessible name asks for the second tap),
  * and it disarms by itself, or on any other tap or Escape. The guard runs in
- * the capture phase, before the page's own click handlers. */
+ * the capture phase, before the page's own click handlers.
+ * The area pill (.measure) reaches into the free room under its strip:
+ * --area-reach is the room left down to 8 px above the nearest control,
+ * piece or board below the strip, at most REACH_MAX; its number grows with
+ * it (--area-num), as far as three digits (an area never needs more) keep
+ * 8 px from the controls beside the pill and 10 px from the screen's edge. */
 (function () {
   "use strict";
   var ARM_MS = 2600;
@@ -150,4 +155,82 @@
     }
   }
   window.FencePlay = { ARROWS: ARROWS, arrowOf: arrowOf, towards: towards, trayDrag: trayDrag, afterTrayDrag: afterTrayDrag, outerEdges: outerEdges, placeBar: placeBar };
+})();
+
+(function () {
+  "use strict";
+  var REACH_MAX = 14;
+  var GAP = 8;
+  var SIDE = 10;
+  var NUM_BASE = 36;
+  var NUM_GROW = 0.6;
+  var NUM_MIN = 16;
+  var OTHERS = "button, a[href], canvas, .piece-chip-ring, .piece-btn, .langSel";
+  function fit() {
+    var pill = document.querySelector(".measure");
+    if (!pill || !pill.parentElement) return;
+    var strip = pill.parentElement.getBoundingClientRect();
+    var cs = window.getComputedStyle(pill.parentElement);
+    var left = strip.left + parseFloat(cs.paddingLeft || "0") - GAP;
+    var right = strip.right - parseFloat(cs.paddingRight || "0") + GAP;
+    var room = REACH_MAX;
+    var els = document.querySelectorAll(OTHERS);
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      if (pill.contains(el)) continue;
+      var r = el.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) continue;
+      if (r.right <= left || r.left >= right || r.bottom <= strip.top) continue;
+      room = Math.min(room, r.top - GAP - strip.bottom);
+    }
+    room = Math.max(0, Math.floor(room));
+    pill.style.setProperty("--area-reach", room + "px");
+    sizeNumber(pill, els, NUM_BASE + NUM_GROW * room);
+  }
+  function sizeNumber(pill, els, want) {
+    var num = pill.querySelector(".area-num");
+    if (!num) return;
+    pill.style.setProperty("--area-num", want + "px");
+    var pr = pill.getBoundingClientRect();
+    var nr = num.getBoundingClientRect();
+    var digit = nr.width / Math.max(1, num.textContent.length) / want;
+    if (!(digit > 0)) return;
+    var cx = (pr.left + pr.right) / 2;
+    var lo = SIDE, hi = window.innerWidth - SIDE;
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      if (pill.contains(el)) continue;
+      var r = el.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) continue;
+      if (r.bottom <= pr.top || r.top >= pr.bottom) continue;
+      if ((r.left + r.right) / 2 < cx) lo = Math.max(lo, r.right + GAP);
+      else hi = Math.min(hi, r.left - GAP);
+    }
+    var centred = window.getComputedStyle(pill.parentElement).justifyContent === "center";
+    var width = centred ? 2 * Math.min(cx - lo, hi - cx) : hi - pr.left;
+    var fits = (width - (pr.width - nr.width)) / (3 * digit);
+    pill.style.setProperty("--area-num", Math.max(NUM_MIN, Math.min(want, Math.floor(fits))) + "px");
+  }
+  var queued = 0;
+  function later() {
+    if (queued) return;
+    queued = window.requestAnimationFrame(function () { queued = 0; fit(); });
+  }
+  window.addEventListener("resize", later);
+  window.addEventListener("orientationchange", later);
+  window.addEventListener("load", later);
+  document.addEventListener("fc-langchange", later);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(later);
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", later);
+  else later();
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(later);
+    ro.observe(document.documentElement);
+    var watch = function () {
+      var b = document.querySelector("#game-board, #board-canvas, #piece-tray");
+      if (b) ro.observe(b);
+    };
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", watch);
+    else watch();
+  }
 })();

@@ -11,7 +11,6 @@
   Object.assign(DICT.fr, {
     "hx.pageTitle": "Défi 3 · 7 tétrahexes · Fence Challenge",
     "hx.h1": "Défi 3 · 7 tétrahexes",
-    "hx.areaChip": "Aire" + NB + ": {area}",
     "hx.cameraOpen": "Ouvrir la caméra sur le plateau",
     "hx.cameraClose": "Fermer la caméra",
     "hx.tray.ariaLabel": "Pièces tétrahexes",
@@ -53,7 +52,6 @@
   Object.assign(DICT.de, {
     "hx.pageTitle": "Rätsel 3 · 7 Tetrahexe · Fence Challenge",
     "hx.h1": "Rätsel 3 · 7 Tetrahexe",
-    "hx.areaChip": "Fläche: {area}",
     "hx.cameraOpen": "Kamera auf dem Spielfeld öffnen",
     "hx.cameraClose": "Kamera schließen",
     "hx.tray.ariaLabel": "Tetrahex-Teile",
@@ -95,7 +93,6 @@
   Object.assign(DICT.en, {
     "hx.pageTitle": "Challenge 3 · 7 tetrahexes · Fence Challenge",
     "hx.h1": "Challenge 3 · 7 tetrahexes",
-    "hx.areaChip": "Area: {area}",
     "hx.cameraOpen": "Open the camera on the board",
     "hx.cameraClose": "Close the camera",
     "hx.tray.ariaLabel": "Tetrahex pieces",

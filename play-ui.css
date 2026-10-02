@@ -183,6 +183,58 @@ body:has(.ctl.cam[aria-pressed="true"]) .board-actions > .act {
   pointer-events: none;
 }
 
+/* The area: the number the game is about, large and lit in the board's
+   colour (--area-accent, else --accent), its word small beside it. A tap
+   measures again. Its strip keeps 44 px; play-ui.js lets the pill reach
+   lower into the free room under that strip (--area-reach, never closer
+   than 8 px to what lies below) and sizes the number (--area-num) so that
+   three digits still keep 8 px from whatever sits beside the pill. */
+.measure {
+  --area: var(--area-accent, var(--accent, #2ff3ff));
+  --area-reach: 0px;
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  height: calc(44px + var(--area-reach));
+  margin: 0;
+  padding: 0 18px 0 16px;
+  border-radius: 999px;
+  border: 1.5px solid color-mix(in srgb, var(--area) 62%, transparent);
+  background: radial-gradient(120% 140% at 50% 0%, color-mix(in srgb, var(--area) 20%, transparent), rgba(7, 6, 10, 0.82) 78%);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--area) 34%, transparent), inset 0 0 14px color-mix(in srgb, var(--area) 16%, transparent);
+  color: var(--area);
+  font-family: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 0.2s ease;
+}
+.measure .area-word {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  opacity: 0.85;
+}
+.measure .area-word:not(:lang(de)) { text-transform: lowercase; }
+.measure .area-num {
+  font-size: var(--area-num, 36px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--area);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--area) 60%, transparent), 0 0 22px color-mix(in srgb, var(--area) 45%, transparent);
+}
+@media (hover: hover) {
+  .measure:hover { box-shadow: 0 0 26px color-mix(in srgb, var(--area) 48%, transparent), inset 0 0 16px color-mix(in srgb, var(--area) 22%, transparent); }
+}
+.measure:active { transform: scale(0.97); }
+.measure:focus-visible { outline: 2px solid color-mix(in srgb, var(--area) 70%, white); outline-offset: 2px; }
+
 /* Back to the hub and print this board's kit. */
 .lab-nav { display: flex; gap: 8px; margin-left: auto; }
 .ctl.nav { --fg: rgba(255, 255, 255, 0.78); }

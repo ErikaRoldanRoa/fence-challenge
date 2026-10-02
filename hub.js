@@ -40,6 +40,12 @@
       if (text && live) live.textContent = text;
     }, 900);
   }
+  // The number on the card, and its copy in the pill's hidden sizer.
+  function showArea(el, area) {
+    el.textContent = area;
+    const sizer = el.closest(".pill").querySelector(".aSize .k");
+    if (sizer) sizer.textContent = area;
+  }
   function noteUnlock(card, launch) {
     if (!launch.classList.contains("unlocked")) liveUnlocked[card] = true;
   }
@@ -105,7 +111,7 @@
         onArea: (info) => {
           const { area, cornerLeak, regionCount } = info;
           const valid = isFence(info);
-          areaEl.textContent = area;
+          showArea(areaEl, area);
           document.getElementById("pill-sq").classList.toggle("live", valid);
           root.dataset.pockets = regionCount > 1 ? String(regionCount) : "";
           coin.classList.toggle("leak", !!cornerLeak);
@@ -203,7 +209,7 @@
         onArea: (info) => {
           const { area, regionCount } = info;
           const valid = isFence(info);
-          areaEl.textContent = area;
+          showArea(areaEl, area);
           document.getElementById("pill-hex").classList.toggle("live", valid);
           root.dataset.pockets = regionCount > 1 ? String(regionCount) : "";
           if (valid) { noteUnlock("hex", launch); unlock(); }
@@ -287,7 +293,7 @@
         onArea: (info) => {
           const { area, cornerLeak, regionCount } = info;
           const valid = isFence(info);
-          areaEl.textContent = area;
+          showArea(areaEl, area);
           document.getElementById("pill-tri").classList.toggle("live", valid);
           document.getElementById("coin-tri").classList.toggle("leak", !!cornerLeak);
           root.dataset.pockets = regionCount > 1 ? String(regionCount) : "";

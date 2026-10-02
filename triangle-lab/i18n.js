@@ -11,7 +11,6 @@
   Object.assign(DICT.fr, {
     "tri.pageTitle": "Défi 4 · 12 hexiamants · Fence Challenge",
     "tri.h1": "Défi 4 · 12 hexiamants",
-    "tri.areaChip": "Aire" + NB + ": {area}",
     "tri.cameraOpen": "Ouvrir la caméra sur le plateau",
     "tri.cameraClose": "Fermer la caméra",
     "tri.tray.ariaLabel": "Pièces hexiamants",
@@ -55,7 +54,6 @@
   Object.assign(DICT.de, {
     "tri.pageTitle": "Rätsel 4 · 12 Hexiamonds · Fence Challenge",
     "tri.h1": "Rätsel 4 · 12 Hexiamonds",
-    "tri.areaChip": "Fläche: {area}",
     "tri.cameraOpen": "Kamera auf dem Spielfeld öffnen",
     "tri.cameraClose": "Kamera schließen",
     "tri.tray.ariaLabel": "Hexiamond-Teile",
@@ -99,7 +97,6 @@
   Object.assign(DICT.en, {
     "tri.pageTitle": "Challenge 4 · 12 hexiamonds · Fence Challenge",
     "tri.h1": "Challenge 4 · 12 hexiamonds",
-    "tri.areaChip": "Area: {area}",
     "tri.cameraOpen": "Open the camera on the board",
     "tri.cameraClose": "Close the camera",
     "tri.tray.ariaLabel": "Hexiamond pieces",

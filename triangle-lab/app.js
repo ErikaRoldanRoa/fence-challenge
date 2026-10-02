@@ -1390,7 +1390,7 @@ function findNearestBoardCell(point, orientation = null) {
 
 function updateAreaChip(area) {
   state.area = area;
-  dom.areaChip.textContent = t("tri.areaChip", { area });
+  dom.areaChip.textContent = String(area);
 }
 
 // Keeps the message as keys so a language switch can render it again.

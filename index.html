@@ -126,10 +126,17 @@
       /* French and English labels read in lower case; German nouns keep their capitals. */
       .pill:not(:lang(de)){text-transform:lowercase;}
       .pill .k{font-weight:800;font-size:14px;letter-spacing:0.02em;color:var(--text);}
-      .pill.area{border-color:rgba(255,210,74,0.42);background:linear-gradient(135deg,rgba(255,210,74,0.13),rgba(255,210,74,0.04));color:var(--amber);box-shadow:inset 0 1px 0 rgba(255,255,255,0.07);}
-      .pill.area .k{color:var(--amber);font-size:17px;min-width:14px;}
-      
-      .pill.area.live{border-color:rgba(255,210,74,0.95);box-shadow:0 0 16px rgba(255,210,74,0.30),inset 0 1px 0 rgba(255,255,255,0.10);}
+      /* The area: its number large and lit in the card's colour, its word
+         small above it, as tall as the camera's row. A hidden copy of the
+         word and the number side by side (.aSize) gives the pill its width,
+         so the pills next to it keep their place. */
+      .pill.area{position:relative;height:60px;border-color:var(--accent-line);background:radial-gradient(120% 130% at 50% 0%,var(--accent-soft),rgba(7,6,10,0.5) 78%);color:var(--accent);box-shadow:0 0 14px var(--accent-soft),inset 0 0 12px var(--accent-soft);transition:border-color .2s ease,box-shadow .2s ease;}
+      .pill.area .aSize{display:inline-flex;align-items:center;gap:8px;visibility:hidden;}
+      .pill.area .k{font-size:17px;min-width:14px;}
+      .pill.area .aShow{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;pointer-events:none;}
+      .pill.area .aWord{font-size:10px;line-height:1;letter-spacing:0.08em;color:var(--accent);opacity:0.8;}
+      .pill.area .aNum{font-family:var(--sans);font-weight:800;font-size:38px;line-height:1;letter-spacing:0;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--accent);text-shadow:0 0 8px var(--accent-glow),0 0 22px var(--accent-glow);}
+      .pill.area.live{border-color:var(--accent);box-shadow:0 0 24px var(--accent-glow),inset 0 0 14px var(--accent-soft);}
       .pill.corner{border-color:rgba(178,120,255,0.45);background:linear-gradient(135deg,rgba(178,120,255,0.13),rgba(178,120,255,0.04));color:#e6d6ff;box-shadow:inset 0 1px 0 rgba(255,255,255,0.07);}
       .pill.corner .k{color:var(--purple);}
 
@@ -322,7 +329,7 @@
             <div class="toy"><canvas tabindex="0" role="application" data-i18n-aria-label="hub.boardAria" aria-label="Plateau de jeu : les flèches déplacent la pièce choisie, R la tourne, F la retourne, Suppr l’enlève."></canvas></div>
           </div>
           <div class="pStatus">
-            <span class="pill area" id="pill-sq" data-i18n-data-tip="hub.areaTip" data-tip="Aire actuellement enclose sur ton plateau"><span data-i18n="common.areaLabel">Aire</span> <span class="k" id="area-sq">0</span></span>
+            <span class="pill area" id="pill-sq" data-i18n-data-tip="hub.areaTip" data-tip="Aire actuellement enclose sur ton plateau"><span class="aSize" aria-hidden="true"><span data-i18n="common.areaLabel">Aire</span> <span class="k">0</span></span><span class="aShow"><span class="aWord" data-i18n="common.areaLabel">Aire</span> <span class="aNum" id="area-sq">0</span></span></span>
             <span class="pill corner reactive" id="coin-sq"
                   data-i18n-data-tip="hub.coinSqTip" data-tip="Sur le pavage carré, deux cases peuvent se toucher par un coin sans partager d’arête. Si ta barrière ne se ferme que par un tel coin, l’extérieur se faufile par ce coin : le coin ne ferme rien. Ce témoin s’allume quand ça arrive sur ton plateau.">
               <span class="dot" aria-hidden="true"></span><span class="lab" data-i18n="hub.coinLabel">fuite par un coin</span>
@@ -364,7 +371,7 @@
             <div class="toy"><canvas tabindex="0" role="application" data-i18n-aria-label="hub.boardAria" aria-label="Plateau de jeu : les flèches déplacent la pièce choisie, R la tourne, F la retourne, Suppr l’enlève."></canvas></div>
           </div>
           <div class="pStatus">
-            <span class="pill area" id="pill-hex" data-i18n-data-tip="hub.areaTip" data-tip="Aire actuellement enclose sur ton plateau"><span data-i18n="common.areaLabel">Aire</span> <span class="k" id="area-hex">0</span></span>
+            <span class="pill area" id="pill-hex" data-i18n-data-tip="hub.areaTip" data-tip="Aire actuellement enclose sur ton plateau"><span class="aSize" aria-hidden="true"><span data-i18n="common.areaLabel">Aire</span> <span class="k">0</span></span><span class="aShow"><span class="aWord" data-i18n="common.areaLabel">Aire</span> <span class="aNum" id="area-hex">0</span></span></span>
             <button class="icon cam" type="button" data-cam="hex" aria-pressed="false" hidden data-tip-pos="side" data-i18n-data-tip="hub.camTip" data-tip="Caméra : filme ton plateau imprimé, tes pièces se posent ici" data-i18n-aria-label="hub.camAria" aria-label="Ouvrir la caméra dans ce plateau"><svg class="camOn" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><svg class="camOff" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
           </div>
         </article>
@@ -401,7 +408,7 @@
             <div class="toy"><canvas tabindex="0" role="application" data-i18n-aria-label="hub.boardAria" aria-label="Plateau de jeu : les flèches déplacent la pièce choisie, R la tourne, F la retourne, Suppr l’enlève."></canvas></div>
           </div>
           <div class="pStatus">
-            <span class="pill area" id="pill-tri" data-i18n-data-tip="hub.areaTip" data-tip="Aire actuellement enclose sur ton plateau"><span data-i18n="common.areaLabel">Aire</span> <span class="k" id="area-tri">0</span></span>
+            <span class="pill area" id="pill-tri" data-i18n-data-tip="hub.areaTip" data-tip="Aire actuellement enclose sur ton plateau"><span class="aSize" aria-hidden="true"><span data-i18n="common.areaLabel">Aire</span> <span class="k">0</span></span><span class="aShow"><span class="aWord" data-i18n="common.areaLabel">Aire</span> <span class="aNum" id="area-tri">0</span></span></span>
             <span class="pill corner reactive" id="coin-tri" data-i18n-data-tip="hub.coinTriTip" data-tip="Sur le pavage triangulaire, 6 triangles se rencontrent à chaque coin ; deux d’entre eux peuvent donc s’y toucher sans partager d’arête. Si ta barrière ne se ferme que par un tel coin, l’extérieur se faufile par ce coin : le coin ne ferme rien. Ce témoin s’allume quand ça arrive sur ton plateau."><span class="dot" aria-hidden="true"></span><span class="lab" data-i18n="hub.coinLabel">fuite par un coin</span></span>
             <button class="icon cam" type="button" data-cam="tri" aria-pressed="false" hidden data-tip-pos="side" data-i18n-data-tip="hub.camTip" data-tip="Caméra : filme ton plateau imprimé, tes pièces se posent ici" data-i18n-aria-label="hub.camAria" aria-label="Ouvrir la caméra dans ce plateau"><svg class="camOn" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><svg class="camOff" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
           </div>
