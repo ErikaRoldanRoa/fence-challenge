@@ -69,6 +69,8 @@ var DICT = {
   "hub.vocFence": "Barrière",
   "hub.defFence": "Une barrière, ce sont deux polyformes ou plus qui enferment une aire. Les cases qu’elle laisse libres forment exactement un intérieur et un extérieur, qui ne se touchent jamais, pas même par un coin. Sur les pavages carré et triangulaire, deux cases peuvent se toucher par un coin sans partager d’arête (sur les hexagones, jamais) : la barrière doit donc se fermer arête contre arête. Le but est d’enclore la plus grande aire.",
   "hub.pieceAria": "Pièce {name}",
+  "hub.boardAria": "Plateau de jeu : les flèches déplacent la pièce choisie, R la tourne, F la retourne, Suppr l’enlève.",
+  "hub.liveMoved": "Pièce {name} déplacée.",
   "hub.piece.pbar": "bar",
   "hub.chipPublications": "Publications",
   "hub.pubEnglish": "Version anglaise : <em>Extremal fences with polyforms</em>, {arxiv} (2026)."
@@ -141,6 +143,8 @@ var DICT = {
   "hub.vocFence": "Zaun",
   "hub.defFence": "Ein Zaun besteht aus zwei oder mehr Polyformen, die eine Fläche einschließen. Die freien Felder bilden genau zwei zusammenhängende Bereiche, einen Innenbereich und das Außen, die sich nie berühren, nicht einmal an einer Ecke. Auf der quadratischen und der dreieckigen Parkettierung können sich zwei Felder an einer Ecke berühren, ohne eine Kante zu teilen (auf Sechsecken nie): Der Zaun muss sich deshalb Kante an Kante schließen. Ziel ist es, die größte Fläche einzuschließen.",
   "hub.pieceAria": "Teil {name}",
+  "hub.boardAria": "Spielfeld: Die Pfeiltasten verschieben das gewählte Teil, R dreht es, F spiegelt es, Entf entfernt es.",
+  "hub.liveMoved": "Teil {name} verschoben.",
   "hub.piece.pbar": "bar",
   "hub.chipPublications": "Publikationen",
   "hub.pubEnglish": "Englische Fassung: <em>Extremal fences with polyforms</em>, {arxiv} (2026)."
@@ -213,6 +217,8 @@ var DICT = {
   "hub.vocFence": "Fence",
   "hub.defFence": "A fence is two or more polyforms that enclose an area. The cells it leaves free form exactly one inside and one outside, which never touch, not even at a corner. On the square and triangular tilings, two cells can touch at a corner without sharing an edge (on hexagons they never can), so the fence must close edge to edge. The goal is to enclose the largest area.",
   "hub.pieceAria": "Piece {name}",
+  "hub.boardAria": "Game board: the arrow keys move the chosen piece, R turns it, F flips it, Delete removes it.",
+  "hub.liveMoved": "Piece {name} moved.",
   "hub.piece.pbar": "bar",
   "hub.chipPublications": "Publications",
   "hub.pubEnglish": "English version: <em>Extremal fences with polyforms</em>, {arxiv} (2026)."

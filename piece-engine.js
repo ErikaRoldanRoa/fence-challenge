@@ -227,6 +227,7 @@
           return;
         }
         if (reorientPlacedPiece(selected, next)) {
+          state.freshPieceId = selected.id; // the next tap on it only selects it
           setStatus(`${verb} ${selected.typeId}.`);
           resetArea();
           render();
@@ -367,6 +368,9 @@
       // equivalent of the Delete key, which touch devices do not have.
       if (state._downPieceId && !state._didDrag && state._downWasSelected) {
         removePiece(state._downPieceId);
+      } else if (state._downPieceId && state._didDrag) {
+        // A piece just moved counts as new: the next tap on it only selects it.
+        state.freshPieceId = state._downPieceId;
       }
       state._downPieceId = null;
       if (state.draggingPieceId) {
@@ -380,8 +384,55 @@
       } catch (e) {  }
     }
 
+    // Arrow keys move the selected piece to the next cell in that direction:
+    // the nearest cell its marker may take whose direction from the current
+    // one is within 60 degrees of the arrow's, where the piece fits.
+    const ARROWS = {
+      ArrowLeft: { x: -1, y: 0 },
+      ArrowRight: { x: 1, y: 0 },
+      ArrowUp: { x: 0, y: -1 },
+      ArrowDown: { x: 0, y: 1 },
+    };
+    function moveSelectionBy(dir) {
+      const piece = getSelectedPiece();
+      if (!piece) return false;
+      const type = state.pieceTypeMap.get(piece.typeId);
+      const variant = type.variants[piece.variantIndex];
+      const from = state.board.map.get(lattice.cellKey(piece.marker));
+      const origin = from ? from.centroid : lattice.cellCentroidWorld(piece.marker);
+      const candidates = [];
+      for (const entry of state.board.cells) {
+        const vx = entry.centroid.x - origin.x;
+        const vy = entry.centroid.y - origin.y;
+        const len = Math.hypot(vx, vy);
+        if (len < 1e-6) continue;
+        const along = (vx * dir.x + vy * dir.y) / len;
+        if (along < 0.5 - 1e-6) continue;
+        if (!lattice.markerConstraint(variant, entry)) continue;
+        candidates.push({ entry, len, along });
+      }
+      candidates.sort((a, b) => (a.len - b.len) || (b.along - a.along));
+      for (const c of candidates) {
+        if (canPlace(piece.typeId, piece.variantIndex, c.entry, piece.id)) {
+          piece.marker = lattice.bareCell(c.entry);
+          state.freshPieceId = piece.id; // the next tap on it only selects it
+          resetArea();
+          setStatus(`Moved ${piece.typeId}.`);
+          render();
+          return true;
+        }
+      }
+      return false;
+    }
+
     function onKeyDown(event) {
       if (!state.hovered && !dom.root.contains(document.activeElement)) return;
+      if (ARROWS[event.key] && !event.altKey && !event.ctrlKey && !event.metaKey) {
+        if (!getSelectedPiece() || !dom.root.contains(document.activeElement)) return;
+        event.preventDefault();
+        moveSelectionBy(ARROWS[event.key]);
+        return;
+      }
       if (event.key === "r" || event.key === "R") {
         event.preventDefault();
         rotateSelection();
@@ -397,6 +448,9 @@
 
     function refreshTray() {
       if (!dom.tray) return;
+      // The chips are rebuilt: a keyboard user keeps focus on the same piece.
+      const focused = document.activeElement;
+      const focusId = focused && dom.tray.contains(focused) ? focused.dataset.pieceId : null;
       dom.tray.innerHTML = "";
       const chips = [];
       state.pieceTypes.forEach((type) => {
@@ -412,6 +466,10 @@
         dom.tray.appendChild(chip);
         chips.push(chip);
       });
+      if (focusId) {
+        const again = chips.find((c) => c.dataset.pieceId === focusId);
+        if (again) again.focus({ preventScroll: true });
+      }
       emit.tray(chips);
     }
 
@@ -713,6 +771,7 @@
     return {
       spawnPiece,
       canPlace,
+      moveSelectionBy,
       rotateSelection,
       flipSelection,
       reorientPlacedPiece,

@@ -186,6 +186,14 @@ function wireEvents() {
       closeCamera();
       return;
     }
+    const dir = window.FencePlay ? window.FencePlay.arrowOf(event, dom.canvas) : null;
+    if (dir) {
+      const selected = getSelectedPiece();
+      if (!selected || state.draggingPieceId) return;
+      event.preventDefault();
+      movePieceToward(selected, dir);
+      return;
+    }
     if (event.key === "r" || event.key === "R") {
       event.preventDefault();
       rotateSelection();
@@ -534,12 +542,31 @@ function findBestMarkerCell(typeId, variantIndex, preferredWorld = { x: 0, y: 0 
   return null;
 }
 
+// Arrow keys: the selected piece goes to the nearest free place that way.
+function movePieceToward(piece, dir) {
+  const from = state.boardCellMap.get(cellKey(piece.marker));
+  if (!from) return false;
+  const markerO = state.pieceTypeMap.get(piece.typeId).variants[piece.variantIndex].markerO;
+  const entries = window.FencePlay.towards(state.boardCellEntries, from.centroid, dir, (e) => e.o === markerO);
+  for (const entry of entries) {
+    if (!canPlace(piece.typeId, piece.variantIndex, entry, piece.id)) continue;
+    piece.marker = { i: entry.i, j: entry.j, o: entry.o };
+    state.freshPieceId = piece.id; // the next tap on it only selects it
+    resetMeasure();
+    setStatus("tri.s.moved", { name: pieceName(piece.typeId) });
+    render();
+    return true;
+  }
+  return false;
+}
+
 function rotateSelection() {
   const selected = getSelectedPiece();
   if (selected) {
     const type = state.pieceTypeMap.get(selected.typeId);
     const nextVariant = type.rotateMap[selected.variantIndex];
     if (reorientPlacedPiece(selected, nextVariant)) {
+      state.freshPieceId = selected.id; // the next tap on it only selects it
       setStatus("tri.s.rotated", { name: pieceName(selected.typeId) });
       resetMeasure();
       render();
@@ -562,6 +589,7 @@ function flipSelection() {
     const type = state.pieceTypeMap.get(selected.typeId);
     const nextVariant = type.flipMap[selected.variantIndex];
     if (reorientPlacedPiece(selected, nextVariant)) {
+      state.freshPieceId = selected.id; // the next tap on it only selects it
       setStatus("tri.s.flipped", { name: pieceName(selected.typeId) });
       resetMeasure();
       render();
@@ -694,6 +722,8 @@ function onPointerUp(event) {
   if (pieceId && state._moved) {
     const piece = state.placedPieces.find((item) => item.id === pieceId);
     if (piece) setStatus("tri.s.moved", { name: pieceName(piece.typeId) });
+    // a piece just moved counts as new: the next tap on it only selects it
+    if (piece) state.freshPieceId = pieceId;
   }
   state._moved = false;
   state._downPieceId = null;

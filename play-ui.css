@@ -179,3 +179,7 @@
   .ctl.erase.is-armed, .ctl.cam[aria-pressed="true"]::after { animation: none; }
   .ctl.cam.is-ready:not([aria-pressed="true"])::after { animation: none; transform: scale(1.1); opacity: 0.7; }
 }
+
+/* The board takes keyboard focus (arrow keys move the chosen piece). */
+#board-canvas:focus-visible,
+#game-board:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.65); outline-offset: 2px; }

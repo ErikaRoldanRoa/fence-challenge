@@ -69,6 +69,18 @@
       if (!root.matches(":hover") && !root.contains(document.activeElement)) return;
       if (["r", "R", "f", "F", "Delete", "Backspace"].includes(e.key)) {
         setTimeout(refresh, 0); // after the engine's own handler
+      } else if (/^Arrow(Left|Right|Up|Down)$/.test(e.key) && root.contains(document.activeElement)) {
+        setTimeout(() => {
+          const s = root._engine && root._engine.state;
+          // set by this key press only: the refresh after each move replaces it
+          const moved = s && /^Moved /.test(s.lastStatus || "");
+          refresh();
+          // the engine moved the chosen piece: say so in the polite live region
+          if (moved && live) {
+            const piece = s.placedPieces.find((p) => p.id === s.selectedPieceId);
+            if (piece) live.textContent = i18n.t("hub.liveMoved", { name: pieceName(piece.typeId) });
+          }
+        }, 0);
       }
     });
   }

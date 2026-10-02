@@ -345,6 +345,14 @@ function wireEvents() {
   window.addEventListener("keydown", (e) => {
     if (e.altKey || e.ctrlKey || e.metaKey) return;
     if (e.key === "Escape" && camera.view) { closeCamera(); return; }
+    const dir = window.FencePlay ? window.FencePlay.arrowOf(e, dom.canvas) : null;
+    if (dir) {
+      const sel = getSelectedPiece();
+      if (!sel || state.draggingPieceId) return;
+      e.preventDefault();
+      movePieceToward(sel, dir);
+      return;
+    }
     if (e.key === "r" || e.key === "R") { e.preventDefault(); rotateSelection(); return; }
     if (e.key === "f" || e.key === "F") { e.preventDefault(); flipSelection(); return; }
     if (e.key === "Delete" || e.key === "Backspace") {
@@ -480,6 +488,22 @@ function spawnPiece(typeId, preferredCell = null) {
   return true;
 }
 
+// Arrow keys: the selected piece goes to the nearest free place that way.
+function movePieceToward(piece, dir) {
+  const from = state.boardCellMap.get(cellKey(piece.marker));
+  if (!from) return false;
+  for (const entry of window.FencePlay.towards(state.boardCells, from.centroid, dir)) {
+    if (!canPlace(piece.typeId, piece.variantIndex, entry, piece.id)) continue;
+    piece.marker = { q: entry.q, r: entry.r };
+    state.freshPieceId = piece.id; // the next tap on it only selects it
+    resetMeasure();
+    setStatus("hx.s.moved", { name: pieceName(piece.typeId) });
+    render();
+    return true;
+  }
+  return false;
+}
+
 function rotateSelection() {
   const sel = getSelectedPiece();
   if (sel) {
@@ -490,6 +514,7 @@ function rotateSelection() {
       return;
     }
     if (reorient(sel, next)) {
+      state.freshPieceId = sel.id; // the next tap on it only selects it
       setStatus("hx.s.rotated", { name: pieceName(sel.typeId) });
       resetMeasure();
       render();
@@ -513,6 +538,7 @@ function flipSelection() {
       return;
     }
     if (reorient(sel, next)) {
+      state.freshPieceId = sel.id; // the next tap on it only selects it
       setStatus("hx.s.flipped", { name: pieceName(sel.typeId) });
       resetMeasure();
       render();
@@ -609,6 +635,8 @@ function onPointerUp(event) {
   if (pieceId && state._moved) {
     const piece = state.placedPieces.find((p) => p.id === pieceId);
     if (piece) setStatus("hx.s.moved", { name: pieceName(piece.typeId) });
+    // a piece just moved counts as new: the next tap on it only selects it
+    if (piece) state.freshPieceId = pieceId;
   }
   state._moved = false;
   state._downPieceId = null;

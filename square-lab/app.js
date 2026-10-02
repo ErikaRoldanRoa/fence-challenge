@@ -335,6 +335,16 @@
         return;
       }
 
+      const dir = window.FencePlay ? window.FencePlay.arrowOf(event, dom.gameBoard) : null;
+      if (dir) {
+        if (!gameState.activePieceId || gameState.drag) {
+          return;
+        }
+        event.preventDefault();
+        moveActivePiece(dir);
+        return;
+      }
+
       const key = event.key.toLowerCase();
       if (key === "r") {
         event.preventDefault();
@@ -533,6 +543,7 @@
     if (canTransform) {
       const updated = buildPlacedPiece(piece, nextRotation, nextFlipped, relativeCells, anchor.x, anchor.y);
       gameState.placedPieces.set(pieceId, updated);
+      gameState.freshPieceId = pieceId; // the next tap on it only selects it
       setStatus(rotate ? "sq.s.rotated" : "sq.s.flipped", { name: pieceId });
     } else {
       gameState.placedPieces.set(pieceId, placed);
@@ -545,6 +556,43 @@
     updateGameMetrics();
     renderGameBoard();
     return true;
+  }
+
+  // Arrow keys: the active piece goes to the nearest free place that way.
+  function moveActivePiece(dir) {
+    const pieceId = gameState.activePieceId;
+    const placed = pieceId ? gameState.placedPieces.get(pieceId) : null;
+    if (!placed) {
+      return false;
+    }
+    const anchor = anchorFromPlacedPiece(placed);
+    const relativeCells = placed.cells.map((cell) => ({ x: cell.x - anchor.x, y: cell.y - anchor.y }));
+    gameState.placedPieces.delete(pieceId);
+    rebuildGameOccupancy();
+    let target = null;
+    for (let k = 1; k < BOARD_SIZE && !target; k += 1) {
+      const ax = anchor.x + dir.x * k;
+      const ay = anchor.y + dir.y * k;
+      if (canPlaceCells(relativeCells, ax, ay)) {
+        target = { x: ax, y: ay };
+      }
+    }
+    if (target) {
+      const piece = PIECE_BY_ID.get(pieceId);
+      gameState.placedPieces.set(pieceId, buildPlacedPiece(piece, placed.rotation, placed.flipped, relativeCells, target.x, target.y));
+      gameState.freshPieceId = pieceId; // the next tap on it only selects it
+      setStatus("sq.s.moved", { name: pieceId });
+    } else {
+      gameState.placedPieces.set(pieceId, placed);
+    }
+    rebuildGameOccupancy();
+    if (target) {
+      clearGameAnalysis();
+      updatePieceTrayState();
+      updateGameMetrics();
+      renderGameBoard();
+    }
+    return !!target;
   }
 
   function anchorFromPlacedPiece(placed) {
@@ -925,6 +973,8 @@
         const placed = buildPlacedPiece(piece, drag.rotation, drag.flipped, drag.relativeCells, anchorX, anchorY);
         gameState.placedPieces.set(drag.pieceId, placed);
         dropped = true;
+        // a piece just moved counts as new: the next tap on it only selects it
+        gameState.freshPieceId = drag.pieceId;
         setStatus("sq.s.moved", { name: drag.pieceId });
       }
     }
