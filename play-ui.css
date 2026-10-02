@@ -114,6 +114,22 @@
   animation: camLive 1.3s ease-in-out infinite;
 }
 @keyframes camLive { 50% { opacity: 0.35; } }
+/* Opened from a printed sheet's QR code, a camera that could not start by
+   itself waits for a tap: a ring pulses out of it. */
+.ctl.cam.is-ready:not([aria-pressed="true"])::before {
+  border-width: 2px;
+  box-shadow: 0 0 30px var(--accent-glow, rgba(47, 243, 255, 0.4)), inset 0 0 14px var(--accent-soft, rgba(47, 243, 255, 0.14));
+}
+.ctl.cam.is-ready:not([aria-pressed="true"])::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 2px solid var(--accent, #2ff3ff);
+  pointer-events: none;
+  animation: camReady 1.6s ease-out infinite;
+}
+@keyframes camReady { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.22); opacity: 0; } }
 
 /* Locked or not yet possible. */
 .ctl[aria-disabled="true"], .ctl.locked { opacity: 0.32; filter: grayscale(0.6); }
@@ -161,4 +177,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ctl.erase.is-armed, .ctl.cam[aria-pressed="true"]::after { animation: none; }
+  .ctl.cam.is-ready:not([aria-pressed="true"])::after { animation: none; transform: scale(1.1); opacity: 0.7; }
 }

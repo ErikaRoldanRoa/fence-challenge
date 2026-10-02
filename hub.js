@@ -432,7 +432,13 @@
     const found = raw ? readPaperPlacements(card, raw) : null;
     if (!found) return;
     placeOnCard(found);
-    const article = document.getElementById("engine-" + card).closest("article");
+    showCard(card);
+  }
+  // Bring a card into view and let it glow once.
+  function showCard(card) {
+    const root = document.getElementById("engine-" + card);
+    const article = root && root.closest("article");
+    if (!article) return;
     const still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // Centre the card when it fits below the language switch, otherwise
     // show its top (scroll-margin-top keeps it clear of the switch).
@@ -458,6 +464,7 @@
     if (!btn) return;
     const on = camOpen === card;
     btn.setAttribute("aria-pressed", on ? "true" : "false");
+    if (on) btn.classList.remove("camReady");
     const article = btn.closest("article");
     if (article) article.classList.toggle("camLive", on);
     btn.setAttribute("data-i18n-aria-label", on ? "hub.camClose" : "hub.camAria");
@@ -476,7 +483,15 @@
     try { session.close(); } catch (e) {}
     camLabel(card);
   }
-  function openCam(card) {
+  // auto: opened by the page, not by a tap. If the camera cannot start by
+  // itself (blocked, or the browser waits for a tap), the card closes it
+  // without a message and lights its camera control for that tap.
+  function waitForTap(card) {
+    closeCam(card);
+    const c = cams[card];
+    if (c && c.btn) c.btn.classList.add("camReady");
+  }
+  function openCam(card, auto) {
     const c = cams[card];
     const root = document.getElementById("engine-" + card);
     const engine = root && root._engine;
@@ -517,7 +532,11 @@
           if (found) placeOnCard(found);
         },
         onState: (state) => {
-          if (typeof state === "string" && state.indexOf("error") === 0) {
+          if (c.session !== session || typeof state !== "string") return;
+          if (state === "searching" || state === "locked") auto = false;
+          if (auto && (state === "stopped" || state.indexOf("error") === 0)) {
+            waitForTap(card);
+          } else if (state.indexOf("error") === 0) {
             if (live) live.textContent = i18n.t("hub.camError");
             closeCam(card);
           }
@@ -528,7 +547,8 @@
       session = null;
     }
     if (!session) {
-      if (live) live.textContent = i18n.t("hub.camError");
+      if (auto) c.btn.classList.add("camReady");
+      else if (live) live.textContent = i18n.t("hub.camError");
       return;
     }
     c.session = session;
@@ -680,8 +700,26 @@
   window.addEventListener("resize", hideTip);
   document.addEventListener("fc-langchange", () => { if (tipAnchor) showTip(tipAnchor); });
 
+  // A printed sheet's QR code (camera/?board=<id>) lands here as
+  // index.html#camera=<card>: the card comes into view with its camera open.
+  function cameraFromSheet() {
+    const m = /^#camera=(sq|hex|tri)$/.exec(window.location.hash);
+    if (!m) return;
+    const card = m[1];
+    try {
+      window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+    } catch (e) {}
+    closeMenus(null);
+    showCard(card);
+    if (cams[card] && !cams[card].session) openCam(card, true);
+  }
   // The camera scripts load with defer: they are ready at DOMContentLoaded.
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountCams);
-  else mountCams();
+  function startCams() {
+    mountCams();
+    cameraFromSheet();
+    window.addEventListener("hashchange", cameraFromSheet);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", startCams);
+  else startCams();
   document.addEventListener("fc-langchange", () => Object.keys(cams).forEach(camLabel));
 })();

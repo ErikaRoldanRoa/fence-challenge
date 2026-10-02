@@ -240,7 +240,9 @@ const state = {
 };
 
 // The camera view inside the board (../camera/inboard.js), while it is open.
-const camera = { view: null };
+// auto: opened by the page (a printed sheet's QR code), not by a tap;
+// hushed: a view closed without a message.
+const camera = { view: null, auto: false, hushed: null };
 
 init();
 
@@ -1096,6 +1098,8 @@ function bindCamera() {
   const decide = () => {
     dom.cameraChip.hidden = !cameraSupported();
     resizeCanvas();
+    cameraFromSheet();
+    window.addEventListener("hashchange", cameraFromSheet);
   };
   if (document.readyState === "complete") decide();
   else window.addEventListener("load", decide);
@@ -1120,8 +1124,30 @@ function localizeCameraChip() {
   dom.cameraChip.classList.toggle("is-active", Boolean(camera.view));
 }
 
-function openCamera() {
+// A printed sheet's QR code (camera/?board=<id>) lands here as
+// index.html#camera: the camera opens inside the board at once.
+function cameraFromSheet() {
+  if (!/^#camera$/.test(window.location.hash)) return;
+  try {
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  } catch (e) {
+    /* the hash simply stays */
+  }
+  if (!camera.view && cameraSupported()) openCamera(true);
+}
+
+// The camera opened by the page could not start by itself (blocked, or the
+// browser waits for a tap): it closes without a message and its chip is lit
+// for that tap.
+function waitForTap() {
+  camera.hushed = camera.view;
+  closeCamera(true);
+  dom.cameraChip.classList.add("is-ready");
+}
+
+function openCamera(auto = false) {
   if (camera.view || !cameraSupported()) return;
+  dom.cameraChip.classList.remove("is-ready");
   state.draggingPieceId = null;
   dom.cameraHost.hidden = false;
   dom.boardWrap.classList.add("camera-mode");
@@ -1133,7 +1159,11 @@ function openCamera() {
       worldToHost: worldToCss,
       onPlacements: cameraPlacements,
       onState: cameraStateChanged,
-      onClose: () => cameraClosed(false),
+      onClose: () => {
+        const quiet = camera.hushed === view;
+        if (quiet) camera.hushed = null;
+        cameraClosed(quiet);
+      },
     });
   } catch (e) {
     view = null;
@@ -1141,10 +1171,12 @@ function openCamera() {
   if (!view) {
     dom.cameraHost.hidden = true;
     dom.boardWrap.classList.remove("camera-mode");
-    setStatus("hx.s.camError");
+    if (auto) dom.cameraChip.classList.add("is-ready");
+    else setStatus("hx.s.camError");
     return;
   }
   camera.view = view;
+  camera.auto = auto;
   document.body.dataset.fcCamera = "starting";
   localizeCameraChip();
 }
@@ -1171,6 +1203,11 @@ function cameraClosed(quiet) {
 function cameraStateChanged(value) {
   if (!camera.view) return;
   const s = String(value || "");
+  if (s === "searching" || s === "locked") camera.auto = false;
+  if (camera.auto && (s === "stopped" || s.indexOf("error") === 0)) {
+    waitForTap();
+    return;
+  }
   if (s === document.body.dataset.fcCamera) return;
   document.body.dataset.fcCamera = s;
   if (s === "starting") setStatus("hx.s.camStarting");
