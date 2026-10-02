@@ -826,7 +826,9 @@
       gameCtx.restore();
     }
 
-    gameCtx.strokeStyle = "#2a374a";
+    // grid lines at 3:1 against the cells; on a 1x screen the line is
+    // spread over two pixels, so it gets more ink there
+    gameCtx.strokeStyle = (window.devicePixelRatio || 1) < 1.5 ? "#6d86a8" : "#5a708f";
     gameCtx.lineWidth = 1;
     for (let i = 0; i <= BOARD_SIZE; i += 1) {
       const lineX = originX + i * cellSize + 0.5;

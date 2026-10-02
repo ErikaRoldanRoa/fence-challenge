@@ -1256,7 +1256,9 @@ function drawBoardBase() {
     ctx.closePath();
     ctx.fillStyle = "rgba(40, 70, 110, 0.32)";
     ctx.fill();
-    ctx.strokeStyle = "rgba(170, 220, 255, 0.18)";
+    // grid lines at 3:1 against the cells, as on the hub; a thin line on a
+    // 1x screen is spread over two pixels, so it gets more ink there
+    ctx.strokeStyle = (window.devicePixelRatio || 1) < 1.5 ? "rgba(170, 220, 255, 0.3)" : "rgba(170, 220, 255, 0.27)";
     ctx.stroke();
   }
 

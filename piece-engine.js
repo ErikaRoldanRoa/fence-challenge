@@ -619,7 +619,10 @@
       const { width, height } = state.view;
       if (!ctx || width <= 0 || height <= 0) return;
       ctx.clearRect(0, 0, width, height);
-      drawCells(state.board.cells, "rgba(40, 70, 110, 0.32)", "rgba(170, 220, 255, 0.34)", 1);
+      // grid lines at 3:1 against the cells; a 1 px line on a 1x screen is
+      // spread over two pixels, so it gets more ink there
+      const gridInk = (state.view.dpr || 1) < 1.5 ? 0.5 : 0.34;
+      drawCells(state.board.cells, "rgba(40, 70, 110, 0.32)", `rgba(170, 220, 255, ${gridInk})`, 1);
       drawEnclosed();
       drawLeak();
       drawPlacedPieces();
