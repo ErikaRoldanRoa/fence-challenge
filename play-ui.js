@@ -71,7 +71,8 @@
       if (accept && !accept(e)) continue;
       out.push({ entry: e, len: len, along: along });
     }
-    out.sort(function (a, b) { return (a.len - b.len) || (b.along - a.along); });
+    // nearest first; at the same distance (up to rounding), the straightest
+    out.sort(function (a, b) { return Math.abs(a.len - b.len) > 1e-6 ? a.len - b.len : b.along - a.along; });
     return out.map(function (c) { return c.entry; });
   }
   function trayDrag(event, board, over, done) {
