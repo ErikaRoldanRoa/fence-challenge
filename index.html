@@ -47,8 +47,10 @@
       
       .rack{margin-top:32px;padding:16px;border-radius:24px;background:rgba(255,255,255,0.015);border:1px solid rgba(255,255,255,0.09);}
       .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch;}
-      @media(max-width:900px){.grid{grid-template-columns:1fr;}.rack{padding:10px;border-radius:18px;}}
-      @media(max-width:520px){main{padding:32px 16px 80px;}.pStatus{gap:6px;}.pStatus .pill{padding:0 11px;letter-spacing:0.03em;}.pStatus .pill.corner{padding:0 9px;gap:6px;}.pill.corner.reactive .lab{letter-spacing:0;}.rack{padding:0;border:0;background:none;margin-top:24px;}article.pCard{padding:12px;}}
+      /* One column under 990 px: three columns narrower than that leave a card's
+         top bar (five 44 px icons, 10 px apart) no room. */
+      @media(max-width:990px){.grid{grid-template-columns:1fr;}.rack{padding:10px;border-radius:18px;}}
+      @media(max-width:520px){main{padding:32px 16px 80px;}.pStatus{gap:6px;}.pStatus .pill{padding:0 11px;letter-spacing:0.03em;}.pStatus .pill.corner{padding:0 9px;gap:6px;}.pill.corner.reactive .lab{letter-spacing:0;}.pStatus .pill.corner .lab{white-space:normal;}.rack{padding:0;border:0;background:none;margin-top:24px;}article.pCard{padding:12px;}}
 
       article.pCard{display:flex;flex-direction:column;padding:14px;border-radius:18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.10);box-shadow:0 18px 50px rgba(0,0,0,0.35);}
       article.pCard.pink{border-color:rgba(255,59,212,0.34);background:linear-gradient(180deg,rgba(255,59,212,0.07),rgba(255,255,255,0.02));}
@@ -255,7 +257,7 @@
       .floatCredit{pointer-events:none;transition:opacity .2s ease,visibility .2s;}
       .floatCredit.tucked{opacity:0;visibility:hidden;}
       .floatCredit a{pointer-events:auto;}
-      @media(max-width:900px){.floatCredit{position:static;margin:24px auto 0;display:block;width:fit-content;}}
+      @media(max-width:990px){.floatCredit{position:static;margin:24px auto 0;display:block;width:fit-content;}}
       /* Language switch: fixed top-right, three equal chips. */
       .langSel{position:fixed;top:14px;right:16px;z-index:600;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(7,6,10,0.80);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.12);}
       .langSel button{cursor:pointer;border:none;background:transparent;color:var(--muted2);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.04em;padding:5px 9px;border-radius:999px;transition:color .12s ease,background .12s ease;}
@@ -271,7 +273,7 @@
       @media(max-width:520px){.langSel{top:10px;right:10px;}}
       /* With one column of cards (phones, tablets) the switch keeps its place
          at the top of the page but scrolls away, so it never covers a card. */
-      @media(max-width:900px){.langSel{position:absolute;}}
+      @media(max-width:990px){.langSel{position:absolute;}}
       /* Touch screens: every button and tip holder answers to a 44 px touch
          area that reaches past its drawn edge, so the page looks the same. */
       @media(pointer:coarse){

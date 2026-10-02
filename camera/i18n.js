@@ -142,7 +142,7 @@
     "cam.metaDescription": "Bau einen Zaun mit echten Teilen auf einem gedruckten Spielfeld der Fence Challenge. Die Kamera deines Handys folgt deinen Teilen und lässt den Innenbereich auf dem Bild deines Spielfelds leuchten. Das Bild bleibt auf deinem Gerät.",
     "cam.boardFound": "Spielfeld erkannt:",
     "cam.board.square": "Quadrate · {w} × {h}",
-    "cam.board.side": "{lattice} · Seite {n}",
+    "cam.board.side": "{lattice} · Seitenlänge {n}",
     "cam.board.classic": "Quadrate · {w} × {h}, klassisches Kit",
     "cam.lattice.hexagonal": "Sechsecke",
     "cam.lattice.triangular": "Dreiecke",

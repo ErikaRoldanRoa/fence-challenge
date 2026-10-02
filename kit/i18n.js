@@ -98,7 +98,7 @@
     "kit.capPieces": "die Teile zum Ausschneiden",
     "kit.capBacks": "die Rückseiten der Teile, hinter Seite {n}",
     "kit.board.square": "Quadrate · {w} × {h}",
-    "kit.board.side": "{lattice} · Seite {n}",
+    "kit.board.side": "{lattice} · Seitenlänge {n}",
     "kit.lattice.hexagonal": "Sechsecke",
     "kit.lattice.triangular": "Dreiecke",
     "kit.pc.square4": "{n} Tetrominos",

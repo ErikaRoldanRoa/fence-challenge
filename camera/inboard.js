@@ -109,7 +109,7 @@
       "cam.s.find": "Zeig alle vier Eckquadrate.",
       "cam.boardFound": "Spielfeld erkannt:",
       "cam.board.square": "Quadrate · {w} × {h}",
-      "cam.board.side": "{lattice} · Seite {n}",
+      "cam.board.side": "{lattice} · Seitenlänge {n}",
       "cam.lattice.hexagonal": "Sechsecke",
       "cam.lattice.triangular": "Dreiecke",
       "cam.s.stopped": "Die Kamera ist aus. Tipp auf „Weiter“, um sie wieder einzuschalten.",

@@ -12,7 +12,7 @@
  * The area pill (.measure) reaches into the free room under its strip:
  * --area-reach is the room left down to 8 px above the nearest control,
  * piece or board below the strip, at most REACH_MAX; its number grows with
- * it (--area-num), as far as three digits (an area never needs more) keep
+ * it (--area-num), with room for three digits, keeping
  * 8 px from the controls beside the pill and 10 px from the screen's edge. */
 (function () {
   "use strict";
@@ -133,23 +133,44 @@
   }
   // Wide screens: the board group (erase, the camera) laid right under the
   // drawn board and as wide as it, so the camera's right edge is the board's
-  // (as in the square lab); the credit sits between erase and the camera.
+  // (as in the square lab); the credit sits between erase and the camera,
+  // never closer than 16 px to either: on one line when it fits, else on two
+  // centred lines as wide as that room.
   // drawn: the board's drawing in viewport pixels {left, right, bottom}, or
   // null to leave both to the stylesheet (phones).
   var BAR_GAP = 8;
+  var BRAND_CLEAR = 16;
   function placeBar(bar, brand, drawn) {
     if (!bar) return;
     bar.style.width = "";
     bar.style.transform = "";
-    if (brand) brand.style.transform = "";
+    if (brand) {
+      brand.style.transform = "";
+      brand.style.maxWidth = "";
+      brand.style.whiteSpace = "";
+      brand.style.textAlign = "";
+    }
     if (!drawn) return;
     bar.style.width = Math.round(drawn.right - drawn.left) + "px";
     var r = bar.getBoundingClientRect();
     var top = drawn.bottom + BAR_GAP;
     bar.style.transform = "translate(" + (drawn.left - r.left).toFixed(1) + "px, " + (top - r.top).toFixed(1) + "px)";
     if (brand) {
+      var cx = (drawn.left + drawn.right) / 2;
+      var half = Infinity;
+      bar.querySelectorAll("button").forEach(function (el) {
+        var c = el.getBoundingClientRect();
+        if (c.width === 0) return;
+        half = Math.min(half, c.left >= cx ? c.left - cx : cx - c.right);
+      });
+      var room = 2 * (half - BRAND_CLEAR);
+      if (isFinite(room) && brand.getBoundingClientRect().width > room) {
+        brand.style.whiteSpace = "normal";
+        brand.style.textAlign = "center";
+        brand.style.maxWidth = Math.max(44, Math.floor(room)) + "px";
+      }
       var b = brand.getBoundingClientRect();
-      var dx = (drawn.left + drawn.right) / 2 - (b.left + b.right) / 2;
+      var dx = cx - (b.left + b.right) / 2;
       var dy = top + r.height / 2 - (b.top + b.bottom) / 2;
       brand.style.transform = "translate(" + dx.toFixed(1) + "px, " + dy.toFixed(1) + "px)";
     }
