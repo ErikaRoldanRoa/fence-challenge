@@ -45,11 +45,43 @@
   const BLEED = 1; // mm the coloured backs reach past the cut line
   const FALLBACK_BASE = "erikaroldanroa.github.io/fence-challenge/";
   const FONT = "Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  // The hub's small tracked capitals are monospace: the sheets embed IBM Plex Mono (fonts/plex-mono.css).
+  const MONO = "'IBM Plex Mono', Manrope, monospace";
   const RING_TOP = 16; // mm: on the pieces sheets the pieces start below this line (the header sits above it)
 
   const INK = "#111111"; // marks, text and cut lines
   const GRID = "#2563eb"; // strong blue: printed from the colour cartridge alone
   const OUTLINE = "#1e3a8a";
+  const MUTED = "#5b5763"; // the hub's muted grey, on paper (6.9:1 on white)
+
+  /* The hub's neon accent of each tiling, for white paper: `neon` is the
+   * hub's colour, used only for the light halo (the printed glow); `ink` is
+   * the same hue deepened to 4.5:1 on white, so the title still reads on a
+   * black-and-white print or a photocopy (a mid grey). */
+  // `glow`: share of the neon in the halo's innermost tint, the most that
+  // keeps the ink at 3:1 or more against it (pink 3.1, lime 3.9, cyan 3.7).
+  const ACCENT = Object.freeze({
+    square: { neon: "#ff3bd4", ink: "#dc00ac", glow: 0.3 },
+    hexagonal: { neon: "#70ff7a", ink: "#008a0a", glow: 0.5 },
+    triangular: { neon: "#2ff3ff", ink: "#00838c", glow: 0.5 },
+  });
+
+  // The sheet's kicker: the hub card's mission, or the lab's own title.
+  const MISSION = Object.freeze({
+    sq9: "hub.sqTitle",
+    hex5: "hub.hexTitle",
+    tri4: "hub.triTitle",
+    sq20: "kit.mission.sq20",
+    hex6: "kit.mission.hex6",
+    tri10: "kit.mission.tri10",
+  });
+
+  // The neon mixed with white paper: share p of the colour.
+  function tint(hex, p) {
+    const n = parseInt(hex.slice(1), 16);
+    const ch = (v) => Math.round(255 - p * (255 - v)).toString(16).padStart(2, "0");
+    return "#" + ch((n >> 16) & 255) + ch((n >> 8) & 255) + ch(n & 255);
+  }
 
   function fmt(v) {
     return String(Math.round(v * 1000) / 1000);
@@ -600,6 +632,7 @@
   function runWidth(r) {
     let em = r.gap || 0;
     const text = r.caps ? r.text.toUpperCase() : r.text;
+    if (r.mono) return (em + [...text].length * (0.6 + (r.track || 0))) * r.size;
     for (const ch of text) {
       if (ch === " ") em += 0.27;
       else if (/[.,·:;'’]/.test(ch)) em += 0.3;
@@ -622,15 +655,45 @@
   }
 
   // One line of runs at (x, y), anchored start, middle or end.
-  function textLine(cls, x, y, anchor, runs) {
-    let out = '<text class="' + cls + '" x="' + fmt(x) + '" y="' + fmt(y) + '" text-anchor="' + anchor + '" font-family="' + FONT + '" fill="' + INK + '">';
-    for (const r of runs) {
+  // `paint` (optional) paints every run alike: { fill, stroke, width } (a halo layer).
+  function textLine(cls, x, y, anchor, runs, paint) {
+    let out = '<text class="' + cls + '" x="' + fmt(x) + '" y="' + fmt(y) + '" text-anchor="' + anchor + '" font-family="' + FONT + '" fill="' + (paint ? paint.fill : INK) + '"' +
+      (paint && paint.stroke ? ' stroke="' + paint.stroke + '" stroke-width="' + fmt(paint.width) + '" stroke-linejoin="round" aria-hidden="true"' : "") + ">";
+    for (const r0 of runs) {
+      const r = paint ? Object.assign({}, r0, { fill: null }) : r0;
       out += '<tspan font-size="' + fmt(r.size) + '" font-weight="' + (r.weight || 400) + '"' +
+        (r.mono ? ' font-family="' + MONO + '"' : "") +
         (r.gap ? ' dx="' + fmt(r.gap * r.size) + '"' : "") +
         (r.track ? ' letter-spacing="' + fmt(r.track * r.size) + '"' : "") +
         (r.fill && r.fill !== INK ? ' fill="' + r.fill + '"' : "") + ">" + esc(r.caps ? r.text.toUpperCase() : r.text) + "</tspan>";
     }
     return out + "</text>";
+  }
+
+  /* A line lit like the hub's neon titles (text-shadow 0 0 8px / 22px of the
+   * accent), printed: under the ink, the same letters stroked ever wider in
+   * ever paler tints of the neon, a soft halo that stays light in grey. `w` is
+   * the widest stroke, in mm. */
+  function glowLine(cls, x, y, anchor, runs, accent, w) {
+    const layers = [
+      { p: 0.28 * accent.glow, k: 1 },
+      { p: 0.6 * accent.glow, k: 0.62 },
+      { p: accent.glow, k: 0.32 },
+    ];
+    let out = '<g class="' + cls + '-glow" aria-hidden="true">';
+    for (const l of layers) {
+      const c = tint(accent.neon, l.p);
+      out += textLine(cls + "-halo", x, y, anchor, runs, { fill: c, stroke: c, width: w * l.k });
+    }
+    out += "</g>";
+    return out + textLine(cls, x, y, anchor, runs.map((r) => Object.assign({}, r, { fill: accent.ink })));
+  }
+
+  // The hub's camera icon (24 x 24, stroked), at (x, y) with side `size`.
+  function cameraIcon(x, y, size, color) {
+    const k = size / 24;
+    return '<g transform="translate(' + fmt(x) + " " + fmt(y) + ") scale(" + fmt(k) + ')" fill="none" stroke="' + color +
+      '" stroke-width="1.9" stroke-linejoin="round"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z"/><circle cx="12" cy="13.3" r="3.3"/></g>';
   }
 
   // The credit, as on the hub: by THE LEARNING MACHINE · CEO Dr. Erika Roldán.
@@ -650,70 +713,158 @@
     return { x0: a.x1 + pad, x1: b.x0 - pad, y0: Math.min(a.y0, b.y0), y1: Math.max(a.y1, b.y1) };
   }
 
-  // Between the top marks, centred as a hub card's head: the brand in tracked
-  // capitals, the name of the pieces large and heavy, the board in blue.
+  // Between the top marks, centred as a hub card's head: the brand in small
+  // tracked capitals, the name of the pieces large and heavy in the tiling's
+  // neon (deepened for paper, with its printed glow), and under it, as the
+  // hub's mono kicker, the mission this board is played in, between two
+  // short accent rules.
   function titleBlock(band, opts, k) {
+    const acc = opts.accent;
+    const glow = 1.8 * k; // widest halo stroke, mm
     const w = band.x1 - band.x0;
     const cx = (band.x0 + band.x1) / 2;
-    const kick = fitRuns([{ text: "Fence Challenge", size: 2.4 * k, weight: 700, track: 0.22, caps: true }], w);
-    const head = fitRuns([{ text: opts.polyform, size: 10.5 * k, weight: 800, track: -0.015 }], w);
-    const sub = fitRuns([{ text: opts.boardLine, size: 3.6 * k, weight: 600, track: 0.02, fill: GRID }], w);
+    const brand = fitRuns([{ text: "Fence Challenge", size: 2.5 * k, weight: 600, track: 0.3, caps: true, mono: true, fill: MUTED }], w);
+    const head = fitRuns([{ text: opts.polyform, size: 13.5 * k, weight: 800, track: -0.02 }], w - glow - 4 * k);
+    const rule = 7 * k; // each accent rule
+    const rgap = 2.4 * k;
+    const kick = fitRuns([{ text: opts.mission, size: 2.9 * k, weight: 600, track: 0.14, caps: true, mono: true, fill: MUTED }], w - 2 * (rule + rgap));
     const cap = 0.72; // Manrope cap height, in em
-    const hK = cap * kick[0].size;
+    const capM = 0.7; // Plex Mono cap height, in em
+    const hB = capM * brand[0].size;
     const hH = cap * head[0].size;
-    const hS = cap * sub[0].size;
-    const g1 = 3.4 * k;
-    const g2 = 3.6 * k;
-    const total = hK + g1 + hH + g2 + hS;
-    const yK = (band.y0 + band.y1) / 2 - total / 2 + hK;
-    const yH = yK + g1 + hH;
-    const yS = yH + g2 + hS;
+    const hK = capM * kick[0].size;
+    const g1 = 3.2 * k;
+    const g2 = 3.9 * k;
+    const total = hB + g1 + hH + g2 + hK;
+    const yB = (band.y0 + band.y1) / 2 - total / 2 + hB;
+    const yH = yB + g1 + hH;
+    const yK = yH + g2 + hK;
     // letter-spacing adds room after the last letter: shift tracked lines by half of it to stay centred
-    return (
-      textLine("kit-kicker", cx + (kick[0].track * kick[0].size) / 2, yK, "middle", kick) +
-      textLine("kit-title", cx, yH, "middle", head) +
-      textLine("kit-board-line", cx, yS, "middle", sub)
-    );
+    const half = (r) => (r.track * r.size) / 2;
+    const kw = runsWidth(kick) - 2 * half(kick[0]);
+    const ry = yK - hK / 2;
+    const rw = 0.42 * k;
+    let out = textLine("kit-brand", cx + half(brand[0]), yB, "middle", brand);
+    out += glowLine("kit-title", cx, yH, "middle", head, acc, glow);
+    out += '<path class="kit-rule" d="M' + fmt(cx - kw / 2 - rgap - rule) + " " + fmt(ry) + "h" + fmt(rule) + "M" + fmt(cx + kw / 2 + rgap) + " " + fmt(ry) + "h" + fmt(rule) +
+      '" stroke="' + acc.ink + '" stroke-width="' + fmt(rw) + '" stroke-linecap="round"/>';
+    out += textLine("kit-kicker", cx + half(kick[0]), yK, "middle", kick);
+    return out;
   }
 
-  // Between the bottom marks: the QR code centred, the credit under it.
+  /* Between the bottom marks, like a lit control of the hub: the QR code in a
+   * rounded frame of the tiling's accent (a hub pill, with its glow), centred,
+   * as tall as the marks; at its left the hub's camera icon and "Open the
+   * camera", pointing at it; at its right the credit. The QR keeps 3
+   * modules of white inside the frame, and stays farther than 0.3 of a mark's
+   * side from every mark. */
+  const QR_QUIET = 3; // modules of white between the code and its frame
   function footBlock(band, opts, k, markSide) {
+    const acc = opts.accent;
     const w = band.x1 - band.x0;
     const cx = (band.x0 + band.x1) / 2;
-    const credit = fitRuns(creditRuns(opts.by, 3 * k), w);
-    const hC = 0.72 * credit[0].size;
-    const gap = 2.8 * k;
     const bandH = band.y1 - band.y0;
-    // as large as the band allows, and never nearer a mark than 0.3 of its side
-    const q = Math.min(QR_SIZE * k, bandH - gap - hC - 0.5 * k, w + 2 * (CLEAR_MODULES / 6 - 0.3) * markSide);
-    const total = q + gap + hC;
-    const qy = band.y0 + (bandH - total) / 2;
-    let out = "";
-    const qr = qrPath(opts.url, cx - q / 2, qy, q);
+    const qr0 = qrPath(opts.url, 0, 0, 1);
+    const n = qr0 ? qr0.modules : 37;
+    const sw = 0.55 * k; // frame stroke
+    const glowW = 2.2 * k; // its halo, outside
+    // frame: as tall as the marks (its pale glow reaches past them, between
+    // them, away from their light margin), or less where the band is narrow
+    const F = Math.min(bandH, w + 2 * (CLEAR_MODULES / 6 - 0.3) * markSide - glowW, 0.34 * w);
+    const q = (F - 2 * sw) / (1 + (2 * QR_QUIET) / n);
+    const fx = cx - F / 2;
+    const fy = band.y0 + (bandH - F) / 2;
+    const r = 0.17 * F;
+    const rect = (x, y, s, rr) => "M" + fmt(x + rr) + " " + fmt(y) + "H" + fmt(x + s - rr) + "A" + fmt(rr) + " " + fmt(rr) + " 0 0 1 " + fmt(x + s) + " " + fmt(y + rr) +
+      "V" + fmt(y + s - rr) + "A" + fmt(rr) + " " + fmt(rr) + " 0 0 1 " + fmt(x + s - rr) + " " + fmt(y + s) + "H" + fmt(x + rr) +
+      "A" + fmt(rr) + " " + fmt(rr) + " 0 0 1 " + fmt(x) + " " + fmt(y + s - rr) + "V" + fmt(y + rr) + "A" + fmt(rr) + " " + fmt(rr) + " 0 0 1 " + fmt(x + rr) + " " + fmt(y) + "Z";
+    let out = '<g class="kit-qr-frame" aria-hidden="true">';
+    out += '<path d="' + rect(fx, fy, F, r) + '" fill="#fff" stroke="' + tint(acc.neon, 0.22) + '" stroke-width="' + fmt(sw + glowW) + '"/>';
+    out += '<path d="' + rect(fx, fy, F, r) + '" fill="#fff" stroke="' + tint(acc.neon, 0.45) + '" stroke-width="' + fmt(sw + 0.9 * k) + '"/>';
+    out += '<path d="' + rect(fx, fy, F, r) + '" fill="#fff" stroke="' + acc.ink + '" stroke-width="' + fmt(sw) + '"/>';
+    out += "</g>";
+    const qx = cx - q / 2;
+    const qy = fy + (F - q) / 2;
+    const qr = qrPath(opts.url, qx, qy, q);
     if (qr) {
       out += '<path class="kit-qr" data-url="' + esc(opts.url) + '" data-modules="' + qr.modules + '" fill="' + INK +
         '" shape-rendering="crispEdges" d="' + qr.d + '"/>';
     }
-    out += textLine("kit-credit", cx, qy + q + gap + hC, "middle", credit);
+    // the two sides, between the frame's glow and the band's ends
+    const gapSide = 2.6 * k;
+    const sideW = w / 2 - F / 2 - glowW / 2 - gapSide;
+    const midY = fy + F / 2;
+    // left: the hub's camera icon, "OPEN THE CAMERA" on two lines (cut at
+    // its last space) and an arrow at the code, ending at the frame
+    const arrowW = 4.4 * k; // a drawn arrow (no font carries it the same everywhere)
+    const iconS0 = 6.4 * k;
+    const cut = opts.cameraLabel.lastIndexOf(" ");
+    const words = cut > 0 ? [opts.cameraLabel.slice(0, cut), opts.cameraLabel.slice(cut + 1)] : [opts.cameraLabel];
+    const lab0 = 4 * k;
+    const labRuns = (text, size) => [{ text, size, weight: 600, track: 0.12, caps: true, mono: true, fill: acc.ink }];
+    const widest = Math.max(...words.map((t) => runsWidth(labRuns(t, lab0))));
+    const f0 = Math.min(1, (sideW - arrowW - iconS0 - 3 * k) / widest);
+    const lsz = lab0 * f0;
+    const hL = 0.7 * lsz;
+    const gL = 0.75 * lsz; // between the two lines
+    const aw = arrowW * f0;
+    const iconS = iconS0 * f0;
+    const lx = cx - F / 2 - glowW / 2 - gapSide;
+    const ah = 1.3 * k * f0;
+    out += '<path class="kit-cam-arrow" d="M' + fmt(lx - aw + 0.8 * k) + " " + fmt(midY) + "H" + fmt(lx) + "M" + fmt(lx - ah) + " " + fmt(midY - ah) + "L" + fmt(lx) + " " + fmt(midY) + "L" + fmt(lx - ah) + " " + fmt(midY + ah) +
+      '" fill="none" stroke="' + acc.ink + '" stroke-width="' + fmt(0.5 * k) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+    // (Chromium drops the trailing letter-spacing of an end-anchored line: the label ends here, a gap before the arrow)
+    const lend = lx - aw - 0.9 * k;
+    const ly0 = midY - (words.length * hL + (words.length - 1) * gL) / 2 + hL;
+    words.forEach((t, i) => {
+      out += textLine("kit-cam-label", lend, ly0 + i * (hL + gL), "end", labRuns(t, lsz));
+    });
+    const lstart = lend - (widest * f0 - 0.12 * lsz); // mono advances are exact
+    out += '<g class="kit-cam" aria-hidden="true">' + cameraIcon(lstart - 1.6 * k - iconS, midY - iconS * 0.55, iconS, acc.ink) + "</g>";
+    // right: the credit on three lines, as large as the side allows, keeping
+    // one more module of white from its mark than the band does:
+    // "by" / THE LEARNING MACHINE / CEO Dr. Erika Roldán. The brand line is
+    // the same in every language: it is fitted on its measured width (13.06 em
+    // in Manrope 800 tracked 0.06 em, read from a printed sheet; 0.6 em less
+    // at 0.03 em), the other two on runWidth's estimate.
+    const TLM_EM = 12.46;
+    const sz = 3.4 * k;
+    const lines = [
+      [{ text: opts.by, size: sz * 0.9, weight: 500, fill: MUTED }],
+      [{ text: "THE LEARNING MACHINE", size: sz, weight: 800, track: 0.03, fill: acc.ink }],
+      [{ text: "CEO", size: sz * 0.86, weight: 600, track: 0.08, fill: MUTED }, { text: "Dr. Erika Roldán", size: sz, weight: 700, gap: 0.3 }],
+    ];
+    const f = Math.min(1, (sideW - markSide / 6) / Math.max(runsWidth(lines[0]), TLM_EM * sz, runsWidth(lines[2])));
+    const hC = 0.72 * sz * f;
+    const gC = 1.9 * k * f;
+    const rx = cx + F / 2 + glowW / 2 + gapSide;
+    const y1 = midY - (3 * hC + 2 * gC) / 2 + hC;
+    lines.forEach((ln, i) => {
+      out += textLine("kit-credit", rx, y1 + i * (gC + hC), "start", ln.map((x) => Object.assign({}, x, { size: x.size * f })));
+    });
     return out;
   }
 
-  // The head of a pieces sheet, one line at the top: the name of the pieces,
-  // what the sheet is, and the credit at the right.
+  // The head of a pieces sheet, one line at the top: the name of the pieces in
+  // the tiling's neon (deepened, with its glow), what the sheet is in the
+  // hub's mono capitals, and the credit at the right.
   function piecesHead(L, opts, tag) {
     const k = L.cw / 190;
     const y = 8.2;
-    const left = [
-      { text: opts.polyform, size: 6.2 * k, weight: 800, track: -0.015 },
-      { text: tag, size: 2.6 * k, weight: 700, track: 0.16, caps: true, gap: 1.6 },
-    ];
-    const right = creditRuns(opts.by, 2.6 * k);
-    const room = L.cw - 8;
-    const wl = runsWidth(left);
+    const left = [{ text: opts.polyform, size: 6.6 * k, weight: 800, track: -0.015 }];
+    const mid = [{ text: tag, size: 2.5 * k, weight: 600, track: 0.16, caps: true, mono: true, fill: MUTED }];
+    const right = creditRuns(opts.by, 2.6 * k).map((r) => (r.text === "THE LEARNING MACHINE" ? Object.assign({}, r, { fill: opts.accent.ink }) : r.text === opts.by || r.text === "CEO" || r.text === "·" ? Object.assign({}, r, { fill: MUTED }) : r));
+    const glow = 1.1 * k;
+    const g = 3.2 * k;
+    const room = L.cw - 8 - glow - g;
+    const wl = runsWidth(left) + runsWidth(mid);
     const wr = runsWidth(right);
     const f = Math.min(1, room / (wl + wr));
     const fit = (runs) => runs.map((r) => Object.assign({}, r, { size: r.size * f }));
-    return textLine("kit-title", 0, y, "start", fit(left)) + textLine("kit-credit", L.cw, y, "end", fit(right));
+    const x0 = glow / 2;
+    return glowLine("kit-title", x0, y, "start", fit(left), opts.accent, glow) +
+      textLine("kit-tag", x0 + runsWidth(fit(left)) + g, y, "start", fit(mid)) +
+      textLine("kit-credit", L.cw, y, "end", fit(right));
   }
 
   // Grid lines and cut lines share one width. Every line is centred on the cell
@@ -861,7 +1012,9 @@
     const opts = {
       title,
       polyform: polyformName(boardId, t),
-      boardLine: boardName(boardId, t, o.lang),
+      mission: t(MISSION[boardId] || "kit.title." + FenceBoards.get(boardId).lattice),
+      accent: ACCENT[FenceBoards.get(boardId).lattice] || ACCENT.square,
+      cameraLabel: t("kit.cameraLink"),
       piecesTag: t("kit.sheet.pieces"),
       backsTag: t("kit.sheet.backs"),
       by: t("kit.sheet.by"),
@@ -1087,7 +1240,18 @@
     });
     translateMeta();
     update(false);
-    doc.documentElement.classList.add("kit-ready");
+    // Ready once the sheets' two webfonts are in (a print made before would
+    // fall back to another face); never later than 5 s.
+    const ready = () => doc.documentElement.classList.add("kit-ready");
+    try {
+      const f = doc.fonts;
+      Promise.race([
+        Promise.all(["800 10px Manrope", "500 10px Manrope", "600 10px 'IBM Plex Mono'"].map((x) => f.load(x))).then(() => f.ready),
+        new Promise((res) => win.setTimeout(res, 5000)),
+      ]).then(ready, ready);
+    } catch (e) {
+      ready();
+    }
   }
 
   if (win && win.document) {

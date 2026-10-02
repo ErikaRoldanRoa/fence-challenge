@@ -54,6 +54,10 @@
     "kit.sheet.pieces": "pièces à découper",
     "kit.sheet.backs": "dos des pièces",
     "kit.sheet.by": "par",
+    // the labs' own titles (sq.title, hx.h1, tri.h1), as kickers on the lab sheets
+    "kit.mission.sq20": "Défi 2 · 12 pentominos",
+    "kit.mission.hex6": "Défi 3 · 7 tétrahexes",
+    "kit.mission.tri10": "Défi 4 · 12 hexiamants",
     "kit.piecesA4": "Pièces seules, sur A4 (plateau en A3)",
     "kit.metaDescription": "Imprime un plateau du Fence Challenge et ses pièces, construis ta barrière sur la table, puis laisse la caméra allumer l’intérieur que tu enfermes sur l’image de ton plateau.",
     "kit.a3Note": "Astuce : sur A4, ce grand plateau a de toutes petites cases. Sur du papier A3, elles sont plus grandes et plus faciles à lire pour la caméra. L’A4 marche aussi.",
@@ -110,6 +114,10 @@
     "kit.sheet.pieces": "Teile zum Ausschneiden",
     "kit.sheet.backs": "Rückseiten der Teile",
     "kit.sheet.by": "von",
+    // the labs' own titles (sq.title, hx.h1, tri.h1), as kickers on the lab sheets
+    "kit.mission.sq20": "Rätsel 2 · 12 Pentominos",
+    "kit.mission.hex6": "Rätsel 3 · 7 Tetrahexe",
+    "kit.mission.tri10": "Rätsel 4 · 12 Hexiamonds",
     "kit.piecesA4": "Nur die Teile, auf A4 (Spielfeld in A3)",
     "kit.metaDescription": "Drucke ein Spielfeld der Fence Challenge und seine Teile aus, baue deinen Zaun auf dem Tisch und lass die Kamera den Innenbereich, den du einschließt, auf dem Bild deines Spielfelds leuchten.",
     "kit.a3Note": "Tipp: Auf A4 hat dieses große Spielfeld sehr kleine Felder. Auf A3 werden sie größer und die Kamera liest sie besser. A4 geht auch.",
@@ -166,6 +174,10 @@
     "kit.sheet.pieces": "pieces to cut out",
     "kit.sheet.backs": "backs of the pieces",
     "kit.sheet.by": "by",
+    // the labs' own titles (sq.title, hx.h1, tri.h1), as kickers on the lab sheets
+    "kit.mission.sq20": "Challenge 2 · 12 pentominoes",
+    "kit.mission.hex6": "Challenge 3 · 7 tetrahexes",
+    "kit.mission.tri10": "Challenge 4 · 12 hexiamonds",
     "kit.piecesA4": "Pieces only, on A4 (board on A3)",
     "kit.metaDescription": "Print a Fence Challenge board and its pieces, build your fence on the table, then let the camera light up the inside you enclose on the picture of your board.",
     "kit.a3Note": "Tip: on A4 this big board has very small cells. On A3 paper they are bigger and easier for the camera to read. A4 works too.",
