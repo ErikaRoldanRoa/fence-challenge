@@ -42,7 +42,7 @@
   const CLEAR_MODULES = 2; // white margin kept around the marks, in marker modules
   const SCALE_STEP = 0.5; // the scale is a whole number of half millimetres per unit
   const PIECE_GAP = 6; // mm between pieces (at least)
-  const BLEED = 1; // mm the coloured backs reach past the cut line
+  const BLEED = 1; // mm the coloured backs reach past the edge of the pieces
   const FALLBACK_BASE = "erikaroldanroa.github.io/fence-challenge/";
   const FONT = "Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
   // The hub's small tracked capitals are monospace: the sheets embed IBM Plex Mono (fonts/plex-mono.css).
@@ -446,7 +446,17 @@
   // space along it is at most RING_SPACE gaps.
   const RING_SPACE = 5;
   const RING_LEAST = 0.7; // and keeps at least this share of the sheet, a frame rather than a cluster
+  // Every piece keeps BLEED of the printable area beyond its sides: its
+  // coloured back reaches that far past it, and the page margin would cut it.
+  // (The scale is chosen before, on the whole width; at worst, when the
+  // pieces only fit without that room, they are laid as before.)
   function arrangePieces(shapes, scale, width, bottom) {
+    const inner = arrangeWithin(shapes, scale, width - 2 * BLEED, bottom);
+    if (!inner) return arrangeWithin(shapes, scale, width, bottom);
+    inner.place = inner.place.map((p) => ({ x: p.x + BLEED, y: p.y }));
+    return inner;
+  }
+  function arrangeWithin(shapes, scale, width, bottom) {
     const gap = Math.max(PIECE_GAP, 0.45 * scale);
     const H = bottom - RING_TOP;
     let f = 1;
