@@ -42,7 +42,7 @@
   const CLEAR_MODULES = 2; // white margin kept around the marks, in marker modules
   const SCALE_STEP = 0.5; // the scale is a whole number of half millimetres per unit
   const PIECE_GAP = 6; // mm between pieces (at least)
-  const BLEED = 1; // mm the coloured backs reach past the edge of the pieces
+  const PIECE_ROOM = 1; // mm kept between the pieces and the page margin
   const FALLBACK_BASE = "erikaroldanroa.github.io/fence-challenge/";
   const FONT = "Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
   // The hub's small tracked capitals are monospace: the sheets embed IBM Plex Mono (fonts/plex-mono.css).
@@ -446,14 +446,14 @@
   // space along it is at most RING_SPACE gaps.
   const RING_SPACE = 5;
   const RING_LEAST = 0.7; // and keeps at least this share of the sheet, a frame rather than a cluster
-  // Every piece keeps BLEED of the printable area beyond its sides: its
-  // coloured back reaches that far past it, and the page margin would cut it.
-  // (The scale is chosen before, on the whole width; at worst, when the
-  // pieces only fit without that room, they are laid as before.)
+  // Every piece keeps PIECE_ROOM of the printable area beyond its sides, so
+  // the page margin never touches it. (The scale is chosen before, on the
+  // whole width; at worst, when the pieces only fit without that room, they
+  // are laid as before.)
   function arrangePieces(shapes, scale, width, bottom) {
-    const inner = arrangeWithin(shapes, scale, width - 2 * BLEED, bottom);
+    const inner = arrangeWithin(shapes, scale, width - 2 * PIECE_ROOM, bottom);
     if (!inner) return arrangeWithin(shapes, scale, width, bottom);
-    inner.place = inner.place.map((p) => ({ x: p.x + BLEED, y: p.y }));
+    inner.place = inner.place.map((p) => ({ x: p.x + PIECE_ROOM, y: p.y }));
     return inner;
   }
   function arrangeWithin(shapes, scale, width, bottom) {
@@ -860,7 +860,6 @@
   // hub's mono capitals, and the credit at the right.
   function piecesHead(L, opts, tag) {
     const k = L.cw / 190;
-    const y = 8.2;
     const left = [{ text: opts.polyform, size: 6.6 * k, weight: 800, track: -0.015 }];
     const mid = [{ text: tag, size: 2.5 * k, weight: 600, track: 0.16, caps: true, mono: true, fill: MUTED }];
     const right = creditRuns(opts.by, 2.6 * k).map((r) => (r.text === "THE LEARNING MACHINE" ? Object.assign({}, r, { fill: opts.accent.ink }) : r.text === opts.by || r.text === "CEO" || r.text === "·" ? Object.assign({}, r, { fill: MUTED }) : r));
@@ -871,6 +870,10 @@
     const wr = runsWidth(right);
     const f = Math.min(1, room / (wl + wr));
     const fit = (runs) => runs.map((r) => Object.assign({}, r, { size: r.size * f }));
+    // The baseline: 8.2 mm, or lower when the title is large (A3), so its
+    // accents (0.8 em above the baseline in Manrope 800) and their glow stay on
+    // the sheet, 0.4 mm below its top.
+    const y = Math.max(8.2, 0.82 * left[0].size * f + glow / 2 + 0.4);
     const x0 = glow / 2;
     return glowLine("kit-title", x0, y, "start", fit(left), opts.accent, glow) +
       textLine("kit-tag", x0 + runsWidth(fit(left)) + g, y, "start", fit(mid)) +
@@ -926,19 +929,23 @@
     return Math.min(1.1 * gridLineWidth(s), BORDER_IN * s);
   }
 
-  // The backs carry the same border, over the colour bleed (which still
-  // reaches BLEED past the cut line). Turned up and printed up to 1 mm out of
-  // register, they read on camera as well as backs without it.
-  const BACK_EDGE = true;
-
   let clipSeq = 0;
 
+  /* A sheet of pieces, or of their backs. Every piece is exactly its cells:
+   * its colour, its inner lines (the edges between its cells, at 45 % white)
+   * and its border are all clipped to the outline of its cells. The border,
+   * in the board border's blue, is a band inside the piece at most BORDER_IN
+   * deep, so the camera, which reads a piece's colour away from its edges,
+   * never takes it for the piece; its outer edge is the cells' own edge: cut
+   * along it, a piece is exactly its cells, and pieces side by side on the
+   * board meet on the middle of the grid line between them. The backs are the
+   * fronts seen through the paper: mirrored left to right about the page
+   * centre, each back exactly over its front. */
   function piecesSheet(L, opts, back) {
     const s = L.scale;
     const innerW = Math.min(0.3, Math.max(0.18, 0.02 * s));
     let svg = svgOpen(L, opts.polyform + " · " + (back ? opts.backsTag : opts.piecesTag), "kit-sheet " + (back ? "kit-backs" : "kit-pieces"));
     svg += piecesHead(L, opts, back ? opts.backsTag : opts.piecesTag);
-    // The backs are the fronts seen through the paper: mirrored left to right about the page centre.
     svg += back ? '<g transform="translate(' + fmt(L.cw) + ' 0) scale(-1 1)">' : "<g>";
     L.shapes.forEach((shape, i) => {
       const at = L.place[i];
@@ -946,28 +953,15 @@
       const outline = loopsPath(shape.loops, tx);
       const clip = "kitclip" + (clipSeq += 1);
       svg += '<g class="kit-piece" data-piece="' + esc(shape.id) + '" data-cells="' + shape.cellCount + '">';
-      if (back) {
-        svg += '<path d="' + outline + '" fill="' + shape.color + '" fill-rule="evenodd" stroke="' + shape.color +
-          '" stroke-width="' + fmt(2 * BLEED) + '" stroke-linejoin="round"/>';
-      } else {
-        svg += '<path d="' + outline + '" fill="' + shape.color + '" fill-rule="evenodd"/>';
-      }
+      svg += '<clipPath id="' + clip + '"><path d="' + outline + '" clip-rule="evenodd"/></clipPath>';
+      svg += '<path d="' + outline + '" fill="' + shape.color + '" fill-rule="evenodd"/>';
+      svg += '<g clip-path="url(#' + clip + ')">';
       if (shape.inner.length) {
-        svg += '<path d="' + segmentsPath(shape.inner, tx) + '" fill="none" stroke="#fff" stroke-opacity="0.45" stroke-width="' +
-          fmt(innerW) + '" stroke-linecap="round"/>';
+        svg += '<path d="' + segmentsPath(shape.inner, tx) + '" fill="none" stroke="#fff" stroke-opacity="0.45" stroke-width="' + fmt(innerW) + '" stroke-linecap="round"/>';
       }
-      if (!back || BACK_EDGE) {
-        // The border, in the board border's blue: a band inside the piece
-        // (clipped to it) at most BORDER_IN deep, so the camera, which reads a
-        // piece's colour away from its edges, never takes the band for the
-        // piece. Its outer edge is the cells' own edge: cut along it, a piece
-        // is exactly its cells, and pieces side by side on the board meet on
-        // the middle of the grid line between them.
-        svg += '<clipPath id="' + clip + '"><path d="' + outline + '" clip-rule="evenodd"/></clipPath>';
-        svg += '<path class="kit-border" d="' + outline + '" fill="none" stroke="' + OUTLINE + '" stroke-width="' + fmt(Math.floor(2000 * borderIn(s)) / 1000) +
-          '" stroke-linejoin="round" clip-path="url(#' + clip + ')"/>';
-      }
-      svg += "</g>";
+      svg += '<path class="kit-border" d="' + outline + '" fill="none" stroke="' + OUTLINE + '" stroke-width="' + fmt(Math.floor(2000 * borderIn(s)) / 1000) +
+        '" stroke-linejoin="round"/>';
+      svg += "</g></g>";
     });
     svg += "</g></svg>";
     return svg;
