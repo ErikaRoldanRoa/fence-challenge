@@ -299,19 +299,19 @@
             <button class="icon act" data-flip="sq" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 8.5h14M15 5l3.5 3.5L15 12M19.5 15.5h-14M9 12l-3.5 3.5L9 19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </span>
             <span class="pIconSet nav">
-            <span class="icon goal" tabindex="0" data-tip-pos="below"
+            <span class="icon goal" role="img" tabindex="0" data-tip-pos="below"
                   data-i18n-data-tip="hub.goalTip" data-tip="Enclos la plus grande aire possible."
-                  data-i18n-aria-label="hub.goalAria" aria-label="But de la mission">🏆</span>
-            <a class="icon launch" data-launch="sq" href="square-lab/index.html" data-i18n-data-tip="hub.launchSqTip" data-i18n-aria-label="hub.launchSqAria"
+                  data-i18n-aria-label="hub.goalAria" aria-label="But de la mission : enclos la plus grande aire possible.">🏆</span>
+            <a class="icon launch" aria-disabled="true" data-launch="sq" href="square-lab/index.html" data-i18n-data-tip="hub.launchSqTip" data-i18n-aria-label="hub.launchSqAria"
                data-tip="Ferme une barrière ici (aire ≥ 1) pour ouvrir le labo du Défi 2 · 12 pentominos" data-tip-pos="below"
                aria-label="Ouvrir le labo du Défi 2">🚀</a>
             <button class="icon more" type="button" aria-expanded="false" aria-controls="menu-sq" data-i18n-aria-label="common.more" aria-label="Plus d’outils"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="5.5" cy="12" r="1.9" fill="currentColor"/><circle cx="12" cy="12" r="1.9" fill="currentColor"/><circle cx="18.5" cy="12" r="1.9" fill="currentColor"/></svg></button>
             </span>
             <div class="pMenu" id="menu-sq" hidden>
-            <span class="icon help" tabindex="0"
+            <span class="icon help" role="img" tabindex="0"
                   data-tip-pos="above" data-i18n-data-tip="hub.helpSq" data-i18n-aria-label="hub.helpAria" data-tip="Choisis une pièce, glisse-la en place. ⟳ tourne, ⇄ retourne, touche-la pour l’enlever. Ferme la barrière pour enclore une aire."
                   aria-label="Comment jouer">?</span>
-            <span class="icon info" tabindex="0" data-tip-pos="above" data-i18n-data-tip="hub.infoSq" data-i18n-aria-label="hub.infoAria" data-tip="Ferme une barrière (aire ≥ 1) pour débloquer, puis touche 🚀 pour le défi complet avec 12 pentominos." aria-label="Comment débloquer cette carte">i</span>
+            <span class="icon info" role="img" tabindex="0" data-tip-pos="above" data-i18n-data-tip="hub.infoSq" data-i18n-aria-label="hub.infoAria" data-tip="Ferme une barrière (aire ≥ 1) pour débloquer, puis touche 🚀 pour le défi complet avec 12 pentominos." aria-label="Comment débloquer cette carte">i</span>
             <a class="icon kit" href="kit/?board=sq9" data-tip-pos="above" data-i18n-data-tip="hub.kitTip" data-tip="Imprimer : le plateau et ses pièces à découper" data-i18n-aria-label="hub.kitAria" aria-label="Imprimer ce plateau et ses pièces"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 8.6V3.8h10v4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6.9 17.2H4V9h16v8.2h-2.9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 13.6h10v6.6H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></a>
             <span class="pMenuSep" aria-hidden="true"></span>
             <button class="icon reset" data-arm="common.clearConfirm" data-reset="sq" data-tip-pos="above" data-i18n-data-tip="hub.resetTip" data-tip="Efface la barrière" data-i18n-aria-label="hub.resetAria" aria-label="Efface la barrière"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 6.8h15M9.6 6.6V4.6h4.8v2M6.6 6.8l.9 12.6h9l.9-12.6M10.2 10.4v5.8M13.8 10.4v5.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
@@ -319,7 +319,7 @@
           </div>
           <div class="toyWrap" id="engine-sq">
             <div class="toyTray" data-tray></div>
-            <div class="toy"><canvas tabindex="0" role="application" data-i18n-aria-label="hub.boardAria" aria-label="Plateau de jeu : les flèches déplacent la pièce choisie, R la tourne, F la retourne, Suppr l’enlève."></canvas></div>
+            <div class="toy"><canvas tabindex="0" role="application" data-i18n-aria-label="hub.boardAria" aria-label="Plateau de jeu : les flèches déplacent la pièce choisie, R la tourne, F la retourne, Suppr l’enlève."></canvas></div>
           </div>
           <div class="pStatus">
             <span class="pill area" id="pill-sq" data-i18n-data-tip="hub.areaTip" data-tip="Aire actuellement enclose sur ton plateau"><span data-i18n="common.areaLabel">Aire</span> <span class="k" id="area-sq">0</span></span>
@@ -341,19 +341,19 @@
             <button class="icon act" data-flip="hex" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 8.5h14M15 5l3.5 3.5L15 12M19.5 15.5h-14M9 12l-3.5 3.5L9 19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </span>
             <span class="pIconSet nav">
-            <span class="icon goal" tabindex="0" data-tip-pos="below"
+            <span class="icon goal" role="img" tabindex="0" data-tip-pos="below"
                   data-i18n-data-tip="hub.goalTip" data-tip="Enclos la plus grande aire possible."
-                  data-i18n-aria-label="hub.goalAria" aria-label="But de la mission">🏆</span>
-            <a class="icon launch" data-launch="hex" href="hex-lab/index.html" data-i18n-data-tip="hub.launchHexTip" data-i18n-aria-label="hub.launchHexAria"
+                  data-i18n-aria-label="hub.goalAria" aria-label="But de la mission : enclos la plus grande aire possible.">🏆</span>
+            <a class="icon launch" aria-disabled="true" data-launch="hex" href="hex-lab/index.html" data-i18n-data-tip="hub.launchHexTip" data-i18n-aria-label="hub.launchHexAria"
                data-tip="Ferme une barrière (aire ≥ 1) pour débloquer" data-tip-pos="below"
                aria-label="Ouvrir le Défi 3">🚀</a>
             <button class="icon more" type="button" aria-expanded="false" aria-controls="menu-hex" data-i18n-aria-label="common.more" aria-label="Plus d’outils"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="5.5" cy="12" r="1.9" fill="currentColor"/><circle cx="12" cy="12" r="1.9" fill="currentColor"/><circle cx="18.5" cy="12" r="1.9" fill="currentColor"/></svg></button>
             </span>
             <div class="pMenu" id="menu-hex" hidden>
-            <span class="icon help" tabindex="0"
+            <span class="icon help" role="img" tabindex="0"
                   data-tip-pos="above" data-i18n-data-tip="hub.helpHex" data-i18n-aria-label="hub.helpAria" data-tip="Choisis une pièce, glisse-la en place. ⟳ tourne, ⇄ retourne, touche-la pour l’enlever. Ferme la barrière pour enclore une aire."
                   aria-label="Comment jouer">?</span>
-            <span class="icon info" tabindex="0" data-tip-pos="above" data-i18n-data-tip="hub.infoHex" data-i18n-aria-label="hub.infoAria" data-tip="Ferme une barrière (aire ≥ 1) pour débloquer, puis touche 🚀 pour le défi complet avec 7 tétrahexes." aria-label="Comment débloquer cette carte">i</span>
+            <span class="icon info" role="img" tabindex="0" data-tip-pos="above" data-i18n-data-tip="hub.infoHex" data-i18n-aria-label="hub.infoAria" data-tip="Ferme une barrière (aire ≥ 1) pour débloquer, puis touche 🚀 pour le défi complet avec 7 tétrahexes." aria-label="Comment débloquer cette carte">i</span>
             <a class="icon kit" href="kit/?board=hex5" data-tip-pos="above" data-i18n-data-tip="hub.kitTip" data-tip="Imprimer : le plateau et ses pièces à découper" data-i18n-aria-label="hub.kitAria" aria-label="Imprimer ce plateau et ses pièces"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 8.6V3.8h10v4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6.9 17.2H4V9h16v8.2h-2.9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 13.6h10v6.6H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></a>
             <span class="pMenuSep" aria-hidden="true"></span>
             <button class="icon reset" data-arm="common.clearConfirm" data-reset="hex" data-tip-pos="above" data-i18n-data-tip="hub.resetTip" data-tip="Efface la barrière" data-i18n-aria-label="hub.resetAria" aria-label="Efface la barrière"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 6.8h15M9.6 6.6V4.6h4.8v2M6.6 6.8l.9 12.6h9l.9-12.6M10.2 10.4v5.8M13.8 10.4v5.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
@@ -361,7 +361,7 @@
           </div>
           <div class="toyWrap" id="engine-hex">
             <div class="toyTray" data-tray></div>
-            <div class="toy"><canvas tabindex="0" role="application" data-i18n-aria-label="hub.boardAria" aria-label="Plateau de jeu : les flèches déplacent la pièce choisie, R la tourne, F la retourne, Suppr l’enlève."></canvas></div>
+            <div class="toy"><canvas tabindex="0" role="application" data-i18n-aria-label="hub.boardAria" aria-label="Plateau de jeu : les flèches déplacent la pièce choisie, R la tourne, F la retourne, Suppr l’enlève."></canvas></div>
           </div>
           <div class="pStatus">
             <span class="pill area" id="pill-hex" data-i18n-data-tip="hub.areaTip" data-tip="Aire actuellement enclose sur ton plateau"><span data-i18n="common.areaLabel">Aire</span> <span class="k" id="area-hex">0</span></span>
@@ -378,19 +378,19 @@
             <button class="icon act" data-flip="tri" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 8.5h14M15 5l3.5 3.5L15 12M19.5 15.5h-14M9 12l-3.5 3.5L9 19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </span>
             <span class="pIconSet nav">
-            <span class="icon goal" tabindex="0" data-tip-pos="below"
+            <span class="icon goal" role="img" tabindex="0" data-tip-pos="below"
                   data-i18n-data-tip="hub.goalTip" data-tip="Enclos la plus grande aire possible."
-                  data-i18n-aria-label="hub.goalAria" aria-label="But de la mission">🏆</span>
-            <a class="icon launch" data-launch="tri" href="triangle-lab/index.html" data-i18n-data-tip="hub.launchTriTip" data-i18n-aria-label="hub.launchTriAria"
+                  data-i18n-aria-label="hub.goalAria" aria-label="But de la mission : enclos la plus grande aire possible.">🏆</span>
+            <a class="icon launch" aria-disabled="true" data-launch="tri" href="triangle-lab/index.html" data-i18n-data-tip="hub.launchTriTip" data-i18n-aria-label="hub.launchTriAria"
                data-tip="Ferme une barrière (aire ≥ 1) pour débloquer" data-tip-pos="below"
                aria-label="Ouvrir le Défi 4">🚀</a>
             <button class="icon more" type="button" aria-expanded="false" aria-controls="menu-tri" data-i18n-aria-label="common.more" aria-label="Plus d’outils"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="5.5" cy="12" r="1.9" fill="currentColor"/><circle cx="12" cy="12" r="1.9" fill="currentColor"/><circle cx="18.5" cy="12" r="1.9" fill="currentColor"/></svg></button>
             </span>
             <div class="pMenu" id="menu-tri" hidden>
-            <span class="icon help" tabindex="0"
+            <span class="icon help" role="img" tabindex="0"
                   data-tip-pos="above" data-i18n-data-tip="hub.helpTri" data-i18n-aria-label="hub.helpAria" data-tip="Choisis une pièce, glisse-la en place. ⟳ tourne, ⇄ retourne, touche-la pour l’enlever. Ferme la barrière pour enclore une aire."
                   aria-label="Comment jouer">?</span>
-            <span class="icon info" tabindex="0" data-tip-pos="above" data-i18n-data-tip="hub.infoTri" data-i18n-aria-label="hub.infoAria" data-tip="Ferme une barrière (aire ≥ 1) pour débloquer, puis touche 🚀 pour le défi complet avec 12 hexiamants." aria-label="Comment débloquer cette carte">i</span>
+            <span class="icon info" role="img" tabindex="0" data-tip-pos="above" data-i18n-data-tip="hub.infoTri" data-i18n-aria-label="hub.infoAria" data-tip="Ferme une barrière (aire ≥ 1) pour débloquer, puis touche 🚀 pour le défi complet avec 12 hexiamants." aria-label="Comment débloquer cette carte">i</span>
             <a class="icon kit" href="kit/?board=tri4" data-tip-pos="above" data-i18n-data-tip="hub.kitTip" data-tip="Imprimer : le plateau et ses pièces à découper" data-i18n-aria-label="hub.kitAria" aria-label="Imprimer ce plateau et ses pièces"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 8.6V3.8h10v4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6.9 17.2H4V9h16v8.2h-2.9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 13.6h10v6.6H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></a>
             <span class="pMenuSep" aria-hidden="true"></span>
             <button class="icon reset" data-arm="common.clearConfirm" data-reset="tri" data-tip-pos="above" data-i18n-data-tip="hub.resetTip" data-tip="Efface la barrière" data-i18n-aria-label="hub.resetAria" aria-label="Efface la barrière"><span class="glyph" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 6.8h15M9.6 6.6V4.6h4.8v2M6.6 6.8l.9 12.6h9l.9-12.6M10.2 10.4v5.8M13.8 10.4v5.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
@@ -398,7 +398,7 @@
           </div>
           <div class="toyWrap" id="engine-tri">
             <div class="toyTray" data-tray></div>
-            <div class="toy"><canvas tabindex="0" role="application" data-i18n-aria-label="hub.boardAria" aria-label="Plateau de jeu : les flèches déplacent la pièce choisie, R la tourne, F la retourne, Suppr l’enlève."></canvas></div>
+            <div class="toy"><canvas tabindex="0" role="application" data-i18n-aria-label="hub.boardAria" aria-label="Plateau de jeu : les flèches déplacent la pièce choisie, R la tourne, F la retourne, Suppr l’enlève."></canvas></div>
           </div>
           <div class="pStatus">
             <span class="pill area" id="pill-tri" data-i18n-data-tip="hub.areaTip" data-tip="Aire actuellement enclose sur ton plateau"><span data-i18n="common.areaLabel">Aire</span> <span class="k" id="area-tri">0</span></span>

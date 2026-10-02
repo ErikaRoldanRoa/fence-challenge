@@ -1474,6 +1474,7 @@ function waitForTap() {
   camera.hushed = camera.view;
   closeCamera(true);
   dom.cameraChip.classList.add("is-ready");
+  setStatus("tri.cameraOpen"); // the lit chip, said for screen readers
 }
 
 function openCamera(auto = false) {
@@ -1486,6 +1487,7 @@ function openCamera(auto = false) {
   try {
     view = window.FenceInboard.open({
       host: dom.cameraHost,
+      announce: false, // the page reads the camera states out itself
       boardId: CAMERA_BOARD,
       worldToHost: worldToCss,
       onPlacements: cameraPlacements,
@@ -1502,7 +1504,10 @@ function openCamera(auto = false) {
   if (!view) {
     dom.cameraHost.hidden = true;
     dom.boardWrap.classList.remove("camera-mode");
-    if (auto) dom.cameraChip.classList.add("is-ready");
+    if (auto) {
+      dom.cameraChip.classList.add("is-ready");
+      setStatus("tri.cameraOpen");
+    }
     else setStatus("tri.s.camError");
     return;
   }

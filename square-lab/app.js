@@ -1250,6 +1250,7 @@
     cameraState.hushed = view;
     closeCamera(true);
     dom.cameraToggle.classList.add("is-ready");
+    setStatus("sq.cam.open"); // the lit chip, said for screen readers
   }
 
   function openCamera(auto = false) {
@@ -1267,6 +1268,7 @@
     try {
       view = window.FenceInboard.open({
         host: dom.cameraHost,
+        announce: false, // the page reads the camera states out itself
         boardId: CAMERA_BOARD,
         worldToHost: cellToHost,
         onPlacements: cameraPlacements,
@@ -1282,7 +1284,10 @@
     }
     if (!view) {
       dom.cameraFrame.hidden = true;
-      if (auto) dom.cameraToggle.classList.add("is-ready");
+      if (auto) {
+        dom.cameraToggle.classList.add("is-ready");
+        setStatus("sq.cam.open");
+      }
       else setStatus("sq.s.camError");
       return;
     }

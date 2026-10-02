@@ -121,6 +121,7 @@
 
     function unlock() {
       launch.classList.add("unlocked");
+      launch.removeAttribute("aria-disabled");
       launch.setAttribute("data-i18n-data-tip", "hub.unlockedSq"); launch.setAttribute("data-tip", i18n.t("hub.unlockedSq"));
       try { localStorage.setItem("unlock-sq", "1"); } catch (e) {}
     }
@@ -216,6 +217,7 @@
 
     function unlock() {
       launch.classList.add("unlocked");
+      launch.removeAttribute("aria-disabled");
       launch.setAttribute("data-i18n-data-tip", "hub.unlockedHex"); launch.setAttribute("data-tip", i18n.t("hub.unlockedHex"));
       try { localStorage.setItem("unlock-hex", "1"); } catch (e) {}
     }
@@ -300,6 +302,7 @@
 
     function unlock() {
       launch.classList.add("unlocked");
+      launch.removeAttribute("aria-disabled");
       launch.setAttribute("data-i18n-data-tip", "hub.unlockedTri"); launch.setAttribute("data-tip", i18n.t("hub.unlockedTri"));
       try { localStorage.setItem("unlock-tri", "1"); } catch (e) {}
     }
@@ -500,8 +503,14 @@
   // without a message and lights its camera control for that tap.
   function waitForTap(card) {
     closeCam(card);
+    camReady(card);
+  }
+  // The lit camera control is also said, for screen readers.
+  function camReady(card) {
     const c = cams[card];
-    if (c && c.btn) c.btn.classList.add("camReady");
+    if (!c || !c.btn) return;
+    c.btn.classList.add("camReady");
+    if (live) live.textContent = i18n.t(CARD_TITLE[card]) + ". " + i18n.t("hub.camTip");
   }
   function openCam(card, auto) {
     const c = cams[card];
@@ -559,7 +568,7 @@
       session = null;
     }
     if (!session) {
-      if (auto) c.btn.classList.add("camReady");
+      if (auto) camReady(card);
       else if (live) live.textContent = i18n.t("hub.camError");
       return;
     }
@@ -722,6 +731,13 @@
   window.addEventListener("scroll", () => { if (Date.now() >= keepTipUntil) hideTip(); }, { passive: true });
   window.addEventListener("resize", hideTip);
   document.addEventListener("fc-langchange", () => { if (tipAnchor) showTip(tipAnchor); });
+
+  // A locked lab link stays focusable (its tip says how to open it) but
+  // does not open, from the keyboard either.
+  document.addEventListener("click", (e) => {
+    const a = e.target && e.target.closest ? e.target.closest("a[data-launch]") : null;
+    if (a && !a.classList.contains("unlocked")) e.preventDefault();
+  });
 
   // A printed sheet's QR code (camera/?board=<id>) lands here as
   // index.html#camera=<card>: the card comes into view with its camera open.
