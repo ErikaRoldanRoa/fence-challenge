@@ -3,7 +3,8 @@
  * to for one arrow, nearest first; a cell counts when its direction from the
  * current one is within 60 degrees of the arrow's. trayDrag follows a
  * press on a piece chip: once it has moved and is over the board, over(e)
- * runs on each move; done() runs on release after such a drag.
+ * runs on each move; done() runs on release after such a drag. placeBar
+ * lays the board group under the drawn board on wide screens.
  * An erase control ([data-arm]) acts on its second tap only: the first tap
  * arms it (it turns rose and its accessible name asks for the second tap),
  * and it disarms by itself, or on any other tap or Escape. The guard runs in
@@ -125,5 +126,28 @@
     seen.forEach(function (seg) { if (seg) out.push(seg); });
     return out;
   }
-  window.FencePlay = { ARROWS: ARROWS, arrowOf: arrowOf, towards: towards, trayDrag: trayDrag, afterTrayDrag: afterTrayDrag, outerEdges: outerEdges };
+  // Wide screens: the board group (erase, the camera) laid right under the
+  // drawn board and as wide as it, so the camera's right edge is the board's
+  // (as in the square lab); the credit sits between erase and the camera.
+  // drawn: the board's drawing in viewport pixels {left, right, bottom}, or
+  // null to leave both to the stylesheet (phones).
+  var BAR_GAP = 8;
+  function placeBar(bar, brand, drawn) {
+    if (!bar) return;
+    bar.style.width = "";
+    bar.style.transform = "";
+    if (brand) brand.style.transform = "";
+    if (!drawn) return;
+    bar.style.width = Math.round(drawn.right - drawn.left) + "px";
+    var r = bar.getBoundingClientRect();
+    var top = drawn.bottom + BAR_GAP;
+    bar.style.transform = "translate(" + (drawn.left - r.left).toFixed(1) + "px, " + (top - r.top).toFixed(1) + "px)";
+    if (brand) {
+      var b = brand.getBoundingClientRect();
+      var dx = (drawn.left + drawn.right) / 2 - (b.left + b.right) / 2;
+      var dy = top + r.height / 2 - (b.top + b.bottom) / 2;
+      brand.style.transform = "translate(" + dx.toFixed(1) + "px, " + dy.toFixed(1) + "px)";
+    }
+  }
+  window.FencePlay = { ARROWS: ARROWS, arrowOf: arrowOf, towards: towards, trayDrag: trayDrag, afterTrayDrag: afterTrayDrag, outerEdges: outerEdges, placeBar: placeBar };
 })();

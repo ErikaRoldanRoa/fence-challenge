@@ -675,7 +675,6 @@ function computeEnclosedArea() {
 // down a little, when the ring of chips would leave the screen or run into
 // the controls above it.
 function resizeCanvas() {
-  placeBrand();
   const wrap = dom.boardWrap;
   wrap.style.width = "";
   wrap.style.height = "";
@@ -704,28 +703,6 @@ function resizeCanvas() {
   }
 }
 
-// The citation: in the board group on wide screens, under the pieces when
-// they sit in rows (the "brand" area of the stylesheet), where it has room
-// for one line.
-function placeBrand() {
-  const brand = document.querySelector(".side-brand");
-  if (!brand || !dom.boardbar) return;
-  if (!placeBrand.gap) {
-    placeBrand.gap = document.createElement("span");
-    placeBrand.gap.className = "bar-gap"; // keeps the camera at the right end
-  }
-  const barGap = placeBrand.gap;
-  if (piecesInRows()) {
-    if (brand.parentElement !== dom.boardWrap) {
-      dom.boardbar.replaceChild(barGap, brand);
-      dom.boardWrap.appendChild(brand);
-    }
-  } else if (brand.parentElement !== dom.boardbar) {
-    if (barGap.parentElement === dom.boardbar) dom.boardbar.replaceChild(brand, barGap);
-    else dom.boardbar.insertBefore(brand, dom.cameraChip);
-  }
-}
-
 function drawAtSize() {
   const rect = dom.canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
@@ -740,9 +717,24 @@ function drawAtSize() {
   const offsetX = (w - bw * scale) / 2 - state.boardBounds.minX * scale;
   const offsetY = (h - bh * scale) / 2 - state.boardBounds.minY * scale;
   state.view = { scale, offsetX, offsetY, width: w, height: h, dpr };
+  placeBoardBar();
   render();
   layoutPieceRing();
   if (camera.view && typeof camera.view.refresh === "function") camera.view.refresh();
+}
+
+// Wide screens: erase and the camera right under the drawn board (play-ui.js).
+function placeBoardBar() {
+  if (!window.FencePlay || !window.FencePlay.placeBar) return;
+  let drawn = null;
+  if (!piecesInRows()) {
+    const rect = dom.canvas.getBoundingClientRect();
+    const b = state.boardBounds;
+    const tl = worldToCss({ x: b.minX, y: b.minY });
+    const br = worldToCss({ x: b.maxX, y: b.maxY });
+    drawn = { left: rect.left + tl.x, right: rect.left + br.x, bottom: rect.top + br.y };
+  }
+  window.FencePlay.placeBar(dom.boardbar, document.querySelector(".main-stage > .side-brand"), drawn);
 }
 
 // True when the stylesheet lays the pieces in rows under the board.
@@ -751,7 +743,7 @@ function piecesInRows() {
 }
 
 // The lowest point the ring may reach: the top of the board group (erase and
-// the camera), or the bottom of the screen.
+// the camera, under the board), or the bottom of the screen.
 function ringFloor() {
   const vh = window.innerHeight;
   const bar = dom.boardbar ? dom.boardbar.getBoundingClientRect() : null;
@@ -759,14 +751,16 @@ function ringFloor() {
 }
 
 // How far the chips (and rotate and flip, at the top left) reach past the
-// screen sides, below the floor, and up into the toolbar; room = free space
-// under the board for moving it down.
+// screen sides, below the floor, and up into the toolbar, and how far the
+// board group under the board reaches below the screen; room = free space
+// under everything for moving the board down.
 function ringOverflow() {
   const items = [...dom.tray.querySelectorAll(".piece-chip"), dom.actions];
   const vw = document.documentElement.clientWidth;
+  const vh = window.innerHeight;
   const floor = ringFloor();
   const top = dom.toolbar.getBoundingClientRect().bottom + EDGE_GAP;
-  let side = 0, below = 0, above = 0, lowest = -Infinity;
+  let side = 0, below = 0, above = 0, lowest = dom.boardWrap.getBoundingClientRect().bottom;
   for (const el of items) {
     const b = el.getBoundingClientRect();
     if (b.width === 0) continue;
@@ -775,8 +769,12 @@ function ringOverflow() {
     above = Math.max(above, top - b.top);
     lowest = Math.max(lowest, b.bottom);
   }
-  lowest = Math.max(lowest, dom.boardWrap.getBoundingClientRect().bottom);
-  return { side, below, above, room: floor - lowest };
+  const bar = dom.boardbar ? dom.boardbar.getBoundingClientRect() : null;
+  if (bar && bar.height > 0) {
+    below = Math.max(below, bar.bottom - (vh - EDGE_GAP));
+    lowest = Math.max(lowest, bar.bottom);
+  }
+  return { side, below, above, room: vh - EDGE_GAP - lowest };
 }
 
 // World point to CSS pixels inside the canvas box (also the camera window).

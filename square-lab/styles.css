@@ -125,8 +125,9 @@ body {
 }
 
 /* Wide screens: rotate and flip at the top left, above the pieces (two
-   columns) on the left, the board in the middle, the credit on the right;
-   the area above the board, erase and the camera under it. */
+   columns) on the left, the board in the middle; the area above the board;
+   erase and the camera right under it, the camera's right edge on the
+   board's, the credit between them (as in the other two labs). */
 .game-layout {
   display: grid;
   grid-template-columns: var(--dock-width) var(--board-size) var(--label-width);
@@ -146,23 +147,21 @@ body {
 }
 
 .side-brand {
-  grid-area: label;
+  grid-area: bar;
   align-self: center;
   justify-self: center;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  text-decoration: none;
-  color: #8fe8ff;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  font-size: 0.76rem;
-  text-shadow:
-    0 0 9px rgba(0, 209, 255, 0.3),
-    0 0 18px rgba(0, 255, 162, 0.16);
+  position: relative;
+  z-index: 1;
+  max-width: calc(100% - 2 * (76px + 16px));
 }
 
-.side-brand:hover {
-  color: #d7f8ff;
+/* Back to the hub and print the kit: in the top strip, left of the
+   language switch. */
+.lab-nav {
+  position: fixed;
+  top: 13px;
+  right: 180px;
+  z-index: 9999;
 }
 
 .game-toolbar {
@@ -324,13 +323,15 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
   width: 100%;
 }
 
-/* ---------- narrow or portrait screens: area on top, rotate and flip, the
-   board, the pieces in two rows, then erase and the camera, then the
-   credit ---------- */
+/* ---------- narrow or portrait screens: area on top, then rotate and flip
+   (back to the hub and print at the other end of their row), the board, the
+   pieces in two rows, erase and the camera right under the pieces, then the
+   credit; this group is centred in the room under the area, its rows 10 px
+   apart, as in the other two labs ---------- */
 
 @media (max-width: 1180px) {
   #panel-game {
-    --board-size: min(calc(100vw - 20px), calc(100dvh - 384px));
+    --board-size: min(calc(100vw - 20px), calc(100dvh - 404px));
     align-items: center;
   }
 
@@ -341,25 +342,29 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
   .game-layout {
     width: var(--board-size);
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto auto auto;
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto auto auto minmax(0, 1fr);
     grid-template-areas:
       "toolbar"
+      "."
       "acts"
       "main"
       "dock"
       "bar"
-      "label";
+      "label"
+      ".";
     row-gap: 10px;
     column-gap: 0;
-    align-content: space-between;
+    align-content: stretch;
     height: 100%;
   }
 
   .side-brand {
-    writing-mode: horizontal-tb;
-    transform: none;
-    justify-self: center;
-    font-size: 0.66rem;
+    grid-area: label;
+    max-width: 100%;
+  }
+
+  .lab-nav {
+    position: static;
   }
 
   .game-toolbar {
@@ -383,7 +388,7 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
   }
 
   .piece-actions {
-    justify-self: start;
+    justify-self: stretch;
   }
 }
 

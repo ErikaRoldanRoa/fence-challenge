@@ -2,9 +2,14 @@
  *
  * Around every board:
  *   - rotate and flip lead the play area at its top left, above the board
- *     and the pieces, in the same place as on the hub cards;
+ *     and the pieces, in the same place as on the hub cards; back to the hub
+ *     and print this board's kit end that row on the right on phones, and
+ *     sit left of the language switch on wide screens;
  *   - the board group (.boardbar): erase alone on the left, the camera on the
- *     right, the camera the largest control of the page.
+ *     right, the camera the largest control of the page. On phones the group
+ *     sits right under the pieces, the credit under it; on wide screens it
+ *     sits right under the board, the camera's right edge on the board's,
+ *     the credit between erase and the camera. The same in the three labs.
  * Every control is a 44 x 44 px (or larger) touch box, at least 8 px from the
  * next one; the ring drawn inside it can be smaller (--ink), so quiet
  * controls stay discreet. */
@@ -84,7 +89,7 @@
 }
 
 /* The camera: the one bright control. Off, an accent outline; on, filled,
-   with a pulsing dot, so its state reads from across a table. */
+   so its state reads from across a table. */
 .ctl.cam {
   --ink: 0px;
   --ring: var(--accent, #2ff3ff);
@@ -99,21 +104,23 @@
   box-shadow: 0 0 18px var(--accent-glow, rgba(47, 243, 255, 0.4)), inset 0 0 14px var(--accent-soft, rgba(47, 243, 255, 0.14));
 }
 .ctl.cam svg { width: 28px; height: 28px; }
+/* Open, as on the hub cards: filled in the board's colour, a cross to close
+   it, and a ring pulsing out of it while it films. */
+.ctl.cam .camOff { display: none; }
+.ctl.cam[aria-pressed="true"] .camOn { display: none; }
+.ctl.cam[aria-pressed="true"] .camOff { display: block; }
 .ctl.cam[aria-pressed="true"] { --fill: var(--accent, #2ff3ff); --fg: #07060a; }
 .ctl.cam[aria-pressed="true"]::before { box-shadow: 0 0 26px var(--accent-glow, rgba(47, 243, 255, 0.4)); }
 .ctl.cam[aria-pressed="true"]::after {
   content: "";
   position: absolute;
-  top: 9px;
-  right: 14px;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: #ff2d55;
-  box-shadow: 0 0 0 2px var(--accent, #2ff3ff), 0 0 10px #ff2d55;
-  animation: camLive 1.3s ease-in-out infinite;
+  inset: -2px;
+  border-radius: inherit;
+  border: 2px solid var(--accent, #2ff3ff);
+  pointer-events: none;
+  animation: camPulse 1.6s ease-out infinite;
 }
-@keyframes camLive { 50% { opacity: 0.6; } }
+@keyframes camPulse { 0% { transform: scale(1); opacity: 0.9; } 100% { transform: scale(1.45); opacity: 0; } }
 /* Opened from a printed sheet's QR code, a camera that could not start by
    itself waits for a tap: a ring pulses out of it. */
 .ctl.cam.is-ready:not([aria-pressed="true"])::before {
@@ -164,19 +171,50 @@
   background: #ffd24a;
 }
 
-/* The credit link: a 44 px tall touch box, never closer than 16 px to the
-   camera. */
+/* While the camera films, the pieces and rotate and flip stay in sight,
+   dimmed, and wait. */
+#piece-tray,
+.piece-actions > .act,
+.board-actions > .act { transition: opacity 0.18s ease; }
+body:has(.ctl.cam[aria-pressed="true"]) #piece-tray,
+body:has(.ctl.cam[aria-pressed="true"]) .piece-actions > .act,
+body:has(.ctl.cam[aria-pressed="true"]) .board-actions > .act {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* Back to the hub and print this board's kit. */
+.lab-nav { display: flex; gap: 8px; margin-left: auto; }
+.ctl.nav { --fg: rgba(255, 255, 255, 0.78); }
+.ctl.nav svg { width: 19px; height: 19px; }
+
+/* The credit link, one line in the same place and style in the three labs:
+   a 44 px tall touch box, never closer than 16 px to the camera. */
 .side-brand {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 44px;
   min-height: 44px;
+  max-width: 100%;
+  padding: 0 16px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  text-decoration: none;
+  color: #8fe8ff;
+  font-family: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  font-weight: 700;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-shadow: 0 0 9px rgba(0, 209, 255, 0.3), 0 0 18px rgba(0, 255, 162, 0.16);
 }
-.boardbar .side-brand { margin: 0 8px; }
+.side-brand:hover { color: #d7f8ff; }
+@media (max-width: 640px) { .side-brand { font-size: 0.66rem; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .ctl.erase.is-armed, .ctl.cam[aria-pressed="true"]::after { animation: none; }
+  .ctl.erase.is-armed { animation: none; }
+  .ctl.cam[aria-pressed="true"]::after { animation: none; transform: scale(1.18); opacity: 0.6; }
   .ctl.cam.is-ready:not([aria-pressed="true"])::after { animation: none; transform: scale(1.1); opacity: 0.7; }
 }
 

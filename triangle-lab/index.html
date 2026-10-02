@@ -42,22 +42,26 @@
           <div class="board-actions">
             <button id="rotate-piece" class="ctl act" type="button" aria-keyshortcuts="R" data-i18n-aria-label="tri.rotateTipTouch" aria-label="Rotate the selected piece" data-i18n-title="tri.rotateTip" title="Rotate the selected piece (R key)"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18.4 8.6A7.2 7.2 0 1 0 19.2 13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M19.6 4.4v4.8h-4.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             <button id="flip-piece" class="ctl act" type="button" aria-keyshortcuts="F" data-i18n-aria-label="tri.flipTipTouch" aria-label="Flip the selected piece" data-i18n-title="tri.flipTip" title="Flip the selected piece (F key)"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 8.5h14.5M15.5 5l3.5 3.5-3.5 3.5M19.5 15.5H5M8.5 12 5 15.5 8.5 19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <span class="lab-nav">
+              <a class="ctl nav" href="../index.html" data-i18n-aria-label="common.home" aria-label="Back to the Fence Challenge home page" data-i18n-title="common.home" title="Back to the Fence Challenge home page"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 11.4 12 4.6l8 6.8M6.4 9.6v9.9h4.2v-5.4h2.8v5.4h4.2V9.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+              <a class="ctl nav" href="../kit/?board=tri10" data-i18n-aria-label="hub.kitAria" aria-label="Print this board and its pieces" data-i18n-title="hub.kitAria" title="Print this board and its pieces"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 8.6V3.8h10v4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6.9 17.2H4V9h16v8.2h-2.9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 13.6h10v6.6H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></a>
+            </span>
           </div>
-          <a
-            class="side-brand"
-            href="https://doi.org/10.1515/dmvm-2025-0056"
-            target="_blank"
-            rel="noreferrer"
-            data-i18n-title="tri.cite.title" title="Cite: Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025, doi:10.1515/dmvm-2025-0056"
-            data-i18n="tri.cite.text">Hexiamond Fence · LRMR25 · Dr. Erika Roldán</a>
         </section>
       </section>
 
       <footer class="boardbar">
         <button id="clear-board" class="ctl quiet erase" type="button" data-arm="common.clearConfirm" data-i18n-aria-label="common.clear" aria-label="Clear" data-i18n-title="common.clear" title="Clear"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 6.8h15M9.5 6.6V4.4h5v2.2M6.6 6.9l.9 12.7h9l.9-12.7M10.2 10.4v6M13.8 10.4v6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <span class="bar-gap"></span>
-        <button id="camera-chip" class="ctl cam" type="button" hidden aria-pressed="false" data-i18n-aria-label="tri.cameraOpen" aria-label="Open the camera on the board" data-i18n-title="tri.cameraOpen" title="Open the camera on the board"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
+        <button id="camera-chip" class="ctl cam" type="button" hidden aria-pressed="false" data-i18n-aria-label="tri.cameraOpen" aria-label="Open the camera on the board" data-i18n-title="tri.cameraOpen" title="Open the camera on the board"><svg class="camOn" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 8.2h3.6l1.7-2.6h6.4l1.7 2.6h3.6v10.6H3.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13.3" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><svg class="camOff" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
       </footer>
+      <a
+        class="side-brand"
+        href="https://doi.org/10.1515/dmvm-2025-0056"
+        target="_blank"
+        rel="noreferrer"
+        data-i18n-title="tri.cite.title" title="Cite: Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025, doi:10.1515/dmvm-2025-0056"
+        data-i18n="tri.cite.text">Hexiamond Fence · LRMR25 · Dr. Erika Roldán</a>
       <p id="status" class="visually-hidden" role="status" aria-live="polite"></p>
     </main>
   </div>

@@ -90,7 +90,9 @@ body {
 }
 
 /* ---------- page: area on top, the board with its pieces, the board group
-   at the bottom (erase on the left, the camera on the right) ---------- */
+   (erase on the left, the camera on the right) right under the board, the
+   camera's right edge on the board's and the credit between them, as in the
+   other two labs (app.js lays the group on the drawn board) ---------- */
 
 .app-shell {
   width: 100%;
@@ -103,6 +105,7 @@ body {
   height: 100%;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
   justify-items: center;
 }
@@ -237,36 +240,62 @@ body {
   display: none !important;
 }
 
-.board-wrap.camera-mode .piece-ring,
-.board-wrap.camera-mode .board-actions {
-  opacity: 0;
-  pointer-events: none;
-}
+/* One column; the credit shares the board group's row. */
+.main-stage > * { grid-column: 1; }
+.main-stage > .toolbar { grid-row: 1; }
+.main-stage > .play-zone { grid-row: 2; }
 
-/* The board group, as wide as the board. */
+/* The board group, as wide as the drawn board (app.js), over the board's
+   box (its corners outside the drawing) and over the camera window. */
 .boardbar {
-  width: min(100%, calc(var(--board-size) + 120px));
+  grid-row: 3;
+  width: var(--board-size);
   min-height: 56px;
+  position: relative;
+  z-index: 8;
 }
 
-/* The citation sits in the board group, between erase and the camera. */
-.side-brand {
-  flex: 1 1 auto;
-  min-width: 0;
-  text-align: center;
-  text-decoration: none;
-  color: rgba(134, 233, 255, 0.55);
-  font-weight: 600;
-  font-size: 0.7rem;
-  letter-spacing: 0.05em;
+.main-stage > .side-brand {
+  grid-row: 3;
+  align-self: center;
+  justify-self: center;
+  position: relative;
+  z-index: 9;
 }
 
-/* ---------- narrow or portrait screens: rotate and flip at the top left,
-   the board, the pieces in two rows under it ---------- */
+/* Back to the hub and print the kit: in the top strip, left of the
+   language switch. */
+.lab-nav {
+  position: fixed;
+  top: 13px;
+  right: 180px;
+  z-index: 9999;
+}
+
+
+/* ---------- narrow or portrait screens: area on top, then rotate and flip
+   (back to the hub and print at the other end of their row), the board, the
+   pieces in two rows, erase and the camera right under the pieces, then the
+   credit; this group is centred in the room under the area, its rows 10 px
+   apart, as in the other two labs ---------- */
 
 @media (max-width: 700px), (max-aspect-ratio: 4/5) {
   :root {
-    --board-size: min(calc(100vw - 20px), calc(100dvh - 356px));
+    --board-size: min(calc(100vw - 20px), calc(100dvh - 404px));
+  }
+
+  .main-stage {
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto minmax(0, 1fr);
+    row-gap: 10px;
+  }
+
+  .main-stage > .toolbar { grid-row: 1; }
+  .main-stage > .play-zone { grid-row: 3; }
+  .boardbar { grid-row: 4; }
+  .main-stage > .side-brand { grid-row: 5; max-width: 100%; }
+
+  .lab-nav {
+    position: static;
   }
 
   .app-shell {
@@ -291,8 +320,7 @@ body {
     grid-template-areas:
       "acts"
       "board"
-      "tray"
-      "brand";
+      "tray";
     column-gap: 8px;
     row-gap: 10px;
     align-items: center;
@@ -341,25 +369,10 @@ body {
   .board-actions {
     grid-area: acts;
     position: static;
-    justify-self: start;
-  }
-
-  .side-brand {
-    grid-area: brand;
-    position: static;
-    transform: none !important;
-    justify-self: center;
-    font-size: 0.66rem;
+    justify-self: stretch;
   }
 
   .boardbar {
     width: min(100%, var(--board-size));
-  }
-}
-
-@media (max-width: 700px), (max-aspect-ratio: 4/5) {
-  .side-brand {
-    font-size: 0.62rem;
-    line-height: 1.35;
   }
 }

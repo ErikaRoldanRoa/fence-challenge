@@ -916,9 +916,27 @@ function drawAtSize() {
   const offsetY = (height - boardHeight * scale) * 0.5 - bounds.minY * scale;
 
   state.view = { scale, offsetX, offsetY, width, height, dpr };
+  placeBoardBar();
   layoutPieceRing();
   render();
   if (camera.view && typeof camera.view.refresh === "function") camera.view.refresh();
+}
+
+// Wide screens: erase and the camera right under the drawn board (play-ui.js).
+function placeBoardBar() {
+  if (!window.FencePlay || !window.FencePlay.placeBar) return;
+  let drawn = null;
+  if (!piecesInRows()) {
+    const rect = dom.canvas.getBoundingClientRect();
+    const b = state.boardBounds;
+    const { scale, offsetX, offsetY, dpr } = state.view;
+    drawn = {
+      left: rect.left + (b.minX * scale + offsetX) / dpr,
+      right: rect.left + (b.maxX * scale + offsetX) / dpr,
+      bottom: rect.top + (b.maxY * scale + offsetY) / dpr,
+    };
+  }
+  window.FencePlay.placeBar(dom.boardbar, dom.sideBrand, drawn);
 }
 
 // True when the stylesheet lays the pieces in rows under the board.
@@ -931,7 +949,7 @@ function ringItems() {
 }
 
 // The lowest point the ring may reach: the top of the board group (erase and
-// the camera), or the bottom of the screen.
+// the camera, under the board), or the bottom of the screen.
 function ringFloor() {
   const vh = window.innerHeight;
   const bar = dom.boardbar ? dom.boardbar.getBoundingClientRect() : null;
@@ -939,13 +957,15 @@ function ringFloor() {
 }
 
 // How far the chips (and rotate and flip, at the top left) reach past the
-// screen sides, below the floor, and up into the toolbar; room = free space
-// under the board for moving it down.
+// screen sides, below the floor, and up into the toolbar, and how far the
+// board group under the board reaches below the screen; room = free space
+// under everything for moving the board down.
 function ringOverflow() {
   const vw = document.documentElement.clientWidth;
+  const vh = window.innerHeight;
   const floor = ringFloor();
   const top = dom.toolbar.getBoundingClientRect().bottom + EDGE_GAP;
-  let side = 0, below = 0, above = 0, lowest = -Infinity;
+  let side = 0, below = 0, above = 0, lowest = dom.boardWrap.getBoundingClientRect().bottom;
   for (const el of [...ringItems(), dom.actions]) {
     const b = el.getBoundingClientRect();
     if (b.width === 0) continue;
@@ -954,8 +974,12 @@ function ringOverflow() {
     above = Math.max(above, top - b.top);
     lowest = Math.max(lowest, b.bottom);
   }
-  lowest = Math.max(lowest, dom.boardWrap.getBoundingClientRect().bottom);
-  return { side, below, above, room: floor - lowest };
+  const bar = dom.boardbar ? dom.boardbar.getBoundingClientRect() : null;
+  if (bar && bar.height > 0) {
+    below = Math.max(below, bar.bottom - (vh - EDGE_GAP));
+    lowest = Math.max(lowest, bar.bottom);
+  }
+  return { side, below, above, room: vh - EDGE_GAP - lowest };
 }
 
 // The ring fits when every chip is on screen, below the toolbar, and clear of
@@ -987,8 +1011,7 @@ function layoutPieceRing() {
     return;
   }
   if (piecesInRows()) {
-    for (const el of [...dom.tray.querySelectorAll(".piece-chip-ring"), dom.sideBrand]) {
-      if (!el) continue;
+    for (const el of dom.tray.querySelectorAll(".piece-chip-ring")) {
       el.style.left = "";
       el.style.top = "";
       el.style.transform = "";
@@ -996,7 +1019,6 @@ function layoutPieceRing() {
     }
     return;
   }
-  layoutSideBrand(rect, boardHex);
 
   const chips = [...dom.tray.querySelectorAll(".piece-chip-ring")];
   if (chips.length === 0) {
@@ -1139,44 +1161,6 @@ function clearObstacles(spots, half, boxes) {
       }
     }
   });
-}
-
-function layoutSideBrand(rect = dom.canvas.getBoundingClientRect(), boardHex = getBoardHexVerticesCss()) {
-  if (!dom.sideBrand || !boardHex) {
-    return;
-  }
-
-  const center = {
-    x: (boardHex.left.x + boardHex.right.x) * 0.5,
-    y: (boardHex.topLeft.y + boardHex.bottomLeft.y) * 0.5,
-  };
-
-  const a = boardHex.bottomRight;
-  const b = boardHex.right;
-  const edgeVec = { x: b.x - a.x, y: b.y - a.y };
-  const edgeLen = Math.hypot(edgeVec.x, edgeVec.y) || 1;
-  const anchorT = 0.52;
-  const edgePoint = {
-    x: a.x + edgeVec.x * anchorT,
-    y: a.y + edgeVec.y * anchorT,
-  };
-  const toOutside = {
-    x: edgePoint.x - center.x,
-    y: edgePoint.y - center.y,
-  };
-  const n1 = { x: -edgeVec.y / edgeLen, y: edgeVec.x / edgeLen };
-  const n2 = { x: edgeVec.y / edgeLen, y: -edgeVec.x / edgeLen };
-  const dot1 = n1.x * toOutside.x + n1.y * toOutside.y;
-  const normal = dot1 >= 0 ? n1 : n2;
-  const offset = 34;
-  const x = edgePoint.x + normal.x * offset;
-  const y = edgePoint.y + normal.y * offset;
-  const angleDeg = (Math.atan2(edgeVec.y, edgeVec.x) * 180) / Math.PI;
-
-  dom.sideBrand.style.left = `${x}px`;
-  dom.sideBrand.style.top = `${y}px`;
-  dom.sideBrand.style.transformOrigin = "50% 50%";
-  dom.sideBrand.style.transform = `translate(-50%, -50%) rotate(${angleDeg.toFixed(2)}deg)`;
 }
 
 function toCssFromScreen(point) {

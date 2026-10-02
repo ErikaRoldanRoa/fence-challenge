@@ -737,7 +737,7 @@
 
 
   // Wide screens: the board is as large as the screen allows, with the
-  // pieces on its left and the credit on its right (sizes in styles.css).
+  // pieces on its left and a narrow margin on its right (sizes in styles.css).
   // Narrow screens stack everything in one column and need no sizes here.
   function syncGameLayoutSize() {
     const panel = dom.gamePanel;
