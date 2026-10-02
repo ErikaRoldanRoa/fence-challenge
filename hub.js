@@ -559,7 +559,6 @@
           const B = window.FenceBoards;
           if (c.session !== session || !B || B.current(sheetId) !== PAPER_BOARD[card] || B.handsOverTo(sheetId)) return;
           closeCam(card);
-          try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
           window.location.assign("camera/?board=" + encodeURIComponent(sheetId) + "&start");
         },
         onState: (state) => {
@@ -679,6 +678,15 @@
     let top = /below/.test(pos) ? below : above;
     if (top === below && below + h > vh - m && above >= m) top = above;
     if (top === above && above < m) top = below;
+    // Beside the control (the camera, under the board's right corner): level
+    // with it, on its left, and never up onto the board.
+    if (pos === "side") {
+      left = Math.max(m, r.left - 10 - w);
+      top = r.top + r.height / 2 - h / 2;
+      const toy = el.closest("article") && el.closest("article").querySelector(".toy");
+      if (toy) top = Math.max(top, toy.getBoundingClientRect().bottom + 6);
+      top = Math.min(top, vh - m - h);
+    }
     // In the open menu the tip goes over the title, never down onto the board;
     // with no room above the menu, the page scrolls down to make it.
     const menu = el.closest(".pMenu");
