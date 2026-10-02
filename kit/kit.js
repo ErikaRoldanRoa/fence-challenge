@@ -545,10 +545,9 @@
     const g = FenceBoards.geometry(boardId);
     const def = g.def;
     if (def.lattice === "square") return t("kit.board.square", { w: def.spec.size, h: def.spec.size });
-    return t("kit.board.cells", {
-      lattice: t("kit.lattice." + def.lattice),
-      n: formatCount(g.board.cells.length, lang),
-    });
+    // side: hexagons along one edge (radius + 1), triangle edges along one side
+    const side = def.lattice === "hexagonal" ? def.spec.radius + 1 : def.spec.hexSide;
+    return t("kit.board.side", { lattice: t("kit.lattice." + def.lattice), n: formatCount(side, lang) });
   }
 
   function piecesName(boardId, t) {
