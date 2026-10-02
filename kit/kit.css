@@ -617,8 +617,11 @@ h1 {
     background: #fff;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    /* the box is rounded to whole pixels: a piece laid on the sheet's edge must not lose a sliver */
+    overflow: visible;
   }
   .paper svg {
+    overflow: visible;
     width: var(--sheet-w);
     height: var(--sheet-h);
   }

@@ -867,9 +867,9 @@
       textLine("kit-credit", L.cw, y, "end", fit(right));
   }
 
-  // Grid lines and cut lines share one width. Every line is centred on the cell
-  // boundary, so a piece cut along the middle of its cut line covers exactly half
-  // of the grid line under each of its edges, and its neighbour covers the other half.
+  // Every line of the board is centred on the cell boundary. A piece is cut
+  // exactly on its cells' edge (the outer edge of its blue border), so it covers
+  // half of the grid line under each of its edges, and its neighbour the other half.
   function gridLineWidth(s) {
     return Math.min(1.2, Math.max(0.5, 0.045 * s));
   }
@@ -926,7 +926,6 @@
   function piecesSheet(L, opts, back) {
     const s = L.scale;
     const innerW = Math.min(0.3, Math.max(0.18, 0.02 * s));
-    const lineW = gridLineWidth(s);
     let svg = svgOpen(L, opts.polyform + " · " + (back ? opts.backsTag : opts.piecesTag), "kit-sheet " + (back ? "kit-backs" : "kit-pieces"));
     svg += piecesHead(L, opts, back ? opts.backsTag : opts.piecesTag);
     // The backs are the fronts seen through the paper: mirrored left to right about the page centre.
@@ -948,15 +947,15 @@
           fmt(innerW) + '" stroke-linecap="round"/>';
       }
       if (!back || BACK_EDGE) {
-        // The border, in the board border's blue. Its outer edge is the cut
-        // line's, half a grid line outside the cells, as before: the cut line
-        // itself, plus a band inside the piece (clipped to it) at most
-        // BORDER_IN deep, so the camera, which reads a piece's colour away
-        // from its edges, never takes the band for the piece.
+        // The border, in the board border's blue: a band inside the piece
+        // (clipped to it) at most BORDER_IN deep, so the camera, which reads a
+        // piece's colour away from its edges, never takes the band for the
+        // piece. Its outer edge is the cells' own edge: cut along it, a piece
+        // is exactly its cells, and pieces side by side on the board meet on
+        // the middle of the grid line between them.
         svg += '<clipPath id="' + clip + '"><path d="' + outline + '" clip-rule="evenodd"/></clipPath>';
         svg += '<path class="kit-border" d="' + outline + '" fill="none" stroke="' + OUTLINE + '" stroke-width="' + fmt(Math.floor(2000 * borderIn(s)) / 1000) +
           '" stroke-linejoin="round" clip-path="url(#' + clip + ')"/>';
-        svg += '<path class="kit-cut" d="' + outline + '" fill="none" stroke="' + OUTLINE + '" stroke-width="' + fmt(lineW) + '" stroke-linejoin="round"/>';
       }
       svg += "</g>";
     });
