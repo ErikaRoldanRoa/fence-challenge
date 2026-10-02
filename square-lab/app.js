@@ -244,7 +244,7 @@
       gameState.placedPieces.clear();
       gameState.drag = null;
       gameState.occupiedBy = makeNullGrid();
-      clearGameAnalysis();
+      measureLive();
       updatePieceTrayState();
       updateGameMetrics();
       renderGameBoard();
@@ -425,7 +425,7 @@
         gameState.activePieceId = pieceId;
       }
       rebuildGameOccupancy();
-      clearGameAnalysis();
+      measureLive();
       updateGameMetrics();
       renderGameBoard();
     }, () => {
@@ -522,7 +522,7 @@
     gameState.activePieceId = null;
     gameState.freshPieceId = null;
     rebuildGameOccupancy();
-    clearGameAnalysis();
+    measureLive();
     updatePieceTrayState();
     updateGameMetrics();
     renderGameBoard();
@@ -547,7 +547,7 @@
     gameState.activePieceId = piece.id;
     gameState.freshPieceId = piece.id;
     rebuildGameOccupancy();
-    clearGameAnalysis();
+    measureLive();
     updatePieceTrayState();
     updateGameMetrics();
     renderGameBoard();
@@ -607,7 +607,7 @@
     }
 
     rebuildGameOccupancy();
-    clearGameAnalysis();
+    measureLive();
     updatePieceTrayState();
     updateGameMetrics();
     renderGameBoard();
@@ -643,7 +643,7 @@
     }
     rebuildGameOccupancy();
     if (target) {
-      clearGameAnalysis();
+      measureLive();
       updatePieceTrayState();
       updateGameMetrics();
       renderGameBoard();
@@ -682,6 +682,15 @@
   }
 
   function runGameAreaDetection() {
+    measureLive();
+    updateGameMetrics();
+    renderGameBoard();
+    setStatus(...areaStatus(gameState.analysis));
+  }
+
+  // The area is measured after every change to the board, as on the hub; a
+  // tap on the area pill reads the verdict out.
+  function measureLive() {
     const occupied = new Set();
     for (let y = 0; y < BOARD_SIZE; y += 1) {
       for (let x = 0; x < BOARD_SIZE; x += 1) {
@@ -690,14 +699,10 @@
         }
       }
     }
-
     const analysis = analyzeFence(occupied);
     gameState.analysis = analysis;
     gameState.interiorKeys = new Set(analysis.interiorKeys);
     gameState.leakKeys = new Set(analysis.leakKeys);
-    updateGameMetrics();
-    renderGameBoard();
-    setStatus(...areaStatus(analysis));
   }
 
   // The verdict uses the shared rule (../fence-analysis.js), the same one the
@@ -730,11 +735,6 @@
     return [analysis.cornerLeak ? "sq.s.pocketsLeak" : "sq.s.pockets", { area, count }];
   }
 
-  function clearGameAnalysis() {
-    gameState.analysis = null;
-    gameState.interiorKeys.clear();
-    gameState.leakKeys.clear();
-  }
 
   // Wide screens: the board is as large as the screen allows, with the
   // pieces on its left and the credit on its right (sizes in styles.css).
@@ -1009,11 +1009,10 @@
       },
       pointerCell: grabbedCell,
       originalPiece: placed,
-      hadAnalysis: gameState.analysis,
     };
 
     rebuildGameOccupancy();
-    clearGameAnalysis();
+    measureLive();
     updatePieceTrayState();
     updateGameMetrics();
     dom.gameBoard.style.cursor = "grabbing";
@@ -1032,7 +1031,7 @@
     gameState.freshPieceId = null;
     gameState.drag = null;
     rebuildGameOccupancy();
-    clearGameAnalysis();
+    measureLive();
     updatePieceTrayState();
     updateGameMetrics();
     dom.gameBoard.style.cursor = "crosshair";
@@ -1041,7 +1040,7 @@
   }
 
   // Drops the dragged piece where the pointer is, or puts it back. A plain tap
-  // (restoreKey given) puts it back untouched and keeps the measured area.
+  // (restoreKey given) puts it back untouched.
   function finishDraggingPiece(forceRevert = false, restoreKey = null) {
     if (!gameState.drag) {
       return;
@@ -1072,13 +1071,7 @@
     gameState.activePieceId = drag.pieceId;
     gameState.drag = null;
     rebuildGameOccupancy();
-    clearGameAnalysis();
-    if (restoreKey && drag.hadAnalysis) {
-      // Nothing moved: the board is the one that was measured.
-      gameState.analysis = drag.hadAnalysis;
-      gameState.interiorKeys = new Set(drag.hadAnalysis.interiorKeys);
-      gameState.leakKeys = new Set(drag.hadAnalysis.leakKeys);
-    }
+    measureLive();
     updatePieceTrayState();
     updateGameMetrics();
     dom.gameBoard.style.cursor = "crosshair";

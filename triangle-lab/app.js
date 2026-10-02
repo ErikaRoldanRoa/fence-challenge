@@ -135,11 +135,15 @@ function pieceName(typeId) {
   return type ? type.name : typeId;
 }
 
-// Any change to the board makes the last measurement stale.
-function resetMeasure() {
-  state.enclosedCells = new Set();
-  state.leakCells = new Set();
-  updateAreaChip(0);
+// The area is measured after every change to the board, as on the hub; a
+// tap on the area pill reads the verdict out.
+function measureLive() {
+  const result = computeEnclosedArea();
+  state.enclosedCells = result.enclosedSet;
+  state.enclosedRegionCount = result.regionCount;
+  state.enclosedLargest = result.largestRegion;
+  state.leakCells = result.leakCells;
+  updateAreaChip(result.area);
 }
 
 function wireEvents() {
@@ -151,7 +155,7 @@ function wireEvents() {
     state.freshPieceId = null;
     state.enclosedRegionCount = 0;
     state.enclosedLargest = 0;
-    resetMeasure();
+    measureLive();
     setStatus("tri.s.cleared");
     refreshTray();
     render();
@@ -245,7 +249,7 @@ function removePiece(pieceId) {
   state.placedPieces.splice(index, 1);
   if (state.selectedPieceId === pieceId) state.selectedPieceId = null;
   if (state.freshPieceId === pieceId) state.freshPieceId = null;
-  resetMeasure();
+  measureLive();
   setStatus("tri.s.removed", { name: pieceName(removed.typeId) });
   refreshTray();
   render();
@@ -423,7 +427,7 @@ function onChipDown(event, type) {
     if (!nearest || (piece.marker.i === nearest.i && piece.marker.j === nearest.j && piece.marker.o === nearest.o)) return;
     if (!canPlace(piece.typeId, piece.variantIndex, nearest, piece.id)) return;
     piece.marker = { i: nearest.i, j: nearest.j, o: nearest.o };
-    resetMeasure();
+    measureLive();
     render();
   }, () => {
     const piece = pieceId ? state.placedPieces.find((p) => p.id === pieceId) : null;
@@ -554,7 +558,7 @@ function spawnPiece(typeId, preferredCell = null) {
   // A new piece starts selected, but the next tap on it only confirms the
   // selection: removing it takes a second, deliberate tap.
   state.freshPieceId = piece.id;
-  resetMeasure();
+  measureLive();
   setStatus("tri.s.placed", { name: pieceName(typeId) });
   return true;
 }
@@ -591,7 +595,7 @@ function movePieceToward(piece, dir) {
     if (!canPlace(piece.typeId, piece.variantIndex, entry, piece.id)) continue;
     piece.marker = { i: entry.i, j: entry.j, o: entry.o };
     state.freshPieceId = piece.id; // the next tap on it only selects it
-    resetMeasure();
+    measureLive();
     setStatus("tri.s.moved", { name: pieceName(piece.typeId) });
     render();
     return true;
@@ -607,7 +611,7 @@ function rotateSelection() {
     if (reorientPlacedPiece(selected, nextVariant)) {
       state.freshPieceId = selected.id; // the next tap on it only selects it
       setStatus("tri.s.rotated", { name: pieceName(selected.typeId) });
-      resetMeasure();
+      measureLive();
       render();
     }
     return;
@@ -630,7 +634,7 @@ function flipSelection() {
     if (reorientPlacedPiece(selected, nextVariant)) {
       state.freshPieceId = selected.id; // the next tap on it only selects it
       setStatus("tri.s.flipped", { name: pieceName(selected.typeId) });
-      resetMeasure();
+      measureLive();
       render();
     }
     return;
@@ -742,7 +746,7 @@ function onPointerMove(event) {
     state._moved = true;
     setStatus("tri.s.moving", { name: pieceName(piece.typeId) });
   }
-  resetMeasure();
+  measureLive();
   render();
 }
 

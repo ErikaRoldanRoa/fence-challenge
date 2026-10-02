@@ -365,10 +365,14 @@ function wireEvents() {
   bindCamera();
 }
 
-// Any change to the board makes the last measurement stale.
-function resetMeasure() {
-  state.enclosedCells = new Set();
-  updateAreaChip(0);
+// The area is measured after every change to the board, as on the hub; a
+// tap on the area pill reads the verdict out.
+function measureLive() {
+  const result = computeEnclosedArea();
+  state.enclosedCells = result.enclosedSet;
+  state.enclosedRegionCount = result.regionCount;
+  state.enclosedLargest = result.largestRegion;
+  updateAreaChip(result.area);
 }
 
 function removePiece(pieceId) {
@@ -378,7 +382,7 @@ function removePiece(pieceId) {
   state.placedPieces.splice(i, 1);
   if (state.selectedPieceId === pieceId) state.selectedPieceId = null;
   if (state.freshPieceId === pieceId) state.freshPieceId = null;
-  resetMeasure();
+  measureLive();
   setStatus("hx.s.removed", { name: pieceName(removed.typeId) });
   refreshTray();
   render();
@@ -483,7 +487,7 @@ function spawnPiece(typeId, preferredCell = null) {
   // A new piece starts selected, but the next tap on it only confirms the
   // selection: removing it takes a second, deliberate tap.
   state.freshPieceId = piece.id;
-  resetMeasure();
+  measureLive();
   setStatus("hx.s.placed", { name: pieceName(typeId) });
   return true;
 }
@@ -496,7 +500,7 @@ function movePieceToward(piece, dir) {
     if (!canPlace(piece.typeId, piece.variantIndex, entry, piece.id)) continue;
     piece.marker = { q: entry.q, r: entry.r };
     state.freshPieceId = piece.id; // the next tap on it only selects it
-    resetMeasure();
+    measureLive();
     setStatus("hx.s.moved", { name: pieceName(piece.typeId) });
     render();
     return true;
@@ -516,7 +520,7 @@ function rotateSelection() {
     if (reorient(sel, next)) {
       state.freshPieceId = sel.id; // the next tap on it only selects it
       setStatus("hx.s.rotated", { name: pieceName(sel.typeId) });
-      resetMeasure();
+      measureLive();
       render();
     }
     return;
@@ -540,7 +544,7 @@ function flipSelection() {
     if (reorient(sel, next)) {
       state.freshPieceId = sel.id; // the next tap on it only selects it
       setStatus("hx.s.flipped", { name: pieceName(sel.typeId) });
-      resetMeasure();
+      measureLive();
       render();
     }
     return;
@@ -619,7 +623,7 @@ function onPointerMove(event) {
     state._moved = true;
     setStatus("hx.s.moving", { name: pieceName(piece.typeId) });
   }
-  resetMeasure();
+  measureLive();
   render();
 }
 
@@ -1047,7 +1051,7 @@ function onChipDown(event, type) {
     if (!piece || (piece.marker.q === nearest.q && piece.marker.r === nearest.r)) return;
     if (!canPlace(piece.typeId, piece.variantIndex, nearest, piece.id)) return;
     piece.marker = { q: nearest.q, r: nearest.r };
-    resetMeasure();
+    measureLive();
     render();
   }, () => {
     const piece = pieceId ? state.placedPieces.find((p) => p.id === pieceId) : null;
