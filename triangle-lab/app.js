@@ -24,6 +24,8 @@ const MARKER_COLORS = [
 const RING_EDGE_SLOTS = [0.18, 0.4, 0.62, 0.84];
 // Space kept between the piece chips, the screen edges and the controls.
 const EDGE_GAP = 4;
+// The least space between a chip and a control next to the ring.
+const CONTROL_GAP = 8;
 const ROTATE_60 = { reflect: false, rot: 1 };
 const REFLECT = { reflect: true, rot: 0 };
 
@@ -891,10 +893,10 @@ function ringFits() {
     .filter((el) => el && el.offsetParent !== null)
     .map((el) => el.getBoundingClientRect())
     .filter((b) => b.width > 0);
-  const meets = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+  const meets = (a, b, m = 0) => a.left - m < b.right && b.left - m < a.right && a.top - m < b.bottom && b.top - m < a.bottom;
   for (let i = 0; i < boxes.length; i += 1) {
     for (let j = i + 1; j < boxes.length; j += 1) if (meets(boxes[i], boxes[j])) return false;
-    for (const f of fixed) if (meets(boxes[i], f)) return false;
+    for (const f of fixed) if (meets(boxes[i], f, CONTROL_GAP)) return false;
   }
   return true;
 }
@@ -952,12 +954,16 @@ function layoutPieceRing() {
       { a: boardHex.topRight, b: boardHex.right },
     ];
     for (const edgeDef of edges) {
-      const { edgeVec, normal } = outwardOf(edgeDef.a, edgeDef.b);
+      const { edgeVec, edgeLen, normal } = outwardOf(edgeDef.a, edgeDef.b);
       const outwardPx = Math.abs(normal.x) * halfW + Math.abs(normal.y) * halfH + chipClearance;
       for (const tt of RING_EDGE_SLOTS) {
         ordered.push({
           x: edgeDef.a.x + edgeVec.x * tt + normal.x * outwardPx,
           y: edgeDef.a.y + edgeVec.y * tt + normal.y * outwardPx,
+          nx: normal.x,
+          ny: normal.y,
+          tx: edgeVec.x / edgeLen,
+          ty: edgeVec.y / edgeLen,
         });
       }
     }
@@ -1003,8 +1009,8 @@ function layoutPieceRing() {
         ty: edgeVec.y / edgeLen,
       });
     }
-    clearObstacles(ordered, Math.max(halfW, halfH), ringObstacles(rect));
   }
+  clearObstacles(ordered.slice(0, chips.length), Math.max(halfW, halfH), ringObstacles(rect));
 
   chips.forEach((chip, index) => {
     const anchor = ordered[index % ordered.length];
@@ -1025,13 +1031,15 @@ function ringObstacles(rect) {
   return boxes;
 }
 
-// A chip that would touch one of these controls, or an earlier chip, slides
-// a little along its side or away from the board until it is clear.
+// A chip that would come within CONTROL_GAP of one of these controls, or
+// touch an earlier chip, slides a little along its side or away from the
+// board until it is clear.
 function clearObstacles(spots, half, boxes) {
   const gap = 3;
+  const boxGap = CONTROL_GAP + 0.5;
   const hits = (p, upto) => {
     for (const b of boxes) {
-      if (p.x + half + gap > b.l && p.x - half - gap < b.r && p.y + half + gap > b.t && p.y - half - gap < b.b) return true;
+      if (p.x + half + boxGap > b.l && p.x - half - boxGap < b.r && p.y + half + boxGap > b.t && p.y - half - boxGap < b.b) return true;
     }
     for (let j = 0; j < upto; j += 1) {
       if (Math.abs(spots[j].x - p.x) < 2 * half + gap && Math.abs(spots[j].y - p.y) < 2 * half + gap) return true;

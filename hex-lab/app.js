@@ -9,6 +9,8 @@ const SQRT3_HALF = SQRT3 / 2;
 const CAMERA_BOARD = "hex6";
 // Space kept between the piece chips, the screen edges and the controls.
 const EDGE_GAP = 4;
+// The least space between a chip and a control next to the ring.
+const CONTROL_GAP = 8;
 
 const PIECE_COLORS = [
   "#3fd8ff", // bar: cyan
@@ -812,13 +814,15 @@ function ringObstacles(rect) {
   return boxes;
 }
 
-// A chip that would touch one of these controls, or an earlier chip, slides
-// a little along its side or away from the board until it is clear.
+// A chip that would come within CONTROL_GAP of one of these controls, or
+// touch an earlier chip, slides a little along its side or away from the
+// board until it is clear.
 function clearObstacles(spots, half, boxes) {
   const gap = 3;
+  const boxGap = CONTROL_GAP + 0.5;
   const hits = (p, upto) => {
     for (const b of boxes) {
-      if (p.x + half + gap > b.l && p.x - half - gap < b.r && p.y + half + gap > b.t && p.y - half - gap < b.b) return true;
+      if (p.x + half + boxGap > b.l && p.x - half - boxGap < b.r && p.y + half + boxGap > b.t && p.y - half - boxGap < b.b) return true;
     }
     for (let j = 0; j < upto; j += 1) {
       if (Math.abs(spots[j].x - p.x) < 2 * half + gap && Math.abs(spots[j].y - p.y) < 2 * half + gap) return true;
