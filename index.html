@@ -167,7 +167,7 @@
       .icon.more{cursor:pointer;padding:0;color:var(--muted);border-color:rgba(255,255,255,0.16);background:transparent;}
       .icon.more svg{width:20px;height:20px;display:block;}
       .icon.more[aria-expanded="true"]{color:var(--text);border-color:var(--accent-line);background:var(--accent-soft);}
-      .pMenu{position:absolute;right:0;bottom:calc(100% + 4px);z-index:30;display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:999px;background:rgba(7,6,10,0.94);border:1px solid var(--accent-line);box-shadow:0 14px 36px rgba(0,0,0,0.6),0 0 22px var(--accent-soft);backdrop-filter:blur(10px);}
+      .pMenu{position:absolute;left:0;right:0;bottom:calc(100% + 2px);z-index:30;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 8px;border-radius:999px;background:rgba(7,6,10,0.94);border:1px solid var(--accent-line);box-shadow:0 14px 36px rgba(0,0,0,0.6),0 0 22px var(--accent-soft);backdrop-filter:blur(10px);}
       .pMenu .icon{width:44px;height:44px;flex:0 0 auto;}
       .pMenu .icon.kit,.pMenu .icon.reset{cursor:pointer;padding:0;color:var(--muted);}
       .pMenu .icon.kit svg{width:19px;height:19px;display:block;}
@@ -197,6 +197,9 @@
       article.pCard.camLive .toy{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 0 26px var(--accent-glow);}
       .icon.cam[hidden]{display:none;}
       .pMenu[hidden]{display:none;}
+      /* The open menu covers the whole title band: title and kicker step aside
+         instead of showing cut words at its edge. */
+      article.pCard:has(.pMenu:not([hidden])) :is(.pTitle,.pKicker){visibility:hidden;}
 
       /* A card that just received a board from the camera glows once. */
       @keyframes arrive{0%{box-shadow:0 18px 50px rgba(0,0,0,0.35),0 0 0 0 transparent;}25%{box-shadow:0 18px 50px rgba(0,0,0,0.35),0 0 0 2px var(--accent),0 0 42px var(--accent-glow);}100%{box-shadow:0 18px 50px rgba(0,0,0,0.35),0 0 0 0 transparent;}}
@@ -242,7 +245,8 @@
       /* Occlusion-safe: the pill ignores pointer events (taps pass through to
          the page); only its link stays clickable. On narrow screens it drops
          out of the fixed corner and flows at the end of the content. */
-      .floatCredit{pointer-events:none;}
+      .floatCredit{pointer-events:none;transition:opacity .2s ease,visibility .2s;}
+      .floatCredit.tucked{opacity:0;visibility:hidden;}
       .floatCredit a{pointer-events:auto;}
       @media(max-width:900px){.floatCredit{position:static;margin:24px auto 0;display:block;width:fit-content;}}
       /* Language switch: fixed top-right, three equal chips. */
@@ -250,6 +254,11 @@
       .langSel button{cursor:pointer;border:none;background:transparent;color:var(--muted2);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.04em;padding:5px 9px;border-radius:999px;transition:color .12s ease,background .12s ease;}
       .langSel button:hover{color:var(--text);}
       .langSel button[aria-pressed="true"]{color:var(--bg0);background:var(--amber);}
+      /* Three 44 x 44 px touch boxes, 8 px apart, as in the labs; the pill
+         keeps its height, the touch box reaches past it. */
+      .langSel{gap:8px;}
+      .langSel button{position:relative;min-width:44px;-webkit-tap-highlight-color:transparent;}
+      .langSel button::before{content:"";position:absolute;left:50%;top:50%;width:44px;height:44px;transform:translate(-50%,-50%);}
       /* A card scrolled into view stays clear of the fixed language switch. */
       article.pCard{scroll-margin-top:72px;}
       @media(max-width:520px){.langSel{top:10px;right:10px;}}
@@ -259,8 +268,8 @@
       /* Touch screens: every button and tip holder answers to a 44 px touch
          area that reaches past its drawn edge, so the page looks the same. */
       @media(pointer:coarse){
-        .icon,.langSel button{position:relative;}
-        .icon::before,.langSel button::before{content:"";position:absolute;left:50%;top:50%;width:44px;height:44px;transform:translate(-50%,-50%);}
+        .icon{position:relative;}
+        .icon::before{content:"";position:absolute;left:50%;top:50%;width:44px;height:44px;transform:translate(-50%,-50%);}
       }
     </style>
     <script src="i18n.js"></script>

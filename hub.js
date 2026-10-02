@@ -640,6 +640,7 @@
   document.body.appendChild(tip);
   let tipAnchor = null;
   let lastPointer = "mouse";
+  let keepTipUntil = 0; // a scroll made by placeTip keeps the tip
   function placeTip(el) {
     const m = 8;
     const r = el.getBoundingClientRect();
@@ -659,9 +660,19 @@
     let top = /below/.test(pos) ? below : above;
     if (top === below && below + h > vh - m && above >= m) top = above;
     if (top === above && above < m) top = below;
-    // In the open menu the tip goes over the title, never down onto the board.
+    // In the open menu the tip goes over the title, never down onto the board;
+    // with no room above the menu, the page scrolls down to make it.
     const menu = el.closest(".pMenu");
-    if (menu) top = Math.max(m, menu.getBoundingClientRect().top - 10 - h);
+    if (menu) {
+      let menuTop = menu.getBoundingClientRect().top;
+      const need = m + h + 10 - menuTop;
+      if (need > 0 && window.scrollY > 0) {
+        keepTipUntil = Date.now() + 300;
+        window.scrollBy(0, -Math.min(Math.ceil(need), window.scrollY));
+        menuTop = menu.getBoundingClientRect().top;
+      }
+      top = Math.max(m, menuTop - 10 - h);
+    }
     tip.style.left = Math.round(left) + "px";
     tip.style.top = Math.round(top) + "px";
   }
@@ -708,7 +719,7 @@
     else hideTip();
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideTip(); });
-  window.addEventListener("scroll", hideTip, { passive: true });
+  window.addEventListener("scroll", () => { if (Date.now() >= keepTipUntil) hideTip(); }, { passive: true });
   window.addEventListener("resize", hideTip);
   document.addEventListener("fc-langchange", () => { if (tipAnchor) showTip(tipAnchor); });
 
@@ -734,4 +745,30 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", startCams);
   else startCams();
   document.addEventListener("fc-langchange", () => Object.keys(cams).forEach(camLabel));
+
+  // The fixed credit (wide screens) steps aside while it would sit on the
+  // cards or the panel below them, and comes back over empty page.
+  (function tuckCredit() {
+    const credit = document.querySelector(".floatCredit");
+    if (!credit) return;
+    const blocks = () => document.querySelectorAll("article.pCard, #refChips, #refPanel");
+    let queued = false;
+    function check() {
+      queued = false;
+      if (getComputedStyle(credit).position !== "fixed") { credit.classList.remove("tucked"); return; }
+      const c = credit.getBoundingClientRect();
+      let hit = false;
+      blocks().forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.width && r.left < c.right && r.right > c.left && r.top < c.bottom && r.bottom > c.top) hit = true;
+      });
+      credit.classList.toggle("tucked", hit);
+    }
+    const soon = () => { if (!queued) { queued = true; window.requestAnimationFrame(check); } };
+    window.addEventListener("scroll", soon, { passive: true });
+    window.addEventListener("resize", soon);
+    document.addEventListener("fc-langchange", soon);
+    if (typeof ResizeObserver === "function") new ResizeObserver(soon).observe(document.querySelector("main") || document.body);
+    soon();
+  })();
 })();
