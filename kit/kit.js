@@ -6,8 +6,8 @@
  *   the backs   the same pieces mirrored, so a double-sided print (flip on the
  *               long edge) gives every piece a coloured back
  *
- * The board sheet also carries a QR code (bottom right) that opens the camera
- * page for that board.
+ * The board sheet also carries a QR code (bottom centre) that opens the camera
+ * page for that board, and its title: the name of the board's pieces.
  *
  * Sheets are SVG in millimetres: one world unit (cell side) is `scale` mm on
  * the board and on the pieces alike. Corner marks are standard ArUco 4x4
@@ -38,13 +38,14 @@
   const MARGIN = 10; // mm, same as the @page margin
   const SLACK = 1; // mm kept free at the bottom so a sheet never spills onto a second page
   const HEADER = 9; // mm reserved at the top of every sheet for the title line
-  const QR_SIZE = 14; // mm, side of the QR code on the board sheet (at most; less where the room between the marks is small)
+  const QR_SIZE = 16; // mm, side of the QR code on an A4 board sheet (at most; in proportion on A3, less where the band between the marks is low)
   const CLEAR_MODULES = 2; // white margin kept around the marks, in marker modules
   const SCALE_STEP = 0.5; // the scale is a whole number of half millimetres per unit
   const PIECE_GAP = 6; // mm between pieces (at least)
   const BLEED = 1; // mm the coloured backs reach past the cut line
   const FALLBACK_BASE = "erikaroldanroa.github.io/fence-challenge/";
-  const FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  const FONT = "Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  const RING_TOP = 16; // mm: on the pieces sheets the pieces start below this line (the header sits above it)
 
   const INK = "#111111"; // marks, text and cut lines
   const GRID = "#2563eb"; // strong blue: printed from the colour cartridge alone
@@ -292,8 +293,10 @@
     const types = FenceBoards.printTypes(boardId);
     const colors = pieceColors(types);
     return types.map((type, i) => {
-      // The orientation with the smallest bounding box, lying flat if possible.
+      // The orientation with the smallest bounding box, lying flat if possible;
+      // and the smallest one standing upright, for the sides of the pieces sheet.
       let chosen = null;
+      let upright = null;
       for (const v of lattice.buildVariants(type.cells).variants) {
         const polys = v.cells.map((c) => lattice.cellWorldVertices(c));
         const bb = bboxOf(polys.flat());
@@ -302,18 +305,133 @@
         if (!chosen || area < chosen.area - 1e-6 || (Math.abs(area - chosen.area) <= 1e-6 && flat < chosen.flat)) {
           chosen = { polys, bb, area, flat };
         }
+        if (bb.h >= bb.w - 1e-9 && (!upright || area < upright.area - 1e-6)) upright = { polys, bb, area };
       }
-      const edges = edgesOf(chosen.polys);
-      return {
-        id: type.id,
-        cellCount: type.cells.length,
-        color: colors[i],
-        polys: chosen.polys,
-        bb: chosen.bb,
-        loops: loopsOf(edges.filter((e) => e.count === 1)),
-        inner: edges.filter((e) => e.count === 2),
+      const shapeOf = (o) => {
+        const edges = edgesOf(o.polys);
+        return {
+          id: type.id,
+          cellCount: type.cells.length,
+          color: colors[i],
+          polys: o.polys,
+          bb: o.bb,
+          loops: loopsOf(edges.filter((e) => e.count === 1)),
+          inner: edges.filter((e) => e.count === 2),
+        };
       };
+      const shape = shapeOf(chosen);
+      shape.upright = upright ? shapeOf(upright) : shape;
+      return shape;
     });
+  }
+
+  /* The pieces around the sheet, like the tray around the board on the hub:
+   * a top row and a bottom row across the whole width, a column down each
+   * side between them, the centre left open. The pieces go round in the
+   * order of their colours (clockwise from the top left, a colour wheel);
+   * pieces in the rows lie flat, pieces in the columns stand upright, each
+   * aligned on the sheet's outer edge. Of every way to cut the sequence into
+   * four sides, the one whose spaces between pieces are the most even wins.
+   * Returns { shapes, place } (shapes in the orientation drawn) or null when
+   * no ring fits at this scale. */
+  function ringPieces(shapes, scale, x0, width, top, bottom) {
+    const gap = Math.max(PIECE_GAP, 0.45 * scale);
+    const n = shapes.length;
+    if (n < 4) return null;
+    const flatW = (sh) => sh.bb.w * scale;
+    const flatH = (sh) => sh.bb.h * scale;
+    const tallW = (sh) => sh.upright.bb.w * scale;
+    const tallH = (sh) => sh.upright.bb.h * scale;
+    const sum = (a) => a.reduce((x, y) => x + y, 0);
+    let best = null;
+    for (let start = 0; start < n; start += 1) {
+      const seq = [];
+      for (let k = 0; k < n; k += 1) seq.push((start + k) % n);
+      for (let a = 1; a <= n - 3; a += 1) {
+        for (let b = 1; a + b <= n - 2; b += 1) {
+          for (let c = 1; a + b + c <= n - 1; c += 1) {
+            const topIds = seq.slice(0, a);
+            const rightIds = seq.slice(a, a + b);
+            const botIds = seq.slice(a + b, a + b + c).reverse();
+            const leftIds = seq.slice(a + b + c).reverse();
+            // rows: the ends at the corners, the others evenly between
+            const rowGap = (ids) => {
+              const free = width - sum(ids.map((i) => flatW(shapes[i])));
+              return ids.length === 1 ? free / 2 : free / (ids.length - 1);
+            };
+            const gT = rowGap(topIds);
+            const gB = rowGap(botIds);
+            if (gT < gap - 1e-9 || gB < gap - 1e-9) continue;
+            const tT = Math.max(...topIds.map((i) => flatH(shapes[i])));
+            const tB = Math.max(...botIds.map((i) => flatH(shapes[i])));
+            const y0 = top + tT + gap;
+            const y1 = bottom - tB - gap;
+            // columns: evenly spaced, as much room above the first as below the last
+            const colGap = (ids) => (y1 - y0 - sum(ids.map((i) => tallH(shapes[i])))) / (ids.length + 1);
+            const gL = colGap(leftIds);
+            const gR = colGap(rightIds);
+            if (gL < (leftIds.length > 1 ? gap : 0) - 1e-9 || gR < (rightIds.length > 1 ? gap : 0) - 1e-9) continue;
+            const thick = (ids) => Math.max(...ids.map((i) => tallW(shapes[i])));
+            if (thick(leftIds) + thick(rightIds) + gap > width) continue;
+            // the spaces seen along the ring: between the pieces of a side, and
+            // from the corners into the columns
+            const gaps = [gT, gB, gL + gap, gR + gap];
+            const score = Math.max(...gaps) / Math.min(...gaps) + (a === c ? 0 : 0.05) + (b === leftIds.length ? 0 : 0.05) + start * 1e-4;
+            if (!best || score < best.score - 1e-9) best = { score, topIds, rightIds, botIds, leftIds, y0, y1, gT, gB, gL, gR, widest: Math.max(...gaps) };
+          }
+        }
+      }
+    }
+    if (!best) return null;
+    if (x0 === undefined) return best;
+    const outShapes = shapes.slice();
+    const place = new Array(n);
+    const row = (ids, g, atBottom) => {
+      let x = x0 + (ids.length === 1 ? g : 0);
+      for (const i of ids) {
+        place[i] = { x, y: atBottom ? bottom - flatH(shapes[i]) : top };
+        x += flatW(shapes[i]) + g;
+      }
+    };
+    const col = (ids, g, right) => {
+      let y = best.y0 + g;
+      for (const i of ids) {
+        outShapes[i] = shapes[i].upright;
+        place[i] = { x: x0 + (right ? width - tallW(shapes[i]) : 0), y };
+        y += tallH(shapes[i]) + g;
+      }
+    };
+    row(best.topIds, best.gT, false);
+    row(best.botIds, best.gB, true);
+    col(best.leftIds, best.gL, false);
+    col(best.rightIds, best.gR, true);
+    return { shapes: outShapes, place };
+  }
+
+  // The pieces of one sheet: in a ring when they fit so, else in rows.
+  // Small pieces on a large sheet would stand far apart along its edges: the
+  // ring then draws in, around the centre of the sheet, until the widest
+  // space along it is at most RING_SPACE gaps.
+  const RING_SPACE = 5;
+  const RING_LEAST = 0.7; // and keeps at least this share of the sheet, a frame rather than a cluster
+  function arrangePieces(shapes, scale, width, bottom) {
+    const gap = Math.max(PIECE_GAP, 0.45 * scale);
+    const H = bottom - RING_TOP;
+    let f = 1;
+    for (let t = 1; t >= RING_LEAST - 1e-9; t -= 0.02) {
+      const w = width * t;
+      const h = H * t;
+      const best = ringPieces(shapes, scale, undefined, w, 0, h);
+      if (!best) break;
+      f = t;
+      if (best.widest <= RING_SPACE * gap) break;
+    }
+    const w = width * f;
+    const h = H * f;
+    const ring = ringPieces(shapes, scale, (width - w) / 2, w, RING_TOP + (H - h) / 2, RING_TOP + (H + h) / 2);
+    if (ring) return ring;
+    const place = packPieces(shapes, scale, width, RING_TOP, bottom) || packPieces(shapes, scale, width, HEADER + 3, bottom);
+    return place ? { shapes: shapes.slice(), place } : null;
   }
 
   // Shelf packing of the pieces at `scale`; returns placements or null if they overflow.
@@ -379,6 +497,10 @@
       if (place) break;
       scale -= SCALE_STEP;
     }
+    // (The scale is set by the rows of packPieces, as always; the sheet then
+    // lays the pieces around the page at that scale.)
+    const arranged = arrangePieces(shapes, scale, cw, ch);
+    if (arranged) place = arranged.place;
     const ox = (cw - (ext.maxX - ext.minX) * scale) / 2 - ext.minX * scale;
     const oy = areaTop + (areaH - (ext.maxY - ext.minY) * scale) / 2 - ext.minY * scale;
     const out = {
@@ -394,7 +516,8 @@
       ox,
       oy,
       geometry: g,
-      shapes,
+      shapes: arranged ? arranged.shapes : shapes,
+      flatShapes: shapes,
       place,
       toSheet: (p) => ({ x: ox + p.x * scale, y: oy + p.y * scale }),
     };
@@ -435,6 +558,13 @@
     return t("kit.pc." + def.lattice + order, { n: types.length });
   }
 
+  // The name of the pieces of a board, as a title: "Pentominoes", "Hexiamonds".
+  function polyformName(boardId, t) {
+    const def = FenceBoards.get(boardId);
+    const types = FenceBoards.printTypes(boardId);
+    return t("kit.title." + def.lattice + types[0].cells.length);
+  }
+
   function cameraAddress(boardId) {
     let base = FALLBACK_BASE;
     try {
@@ -462,25 +592,58 @@
     );
   }
 
-  function titleLine(title, tag) {
-    return (
-      '<text class="kit-title" x="0" y="5.6" font-family="' + FONT + '" font-size="3.9" fill="' + INK + '">' +
-      '<tspan font-weight="800">Fence Challenge</tspan>' +
-      '<tspan fill="' + GRID + '"> · ' + esc(title) + (tag ? " · " + esc(tag) : "") + "</tspan></text>"
-    );
+  /* ---------- type (the hub's: Manrope, heavy titles, tracked capitals) ---------- */
+
+  // A run of text: { text, size (mm), weight, track (em), caps, fill }.
+  // Its width is estimated from Manrope's proportions (nothing can be
+  // measured while the sheet is built, in node or before the font loads);
+  // the estimate leans wide, so a line fitted with it never overflows.
+  function runWidth(r) {
+    let em = r.gap || 0;
+    const text = r.caps ? r.text.toUpperCase() : r.text;
+    for (const ch of text) {
+      if (ch === " ") em += 0.27;
+      else if (/[.,·:;'’]/.test(ch)) em += 0.3;
+      else if (/[A-ZÀ-ÖØ-Þ]/.test(ch)) em += /[MW]/.test(ch) ? 0.92 : 0.72;
+      else if (/[0-9]/.test(ch)) em += 0.6;
+      else em += /[mw]/.test(ch) ? 0.88 : /[ilj]/.test(ch) ? 0.3 : 0.6;
+      em += r.track || 0;
+    }
+    return em * r.size * ((r.weight || 400) >= 700 ? 1.06 : 1);
   }
 
-  // The credit, as on the site: by The Learning Machine, CEO Dr. Erika Roldán.
-  function creditLine(x, y, by) {
-    return (
-      '<text class="kit-credit" x="' + fmt(x) + '" y="' + fmt(y) + '" font-family="' + FONT + '" font-size="2.6" fill="' + INK + '">' +
-      esc(by) + ' <tspan font-weight="800">THE LEARNING MACHINE</tspan> · CEO <tspan font-weight="700">Dr. Erika Roldán</tspan></text>'
-    );
+  function runsWidth(runs) {
+    return runs.reduce((acc, r) => acc + runWidth(r), 0);
   }
 
-  // Text between two corner marks is fitted to the room there (a rough
-  // width per character, on the safe side, since nothing can be measured).
-  const fitFont = (size, text, room, wide) => Math.min(size, room / ((wide ? 0.74 : 0.62) * Math.max(1, text.length)));
+  // Runs scaled down together until they fit `room` (never up).
+  function fitRuns(runs, room) {
+    const k = Math.min(1, room / Math.max(1e-6, runsWidth(runs)));
+    return runs.map((r) => Object.assign({}, r, { size: r.size * k }));
+  }
+
+  // One line of runs at (x, y), anchored start, middle or end.
+  function textLine(cls, x, y, anchor, runs) {
+    let out = '<text class="' + cls + '" x="' + fmt(x) + '" y="' + fmt(y) + '" text-anchor="' + anchor + '" font-family="' + FONT + '" fill="' + INK + '">';
+    for (const r of runs) {
+      out += '<tspan font-size="' + fmt(r.size) + '" font-weight="' + (r.weight || 400) + '"' +
+        (r.gap ? ' dx="' + fmt(r.gap * r.size) + '"' : "") +
+        (r.track ? ' letter-spacing="' + fmt(r.track * r.size) + '"' : "") +
+        (r.fill && r.fill !== INK ? ' fill="' + r.fill + '"' : "") + ">" + esc(r.caps ? r.text.toUpperCase() : r.text) + "</tspan>";
+    }
+    return out + "</text>";
+  }
+
+  // The credit, as on the hub: by THE LEARNING MACHINE · CEO Dr. Erika Roldán.
+  function creditRuns(by, size) {
+    return [
+      { text: by, size, weight: 500 },
+      { text: "THE LEARNING MACHINE", size, weight: 800, track: 0.1, gap: 0.3 },
+      { text: "·", size, weight: 500, gap: 0.35 },
+      { text: "CEO", size: size * 0.86, weight: 600, track: 0.08, gap: 0.52 },
+      { text: "Dr. Erika Roldán", size, weight: 800, gap: 0.3 },
+    ];
+  }
 
   // The room between two corner marks (sheet frame): a and b are the boxes of
   // the left and the right mark, `pad` their light margin.
@@ -488,33 +651,70 @@
     return { x0: a.x1 + pad, x1: b.x0 - pad, y0: Math.min(a.y0, b.y0), y1: Math.max(a.y1, b.y1) };
   }
 
-  // The title, in two lines, centred between the top marks.
-  function titleBetween(band, title) {
+  // Between the top marks, centred as a hub card's head: the brand in tracked
+  // capitals, the name of the pieces large and heavy, the board in blue.
+  function titleBlock(band, opts, k) {
     const w = band.x1 - band.x0;
     const cx = (band.x0 + band.x1) / 2;
-    const f1 = fitFont(3.9, "Fence Challenge", w);
-    const f2 = fitFont(2.9, title, w);
-    const cy = (band.y0 + band.y1) / 2;
+    const kick = fitRuns([{ text: "Fence Challenge", size: 2.4 * k, weight: 700, track: 0.22, caps: true }], w);
+    const head = fitRuns([{ text: opts.polyform, size: 10.5 * k, weight: 800, track: -0.015 }], w);
+    const sub = fitRuns([{ text: opts.boardLine, size: 3.6 * k, weight: 600, track: 0.02, fill: GRID }], w);
+    const cap = 0.72; // Manrope cap height, in em
+    const hK = cap * kick[0].size;
+    const hH = cap * head[0].size;
+    const hS = cap * sub[0].size;
+    const g1 = 3.4 * k;
+    const g2 = 3.6 * k;
+    const total = hK + g1 + hH + g2 + hS;
+    const yK = (band.y0 + band.y1) / 2 - total / 2 + hK;
+    const yH = yK + g1 + hH;
+    const yS = yH + g2 + hS;
+    // letter-spacing adds room after the last letter: shift tracked lines by half of it to stay centred
     return (
-      '<text class="kit-title" x="' + fmt(cx) + '" y="' + fmt(cy - 0.3) + '" text-anchor="middle" font-family="' + FONT + '" font-size="' + fmt(f1) +
-      '" font-weight="800" fill="' + INK + '">Fence Challenge</text>' +
-      '<text x="' + fmt(cx) + '" y="' + fmt(cy + 0.3 + f2 * 1.1) + '" text-anchor="middle" font-family="' + FONT + '" font-size="' + fmt(f2) +
-      '" fill="' + GRID + '">' + esc(title) + "</text>"
+      textLine("kit-kicker", cx + (kick[0].track * kick[0].size) / 2, yK, "middle", kick) +
+      textLine("kit-title", cx, yH, "middle", head) +
+      textLine("kit-board-line", cx, yS, "middle", sub)
     );
   }
 
-  // The credit, in two lines, from the left edge of the room between the bottom marks.
-  function creditBetween(band, room, by) {
-    const l1 = by + " THE LEARNING MACHINE";
-    const l2 = "CEO Dr. Erika Roldán";
-    const f = fitFont(2.6, l1, room, true); // (bold capitals are wide)
-    const cy = (band.y0 + band.y1) / 2;
-    return (
-      '<text class="kit-credit" x="' + fmt(band.x0) + '" y="' + fmt(cy - 0.4) + '" font-family="' + FONT + '" font-size="' + fmt(f) + '" fill="' + INK + '">' +
-      esc(by) + ' <tspan font-weight="800">THE LEARNING MACHINE</tspan></text>' +
-      '<text class="kit-credit" x="' + fmt(band.x0) + '" y="' + fmt(cy + 0.4 + f * 1.1) + '" font-family="' + FONT + '" font-size="' + fmt(f) + '" fill="' + INK + '">' +
-      'CEO <tspan font-weight="700">' + esc(l2.slice(4)) + "</tspan></text>"
-    );
+  // Between the bottom marks: the QR code centred, the credit under it.
+  function footBlock(band, opts, k, markSide) {
+    const w = band.x1 - band.x0;
+    const cx = (band.x0 + band.x1) / 2;
+    const credit = fitRuns(creditRuns(opts.by, 3 * k), w);
+    const hC = 0.72 * credit[0].size;
+    const gap = 2.8 * k;
+    const bandH = band.y1 - band.y0;
+    // as large as the band allows, and never nearer a mark than 0.3 of its side
+    const q = Math.min(QR_SIZE * k, bandH - gap - hC - 0.5 * k, w + 2 * (CLEAR_MODULES / 6 - 0.3) * markSide);
+    const total = q + gap + hC;
+    const qy = band.y0 + (bandH - total) / 2;
+    let out = "";
+    const qr = qrPath(opts.url, cx - q / 2, qy, q);
+    if (qr) {
+      out += '<path class="kit-qr" data-url="' + esc(opts.url) + '" data-modules="' + qr.modules + '" fill="' + INK +
+        '" shape-rendering="crispEdges" d="' + qr.d + '"/>';
+    }
+    out += textLine("kit-credit", cx, qy + q + gap + hC, "middle", credit);
+    return out;
+  }
+
+  // The head of a pieces sheet, one line at the top: the name of the pieces,
+  // what the sheet is, and the credit at the right.
+  function piecesHead(L, opts, tag) {
+    const k = L.cw / 190;
+    const y = 8.2;
+    const left = [
+      { text: opts.polyform, size: 6.2 * k, weight: 800, track: -0.015 },
+      { text: tag, size: 2.6 * k, weight: 700, track: 0.16, caps: true, gap: 1.6 },
+    ];
+    const right = creditRuns(opts.by, 2.6 * k);
+    const room = L.cw - 8;
+    const wl = runsWidth(left);
+    const wr = runsWidth(right);
+    const f = Math.min(1, room / (wl + wr));
+    const fit = (runs) => runs.map((r) => Object.assign({}, r, { size: r.size * f }));
+    return textLine("kit-title", 0, y, "start", fit(left)) + textLine("kit-credit", L.cw, y, "end", fit(right));
   }
 
   // Grid lines and cut lines share one width. Every line is centred on the cell
@@ -546,36 +746,46 @@
       svg += '<path class="kit-mark" data-corner="' + corner + '" data-id="' + m.id + '" fill="' + INK + '" d="' +
         markerPath(m.id, tl.x, tl.y, br.x - tl.x) + '"/>';
     }
-    // Between the top marks the title; between the bottom marks the credit
-    // and a QR code that opens the camera for this board. (The camera
+    // Between the top marks the title; between the bottom marks the QR code
+    // that opens the camera for this board, and the credit. (The camera
     // measures the board from its corner marks, so the printed size does not
     // matter; the board and its pieces only need to be printed at the same size.)
     const pad = CLEAR_MODULES * L.module * s;
-    svg += titleBetween(bandBetween(box.tl, box.tr, pad), opts.title);
-    const low = bandBetween(box.bl, box.br, pad);
-    const q = Math.min(QR_SIZE, low.y1 - low.y0, (low.x1 - low.x0) / 3);
-    svg += creditBetween(low, low.x1 - low.x0 - q - 4, opts.by);
-    const qr = qrPath(opts.url, low.x1 - q, (low.y0 + low.y1) / 2 - q / 2, q);
-    if (qr) {
-      svg += '<path class="kit-qr" data-url="' + esc(opts.url) + '" data-modules="' + qr.modules + '" fill="' + INK +
-        '" shape-rendering="crispEdges" d="' + qr.d + '"/>';
-    }
+    const k = L.cw / 190;
+    svg += titleBlock(bandBetween(box.tl, box.tr, pad), opts, k);
+    svg += footBlock(bandBetween(box.bl, box.br, pad), opts, k, box.bl.x1 - box.bl.x0);
     svg += "</svg>";
     return svg;
   }
 
+  // Depth of the blue border inside a piece, in mm at scale s: 1.1 grid
+  // lines, never more than BORDER_IN of a cell side (the camera reads a
+  // piece's colour only farther than that from its edges).
+  const BORDER_IN = 0.05;
+  function borderIn(s) {
+    return Math.min(1.1 * gridLineWidth(s), BORDER_IN * s);
+  }
+
+  // The backs carry the same border, over the colour bleed (which still
+  // reaches BLEED past the cut line). Turned up and printed up to 1 mm out of
+  // register, they read on camera as well as backs without it.
+  const BACK_EDGE = true;
+
+  let clipSeq = 0;
+
   function piecesSheet(L, opts, back) {
     const s = L.scale;
     const innerW = Math.min(0.3, Math.max(0.18, 0.02 * s));
-    let svg = svgOpen(L, opts.title, "kit-sheet " + (back ? "kit-backs" : "kit-pieces"));
-    svg += titleLine(opts.title, back ? opts.backsTag : opts.piecesTag);
-    svg += creditLine(0, HEADER + 1.1, opts.by);
+    const lineW = gridLineWidth(s);
+    let svg = svgOpen(L, opts.polyform + " · " + (back ? opts.backsTag : opts.piecesTag), "kit-sheet " + (back ? "kit-backs" : "kit-pieces"));
+    svg += piecesHead(L, opts, back ? opts.backsTag : opts.piecesTag);
     // The backs are the fronts seen through the paper: mirrored left to right about the page centre.
     svg += back ? '<g transform="translate(' + fmt(L.cw) + ' 0) scale(-1 1)">' : "<g>";
     L.shapes.forEach((shape, i) => {
       const at = L.place[i];
       const tx = (p) => ({ x: at.x + (p.x - shape.bb.minX) * s, y: at.y + (p.y - shape.bb.minY) * s });
       const outline = loopsPath(shape.loops, tx);
+      const clip = "kitclip" + (clipSeq += 1);
       svg += '<g class="kit-piece" data-piece="' + esc(shape.id) + '" data-cells="' + shape.cellCount + '">';
       if (back) {
         svg += '<path d="' + outline + '" fill="' + shape.color + '" fill-rule="evenodd" stroke="' + shape.color +
@@ -587,8 +797,16 @@
         svg += '<path d="' + segmentsPath(shape.inner, tx) + '" fill="none" stroke="#fff" stroke-opacity="0.45" stroke-width="' +
           fmt(innerW) + '" stroke-linecap="round"/>';
       }
-      if (!back) {
-        svg += '<path d="' + outline + '" fill="none" stroke="' + INK + '" stroke-width="' + fmt(gridLineWidth(s)) + '" stroke-linejoin="round"/>';
+      if (!back || BACK_EDGE) {
+        // The border, in the board border's blue. Its outer edge is the cut
+        // line's, half a grid line outside the cells, as before: the cut line
+        // itself, plus a band inside the piece (clipped to it) at most
+        // BORDER_IN deep, so the camera, which reads a piece's colour away
+        // from its edges, never takes the band for the piece.
+        svg += '<clipPath id="' + clip + '"><path d="' + outline + '" clip-rule="evenodd"/></clipPath>';
+        svg += '<path class="kit-border" d="' + outline + '" fill="none" stroke="' + OUTLINE + '" stroke-width="' + fmt(Math.floor(2000 * borderIn(s)) / 1000) +
+          '" stroke-linejoin="round" clip-path="url(#' + clip + ')"/>';
+        svg += '<path class="kit-cut" d="' + outline + '" fill="none" stroke="' + OUTLINE + '" stroke-width="' + fmt(lineW) + '" stroke-linejoin="round"/>';
       }
       svg += "</g>";
     });
@@ -609,21 +827,23 @@
     const cw = paper.w - 2 * MARGIN;
     const ch = paper.h - 2 * MARGIN - SLACK;
     const pages = [];
-    let rest = L.shapes.map((s, i) => i);
+    const base = L.flatShapes || L.shapes;
+    let rest = base.map((s, i) => i);
     while (rest.length) {
       // as many of the remaining pieces as fit on one page, largest first
       let take = rest.slice();
       let place = null;
-      while (take.length && !(place = packPieces(take.map((i) => L.shapes[i]), L.scale, cw, HEADER + 3, ch))) take = take.slice(0, -1);
+      while (take.length && !(place = packPieces(take.map((i) => base[i]), L.scale, cw, HEADER + 3, ch))) take = take.slice(0, -1);
       if (!take.length) throw new Error("A piece does not fit on " + paperName + " at this scale");
+      const arranged = arrangePieces(take.map((i) => base[i]), L.scale, cw, ch);
       pages.push(Object.assign({}, L, {
         paper: paperName,
         pageW: paper.w,
         pageH: paper.h,
         cw,
         ch,
-        shapes: take.map((i) => L.shapes[i]),
-        place,
+        shapes: arranged ? arranged.shapes : take.map((i) => base[i]),
+        place: arranged ? arranged.place : place,
       }));
       rest = rest.filter((i) => take.indexOf(i) < 0);
     }
@@ -641,6 +861,8 @@
     const title = boardName(boardId, t, o.lang) + " · " + piecesName(boardId, t);
     const opts = {
       title,
+      polyform: polyformName(boardId, t),
+      boardLine: boardName(boardId, t, o.lang),
       piecesTag: t("kit.sheet.pieces"),
       backsTag: t("kit.sheet.backs"),
       by: t("kit.sheet.by"),
@@ -695,6 +917,7 @@
     thumbnail,
     boardName,
     piecesName,
+    polyformName,
     cameraAddress,
     cameraUrl,
   };
