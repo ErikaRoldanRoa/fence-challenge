@@ -845,12 +845,39 @@
       gameCtx.stroke();
     }
 
+    drawPieceOutlines();
     drawActivePieceOutline();
     drawDraggingPieceOnBoard();
 
     gameCtx.strokeStyle = "#5a708f";
     gameCtx.lineWidth = 1.6;
     gameCtx.strokeRect(originX + 0.5, originY + 0.5, boardPx, boardPx);
+  }
+
+  // A darker line around each piece (the sides of its cells it does not
+  // share with itself), so two touching pieces stay apart whatever their colours.
+  function drawPieceOutlines() {
+    const { originX, originY, cellSize } = gameState.layout;
+    gameCtx.save();
+    gameCtx.beginPath();
+    for (const placed of gameState.placedPieces.values()) {
+      const own = new Set(placed.cells.map((c) => keyOf(c.x, c.y)));
+      for (const c of placed.cells) {
+        const x0 = originX + c.x * cellSize + 0.5;
+        const y0 = originY + c.y * cellSize + 0.5;
+        const x1 = x0 + cellSize;
+        const y1 = y0 + cellSize;
+        if (!own.has(keyOf(c.x, c.y - 1))) { gameCtx.moveTo(x0, y0); gameCtx.lineTo(x1, y0); }
+        if (!own.has(keyOf(c.x, c.y + 1))) { gameCtx.moveTo(x0, y1); gameCtx.lineTo(x1, y1); }
+        if (!own.has(keyOf(c.x - 1, c.y))) { gameCtx.moveTo(x0, y0); gameCtx.lineTo(x0, y1); }
+        if (!own.has(keyOf(c.x + 1, c.y))) { gameCtx.moveTo(x1, y0); gameCtx.lineTo(x1, y1); }
+      }
+    }
+    gameCtx.lineWidth = 2;
+    gameCtx.lineCap = "square";
+    gameCtx.strokeStyle = "rgba(4,10,20,0.9)";
+    gameCtx.stroke();
+    gameCtx.restore();
   }
 
   function drawActivePieceOutline() {

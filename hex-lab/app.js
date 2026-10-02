@@ -1007,6 +1007,21 @@ function drawPlacedPieces() {
       ctx.lineWidth = (isSelected ? 2.2 : 1.0) * (state.view.dpr || 1);
       ctx.stroke();
     }
+    if (!isSelected && window.FencePlay) {
+      // a darker line around the piece: touching pieces stay apart whatever their colours
+      const polys = pieceAbsoluteCells(piece).map((c) => state.boardCellMap.get(cellKey(c))).filter(Boolean).map((e) => e.vertices);
+      ctx.save();
+      ctx.beginPath();
+      for (const [a, b] of window.FencePlay.outerEdges(polys)) {
+        ctx.moveTo(a.x * scale + offsetX, a.y * scale + offsetY);
+        ctx.lineTo(b.x * scale + offsetX, b.y * scale + offsetY);
+      }
+      ctx.lineWidth = 2.4 * (state.view.dpr || 1);
+      ctx.lineCap = "round";
+      ctx.strokeStyle = "rgba(4, 10, 20, 0.92)";
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 }
 

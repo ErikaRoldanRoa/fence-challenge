@@ -706,7 +706,41 @@
           ctx.strokeStyle = isSelected ? "rgba(248,252,255,0.95)" : "rgba(10,22,34,0.36)";
           ctx.stroke();
         }
+        if (!isSelected) strokeOutline(piece);
       }
+    }
+
+    // A darker line around each piece (its edges not shared with itself), so
+    // two touching pieces stay apart whatever their colours.
+    function strokeOutline(piece) {
+      const ctx = state.ctx;
+      const seen = new Map();
+      for (const cell of pieceAbsoluteCells(piece)) {
+        const entry = state.board.map.get(lattice.cellKey(cell));
+        if (!entry) continue;
+        const v = entry.vertices;
+        for (let i = 0; i < v.length; i += 1) {
+          const a = v[i], b = v[(i + 1) % v.length];
+          const ka = Math.round(a.x * 1e4) + "," + Math.round(a.y * 1e4);
+          const kb = Math.round(b.x * 1e4) + "," + Math.round(b.y * 1e4);
+          const k = ka < kb ? ka + "|" + kb : kb + "|" + ka;
+          if (seen.has(k)) seen.set(k, null);
+          else seen.set(k, [a, b]);
+        }
+      }
+      ctx.save();
+      ctx.beginPath();
+      for (const seg of seen.values()) {
+        if (!seg) continue;
+        const p = worldToScreen(seg[0]), q = worldToScreen(seg[1]);
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(q.x, q.y);
+      }
+      ctx.lineWidth = Math.max(1.6, state.view.scale * 0.08);
+      ctx.lineCap = "round";
+      ctx.strokeStyle = "rgba(4,10,20,0.88)";
+      ctx.stroke();
+      ctx.restore();
     }
 
     function getState() {

@@ -1358,6 +1358,22 @@ function drawPlacedPieces() {
       ctx.strokeStyle = isSelected ? "rgba(248,252,255,0.95)" : "rgba(10,22,34,0.36)";
       ctx.stroke();
     }
+    if (!isSelected && window.FencePlay) {
+      // a darker line around the piece: touching pieces stay apart whatever their colours
+      const polys = cells.map((c) => state.boardCellMap.get(cellKey(c))).filter(Boolean).map((e) => e.vertices);
+      ctx.save();
+      ctx.beginPath();
+      for (const [a, b] of window.FencePlay.outerEdges(polys)) {
+        const p = worldToScreen(a), q = worldToScreen(b);
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(q.x, q.y);
+      }
+      ctx.lineWidth = Math.max(1.6, state.view.scale * 0.08);
+      ctx.lineCap = "round";
+      ctx.strokeStyle = "rgba(4,10,20,0.88)";
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 }
 

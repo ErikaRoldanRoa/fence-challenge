@@ -105,5 +105,24 @@
   trayDrag.until = 0;
   // true while the click after a tray drag arrives
   function afterTrayDrag() { return Date.now() < trayDrag.until; }
-  window.FencePlay = { ARROWS: ARROWS, arrowOf: arrowOf, towards: towards, trayDrag: trayDrag, afterTrayDrag: afterTrayDrag };
+  // The outline of a piece: the edges of its cells (polygons, as lists of
+  // {x, y}) that no other cell of the piece shares.
+  function outerEdges(polys) {
+    var seen = new Map();
+    function key(p) { return Math.round(p.x * 1e4) + "," + Math.round(p.y * 1e4); }
+    for (var c = 0; c < polys.length; c++) {
+      var v = polys[c];
+      for (var i = 0; i < v.length; i++) {
+        var a = v[i], b = v[(i + 1) % v.length];
+        var ka = key(a), kb = key(b);
+        var k = ka < kb ? ka + "|" + kb : kb + "|" + ka;
+        if (seen.has(k)) seen.set(k, null);
+        else seen.set(k, [a, b]);
+      }
+    }
+    var out = [];
+    seen.forEach(function (seg) { if (seg) out.push(seg); });
+    return out;
+  }
+  window.FencePlay = { ARROWS: ARROWS, arrowOf: arrowOf, towards: towards, trayDrag: trayDrag, afterTrayDrag: afterTrayDrag, outerEdges: outerEdges };
 })();
