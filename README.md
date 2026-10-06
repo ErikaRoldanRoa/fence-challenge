@@ -20,7 +20,7 @@ and walls of polycubes in space, which enclose a volume.
   flip: a mirror image is a piece of its own. Two ways to play, with the 8
   tetracubes and with the 29 pentacubes:
   - *explore*: build freely and watch the enclosed volume light up, open the
-    walls of the paper, spread them apart, cut them open layer by layer, see
+    computed walls, spread them apart, cut them open layer by layer, see
     them from below, and lift the wall away to hold the room alone;
   - *wrap the room*: a room is given, from a single cube upward; build a wall
     that shuts it in. Every room offered has a wall that does it.
@@ -34,9 +34,10 @@ and walls of polycubes in space, which enclose a volume.
   preview of each plate; one zip per kit
   (`python3 cube-lab/tools/make-print.py` rebuilds them).
 - **Hexomino lab** ([hexomino-lab/](hexomino-lab/)): the 35 hexominoes and
-  the search for their largest fence.
-- **Reference-vector lab**: how a fence's area is read from
-  the vectors between its pieces' attachment edges.
+  the search for their largest fence. Its arrow view turns each piece into
+  one vector between its attachment edges: the fence's area is the area of
+  this vector polygon plus small corrections, and sorting the vectors by
+  direction gives the largest polygon they can form.
 
 ## Maximale Zäune mit Polyformen (2025)
 
