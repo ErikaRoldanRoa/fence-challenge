@@ -7,7 +7,10 @@ the question, in the plane and in space.
 
 ## Optimal Polyomino Fences (2026)
 
-**[Authors]**
+**Maximilian Brömme · [Alexis Langlois-Rémillard](https://alexisl-r.github.io/) ·
+Mykhailo Lyader · [Mia N. Müßig](https://miamuessig.de/) ·
+Helmut Podhaisky · Maximilian Prietzel ·
+[Erika Roldán](https://www.erikaroldan.net/) · Günter Rote · Daniel Yu**
 
 The follow-up to the 2025 paper settles the open challenges it left: the
 largest fence that the 35 hexominoes can build, found by dynamic programming
@@ -113,7 +116,9 @@ Serve the folder with any static file server (for example
 If you use these labs, please cite the paper they accompany and, optionally,
 this repository. A machine-readable entry is in [`CITATION.cff`](CITATION.cff).
 
-> [Authors] (2026). *Optimal Polyomino Fences.*
+> Brömme, M., Langlois-Rémillard, A., Lyader, M., Müßig, M. N., Podhaisky, H.,
+> Prietzel, M., Roldán, É., Rote, G. & Yu, D. (2026).
+> *Optimal Polyomino Fences.* In preparation.
 
 > Langlois-Rémillard, A., Müßig, M. N. & Roldán, É. (2025).
 > *Maximale Zäune mit Polyformen.* Mitteilungen der Deutschen
