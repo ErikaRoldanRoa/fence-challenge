@@ -1,0 +1,298 @@
+/* Cube lab: the same family as the 2D labs (dark ground, neon ink, Manrope,
+ * the shared .ctl controls of ../play-ui.css). The pieces at the left, the
+ * space in the middle, a thin strip of view controls at its right, the
+ * board group under it; on phones everything stacks under the space.
+ * Cyan marks what is chosen; gold belongs to the room and its cast. */
+:root {
+  --bg: #0d1117;
+  --panel-soft: #1a2330;
+  --text: #d8f6ff;
+  --line: #4a5b75;
+  --accent: #00d1ff;
+  --room: #ffd36e;
+  --room-glow: rgba(255, 211, 110, 0.45);
+  --focus: rgba(255, 255, 255, 0.65);
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; height: 100%; overflow: hidden; }
+
+body {
+  background:
+    radial-gradient(900px 420px at 10% -10%, rgba(63, 184, 255, 0.14), transparent 60%),
+    radial-gradient(700px 440px at 100% -8%, rgba(46, 207, 153, 0.12), transparent 64%),
+    var(--bg);
+  color: var(--text);
+  font-family: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+}
+
+/* One focus ring for every control, as in the 2D labs. */
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+/* ---------- language switch, top right, on the pill's row ---------- */
+.langSel {
+  position: fixed; top: 7px; right: 12px; z-index: 20;
+  display: flex; border-radius: 999px;
+  background: rgba(7, 6, 10, 0.82); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.langSel button {
+  cursor: pointer; border: none; color: rgba(255, 255, 255, 0.55);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.04em; border-radius: 999px;
+}
+.langSel button:hover { color: #fff; }
+.langSel button[aria-pressed="true"] { color: #07060a; }
+
+/* ---------- the page ---------- */
+.lab {
+  height: 100dvh;
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr) 56px;
+  grid-template-rows: 58px minmax(0, 1fr) 60px;
+  grid-template-areas:
+    "top top top"
+    "dock stage strip"
+    "dock bar strip";
+  gap: 6px 12px;
+  padding: 6px 12px max(6px, env(safe-area-inset-bottom));
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.top {
+  grid-area: top;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  padding-right: 168px; /* the language switch */
+  min-width: 0;
+}
+.modes { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.seg { display: inline-flex; align-items: center; gap: 8px; }
+.modeIcon { display: inline-flex; align-items: center; gap: 1px; }
+.modeIcon svg { width: 16px !important; height: 16px !important; }
+.modeIcon b { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; font-weight: 800; }
+.ctl.mode { width: 52px; }
+.ctl.mode[aria-pressed="true"] { --ring: var(--accent); --fill: rgba(0, 209, 255, 0.16); --fg: #bff4ff; }
+.ctl.mode[aria-pressed="true"]::before { box-shadow: 0 0 12px rgba(0, 209, 255, 0.35); }
+.volWrap { display: inline-flex; align-items: center; gap: 12px; justify-self: center; min-width: 0; }
+.top .measure { --area-accent: var(--room); align-self: center; }
+.volWrap .measure .area-num { font-size: max(var(--area-num, 36px), 30px); }
+.top .lab-nav { justify-self: end; position: static; display: flex; gap: 8px; }
+
+body[data-shut] .measure {
+  box-shadow: 0 0 34px color-mix(in srgb, var(--room) 60%, transparent), inset 0 0 18px color-mix(in srgb, var(--room) 30%, transparent);
+}
+body[data-solved] .measure { box-shadow: 0 0 44px rgba(255, 211, 110, 0.75), inset 0 0 20px rgba(255, 211, 110, 0.4); }
+.measure.pop { animation: pop 0.5s ease-out; }
+@keyframes pop { 0% { transform: scale(1); } 35% { transform: scale(1.14); } 100% { transform: scale(1); } }
+
+/* ---------- the space ---------- */
+.stage {
+  grid-area: stage;
+  position: relative;
+  min-height: 0;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: radial-gradient(120% 90% at 50% 100%, #131b26, #0b0f15 70%);
+  overflow: hidden;
+}
+#space { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; outline: none; }
+.stage:has(#space:focus-visible) { box-shadow: inset 0 0 0 2px var(--focus); }
+body[data-busy] #space { cursor: progress; }
+
+/* ---------- the view strip: cast, cut, spread ---------- */
+.strip {
+  grid-area: strip;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  min-height: 0;
+}
+.castCol { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.slider {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 10px 4px; width: 48px; border-radius: 24px;
+  background: rgba(7, 6, 10, 0.55); border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(216, 246, 255, 0.75);
+  flex: 1 1 0; min-height: 120px; max-height: 260px;
+}
+.slider svg { width: 20px; height: 20px; flex: 0 0 auto; }
+.slider input {
+  writing-mode: vertical-lr; direction: rtl;
+  width: 28px; flex: 1 1 auto; min-height: 0; margin: 0;
+  accent-color: var(--room);
+  cursor: pointer;
+}
+.ctl.castBtn { --ring: rgba(255, 211, 110, 0.6); --fill: rgba(255, 211, 110, 0.1); --fg: #ffd36e; }
+.ctl.castBtn[aria-pressed="true"] { --fill: #ffd36e; --fg: #07060a; }
+.ctl.castBtn[aria-pressed="true"]::before { box-shadow: 0 0 18px rgba(255, 211, 110, 0.55); }
+
+/* ---------- the dock: pieces (or the move pad), actions, walls or rooms ---------- */
+.dock { grid-area: dock; display: flex; flex-direction: column; gap: 12px; min-height: 0; min-width: 0; }
+.trayZone { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.acts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.acts .ctl[aria-disabled="true"] { opacity: 0.32; pointer-events: none; }
+.acts #undo { margin-left: auto; }
+
+.tray {
+  display: grid;
+  grid-template-columns: repeat(3, 60px);
+  grid-auto-rows: 56px;
+  gap: 8px;
+  justify-content: space-between;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 2px 2px 18px;
+  scrollbar-width: thin;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent);
+}
+body[data-selected] .tray { display: none; }
+body[data-busy] .tray, body[data-cast] .tray, body[data-foreign] .tray { opacity: 0.35; pointer-events: none; }
+
+.chip {
+  display: grid; place-items: center;
+  width: 60px; height: 56px; padding: 0;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: var(--panel-soft);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.2s ease, transform 0.12s ease, border-color 0.12s ease;
+}
+.chip svg { width: 48px; height: 48px; display: block; }
+.chip:active { transform: scale(0.94); }
+.chip[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--accent) 70%, white);
+  background: color-mix(in srgb, var(--accent) 22%, var(--panel-soft));
+  box-shadow: 0 0 14px rgba(0, 209, 255, 0.3);
+}
+/* A used piece: dimmer, dashed, still tappable (it selects the piece). */
+.chip.placed { opacity: 0.55; border-style: dashed; border-color: #5b6d88; background: transparent; }
+
+/* The move pad takes the tray's place while a placed piece is chosen. */
+.pad { display: none; gap: 16px; align-items: center; justify-content: center; padding: 8px 0; }
+body[data-selected]:not([data-cast]) .pad { display: flex; }
+.pad .cross {
+  display: grid; gap: 8px;
+  grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(3, 44px);
+  grid-template-areas: ". up ." "left . right" ". down .";
+}
+.pad .lift { display: grid; gap: 8px; grid-template-rows: repeat(2, 44px); padding-left: 12px; border-left: 1px solid rgba(255, 255, 255, 0.12); }
+.ctl.padBtn { --fill: rgba(0, 209, 255, 0.08); --ring: rgba(0, 209, 255, 0.45); }
+.ctl.padBtn svg { width: 20px; height: 20px; }
+.padBtn[data-nudge="up"] { grid-area: up; }
+.padBtn[data-nudge="down"] { grid-area: down; }
+.padBtn[data-nudge="left"] { grid-area: left; }
+.padBtn[data-nudge="right"] { grid-area: right; }
+
+/* Rooms to wrap (wrap) and the walls (pentacubes, explore). */
+.roomsRow, .wallsRow { display: none; align-items: center; gap: 8px; flex-wrap: wrap; }
+body[data-play="wrap"] .roomsRow { display: flex; }
+body[data-play="explore"][data-mode="penta"] .wallsRow { display: flex; }
+.walls { display: grid; grid-template-columns: repeat(3, 44px); gap: 8px; }
+.wallChips { display: flex; align-items: center; gap: 16px; padding-left: 8px; }
+.ctl.wall { --ring: rgba(0, 209, 255, 0.35); --fill: rgba(0, 209, 255, 0.05); width: 44px; height: 44px; border-radius: 12px; --ink: 1px; }
+.ctl.wall::before { border-radius: 12px; }
+.ctl.wall img { width: 36px; height: 36px; display: block; }
+.ctl.wall[aria-pressed="true"] { --ring: var(--accent); --fill: rgba(0, 209, 255, 0.18); }
+.ctl.wall[aria-pressed="true"]::before { box-shadow: 0 0 12px rgba(0, 209, 255, 0.4); }
+.ctl.wall.loading::before { animation: loadPulse 0.8s ease-in-out infinite alternate; }
+@keyframes loadPulse { from { box-shadow: 0 0 4px rgba(0, 209, 255, 0.3); } to { box-shadow: 0 0 18px rgba(0, 209, 255, 0.8); } }
+
+/* The ladder: back, the room, on, then one dot per room (gold once wrapped). */
+.rooms { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ctl.roomStep { width: 44px; height: 44px; }
+.ctl.roomStep[aria-disabled="true"] { opacity: 0.25; pointer-events: none; }
+.roomPic { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 12px; border: 1px solid var(--room); background: rgba(255, 211, 110, 0.12); box-shadow: 0 0 14px rgba(255, 211, 110, 0.3); }
+.roomPic img { width: 44px; height: 44px; }
+.roomPic.done { background: rgba(255, 211, 110, 0.32); }
+.roomPic.boss { border-style: dashed; }
+.roomDots { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; flex-basis: 100%; }
+.roomDots i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid rgba(255, 211, 110, 0.6); }
+.roomDots i.done { background: var(--room); }
+.roomDots i.here { width: 14px; border-radius: 4px; }
+.roomDots i.boss { transform: rotate(45deg); border-radius: 1px; margin-left: 6px; }
+
+/* ---------- the board group, under the space ---------- */
+.bar { grid-area: bar; display: flex; align-items: center; gap: 8px; }
+.bar .side-brand { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* Armed, erase says so in words too. */
+.ctl.erase.is-armed::after {
+  content: attr(data-tip);
+  position: absolute; left: 50%; bottom: calc(100% + 4px); transform: translateX(-50%);
+  white-space: nowrap; font-size: 12px; font-weight: 700; color: #ff9cbc;
+  background: rgba(7, 6, 10, 0.9); border: 1px solid rgba(255, 95, 143, 0.6); border-radius: 8px; padding: 3px 8px;
+}
+
+/* A pressed control keeps its colour under the mouse. */
+@media (hover: hover) {
+  .ctl[aria-pressed="true"]:hover::before { background: var(--fill); border-color: var(--ring); }
+}
+
+/* ---------- tablets: one column for the space, the pill centred ---------- */
+@media (max-width: 1100px) and (min-width: 861px) {
+  .lab { grid-template-columns: 220px minmax(0, 1fr) 56px; }
+}
+
+/* ---------- phones and narrow screens ---------- */
+@media (max-width: 860px) {
+  .lab {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 54px 44px minmax(0, 1fr) 44px auto auto 52px;
+    grid-template-areas: "vol vol" "modes modes" "stage stage" "strip strip" "acts acts" "dock dock" "bar nav";
+    gap: 8px;
+    padding: 4px 10px max(6px, env(safe-area-inset-bottom));
+  }
+  body[data-mode="penta"][data-play="explore"] .lab,
+  body[data-play="wrap"] .lab {
+    grid-template-rows: 54px 44px minmax(0, 1fr) 44px auto auto auto 52px;
+    grid-template-areas: "vol vol" "modes modes" "stage stage" "strip strip" "acts acts" "rows rows" "dock dock" "bar nav";
+  }
+  .top, .dock { display: contents; }
+  .volWrap { grid-area: vol; justify-self: start; }
+  .modes { grid-area: modes; justify-content: space-between; }
+  .top .lab-nav { grid-area: nav; align-self: center; }
+  .bar .side-brand { display: none; }
+  .acts { grid-area: acts; flex-wrap: nowrap; }
+  .trayZone { grid-area: dock; }
+  .roomsRow, .wallsRow { grid-area: rows; }
+  .rooms { flex-wrap: nowrap; }
+  .roomDots { flex-basis: auto; }
+  .walls { grid-template-columns: repeat(6, 44px); }
+  .tray {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(2, 52px);
+    grid-auto-columns: 52px;
+    overflow-x: auto; overflow-y: hidden;
+    justify-content: start;
+    padding: 2px 18px 2px 2px;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent);
+  }
+  .chip { width: 52px; height: 52px; }
+  .chip svg { width: 44px; height: 44px; }
+  .pad { padding: 0; }
+  .strip { flex-direction: row; gap: 10px; }
+  .castCol { flex-direction: row; }
+  .slider { flex-direction: row; width: auto; height: 44px; min-height: 0; max-height: none; padding: 0 12px; flex: 1 1 0; }
+  .slider { min-width: 0; }
+  .slider input { writing-mode: horizontal-tb; direction: ltr; width: 100%; min-width: 0; height: 24px; flex: 1 1 auto; }
+  .roomsRow { flex-wrap: nowrap; }
+  .roomDots { gap: 3px; }
+  .roomDots i { width: 6px; height: 6px; }
+  .roomDots i.here { width: 11px; }
+}
+@media (max-width: 480px) { .langSel { right: 6px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .measure.pop { animation: none; }
+  .ctl.wall.loading::before { animation: none; }
+}
