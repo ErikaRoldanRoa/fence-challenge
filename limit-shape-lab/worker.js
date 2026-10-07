@@ -2,7 +2,7 @@
  * "pieces": every free n-omino with its longest arrows.
  * "giant": a running chain of 500-ominoes, one sample every 8 n proposals,
  * started from a 500-omino that already went through a burn-in. */
-importScripts("sampler.js?v=20261007h", "data/start500.js?v=20261007h");
+importScripts("sampler.js?v=20261007i", "data/start500.js?v=20261007i");
 
 var S = self.LimitSampler;
 var chain = null, running = false, samples = 0, left = 0;

@@ -94,6 +94,8 @@
 }
 /* Phones: the pill's chip needs room before the language switch. */
 @media (max-width: 640px) {
+  /* On phones the spare height goes below the lab, not between the links and the controls. */
+  .game-layout { grid-template-rows: auto auto 0 auto auto auto auto auto minmax(0, 1fr); }
   .game-toolbar {
     width: calc(100vw - 20px);
     margin-left: calc((var(--board-size) - 100vw + 20px) / 2);

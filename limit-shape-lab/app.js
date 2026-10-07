@@ -44,7 +44,7 @@
 
   // ---------- the work: a worker when possible, the page otherwise ----------
   let worker = null;
-  try { worker = new Worker("worker.js?v=20261007h"); } catch (e) { worker = null; }
+  try { worker = new Worker("worker.js?v=20261007i"); } catch (e) { worker = null; }
   const waiting = new Map();
   if (worker) {
     worker.onmessage = (e) => {
