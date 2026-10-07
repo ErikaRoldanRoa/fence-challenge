@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title data-i18n="ls.docTitle">Limit shape · Fence Challenge</title>
+    <meta name="theme-color" content="#07060a" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../fonts/manrope.css?v=20261007f" />
+    <link rel="stylesheet" href="../play-ui.css?v=20261007f" />
+    <link rel="stylesheet" href="styles.css?v=20261007f" />
+    <link rel="stylesheet" href="../lab-tip.css?v=20261007f" />
+    <script src="../i18n.js?v=20261007f"></script>
+    <script src="i18n.js?v=20261007f"></script>
+  </head>
+  <body>
+    <main class="lab" id="lab" data-n="4">
+      <h1 class="visually-hidden" data-i18n="ls.title">The limit shape</h1>
+
+      <!-- Top: the size of the pieces between its two steps, and the gap. -->
+      <div class="topMid" id="topmid">
+      <div class="readout" id="readout">
+        <button id="fewer" class="ctl step" type="button" aria-keyshortcuts="-" data-i18n-title="ls.fewer" data-i18n-aria-label="ls.fewer" title="Pieces one cell smaller (−)" aria-label="Pieces one cell smaller (−)"><svg class="g-step" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><svg class="g-skip" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 6 11 12l6 6M11 6 5 12l6 6M4.5 6v12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <span class="measure" id="n-pill"><span class="area-word" data-i18n="ls.n">n</span><strong class="area-num" id="n-value">4</strong></span>
+        <button id="more" class="ctl step" type="button" aria-keyshortcuts="+" data-i18n-title="ls.more" data-i18n-aria-label="ls.more" title="Pieces one cell bigger (+)" aria-label="Pieces one cell bigger (+)"><svg class="g-step" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><svg class="g-skip" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6l6 6-6 6M13 6l6 6-6 6M19.5 6v12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+
+      </div>
+
+      <!-- The largest gap to the circle. -->
+      <div class="gapBox">
+        <span class="chipHost gapHost"><span class="tok" id="gap-tok" tabindex="0" role="note" aria-labelledby="gap-label gap-value" data-i18n-title="ls.gap" title="The largest gap between the loop and the circle" data-lab-tip-on><span class="visually-hidden" id="gap-label" data-i18n="ls.gapLabel">The largest gap between the loop and the circle</span><svg class="gapIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 15.5a7.5 7.5 0 0 1 13 0" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 1.8"/><path d="M3 15.5a10 10 0 0 1 18 0" fill="none" stroke="#2ff3ff" stroke-width="2" stroke-linecap="round"/><path d="M12 5.6v2.9" stroke="#ffd43b" stroke-width="2" stroke-linecap="round"/></svg><strong id="gap-value">0</strong></span><button class="math-chip" type="button" hidden data-chip="gap" data-i18n-title="ls.chip.gap" data-i18n-aria-label="ls.chip.gap">∑</button></span>
+      </div>
+      </div>
+
+      <!-- Top right: the other labs, home, the language. -->
+      <nav class="topnav">
+        <span class="lab-nav">
+          <span class="ctl nav" role="link" aria-disabled="true" tabindex="0" data-i18n-aria-label="lab.homeSoon" data-i18n-title="lab.homeSoon" aria-label="The home page for this paper’s labs is coming soon" title="The home page for this paper’s labs is coming soon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.4 12 4.6l8 6.8M6.4 9.6v9.9h4.2v-5.4h2.8v5.4h4.2V9.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <a class="ctl nav" href="../cube-lab/" data-i18n-title="ls.toCube" data-i18n-aria-label="ls.toCube" title="Walls in 3D" aria-label="Walls in 3D"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 19.5 7.7v8.6L12 20.5l-7.5-4.2V7.7z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M4.5 7.7 12 12l7.5-4.3M12 12v8.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></a>
+          <a class="ctl nav" href="../hexomino-lab/" data-i18n-title="ls.toHexo" data-i18n-aria-label="ls.toHexo" title="The hexomino lab" aria-label="The hexomino lab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h4V4h4v4h4v4h4v4h-8v4H8v-4H4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 8v8M12 8v8M12 12h8M16 12v4M8 12h4" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity="0.6"/></svg></a>
+          <a class="ctl nav" href="../pentomino-dp-lab/" data-i18n-title="ls.toDp" data-i18n-aria-label="ls.toDp" title="The dynamic-programming lab" aria-label="The dynamic-programming lab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM4 9.7h16M4 14.3h16M9.3 5v14M14.7 5v14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.6 16.7 17.4 7.3" stroke="#2ff3ff" stroke-width="1.8" stroke-linecap="round"/></svg></a>
+        </span>
+      </nav>
+
+      <span class="langSel" aria-label="Language / Langue / Sprache" role="group">
+        <button type="button" data-lang-btn="fr" aria-pressed="false" lang="fr" title="Français">FR</button>
+        <button type="button" data-lang-btn="de" aria-pressed="false" lang="de" title="Deutsch">DE</button>
+        <button type="button" data-lang-btn="en" aria-pressed="false" lang="en" title="English">EN</button>
+      </span>
+
+      <!-- Left: the pieces of n cells, each with its arrow (at 500: one random giant). -->
+      <aside class="dock">
+        <div class="pieceBox">
+          <canvas id="pieces" role="img" data-i18n-aria-label="ls.pieces" aria-label="The pieces"></canvas>
+        </div>
+        <div class="capRow">
+          <p class="caption" id="caption"></p>
+          <span class="chipHost inline"><button class="math-chip" type="button" hidden data-chip="count" data-i18n-title="ls.chip.count" data-i18n-aria-label="ls.chip.count">∑</button><button class="math-chip" type="button" hidden data-chip="arrow" data-i18n-title="ls.chip.arrow" data-i18n-aria-label="ls.chip.arrow">∑</button><button class="math-chip" type="button" hidden data-chip="giant" data-i18n-title="ls.chip.giant" data-i18n-aria-label="ls.chip.giant">∑</button><button class="math-chip" type="button" hidden data-chip="sample" data-i18n-title="ls.chip.sample" data-i18n-aria-label="ls.chip.sample">∑</button></span>
+        </div>
+      </aside>
+
+      <section class="stage" id="stage">
+        <canvas id="loop" role="img" data-i18n-aria-label="ls.loop" aria-label="The loop"></canvas>
+        <span class="chipHost corner"><button class="math-chip" type="button" hidden data-chip="loop" data-i18n-title="ls.chip.loop" data-i18n-aria-label="ls.chip.loop">∑</button></span>
+        <div class="card" id="card" role="dialog" aria-modal="false" aria-labelledby="card-lead" tabindex="-1" hidden>
+          <button class="ctl quiet cardClose" id="card-close" type="button" data-i18n-aria-label="ls.close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+          <p class="cardLead" id="card-lead"></p>
+          <div class="cardBody" id="card-body"></div>
+          <div class="cardFoot" id="card-section"></div>
+        </div>
+      </section>
+
+      <!-- Right: the loupe. -->
+      <div class="strip">
+        <label class="slider" data-i18n-title="ls.loupe" title="Loupe: magnify the gap to the circle">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m15 15 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input id="loupe" type="range" min="0" max="100" step="1" value="0" data-i18n-aria-label="ls.loupe" aria-label="Loupe" />
+          <span class="loupeX" id="loupe-x" aria-hidden="true">×1</span>
+        </label>
+      </div>
+
+      <footer class="bar boardbar">
+        <span class="side-brand">Fence Challenge</span>
+      </footer>
+
+      <p class="visually-hidden" id="status" role="status" aria-live="polite"></p>
+    </main>
+
+    <script defer src="sampler.js?v=20261007f"></script>
+    <script defer src="data/paper.js?v=20261007f"></script>
+    <script defer src="data/start500.js?v=20261007f"></script>
+    <script defer src="chips.js?v=20261007f"></script>
+    <script defer src="../lab-tip.js?v=20261007f"></script>
+    <script defer src="app.js?v=20261007f"></script>
+  </body>
+</html>

@@ -118,6 +118,8 @@
     var el = controlOf(e.target);
     if (!el) { hide(); return; }
     pressed = { el: el, x: e.clientX, y: e.clientY, shown: false };
+    // A bubble still fading out from the last long press must not cancel this one.
+    window.clearTimeout(hideTimer);
     window.clearTimeout(timer);
     timer = window.setTimeout(function () {
       if (!pressed || pressed.el !== el) return;
