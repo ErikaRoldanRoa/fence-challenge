@@ -255,6 +255,32 @@ body {
   .side-brand { font-size: 0.66rem; padding: 0 6px; }
   .cardLead { font-size: 15px; }
 }
+/* Narrow phones: the lab links get their own row so they never cover the piece tools. */
+@media (max-width: 520px) {
+  .lab {
+    grid-template-rows: 52px 48px 44px minmax(0, 1fr) auto 52px;
+    grid-template-areas:
+      "read lang"
+      "acts nav"
+      "links links"
+      "stage stage"
+      "dock dock"
+      "bar bar";
+  }
+  .lab[data-mode="arrows"] {
+    grid-template-rows: 52px 48px minmax(0, 1fr) 52px;
+    grid-template-areas:
+      "acts lang"
+      "nav links"
+      "stage stage"
+      "bar bar";
+  }
+  .topnav { display: contents; }
+  .modes { grid-area: nav; justify-self: end; align-self: center; }
+  .lab[data-mode="arrows"] .modes { justify-self: start; }
+  .lab-nav { grid-area: links; justify-self: end; align-self: center; display: flex; gap: 8px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .math-chip, .toast, .card, .measure.bump, .ctl.shake { animation: none; }
 }
