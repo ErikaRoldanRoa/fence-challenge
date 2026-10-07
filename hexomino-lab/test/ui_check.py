@@ -118,12 +118,12 @@ def run(browser, lang, vp, touch, shots):
 
     # The two bundled fences.
     check(chips(page) == [], f"{tag}: no chip on a board without area {chips(page)}")
-    page.click("#load2025")
+    page.click("#load-previous")
     wait_idle(page)
-    page.screenshot(path=str(OUT / f"{tag}-2025.png"))
-    check(sorted(chips(page)) == ["area", "record2025"], f"{tag}: chips on the 2025 fence {chips(page)}")
+    page.screenshot(path=str(OUT / f"{tag}-previous.png"))
+    check(sorted(chips(page)) == ["area", "recordPrev"], f"{tag}: chips on the previous best fence {chips(page)}")
     s = state(page)
-    check(s["area"] == 1586 and s["valid"], f"{tag}: 2025 fence encloses 1586")
+    check(s["area"] == 1586 and s["valid"], f"{tag}: previous best fence encloses 1586")
     page.click("#reveal")
     wait_idle(page)
     s = state(page)

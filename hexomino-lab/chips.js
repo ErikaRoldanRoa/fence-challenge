@@ -25,18 +25,18 @@
         de: "Die Teile überlappen nicht und hängen Kante an Kante zusammen. Freie Zellen hängen auch über Ecken zusammen: Eine Lücke an einer Ecke lässt das Äußere herein.",
       },
     },
-    record2025: {
+    recordPrev: {
       label: "sec:introduction", lines: "95",
       section: { en: "Introduction", fr: "Introduction", de: "Einleitung" },
       lead: {
-        en: "In 2025, the best known hexomino fence enclosed 1586 cells.",
-        fr: "En 2025, la meilleure barrière d’hexominos connue enfermait 1586 cases.",
-        de: "2025 umschloss der beste bekannte Hexomino-Zaun 1586 Zellen.",
+        en: "Before this work, the best known hexomino fence enclosed 1586 cells.",
+        fr: "Avant ce travail, la meilleure barrière d’hexominos connue enfermait 1586 cases.",
+        de: "Vor dieser Arbeit umschloss der beste bekannte Hexomino-Zaun 1586 Zellen.",
       },
       detail: {
-        en: "It was found in the 2025 paper by a subset of the authors. Can you do better?",
-        fr: "Elle venait de l’article de 2025, écrit par une partie des auteurs. Feras-tu mieux ?",
-        de: "Er stammt aus der Arbeit von 2025, von einem Teil der Autor:innen. Schaffst du mehr?",
+        en: "This is the previous best fence. Can you do better?",
+        fr: "C’est la meilleure barrière précédente. Feras-tu mieux ?",
+        de: "Das ist der bisher beste Zaun. Schaffst du mehr?",
       },
     },
     thm1597: {

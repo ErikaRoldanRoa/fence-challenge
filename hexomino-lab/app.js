@@ -116,7 +116,7 @@
     const j = $("jump");
     if (mode === "build" && loaded === "1597") {
       j.innerHTML = `<span class="was">1586</span>+11`;
-      j.title = t("hx.vs2025", { d: "+11" });
+      j.title = t("hx.vsPrev", { d: "+11" });
       j.hidden = false;
     } else j.hidden = true;
   }
@@ -698,7 +698,7 @@
     const want = new Set();
     if (mode === "build") {
       if (loaded === "1597") want.add("thm1597");
-      else if (loaded === "1586") want.add("record2025");
+      else if (loaded === "1586") want.add("recordPrev");
       if (analysis.area > 0) want.add("area");
     } else if (arrowState) {
       if (arrowState.phase === "fence") { want.add("refvec"); want.add("lemma"); if (showCorners) want.add("rotation"); }
@@ -772,7 +772,7 @@
   $("remove").addEventListener("click", removeSel);
   $("undo").addEventListener("click", undo);
   $("clear").addEventListener("click", clearAll);
-  $("load2025").addEventListener("click", () => assemble("1586", 18));
+  $("load-previous").addEventListener("click", () => assemble("1586", 18));
   $("reveal").addEventListener("click", () => assemble("1597", 90));
   $("shuffle").addEventListener("click", shuffle);
   $("sort").addEventListener("click", sortArrows);
