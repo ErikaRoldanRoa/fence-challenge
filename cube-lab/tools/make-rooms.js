@@ -22,7 +22,7 @@ function hull(S, nb) {
 
 // The rooms the pentacube walls of walls.js shut in, read from those walls.
 const paperRoom = (id) => { const w = WALLS.find((x) => x.id === id); return { cells: G.enclosed(w.pieces.flat()).enclosed, witness: w.pieces }; };
-const w48 = paperRoom("penta_v48"), w49 = paperRoom("penta_v49"), w52 = paperRoom("penta_v52");
+const w52 = paperRoom("penta_v52");
 
 const LADDER = [
   { id: "t1", step: "tetra", cells: box(1, 1, 1) },
@@ -36,8 +36,6 @@ const LADDER = [
   { id: "p18", step: "penta", cells: box(3, 2, 3) },
   { id: "p27", step: "penta", cells: box(3, 3, 3) },
   { id: "p36", step: "penta", cells: box(3, 4, 3) },
-  { id: "p48", step: "penta", cells: w48.cells, witness: w48.witness, from: "penta_v48" },
-  { id: "p49", step: "penta", cells: w49.cells, witness: w49.witness, from: "penta_v49" },
   { id: "p52", step: "penta", cells: w52.cells, witness: w52.witness, from: "penta_v52" }
 ];
 

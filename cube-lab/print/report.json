@@ -676,34 +676,6 @@
    "layers": 3
   },
   {
-   "name": "room-p48",
-   "status_ok": true,
-   "watertight": true,
-   "winding": true,
-   "volume_mm3": 159198.0,
-   "volume_ok": true,
-   "genus": -26,
-   "triangles": 1834,
-   "ok": true,
-   "over_empty": 0,
-   "on_bed": 16,
-   "layers": 3
-  },
-  {
-   "name": "room-p49",
-   "status_ok": true,
-   "watertight": true,
-   "winding": true,
-   "volume_mm3": 162418.8,
-   "volume_ok": true,
-   "genus": -72,
-   "triangles": 2496,
-   "ok": true,
-   "over_empty": 0,
-   "on_bed": 16,
-   "layers": 4
-  },
-  {
    "name": "room-p52",
    "status_ok": true,
    "watertight": true,
@@ -748,7 +720,7 @@
   },
   {
    "name": "rooms-all",
-   "pieces": 14,
+   "pieces": 12,
    "mm": [
     217,
     161

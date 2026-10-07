@@ -8,7 +8,6 @@
   var fr = {
     "m.sec": "Murailles en trois dimensions",
     "m.ours": "Notre argument, pas dans l’article",
-    "m.comp": "Nos calculs, pas dans l’article",
 
     "m.room.aria": "Les maths : ce qui compte comme intérieur",
     "m.room.title": "Ce qui compte comme intérieur",
@@ -37,7 +36,7 @@
 
     "m.bound.aria": "Les maths : combien une muraille peut contenir",
     "m.bound.title": "Combien une muraille peut contenir",
-    "m.bound.body": "Pour chaque taille, une des meilleures poches, celle dont la muraille N(S) ∖ S est la plus petite, est un presque-cube (une boîte de côtés k ou k + 1, un presque-cube plus petit sur une face)" + NB + ": c’est le théorème de Veomett et Radcliffe.\n52 cubes de vide demandent une muraille de 144 cubes, 53 déjà 146, et les 29 pentacubes n’ont que 145 cubes. La muraille 3 atteint 52" + NB + ": 52 est la réponse.",
+    "m.bound.body": "Pour chaque taille, une des meilleures poches, celle dont la muraille N(S) ∖ S est la plus petite, est un presque-cube (une boîte de côtés k ou k + 1, un presque-cube plus petit sur une face)" + NB + ": c’est le théorème de Veomett et Radcliffe.\n52 cubes de vide demandent une muraille de 144 cubes, 53 déjà 146, et les 29 pentacubes n’ont que 145 cubes. La muraille 1 atteint 52" + NB + ": 52 est la réponse.",
 
     "m.cover.aria": "Les maths : remplir la muraille exactement",
     "m.cover.title": "Remplir la muraille exactement",
@@ -46,7 +45,6 @@
     "m.wallinfo.aria": "Les maths : cette muraille",
     "m.wallinfo.title": "Muraille {k}",
     "m.wallinfo.paper.body": "{p} pièces de {n} cubes, {c} cubes en tout" + NB + "; elle enferme {v} cubes de vide.\nUne muraille de l’article.",
-    "m.wallinfo.ours.body": "{p} pièces de {n} cubes, {c} cubes en tout" + NB + "; elle enferme {v} cubes de vide.\nUne muraille de nos calculs, pas dans l’article.",
     "m.wallinfo.best.body": "29 pièces de 5 cubes, 145 cubes" + NB + "; elle enferme 52 cubes de vide.\nOn ne peut pas faire mieux" + NB + ": 53 cubes de vide demanderaient une muraille de 146 cubes, et il n’y en a que 145. Ici 144 bordent exactement la poche et un seul dépasse" + NB + ": il faut les 29 pentacubes, tous.\nC’est la réponse à l’énigme 13 de l’article de 2025.",
 
     "m.roominfo.aria": "Les maths : cette poche de vide",
@@ -59,7 +57,6 @@
   var de = {
     "m.sec": "Dreidimensionale Mauern",
     "m.ours": "Unser Argument, nicht im Artikel",
-    "m.comp": "Unsere Rechnungen, nicht im Artikel",
 
     "m.room.aria": "Die Mathematik: was als innen zählt",
     "m.room.title": "Was als innen zählt",
@@ -88,7 +85,7 @@
 
     "m.bound.aria": "Die Mathematik: wie viel eine Mauer fassen kann",
     "m.bound.title": "Wie viel eine Mauer fassen kann",
-    "m.bound.body": "Für jede Größe ist einer der besten Hohlräume, der mit der kleinsten Mauer N(S) ∖ S, ein Fast-Würfel (eine Kiste mit Seiten k oder k + 1, auf einer Fläche ein kleinerer Fast-Würfel): der Satz von Veomett und Radcliffe.\n52 leere Würfel brauchen eine Mauer von 144 Würfeln, 53 schon 146, und die 29 Pentakuben haben nur 145 Würfel. Mauer 3 erreicht 52: 52 ist die Antwort.",
+    "m.bound.body": "Für jede Größe ist einer der besten Hohlräume, der mit der kleinsten Mauer N(S) ∖ S, ein Fast-Würfel (eine Kiste mit Seiten k oder k + 1, auf einer Fläche ein kleinerer Fast-Würfel): der Satz von Veomett und Radcliffe.\n52 leere Würfel brauchen eine Mauer von 144 Würfeln, 53 schon 146, und die 29 Pentakuben haben nur 145 Würfel. Mauer 1 erreicht 52: 52 ist die Antwort.",
 
     "m.cover.aria": "Die Mathematik: die Mauer genau füllen",
     "m.cover.title": "Die Mauer genau füllen",
@@ -97,7 +94,6 @@
     "m.wallinfo.aria": "Die Mathematik: diese Mauer",
     "m.wallinfo.title": "Mauer {k}",
     "m.wallinfo.paper.body": "{p} Teile aus {n} Würfeln, {c} Würfel insgesamt; sie schließt {v} leere Würfel ein.\nEine Mauer aus dem Artikel.",
-    "m.wallinfo.ours.body": "{p} Teile aus {n} Würfeln, {c} Würfel insgesamt; sie schließt {v} leere Würfel ein.\nEine Mauer aus unseren Rechnungen, nicht im Artikel.",
     "m.wallinfo.best.body": "29 Teile aus 5 Würfeln, 145 Würfel; sie schließt 52 leere Würfel ein.\nBesser geht es nicht: 53 leere Würfel bräuchten eine Mauer von 146 Würfeln, und es gibt nur 145. Hier säumen 144 genau den Hohlraum, und ein einziger ragt heraus: Alle 29 Pentakuben werden gebraucht.\nDas beantwortet Rätsel 13 des Artikels von 2025.",
 
     "m.roominfo.aria": "Die Mathematik: dieser Hohlraum",
@@ -110,7 +106,6 @@
   var en = {
     "m.sec": "Three-dimensional walls",
     "m.ours": "Our argument, not in the paper",
-    "m.comp": "Our computations, not in the paper",
 
     "m.room.aria": "The math: what counts as inside",
     "m.room.title": "What counts as inside",
@@ -139,7 +134,7 @@
 
     "m.bound.aria": "The math: how much a wall can hold",
     "m.bound.title": "How much a wall can hold",
-    "m.bound.body": "For every size, one of the best rooms, the one with the smallest wall N(S) ∖ S, is an almost-cube (a box with sides k or k + 1, a smaller almost-cube on one face): the theorem of Veomett and Radcliffe.\n52 cubes of emptiness need a wall of 144 cubes, 53 already 146, and the 29 pentacubes have only 145 cubes. Wall 3 reaches 52, so 52 is the answer.",
+    "m.bound.body": "For every size, one of the best rooms, the one with the smallest wall N(S) ∖ S, is an almost-cube (a box with sides k or k + 1, a smaller almost-cube on one face): the theorem of Veomett and Radcliffe.\n52 cubes of emptiness need a wall of 144 cubes, 53 already 146, and the 29 pentacubes have only 145 cubes. Wall 1 reaches 52, so 52 is the answer.",
 
     "m.cover.aria": "The math: filling the wall exactly",
     "m.cover.title": "Filling the wall exactly",
@@ -148,7 +143,6 @@
     "m.wallinfo.aria": "The math: this wall",
     "m.wallinfo.title": "Wall {k}",
     "m.wallinfo.paper.body": "{p} pieces of {n} cubes, {c} cubes in all; it shuts in {v} cubes of emptiness.\nA wall of the paper.",
-    "m.wallinfo.ours.body": "{p} pieces of {n} cubes, {c} cubes in all; it shuts in {v} cubes of emptiness.\nA wall from our computations, not in the paper.",
     "m.wallinfo.best.body": "29 pieces of 5 cubes, 145 cubes; it shuts in 52 cubes of emptiness.\nNothing does better: 53 cubes of emptiness would need a wall of 146 cubes, and there are only 145. Here 144 line the room exactly and a single one pokes out: all 29 pentacubes are needed.\nThis answers Puzzle 13 of the 2025 article.",
 
     "m.roominfo.aria": "The math: this room",

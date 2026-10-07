@@ -31,8 +31,6 @@
 
   var CONN = /[?&]conn=6\b/.test(location.search) ? 6 : 26;
   var MODES = { tetra: { n: 4, space: 9 }, penta: { n: 5, space: 12 } };
-  // Walls whose panel carries the published-wall text.
-  var PAPER_WALLS = { penta_v52: true, hexa_v1331: true, hepta_v25544: true };
 
   // Piece hues skip the gold band, which belongs to the room.
   function hueOf(i, n) { return (80 + (i / n) * 315) % 360; }
@@ -1011,8 +1009,7 @@
       opened.pieces.forEach(function (p) { cubesN += p.length; });
       c.setAttribute("data-math-vars", JSON.stringify({ k: WALLS.indexOf(opened) + 1, p: opened.pieces.length, n: opened.n, c: cubesN, v: G.enclosed([].concat.apply([], opened.pieces), CONN).volume }));
       var best = opened.id === "penta_v52" && paperRule;
-      c.setAttribute("data-math-body", best ? "m.wallinfo.best.body" : PAPER_WALLS[opened.id] ? "m.wallinfo.paper.body" : "m.wallinfo.ours.body");
-      c.setAttribute("data-math-src", PAPER_WALLS[opened.id] ? "m.sec" : "m.comp");
+      c.setAttribute("data-math-body", best ? "m.wallinfo.best.body" : "m.wallinfo.paper.body");
       if (best) chip("m.cast").setAttribute("data-math-body", "m.cast52.body");
     }
     if (b.room) {
