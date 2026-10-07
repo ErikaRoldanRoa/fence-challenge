@@ -229,7 +229,7 @@ def run(browser, name, w, h, touch):
     check(pg.locator("#walls .ctl.wall").nth(0).get_attribute("aria-pressed") == "true", "the opened wall shows chosen")
     check(pg.locator("#walls .ctl.wall").count() == 3, "three walls")
     pg.click('[data-math="m.wallinfo"]')
-    check("146" in pg.inner_text(".math-pop") and "13" in pg.inner_text(".math-pop"), "wall 1's chip: best possible, Puzzle 13")
+    check("146" in pg.inner_text(".math-pop"), "wall 1 chip: best possible")
     pg.keyboard.press("Escape")
     if not touch:
         pg.mouse.move(700, 450)

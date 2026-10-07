@@ -7,9 +7,9 @@
   var NB = " ";
 
   var fr = {
-    "cu.docTitle.tetra": "Défi 13 · 8 tétracubes · Fence Challenge",
-    "cu.docTitle.penta": "Défi 13 · 29 pentacubes · Fence Challenge",
-    "cu.title": "Défi 13 · une muraille en 3D",
+    "cu.docTitle.tetra": "8 tétracubes · Fence Challenge",
+    "cu.docTitle.penta": "29 pentacubes · Fence Challenge",
+    "cu.title": "une muraille en 3D",
     "cu.volume": "Volume",
     "cu.step.aria": "Les pièces",
     "cu.mode.tetraTip": "Construire avec les 8 tétracubes, chacun une fois",
@@ -85,9 +85,9 @@
   };
 
   var de = {
-    "cu.docTitle.tetra": "Rätsel 13 · 8 Tetrakuben · Fence Challenge",
-    "cu.docTitle.penta": "Rätsel 13 · 29 Pentakuben · Fence Challenge",
-    "cu.title": "Rätsel 13 · eine Mauer in 3D",
+    "cu.docTitle.tetra": "8 Tetrakuben · Fence Challenge",
+    "cu.docTitle.penta": "29 Pentakuben · Fence Challenge",
+    "cu.title": "eine Mauer in 3D",
     "cu.volume": "Volumen",
     "cu.step.aria": "Die Teile",
     "cu.mode.tetraTip": "Mit den 8 Tetrakuben bauen, jeden einmal",
@@ -163,9 +163,9 @@
   };
 
   var en = {
-    "cu.docTitle.tetra": "Challenge 13 · 8 tetracubes · Fence Challenge",
-    "cu.docTitle.penta": "Challenge 13 · 29 pentacubes · Fence Challenge",
-    "cu.title": "Challenge 13 · a wall in 3D",
+    "cu.docTitle.tetra": "8 tetracubes · Fence Challenge",
+    "cu.docTitle.penta": "29 pentacubes · Fence Challenge",
+    "cu.title": "a wall in 3D",
     "cu.volume": "Volume",
     "cu.step.aria": "The pieces",
     "cu.mode.tetraTip": "Build with the 8 tetracubes, each once",

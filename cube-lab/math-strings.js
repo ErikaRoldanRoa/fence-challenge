@@ -45,7 +45,7 @@
     "m.wallinfo.aria": "Les maths : cette muraille",
     "m.wallinfo.title": "Muraille {k}",
     "m.wallinfo.paper.body": "{p} pièces de {n} cubes, {c} cubes en tout" + NB + "; elle enferme {v} cubes de vide.\nUne muraille de l’article.",
-    "m.wallinfo.best.body": "29 pièces de 5 cubes, 145 cubes" + NB + "; elle enferme 52 cubes de vide.\nOn ne peut pas faire mieux" + NB + ": 53 cubes de vide demanderaient une muraille de 146 cubes, et il n’y en a que 145. Ici 144 bordent exactement la poche et un seul dépasse" + NB + ": il faut les 29 pentacubes, tous.\nC’est la réponse à l’énigme 13 de l’article de 2025.",
+    "m.wallinfo.best.body": "29 pièces de 5 cubes, 145 cubes" + NB + "; elle enferme 52 cubes de vide.\nOn ne peut pas faire mieux" + NB + ": 53 cubes de vide demanderaient une muraille de 146 cubes, et il n’y en a que 145. Ici 144 bordent exactement la poche et un seul dépasse" + NB + ": il faut les 29 pentacubes, tous.",
 
     "m.roominfo.aria": "Les maths : cette poche de vide",
     "m.roominfo.title": "Une poche de {k} cubes",
@@ -94,7 +94,7 @@
     "m.wallinfo.aria": "Die Mathematik: diese Mauer",
     "m.wallinfo.title": "Mauer {k}",
     "m.wallinfo.paper.body": "{p} Teile aus {n} Würfeln, {c} Würfel insgesamt; sie schließt {v} leere Würfel ein.\nEine Mauer aus dem Artikel.",
-    "m.wallinfo.best.body": "29 Teile aus 5 Würfeln, 145 Würfel; sie schließt 52 leere Würfel ein.\nBesser geht es nicht: 53 leere Würfel bräuchten eine Mauer von 146 Würfeln, und es gibt nur 145. Hier säumen 144 genau den Hohlraum, und ein einziger ragt heraus: Alle 29 Pentakuben werden gebraucht.\nDas beantwortet Rätsel 13 des Artikels von 2025.",
+    "m.wallinfo.best.body": "29 Teile aus 5 Würfeln, 145 Würfel; sie schließt 52 leere Würfel ein.\nBesser geht es nicht: 53 leere Würfel bräuchten eine Mauer von 146 Würfeln, und es gibt nur 145. Hier säumen 144 genau den Hohlraum, und ein einziger ragt heraus: Alle 29 Pentakuben werden gebraucht.",
 
     "m.roominfo.aria": "Die Mathematik: dieser Hohlraum",
     "m.roominfo.title": "Ein Hohlraum aus {k} Würfeln",
@@ -143,7 +143,7 @@
     "m.wallinfo.aria": "The math: this wall",
     "m.wallinfo.title": "Wall {k}",
     "m.wallinfo.paper.body": "{p} pieces of {n} cubes, {c} cubes in all; it shuts in {v} cubes of emptiness.\nA wall of the paper.",
-    "m.wallinfo.best.body": "29 pieces of 5 cubes, 145 cubes; it shuts in 52 cubes of emptiness.\nNothing does better: 53 cubes of emptiness would need a wall of 146 cubes, and there are only 145. Here 144 line the room exactly and a single one pokes out: all 29 pentacubes are needed.\nThis answers Puzzle 13 of the 2025 article.",
+    "m.wallinfo.best.body": "29 pieces of 5 cubes, 145 cubes; it shuts in 52 cubes of emptiness.\nNothing does better: 53 cubes of emptiness would need a wall of 146 cubes, and there are only 145. Here 144 line the room exactly and a single one pokes out: all 29 pentacubes are needed.",
 
     "m.roominfo.aria": "The math: this room",
     "m.roominfo.title": "A room of {k} cubes",
