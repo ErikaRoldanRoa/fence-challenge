@@ -12,35 +12,26 @@ Mykhailo Lyader · [Mia N. Müßig](https://miamuessig.de/) ·
 Helmut Podhaisky · Maximilian Prietzel ·
 [Erika Roldán](https://www.erikaroldan.net/) · Günter Rote · Daniel Yu**
 
-The follow-up to the 2025 paper settles the open challenges it left: the
-largest fence that the 35 hexominoes can build, found by dynamic programming
-and proved optimal, the shape that the best fences of larger pieces tend to,
-and walls of polycubes in space, which enclose a volume.
+Paper: on arXiv soon; the arXiv link and the journal reference will appear
+here once available.
 
-- **Cube lab** ([cube-lab/](cube-lab/)): walls in space. A wall of polycubes
-  encloses the empty cubes the outside cannot reach, and the outside slips
-  through faces, edges and corners alike. Pieces turn in space but never
-  flip: a mirror image is a piece of its own. Two ways to play, with the 8
-  tetracubes and with the 29 pentacubes:
-  - *explore*: build freely and watch the enclosed volume light up, open the
-    computed walls, spread them apart, cut them open layer by layer, see
-    them from below, and lift the wall away to hold the room alone;
-  - *wrap the room*: a room is given, from a single cube upward; build a wall
-    that shuts it in. Every room offered has a wall that does it.
+The labs, one per result:
 
-  Every element has a small "∑" chip that opens the mathematics behind it,
-  with the section of the paper it comes from.
-- **Print kit** ([cube-lab/print/](cube-lab/print/)): STL files of every
-  tetracube, every pentacube and every room of *wrap the room*, 15 mm cubes
-  with 0.15 mm of clearance and 0.6 mm chamfers, laid flat with no support
-  wherever a piece allows it, on plates for a 220 x 220 mm bed, with a
-  preview of each plate; one zip per kit
-  (`python3 cube-lab/tools/make-print.py` rebuilds them).
-- **Hexomino lab** ([hexomino-lab/](hexomino-lab/)): the 35 hexominoes and
-  the search for their largest fence. Its arrow view turns each piece into
-  one vector between its attachment edges: the fence's area is the area of
-  this vector polygon plus small corrections, and sorting the vectors by
-  direction gives the largest polygon they can form.
+- **Cube lab** ([cube-lab/](cube-lab/)): the 29 pentacubes can enclose a
+  volume of at most 52 cubes, and a wall reaching 52 exists; walls of
+  hexacubes (1331) and heptacubes (25544) show how far larger pieces go.
+  Build walls freely or wrap a given room, cut them open, spread them apart,
+  and lift the wall away to hold the room alone. Printable pieces:
+  [cube-lab/print/](cube-lab/print/).
+- **Hexomino lab** ([hexomino-lab/](hexomino-lab/)): the largest fence the
+  35 hexominoes can build encloses 1597 cells. Build your own, reveal the
+  optimal one, and switch to its arrow view, where each piece becomes one
+  vector and sorting the vectors by direction shows the idea behind the
+  proof.
+
+Every element of a lab has a small "∑" chip that opens the mathematics
+behind it, with the section of the paper it comes from. More labs are
+coming, one for each key result of the paper.
 
 ## Maximale Zäune mit Polyformen (2025)
 
