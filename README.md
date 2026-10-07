@@ -28,10 +28,20 @@ The labs, one per result:
   optimal one, and switch to its arrow view, where each piece becomes one
   vector and sorting the vectors by direction shows the idea behind the
   proof.
+- **Limit-shape lab** ([limit-shape-lab/](limit-shape-lab/)): the best fences
+  of very large pieces are close to round but not round: at 500 cells their
+  shape bulges out by 0.4 % at the diagonal. Give every piece its longest
+  arrow, sort the arrows into a loop, step the size up to 500 cells, and look
+  through the loupe at where the loop leaves the circle.
+- **Pentomino DP lab** ([pentomino-dp-lab/](pentomino-dp-lab/)): with the 12
+  pentominoes, the order of the pieces decides the area: every order reaches
+  at least 111, the best reach 128. Choose pieces and an order, watch the
+  dynamic program spread step by step, and see the best fence for that order
+  close and count its area.
 
 Every element of a lab has a small "∑" chip that opens the mathematics
-behind it, with the section of the paper it comes from. More labs are
-coming, one for each key result of the paper.
+behind it, with the section of the paper it comes from. One hub bringing all
+the labs together is coming.
 
 ## Maximale Zäune mit Polyformen (2025)
 

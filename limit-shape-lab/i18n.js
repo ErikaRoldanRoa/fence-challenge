@@ -43,6 +43,10 @@
     "ls.s.loupe": "Loupe ×{k}.",
     "ls.s.pick": "Pièce {i}" + NB + ": ses arêtes sont surlignées dans la boucle.",
     "lab.homeSoon": "La page d’accueil des labos de cet article arrive bientôt",
+    "lab.toCube": "Les murs en 3D",
+    "lab.toHexo": "Le labo des hexominos",
+    "lab.toLimit": "La forme limite",
+    "lab.toDp": "12 pentominos, un ordre",
   };
   var de = {
     "ls.docTitle": "Grenzform · Fence Challenge",
@@ -83,6 +87,10 @@
     "ls.s.loupe": "Lupe ×{k}.",
     "ls.s.pick": "Teil {i}: seine Kanten sind in der Schleife hervorgehoben.",
     "lab.homeSoon": "Die Startseite für die Labore dieses Artikels kommt bald",
+    "lab.toCube": "Mauern in 3D",
+    "lab.toHexo": "Das Hexomino-Labor",
+    "lab.toLimit": "Die Grenzform",
+    "lab.toDp": "12 Pentominos, eine Reihenfolge",
   };
   var en = {
     "ls.docTitle": "Limit shape · Fence Challenge",
@@ -123,6 +131,10 @@
     "ls.s.loupe": "Loupe ×{k}.",
     "ls.s.pick": "Piece {i}: its edges are lit in the loop.",
     "lab.homeSoon": "The home page for this paper’s labs is coming soon",
+    "lab.toCube": "Walls in 3D",
+    "lab.toHexo": "The hexomino lab",
+    "lab.toLimit": "The limit shape",
+    "lab.toDp": "12 pentominoes, one order",
   };
   if (typeof DICT === "undefined") return;
   Object.assign(DICT.fr, fr);
