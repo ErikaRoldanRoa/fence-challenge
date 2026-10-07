@@ -80,7 +80,7 @@ assert.strictEqual(tet([[0, 0], [1, 0], [2, 0], [1, 1]]), "3,0,1"); checks++;
 
 // Uniform over fixed 10-ominoes: the chain's mean diameter matches the exact mean
 // over all 36446 of them. (Counting accepted moves only gives about 5.86, the
-// value in the paper's data/fit-data.csv; see the report.)
+// value in data/fit-data.csv.)
 {
   let num = 0, den = 0;
   for (const cells of free[10]) {
