@@ -4,8 +4,10 @@
  *           aria-expanded="false" aria-haspopup="dialog">∑</button>
  * The glyph names the topic (∑ inside, ∂ the wall, ≤ a bound, i this one…),
  * so two chips side by side never look the same.
- * The panel is one shared <div class="math-pop" role="dialog"> built by the
- * script: a title (h2), the text (p), and a footer line (p.math-src). */
+ * Place a chip as a sibling beside its control, with a gap, never on top of it.
+ * The card is one shared modal <div class="math-pop" role="dialog"> over a light
+ * scrim, built by the script: a close button, a title (h2), the text, an
+ * optional computed line (.math-live) and a footer line (p.math-src). */
 .math-chip {
   position: relative;
   display: inline-grid; place-items: center;
@@ -26,23 +28,58 @@
 .math-chip:focus-visible { outline: 2px solid #ffd36e; outline-offset: 2px; }
 .math-chip[hidden] { display: none; }
 
+.math-scrim {
+  position: fixed; inset: 0; z-index: 10001;
+  background: rgba(5, 8, 12, 0.42);
+}
+.math-scrim[hidden] { display: none; }
+/* The language switch stays usable over the scrim: switching keeps the card
+   open. (Every lab's switch is fixed, absolute or a grid item, so z-index applies.) */
+body:has(.math-pop:not([hidden])) .langSel { z-index: 10003; }
 .math-pop {
-  position: fixed; z-index: 50;
-  width: min(340px, calc(100vw - 24px));
+  position: fixed; z-index: 10002;
+  width: min(360px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px); overflow: auto;
   padding: 14px 16px 12px;
   border-radius: 14px;
-  background: rgba(13, 17, 23, 0.97);
+  background: rgba(13, 17, 23, 0.98);
   border: 1px solid rgba(255, 211, 110, 0.45);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55), 0 0 22px rgba(255, 211, 110, 0.12);
   color: #d8f6ff;
   font: 400 13.5px/1.5 "Manrope", "Avenir Next", "Segoe UI", sans-serif;
 }
+.math-pop.sheet {
+  left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  width: auto; max-height: 62vh;
+}
 .math-pop[hidden] { display: none; }
-.math-pop h2 { margin: 0 0 6px; font-size: 14px; font-weight: 800; color: #ffd36e; letter-spacing: 0.01em; }
+.math-pop:focus { outline: none; }
+.math-close {
+  position: absolute; top: 6px; right: 6px;
+  width: 36px; height: 36px; padding: 0;
+  display: grid; place-items: center;
+  border: 0; border-radius: 999px; background: transparent;
+  color: rgba(216, 246, 255, 0.7); cursor: pointer;
+}
+.math-close::after { content: ""; position: absolute; inset: -4px; }
+.math-close svg { width: 18px; height: 18px; }
+.math-close:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+.math-close:focus-visible { outline: 2px solid #ffd36e; outline-offset: 1px; }
+.math-pop h2 { margin: 0 34px 6px 0; font-size: 14px; font-weight: 800; color: #ffd36e; letter-spacing: 0.01em; }
 .math-pop p { margin: 0 0 8px; }
+.math-pop .math-lead { font-weight: 700; color: #eefbff; }
+.math-pop .math-body { margin: 0 0 8px; }
+.math-pop .math-live { margin: 0 0 4px; font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: #7fe7b8; }
+.math-pop i { font-family: "Times New Roman", serif; font-size: 1.08em; }
+.math-pop sub, .math-pop sup { font-size: 0.72em; }
+.math-pop .live { display: block; margin-top: 8px; font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: #7fe7b8; }
 .math-pop .math-src {
   margin: 8px 0 0; padding-top: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   font: 600 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
   color: rgba(216, 246, 255, 0.55);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .math-pop:not([hidden]) { animation: mathPopIn 0.16s ease-out; }
+  @keyframes mathPopIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 }

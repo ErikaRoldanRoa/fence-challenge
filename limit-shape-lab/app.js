@@ -39,12 +39,12 @@
   const LOUPE_GAP = 0.6;   // the loupe never stretches the largest gap past this
 
   let n = 4, pieces = [], chain = null, loupeV = 0, loupe = 1, sel = -1;
-  let giant = null, giantSamples = 0, giantDrawn = 0, openChip = null, chipOpener = null;
+  let giant = null, giantSamples = 0, giantDrawn = 0, openChip = null;
   let shown = null, anim = null, requestId = 0, loupeAnim = null, tiles = false;
 
   // ---------- the work: a worker when possible, the page otherwise ----------
   let worker = null;
-  try { worker = new Worker("worker.js?v=20261007f"); } catch (e) { worker = null; }
+  try { worker = new Worker("worker.js?v=20261007h"); } catch (e) { worker = null; }
   const waiting = new Map();
   if (worker) {
     worker.onmessage = (e) => {
@@ -102,7 +102,7 @@
     giantDrawn = now;
     drawPieces();
     caption();
-    if (openChip === "sample") openCard("sample");
+    if (openChip === "sample") window.mathChip.refresh();
   }
 
   // ---------- choosing n ----------
@@ -133,7 +133,7 @@
     drawPieces();
     caption();
     syncChips();
-    if (openChip) openCard(openChip);
+    if (openChip) window.mathChip.refresh();
     status(k === GIANT ? t("ls.s.giant") : t("ls.s.n", { n: k, count: pieces.length, g: fmtPct(maxGap()) }));
     if (k === GIANT && from !== GIANT && from !== null) sweepLoupe();
   }
@@ -257,16 +257,8 @@
     if (c.height !== h) c.height = h;
     return { w, h, dpr };
   }
-  // The part of the stage the loop may use: beside or above an open card.
-  function loopBox(w, h, dpr) {
-    const card = $("card");
-    if (card.hidden) return { x: 0, y: 0, w, h };
-    const st = $("stage").getBoundingClientRect(), cr = card.getBoundingClientRect();
-    const right = (cr.right - st.left) * dpr, top = (cr.top - st.top) * dpr;
-    // Wide screens hold the card at the top left: the loop takes the rest of the width.
-    if (window.innerWidth > 860 && window.innerHeight > 520) return { x: right, y: 0, w: w - right, h };
-    return { x: 0, y: 0, w, h: Math.max(h * 0.3, top) };
-  }
+  // The whole stage holds the loop; the math card is a modal over the lab.
+  function loopBox(w, h) { return { x: 0, y: 0, w, h }; }
   function drawLoop(exact) {
     const { w, h, dpr } = fitCanvas(loopCanvas);
     const ctx = lctx;
@@ -574,9 +566,8 @@
     else { want.add("count"); want.add("arrow"); want.add("loop"); }
     document.querySelectorAll(".math-chip").forEach((b) => {
       b.hidden = !want.has(b.dataset.chip);
-      b.setAttribute("aria-expanded", openChip === b.dataset.chip ? "true" : "false");
     });
-    if (openChip && !want.has(openChip)) closeCard(false);
+    if (openChip && !want.has(openChip)) closeCard();
   }
   function live(id) {
     const tag = (s) => `<span class="live">${s} · ${t("ls.live.computed")}</span>`;
@@ -605,48 +596,23 @@
     }
     return "";
   }
-  function openCard(id, opener) {
-    const c = CHIPS[id], l = lang(), card = $("card");
-    $("card-lead").innerHTML = c.lead[l];
-    $("card-body").innerHTML = c.detail[l] + live(id);
-    $("card-section").textContent = c.section[l];
-    card.dataset.label = c.label; card.dataset.lines = c.lines; card.dataset.chip = id;
-    card.hidden = false;
-    openChip = id;
-    if (opener) chipOpener = opener;
-    syncChips();
-    drawLoop(true);
-    if (opener) card.focus({ preventScroll: true });
-  }
-  function closeCard(returnFocus) {
-    const card = $("card");
-    if (card.hidden) return;
-    card.hidden = true; openChip = null;
-    syncChips();
-    drawLoop(true);
-    if (returnFocus && chipOpener && !chipOpener.hidden) chipOpener.focus({ preventScroll: true });
-    chipOpener = null;
-  }
-  document.addEventListener("click", (e) => {
-    const b = e.target.closest(".math-chip");
-    if (!b) return;
-    e.stopPropagation();
-    if (openChip === b.dataset.chip) closeCard(true); else openCard(b.dataset.chip, b);
-  });
-  // A tap elsewhere closes the card; the language switch keeps it open.
-  document.addEventListener("pointerdown", (e) => {
-    if ($("card").hidden) return;
-    if (e.target.closest("#card, .math-chip, .langSel")) return;
-    closeCard(false);
-  }, true);
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("card").hidden) closeCard(true); });
-  $("card-close").addEventListener("click", () => closeCard(true));
+  // The card itself is the shared math-chip card; this lab provides its texts.
+  window.mathChip = window.mathChip || {};
+  window.mathChip.provide = (chip) => {
+    const id = chip.dataset.chip, c = CHIPS[id];
+    if (!c) return null;
+    const l = lang();
+    return { title: t("ls.chip." + id), lead: c.lead[l], body: c.detail[l] + live(id), src: c.section[l],
+      data: { label: c.label, lines: c.lines, chip: id } };
+  };
+  function closeCard() { if (window.mathChip.close) window.mathChip.close(false); }
+  document.addEventListener("math-chip-open", (e) => { openChip = e.detail.dataset.chip || null; });
+  document.addEventListener("math-chip-close", () => { openChip = null; });
 
   // ---------- language and size ----------
   document.querySelectorAll("[data-lang-btn]").forEach((b) => b.addEventListener("click", () => window.i18n.setLang(b.dataset.langBtn)));
   document.addEventListener("fc-langchange", () => {
     syncControls(); caption(); syncChips(); syncLoupe(); syncPieceAccess();
-    if (openChip) openCard(openChip);
     centreReadout();
   });
   new ResizeObserver(() => { drawLoop(true); drawPieces(); centreReadout(); }).observe(loopCanvas);

@@ -155,7 +155,9 @@ body[data-busy] #space { cursor: progress; }
   mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent);
 }
 body[data-selected] .tray { display: none; }
-body[data-busy] .tray, body[data-cast] .tray, body[data-foreign] .tray { opacity: 0.35; pointer-events: none; }
+/* Dimmed, the pieces still answer a hover with the reason (and refuse a tap). */
+body[data-busy] .tray, body[data-cast] .tray, body[data-foreign] .tray { opacity: 0.35; }
+.chip[aria-disabled="true"] { cursor: not-allowed; }
 
 .chip {
   display: grid; place-items: center;
@@ -245,21 +247,25 @@ body[data-play="explore"][data-mode="penta"] .wallsRow { display: flex; }
 @media (max-width: 860px) {
   .lab {
     grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: 54px 44px minmax(0, 1fr) 44px auto auto 52px;
-    grid-template-areas: "vol vol" "modes modes" "stage stage" "strip strip" "acts acts" "dock dock" "bar nav";
+    grid-template-rows: 54px 44px 44px minmax(0, 1fr) 44px auto auto 52px;
+    grid-template-areas: "vol vol" "nav nav" "modes modes" "stage stage" "strip strip" "acts acts" "dock dock" "bar bar";
     gap: 8px;
     padding: 4px 10px max(6px, env(safe-area-inset-bottom));
   }
   body[data-mode="penta"][data-play="explore"] .lab,
   body[data-play="wrap"] .lab {
-    grid-template-rows: 54px 44px minmax(0, 1fr) 44px auto auto auto 52px;
-    grid-template-areas: "vol vol" "modes modes" "stage stage" "strip strip" "acts acts" "rows rows" "dock dock" "bar nav";
+    grid-template-rows: 54px 44px 44px minmax(0, 1fr) 44px auto auto auto 52px;
+    grid-template-areas: "vol vol" "nav nav" "modes modes" "stage stage" "strip strip" "acts acts" "rows rows" "dock dock" "bar bar";
   }
   .top, .dock { display: contents; }
   .volWrap { grid-area: vol; justify-self: start; }
   .modes { grid-area: modes; justify-content: space-between; }
-  .top .lab-nav { grid-area: nav; align-self: center; }
-  .bar .side-brand { display: none; }
+  /* The links to the other labs: their own row under the volume, at the right, as in the other labs. */
+  .top .lab-nav { grid-area: nav; align-self: center; justify-self: end; }
+  .bar .side-brand { text-align: center; }
+  /* The volume and its chip keep clear of the language switch. */
+  .volWrap { max-width: calc(100vw - 196px); gap: 8px; }
+  .volWrap .measure .area-num { font-size: clamp(22px, var(--area-num, 28px), 28px); }
   .acts { grid-area: acts; flex-wrap: nowrap; }
   .trayZone { grid-area: dock; }
   .roomsRow, .wallsRow { grid-area: rows; }
@@ -285,6 +291,13 @@ body[data-play="explore"][data-mode="penta"] .wallsRow { display: flex; }
   .slider { flex-direction: row; width: auto; height: 44px; min-height: 0; max-height: none; padding: 0 12px; flex: 1 1 0; }
   .slider { min-width: 0; }
   .slider input { writing-mode: horizontal-tb; direction: ltr; width: 100%; min-width: 0; height: 24px; flex: 1 1 auto; }
+  /* Horizontal sliders drawn by the lab, so Safari shows the same colours as var(--room)hromium. */
+  .slider input { -webkit-appearance: none; appearance: none; background: transparent; height: 28px; }
+  .slider input::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: rgba(216, 246, 255, 0.18); }
+  .slider input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: 50%; border: 0; background: var(--room); box-shadow: 0 0 10px var(--room); }
+  .slider input::-moz-range-track { height: 6px; border-radius: 3px; background: rgba(216, 246, 255, 0.18); }
+  .slider input::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--room); }
+  .slider input::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--room); }
   .roomsRow { flex-wrap: nowrap; }
   .roomDots { gap: 3px; }
   .roomDots i { width: 6px; height: 6px; }

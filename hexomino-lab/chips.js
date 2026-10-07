@@ -1,6 +1,7 @@
 /* Hexomino lab · card texts. `label` and `lines` are source references
  * kept as data attributes for the tests, never shown. Each card: one lead
- * sentence, then detail; app.js appends computed values. */
+ * sentence, then detail; app.js appends computed values. `q` is the
+ * chip's question, its bubble and the card's title. */
 (function (root) {
   "use strict";
   const i = (s) => "<i>" + s + "</i>";
@@ -12,6 +13,7 @@
 
   const CHIPS = {
     area: {
+      q: { en: "How is the area counted?", fr: "Comment l’aire est-elle comptée ?", de: "Wie wird die Fläche gezählt?" },
       label: "def:fence", lines: "281-292",
       section: { en: "Fences and their Area", fr: "Les barrières et leur aire", de: "Zäune und ihre Fläche" },
       lead: {
@@ -26,6 +28,7 @@
       },
     },
     recordPrev: {
+      q: { en: "What was the best fence before?", fr: "Quelle était la meilleure barrière avant ?", de: "Was war der beste Zaun davor?" },
       label: "sec:introduction", lines: "95",
       section: { en: "Introduction", fr: "Introduction", de: "Einleitung" },
       lead: {
@@ -40,6 +43,7 @@
       },
     },
     thm1597: {
+      q: { en: "Why can no fence do better?", fr: "Pourquoi aucune barrière ne fait-elle mieux ?", de: "Warum geht es nicht besser?" },
       label: "thm:1597", lines: "1587-1589, 2054-2188, 2190-2211",
       section: { en: "Hexomino Fence", fr: "La barrière d’hexominos", de: "Der Hexomino-Zaun" },
       lead: {
@@ -54,6 +58,7 @@
       },
     },
     refvec: {
+      q: { en: "What is a reference vector?", fr: "Qu’est-ce qu’un vecteur de référence ?", de: "Was ist ein Referenzvektor?" },
       label: "def:reference-vector", lines: "1638-1675",
       section: { en: "Reference Vectors", fr: "Vecteurs de référence", de: "Referenzvektoren" },
       lead: {
@@ -68,6 +73,7 @@
       },
     },
     lemma: {
+      q: { en: "How do the arrows give the area?", fr: "Comment les flèches donnent-elles l’aire ?", de: "Wie ergeben die Pfeile die Fläche?" },
       label: "lem:area-decomposition", lines: "1686-1690, 1771-1773",
       section: { en: "Reference Vectors", fr: "Vecteurs de référence", de: "Referenzvektoren" },
       lead: {
@@ -82,6 +88,7 @@
       },
     },
     rotation: {
+      q: { en: "Why do the turns add up to 360°?", fr: "Pourquoi les angles font-ils 360° ?", de: "Warum ergeben die Drehungen 360°?" },
       label: "eq:rotation-sum", lines: "1707-1722",
       section: { en: "Reference Vectors", fr: "Vecteurs de référence", de: "Referenzvektoren" },
       lead: {
@@ -96,6 +103,7 @@
       },
     },
     p2: {
+      q: { en: "Why sort the arrows?", fr: "Pourquoi trier les flèches ?", de: "Warum die Pfeile sortieren?" },
       label: "sec:8way", lines: "1790-1815",
       section: { en: "8-Way Partitioning", fr: "Partition en 8 directions", de: "Achtfache Aufteilung" },
       lead: {
@@ -110,6 +118,7 @@
       },
     },
     bound: {
+      q: { en: "How big can the polygon get?", fr: "Jusqu’où le polygone peut-il grandir ?", de: "Wie groß kann das Polygon werden?" },
       label: "sec:minkowski", lines: "1944-2052",
       section: { en: "An Upper Bound via Minkowski Averages", fr: "Une borne supérieure par moyennes de Minkowski", de: "Eine obere Schranke über Minkowski-Mittel" },
       lead: {

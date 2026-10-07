@@ -111,8 +111,9 @@ def run(browser, name, w, h, touch):
     check(pg.locator(".math-pop").is_visible() and "inside" in pg.inner_text(".math-pop h2"), "a math chip opens its panel")
     check("label" not in pg.inner_text(".math-pop") and "\\" not in pg.inner_text(".math-pop"), "no LaTeX in the panel")
     pg.screenshot(path=f"{OUT}/{name}-math.png")
-    pg.click('[data-math="m.room"]')
-    check(pg.locator(".math-pop").is_hidden(), "a second tap closes it")
+    check(pg.locator(".math-pop .math-close").is_visible(), "the panel has a close button")
+    pg.click(".math-pop .math-close")
+    check(pg.locator(".math-pop").is_hidden(), "the close button closes it")
 
     # 1. choose piece 5 first, out of order
     chip(4).click()
@@ -390,6 +391,28 @@ def faces_only(browser):
 
 
 
+def dimmed_tray(browser):
+    # A wall of other pieces dims the tray: its pieces stay hoverable and say why.
+    print("[dimmed tray]")
+    ctx = browser.new_context(viewport={"width": 1400, "height": 900}, bypass_csp=True)
+    pg = ctx.new_page()
+    pg.add_init_script("localStorage.setItem('fc-lang','en')")
+    pg.goto(URL)
+    pg.wait_for_function("window.cubeLab")
+    pg.click("#mode-penta")
+    pg.locator("#walls .ctl.wall").nth(2).click()
+    pg.wait_for_function("!document.body.hasAttribute('data-busy')", timeout=120000)
+    c = pg.locator("#tray .chip").nth(0)
+    check(c.get_attribute("aria-disabled") == "true" and "other pieces" in (c.get_attribute("data-lab-tip") or ""), "a dimmed piece says why")
+    box = c.bounding_box()
+    hit = pg.evaluate("([x, y]) => { const e = document.elementFromPoint(x, y); return !!(e && e.closest('.chip')); }", [box["x"] + box["width"] / 2, box["y"] + box["height"] / 2])
+    check(hit, "a dimmed piece can be hovered")
+    c.hover()
+    pg.wait_for_timeout(450)
+    check("other pieces" in (pg.evaluate("(document.querySelector('.lab-tip.on')||{}).textContent||''")), "its bubble shows the reason")
+    ctx.close()
+
+
 def tip_checks(browser, url, ready, items, home_sel, touch_sel, tag):
     """The shared bubble (../lab-tip.js): hover, keyboard focus, touch long
     press, the disabled home, no native title, no layout shift."""
@@ -470,6 +493,7 @@ with sync_playwright() as p:
     run(b, "phone", 390, 844, True)
     faces_only(b)
     held_piece(b)
+    dimmed_tray(b)
     print("[tips]")
     tip_checks(b, URL, "window.cubeLab", [("#mode-penta", "cu.mode.pentaTip"), ("#turn", "cu.turnTip"), ("#cast", "cu.castTip"), ("#play-wrap", "cu.play.wrap")],
                ".lab-nav [aria-disabled='true']", "#mode-penta", "cube")

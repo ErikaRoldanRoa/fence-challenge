@@ -39,7 +39,7 @@
   const view = { s: 22, ox: 0, oy: 0 }; // px per cell, screen position of (0,0)
   let anim = null;                   // assembly of a known fence
   let loaded = null, loadedSnap = "";
-  let openChip = null, chipOpener = null;
+  let openChip = null;
   const FIT_MAX = 24;
 
   const color = (i, a = 1) => `hsla(${PIECES[i].hue}, 82%, 62%, ${a})`;
@@ -680,9 +680,9 @@
   // ---------- keyboard ----------
   document.addEventListener("keydown", (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); return; }
-    if (e.key === "Escape") { if (!$("card").hidden) closeCard(true); else { sel = null; ghost = null; syncControls(); syncTray(); draw(); } return; }
+    if (e.key === "Escape") { sel = null; ghost = null; syncControls(); syncTray(); draw(); return; }
     if (mode !== "build") return;
-    if (e.target.closest && e.target.closest(".tray, .card, .langSel")) return;
+    if (e.target.closest && e.target.closest(".tray, .math-pop, .langSel")) return;
     const k = e.key;
     if (k === "r" || k === "R") transform(rot);
     else if (k === "f" || k === "F") transform(flp);
@@ -706,10 +706,10 @@
     }
     document.querySelectorAll(".math-chip").forEach((b) => {
       b.hidden = !want.has(b.dataset.chip);
-      b.setAttribute("aria-expanded", openChip === b.dataset.chip ? "true" : "false");
-      b.setAttribute("aria-label", t("hx.math") + ": " + CHIPS[b.dataset.chip].section[lang()]);
+      b.setAttribute("aria-label", CHIPS[b.dataset.chip].q[lang()]);
+      b.title = CHIPS[b.dataset.chip].q[lang()];
     });
-    if (openChip && !want.has(openChip)) closeCard(false);
+    if (openChip && !want.has(openChip)) closeCard();
   }
   function live(id) {
     const tag = (s) => `<span class="live">${s} · ${t("hx.live.computed")}</span>`;
@@ -722,44 +722,22 @@
     if (id === "bound") return tag(t("hx.live.bound", { f: fmt(M.minkowskiBound(ref.order.map((o) => o.v))), a: fmt(F) }));
     return "";
   }
-  function openCard(id, opener) {
-    const c = CHIPS[id], l = lang(), card = $("card");
-    $("card-lead").innerHTML = c.lead[l];
-    $("card-body").innerHTML = c.detail[l] + live(id);
-    $("card-section").textContent = c.section[l];
-    card.dataset.label = c.label; card.dataset.lines = c.lines; card.dataset.chip = id;
-    card.hidden = false;
-    openChip = id;
-    if (opener) chipOpener = opener;
-    syncChips();
-    card.focus({ preventScroll: true });
-  }
-  function closeCard(returnFocus) {
-    const card = $("card");
-    if (card.hidden) return;
-    card.hidden = true; openChip = null;
-    syncChips();
-    if (returnFocus && chipOpener && !chipOpener.hidden) chipOpener.focus({ preventScroll: true });
-    chipOpener = null;
-  }
-  document.addEventListener("click", (e) => {
-    const b = e.target.closest(".math-chip");
-    if (!b) return;
-    e.stopPropagation();
-    if (openChip === b.dataset.chip) closeCard(true); else openCard(b.dataset.chip, b);
-  });
-  // Close on a tap anywhere else.
-  document.addEventListener("pointerdown", (e) => {
-    if ($("card").hidden) return;
-    if (e.target.closest("#card, .math-chip")) return;
-    closeCard(false);
-  }, true);
-  $("card-close").addEventListener("click", () => closeCard(true));
+  // The card itself is the shared math-chip card; this lab provides its texts.
+  window.mathChip = window.mathChip || {};
+  window.mathChip.provide = (chip) => {
+    const id = chip.dataset.chip, c = CHIPS[id];
+    if (!c) return null;
+    const l = lang();
+    return { title: c.q[l], lead: c.lead[l], body: c.detail[l] + live(id), src: c.section[l],
+      data: { label: c.label, lines: c.lines, chip: id } };
+  };
+  function closeCard() { if (window.mathChip.close) window.mathChip.close(false); }
+  document.addEventListener("math-chip-open", (e) => { openChip = e.detail.dataset.chip || null; });
+  document.addEventListener("math-chip-close", () => { openChip = null; });
   document.addEventListener("fc-langchange", () => {
     syncControls(); syncTray(); syncChips(); syncJump(); disarm();
     $("area-value").textContent = analysis.area;
     if (mode === "arrows") showEquation();
-    if (openChip) openCard(openChip);
     draw();
   });
 

@@ -43,9 +43,11 @@
 @keyframes dp-invite { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 0 2px rgba(0, 209, 255, 0.55), 0 0 14px rgba(0, 209, 255, 0.35); } }
 .dp-invite .piece-btn:not(.selected) { animation: dp-invite 1.2s ease-in-out 2; }
 
-/* The area pill is a readout here; its chip sits on its corner. */
-.dp-pill { position: relative; cursor: default; }
-.dp-pillchip { position: absolute; top: -8px; right: -8px; }
+/* The area pill is a readout here. Its chip sits beside it with a gap; it
+   stays inside the pill's markup so the shared pill sizing ignores it. */
+.dp-pill { position: relative; cursor: default; overflow: visible; }
+.dp-pillchip { position: absolute; left: calc(100% + 8px); top: 50%; transform: translateY(-50%); }
+.dp-pill:has(.dp-pillchip:not([hidden])) + .dp-prev { margin-left: 40px; }
 #dp-layout[data-phase="done"] .dp-pill { box-shadow: 0 0 0 2px rgba(255, 216, 74, 0.55), 0 0 22px rgba(255, 216, 74, 0.35); }
 
 /* The previous area for the same pieces in another order. */
@@ -67,3 +69,40 @@
 
 .dp-reveal { color: #ffd84a; }
 .dp-reveal[aria-pressed="true"] { box-shadow: 0 0 0 2px rgba(255, 216, 74, 0.6); }
+
+/* The links to the other labs: in the top strip on wide screens (as in the
+   square lab); on narrower screens their own row under the area, at the
+   right, as in the other 2026 labs. */
+@media (max-width: 1180px) {
+  #panel-game { --board-size: max(96px, min(calc(100vw - 20px), calc(100dvh - 420px))); }
+  .game-layout {
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto auto auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "toolbar"
+      "links"
+      "."
+      "acts"
+      "main"
+      "dock"
+      "bar"
+      "label"
+      ".";
+  }
+  .lab-nav { grid-area: links; justify-self: end; display: flex; gap: 8px; }
+  /* The pieces: a compact grid, as in the square lab. */
+  .piece-dock { grid-template-columns: repeat(6, min(58px, calc((var(--board-size) - 40px) / 6))); justify-content: center; }
+}
+/* Phones: the pill's chip needs room before the language switch. */
+@media (max-width: 640px) {
+  .game-toolbar {
+    width: calc(100vw - 20px);
+    margin-left: calc((var(--board-size) - 100vw + 20px) / 2);
+    justify-content: flex-start;
+    padding-right: 212px;
+  }
+  .lab-nav {
+    width: calc(100vw - 20px);
+    margin-left: calc((var(--board-size) - 100vw + 20px) / 2);
+    justify-content: flex-end;
+  }
+}

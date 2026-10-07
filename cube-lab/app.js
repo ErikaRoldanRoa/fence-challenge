@@ -861,13 +861,23 @@
     next.focus();
   });
 
+  // While the tray is dimmed, its pieces say why in their bubble.
+  function dimReason() {
+    var d = document.body;
+    if (d.hasAttribute("data-busy")) return "cu.dim.busy";
+    if (d.hasAttribute("data-cast")) return "cu.dim.cast";
+    if (d.hasAttribute("data-foreign")) return "cu.dim.foreign";
+    return null;
+  }
   function syncTray() {
-    var b = board(), any = false;
+    var b = board(), any = false, dim = dimReason();
     tray.querySelectorAll(".chip").forEach(function (btn) {
       var i = +btn.getAttribute("data-shape"), used = isPlaced(i), cells = shapes[mode][i].cells;
       btn.classList.toggle("placed", used);
       btn.setAttribute("aria-pressed", i === b.hand ? "true" : "false");
       btn.setAttribute("aria-label", t(used ? "cu.pieceUsed" : "cu.piece", { n: i + 1, k: cells.length }));
+      if (dim) { btn.setAttribute("aria-disabled", "true"); btn.setAttribute("data-lab-tip", t(dim)); }
+      else { btn.removeAttribute("aria-disabled"); btn.removeAttribute("data-lab-tip"); }
       if (btn.tabIndex === 0) any = true;
       renderTrayPiece(i);
     });
@@ -876,6 +886,8 @@
       chips.forEach(function (c, k) { c.tabIndex = k === pick ? 0 : -1; });
     }
   }
+
+  new MutationObserver(function () { syncTray(); }).observe(document.body, { attributes: true, attributeFilter: ["data-busy", "data-cast", "data-foreign"] });
 
   // Controls that need something chosen, or something to undo, wake up then.
   function syncControls() {

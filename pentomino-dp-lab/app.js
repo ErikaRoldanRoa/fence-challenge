@@ -510,6 +510,8 @@
     if (showLayer) {
       var key = phase === "done" ? (r.valid ? "m.close" : "m.bound") : phase === "none" ? "m.none" : "m.layer";
       chipLayer.setAttribute("data-math", key);
+      chipLayer.setAttribute("aria-label", t(key + ".title"));
+      chipLayer.setAttribute("data-lab-tip", t(key + ".title"));
       chipLayer.setAttribute("data-math-src", "m.layer.src");
       var i = Math.min(r.step, n), lay = r.res.layers[i], st = lay.size, co = corners(lay);
       chipLayer.setAttribute("data-math-vars", JSON.stringify({

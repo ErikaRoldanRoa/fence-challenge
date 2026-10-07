@@ -132,23 +132,9 @@ body {
 .sw-poly { border: 2px solid var(--poly); transform: rotate(12deg); border-radius: 3px; }
 .sw-delta { background: var(--delta); border-radius: 50% 0 50% 0; }
 
-/* ---------- math chips: only what the state needs, on a corner of what
- * they explain; on buttons, beside the drawn ring, never over it ---------- */
-.chipHost { position: relative; display: inline-flex; align-items: center; }
-.chipHost.btn { margin-right: 12px; }
-.math-chip {
-  position: absolute; top: -10px; right: -12px; z-index: 4;
-  width: 24px; height: 24px; padding: 0; border-radius: 999px; cursor: pointer;
-  border: 1px solid var(--gold); background: #1b1608; color: var(--gold);
-  font: 800 13px/22px "Manrope", sans-serif; text-align: center;
-  box-shadow: 0 0 10px rgba(255, 212, 59, 0.5);
-  animation: pop 0.25s ease;
-}
-.chipHost.btn .math-chip { top: -8px; right: -16px; }
-.math-chip[hidden] { display: none; }
-.math-chip::after { content: ""; position: absolute; inset: -8px; border-radius: 999px; } /* 40 px hit area */
-.math-chip[aria-expanded="true"] { background: var(--gold); color: #1b1608; }
-@keyframes pop { from { transform: scale(0.3); opacity: 0; } }
+/* ---------- math chips: only what the state needs, beside what they
+ * explain with a gap (the shared math-chip.css draws them) ---------- */
+.chipHost { position: relative; display: inline-flex; align-items: center; gap: 8px; }
 
 /* ---------- the tray of 35 ---------- */
 .tray {
@@ -183,7 +169,7 @@ body {
 
 .zoom { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
 
-/* ---------- toast and card, inside the board ---------- */
+/* ---------- toast, inside the board ---------- */
 .toast {
   position: absolute; z-index: 5; top: 12px; left: 50%; transform: translateX(-50%);
   padding: 8px 14px; border-radius: 999px; white-space: nowrap;
@@ -192,27 +178,9 @@ body {
   animation: rise 0.2s ease;
 }
 .toast[hidden] { display: none; }
-.card {
-  position: absolute; z-index: 6; left: 50%; bottom: 12px; transform: translateX(-50%);
-  width: min(520px, calc(100% - 24px)); max-height: calc(100% - 24px); overflow: auto;
-  padding: 14px 16px 12px; border-radius: 18px;
-  background: rgba(14, 18, 26, 0.97); backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 212, 59, 0.45);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55), 0 0 30px rgba(255, 212, 59, 0.12);
-  animation: rise 0.22s ease;
-}
 @keyframes rise { from { transform: translate(-50%, 10px); opacity: 0; } }
 .toast { animation-name: riseT; }
 @keyframes riseT { from { transform: translate(-50%, -8px); opacity: 0; } }
-.card[hidden] { display: none; }
-.card:focus-visible { outline: 2px solid var(--focus); }
-.cardClose { position: absolute; top: 4px; right: 4px; }
-.cardLead { margin: 0 40px 8px 0; font-size: 16px; font-weight: 700; line-height: 1.45; }
-.cardBody { font-size: 14.5px; line-height: 1.55; color: #c6e6f2; }
-.cardBody i, .cardLead i { font-family: "Times New Roman", serif; font-size: 1.08em; }
-.cardBody sub, .cardLead sub { font-size: 0.72em; }
-.cardBody .live { display: block; margin-top: 8px; font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--region); }
-.cardFoot { margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--gold); letter-spacing: 0.02em; }
 .kRed { color: var(--attach); } .kBlue { color: var(--poly); } .kPink { color: var(--delta); } .kGold { color: var(--gold); }
 .cNE { color: var(--cNE); } .cNW { color: var(--cNW); } .cSW { color: var(--cSW); } .cSE { color: var(--cSE); }
 
@@ -253,25 +221,25 @@ body {
   .equation .op { font-size: 15px; }
   .bound { display: none; }
   .side-brand { font-size: 0.66rem; padding: 0 6px; }
-  .cardLead { font-size: 15px; }
 }
-/* Narrow phones: the lab links get their own row so they never cover the piece tools. */
+/* Narrow phones: the lab links get their own row, the second, at the right, as in the other labs. */
 @media (max-width: 520px) {
   .lab {
-    grid-template-rows: 52px 48px 44px minmax(0, 1fr) auto 52px;
+    grid-template-rows: 52px 44px 48px minmax(0, 1fr) auto 52px;
     grid-template-areas:
       "read lang"
-      "acts nav"
       "links links"
+      "acts nav"
       "stage stage"
       "dock dock"
       "bar bar";
   }
   .lab[data-mode="arrows"] {
-    grid-template-rows: 52px 48px minmax(0, 1fr) 52px;
+    grid-template-rows: 52px 44px 48px minmax(0, 1fr) 52px;
     grid-template-areas:
       "acts lang"
-      "nav links"
+      "links links"
+      "nav nav"
       "stage stage"
       "bar bar";
   }
@@ -279,8 +247,11 @@ body {
   .modes { grid-area: nav; justify-self: end; align-self: center; }
   .lab[data-mode="arrows"] .modes { justify-self: start; }
   .lab-nav { grid-area: links; justify-self: end; align-self: center; display: flex; gap: 8px; }
+  /* The jump keeps only its gain, so the readout never runs under the language switch. */
+  .readout { overflow: hidden; }
+  .jump .was { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .math-chip, .toast, .card, .measure.bump, .ctl.shake { animation: none; }
+  .toast, .measure.bump, .ctl.shake { animation: none; }
 }
