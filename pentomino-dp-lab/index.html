@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title data-i18n="dp.docTitle">12 pentominoes, one order · Fence Challenge</title>
+    <meta name="theme-color" content="#07060a" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../fonts/manrope.css?v=20261007c" />
+    <link rel="stylesheet" href="../square-lab/styles.css?v=20261007c" />
+    <link rel="stylesheet" href="../play-ui.css?v=20261007c" />
+    <link rel="stylesheet" href="../cube-lab/math-chip.css?v=20261007c" />
+    <link rel="stylesheet" href="../lab-tip.css?v=20261007c" />
+    <link rel="stylesheet" href="styles.css?v=20261007c" />
+    <script src="../i18n.js?v=20261007c"></script>
+    <script src="i18n.js?v=20261007c"></script>
+  </head>
+  <body>
+    <nav class="langSel" data-i18n-aria-label="dp.langAria" aria-label="Language / Langue / Sprache">
+      <button type="button" data-lang-btn="fr" aria-pressed="false" lang="fr" data-i18n-title="dp.langFr" title="Français">FR</button>
+      <button type="button" data-lang-btn="de" aria-pressed="false" lang="de" data-i18n-title="dp.langDe" title="Deutsch">DE</button>
+      <button type="button" data-lang-btn="en" aria-pressed="false" lang="en" data-i18n-title="dp.langEn" title="English">EN</button>
+    </nav>
+
+    <main class="app-shell">
+      <section class="panel active" id="panel-game" data-i18n-aria-label="dp.title" aria-label="12 pentominoes, one order">
+        <h1 class="visually-hidden" data-i18n="dp.title">12 pentominoes, one order</h1>
+        <div class="game-layout" id="dp-layout" data-phase="idle">
+          <span class="side-brand">Fence Challenge</span>
+
+          <div class="game-toolbar">
+            <div class="measure dp-pill" id="dp-pill" data-i18n-title="dp.pillTip" title="Area, counted along the boundary"><span class="area-word" data-i18n="common.areaLabel">Area</span><strong class="area-num" id="area-value">0</strong><button class="math-chip dp-pillchip" type="button" data-math="m.area" data-i18n-aria-label="dp.chip.area" aria-label="The mathematics of the area" aria-expanded="false" aria-haspopup="dialog" hidden>∑</button></div>
+            <span class="dp-prev" id="dp-prev" hidden></span>
+          </div>
+
+          <aside class="dock-panel">
+            <div class="piece-actions">
+              <button id="dp-step" class="ctl act" type="button" aria-keyshortcuts="Space" data-i18n-title="dp.stepTip" data-i18n-aria-label="dp.stepTip" title="One more piece" aria-label="One more piece"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 5.5v13l9-6.5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M18.5 5.5v13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button>
+              <button id="dp-play" class="ctl act" type="button" aria-keyshortcuts="Enter" data-playing="false" data-i18n-title="dp.playTip" data-i18n-aria-label="dp.playTip" title="Run the whole order" aria-label="Run the whole order"><svg class="icoPlay" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 5l12 7-12 7z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><svg class="icoPause" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8.5 5.5v13M15.5 5.5v13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+              <button id="dp-shuffle" class="ctl act" type="button" data-i18n-title="dp.shuffleTip" data-i18n-aria-label="dp.shuffleTip" title="Shuffle the order" aria-label="Shuffle the order"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h3.5c4.5 0 5.5 10 10 10H20M4 17h3.5c1.7 0 2.8-1.4 3.7-3.2M14 9.6C14.9 8.1 16 7 17.5 7H20M17.6 4.4 20.2 7l-2.6 2.6M17.6 14.4l2.6 2.6-2.6 2.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <button class="math-chip dp-sidechip" type="button" data-math="m.orders" data-i18n-aria-label="dp.chip.orders" aria-label="The mathematics of the orders" aria-expanded="false" aria-haspopup="dialog" hidden>∑</button>
+              <span class="lab-nav">
+              <span class="ctl nav" role="link" aria-disabled="true" tabindex="0" data-i18n-aria-label="lab.homeSoon" data-i18n-title="lab.homeSoon" aria-label="The home page for this paper’s labs is coming soon" title="The home page for this paper’s labs is coming soon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 11.4 12 4.6l8 6.8M6.4 9.6v9.9h4.2v-5.4h2.8v5.4h4.2V9.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <a class="ctl nav" href="../cube-lab/" data-i18n-aria-label="dp.toCube" data-i18n-title="dp.toCube" aria-label="Walls in 3D" title="Walls in 3D"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.5 19.5 7.7v8.6L12 20.5l-7.5-4.2V7.7z M4.5 7.7 12 12l7.5-4.3M12 12v8.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></a>
+              <a class="ctl nav" href="../hexomino-lab/" data-i18n-aria-label="dp.toHexo" data-i18n-title="dp.toHexo" aria-label="The hexomino lab" title="The hexomino lab"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 8h4V4h4v4h4v4h4v4h-8v4H8v-4H4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></a>
+            </span>
+            </div>
+            <div id="piece-tray" class="piece-tray piece-dock dp-tray" role="group" data-i18n-aria-label="dp.trayAria" aria-label="The 12 pentominoes: tap to put a piece in the order or take it out"></div>
+          </aside>
+
+          <div class="game-main">
+            <div class="board-stage" id="dp-stage">
+              <canvas id="game-board" width="900" height="900" tabindex="0" role="img" data-i18n-aria-label="dp.boardAria" aria-label="The grid: glowing dots are the ends the boundary can reach after each piece; the start is the ringed corner."></canvas>
+              <canvas id="dp-layer" width="900" height="900" aria-hidden="true"></canvas>
+              <button class="math-chip dp-layerchip" type="button" data-math="m.layer" data-i18n-aria-label="dp.chip.layer" aria-label="The mathematics of the steps" aria-expanded="false" aria-haspopup="dialog" hidden>∑</button>
+            </div>
+          </div>
+
+          <footer class="boardbar game-bar">
+            <button id="dp-clear" class="ctl quiet erase" type="button" data-arm="common.clearConfirm" data-i18n-aria-label="dp.clear" data-i18n-title="dp.clear" aria-label="Empty the order" title="Empty the order"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 6.8h15M9.5 6.6V4.4h5v2.2M6.6 6.9l.9 12.7h9l.9-12.7M10.2 10.4v6M13.8 10.4v6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <span class="bar-gap"></span>
+            <button id="dp-worst" class="ctl dp-reveal" type="button" aria-pressed="false" data-i18n-title="dp.worstTip" data-i18n-aria-label="dp.worstTip" title="The worst order" aria-label="The worst order"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 19.5h15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button>
+            <button class="math-chip dp-sidechip" type="button" data-math="m.worst" data-i18n-aria-label="dp.chip.worst" aria-label="The mathematics of the worst order" aria-expanded="false" aria-haspopup="dialog" hidden>∑</button>
+            <button id="dp-best" class="ctl dp-reveal" type="button" aria-pressed="false" data-i18n-title="dp.bestTip" data-i18n-aria-label="dp.bestTip" title="The best order" aria-label="The best order"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.5l-5.1 2.7 1-5.6-4.1-4 5.7-.8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></button>
+            <button class="math-chip dp-sidechip" type="button" data-math="m.best" data-i18n-aria-label="dp.chip.best" aria-label="The mathematics of the best order" aria-expanded="false" aria-haspopup="dialog" hidden>∑</button>
+          </footer>
+        </div>
+        <p class="visually-hidden" id="dp-status" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <script defer src="../lattice-square.js?v=20261007c"></script>
+    <script defer src="../fence-analysis.js?v=20261007c"></script>
+    <script defer src="../piece-engine.js?v=20261007c"></script>
+    <script defer src="../play-ui.js?v=20261007c"></script>
+    <script defer src="../cube-lab/math-chip.js?v=20261007c"></script>
+    <script defer src="../lab-tip.js?v=20261007c"></script>
+    <script defer src="dp.js?v=20261007c"></script>
+    <script defer src="data/orders.js?v=20261007c"></script>
+    <script defer src="app.js?v=20261007c"></script>
+  </body>
+</html>
