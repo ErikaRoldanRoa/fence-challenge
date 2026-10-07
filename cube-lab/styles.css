@@ -138,7 +138,7 @@ body[data-busy] #space { cursor: progress; }
 .dock { grid-area: dock; display: flex; flex-direction: column; gap: 12px; min-height: 0; min-width: 0; }
 .trayZone { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .acts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.acts .ctl[aria-disabled="true"] { opacity: 0.32; pointer-events: none; }
+.acts .ctl[aria-disabled="true"] { opacity: 0.32; cursor: not-allowed; }
 .acts #undo { margin-left: auto; }
 
 .tray {
@@ -209,7 +209,7 @@ body[data-play="explore"][data-mode="penta"] .wallsRow { display: flex; }
 /* The ladder: back, the room, on, then one dot per room (gold once wrapped). */
 .rooms { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .ctl.roomStep { width: 44px; height: 44px; }
-.ctl.roomStep[aria-disabled="true"] { opacity: 0.25; pointer-events: none; }
+.ctl.roomStep[aria-disabled="true"] { opacity: 0.25; cursor: not-allowed; }
 .roomPic { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 12px; border: 1px solid var(--room); background: rgba(255, 211, 110, 0.12); box-shadow: 0 0 14px rgba(255, 211, 110, 0.3); }
 .roomPic img { width: 44px; height: 44px; }
 .roomPic.done { background: rgba(255, 211, 110, 0.32); }

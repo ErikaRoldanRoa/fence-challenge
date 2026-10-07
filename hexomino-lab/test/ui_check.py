@@ -174,11 +174,90 @@ def run(browser, lang, vp, touch, shots):
     ctx.close()
 
 
+
+
+def tip_checks(browser, url, ready, items, home_sel, touch_sel, tag):
+    """The shared bubble (../lab-tip.js): hover, keyboard focus, touch long
+    press, the disabled home, no native title, no layout shift."""
+    for lang in ("en", "fr", "de"):
+        ctx = browser.new_context(viewport={"width": 1400, "height": 900}, bypass_csp=True)
+        pg = ctx.new_page()
+        pg.add_init_script(f"localStorage.setItem('fc-lang','{lang}')")
+        pg.goto(url)
+        pg.wait_for_function(ready)
+        pg.wait_for_timeout(300)
+        bubble = lambda: pg.evaluate("(() => { const t = document.querySelector('.lab-tip'); return t && t.classList.contains('on') ? t.textContent : null; })()")
+        check(pg.evaluate("document.querySelectorAll('body [title]').length") == 0, f"{tag} {lang}: no native title left")
+        before = pg.evaluate("JSON.stringify([...document.querySelectorAll('.ctl, .chip, canvas')].map(e => { const r = e.getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; }))")
+        for sel, key in items:
+            pg.mouse.move(5, 5)
+            pg.wait_for_timeout(80)
+            box = pg.locator(sel).first.bounding_box()
+            pg.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+            pg.wait_for_timeout(120)
+            early = bubble()
+            pg.wait_for_timeout(300)
+            want = pg.evaluate(f"window.i18n.t({key!r})")
+            check(early is None and bubble() == want, f"{tag} {lang}: hover {sel} shows '{want}' after a delay")
+        if lang == "en":
+            pg.screenshot(path=str(OUT / f"{tag}-tip-hover.png"))
+        after = pg.evaluate("JSON.stringify([...document.querySelectorAll('.ctl, .chip, canvas')].map(e => { const r = e.getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; }))")
+        check(before == after, f"{tag} {lang}: the bubble moves nothing")
+        # the disabled home explains itself and goes nowhere
+        url0 = pg.url
+        box = pg.locator(home_sel).bounding_box()
+        pg.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        pg.wait_for_timeout(450)
+        check(bubble() == pg.evaluate("window.i18n.t('lab.homeSoon')"), f"{tag} {lang}: the disabled home explains itself")
+        if lang == "fr":
+            pg.screenshot(path=str(OUT / f"{tag}-tip-home-fr.png"))
+        pg.click(home_sel, force=True)
+        pg.wait_for_timeout(200)
+        check(pg.url == url0, f"{tag} {lang}: the disabled home does not navigate")
+        # keyboard focus
+        pg.mouse.move(5, 5)
+        pg.focus(items[0][0])
+        pg.keyboard.press("Shift+Tab")
+        pg.keyboard.press("Tab")
+        pg.wait_for_timeout(60)
+        check(bubble() is not None, f"{tag} {lang}: keyboard focus shows the bubble")
+        ctx.close()
+    # touch: a long press explains, a tap does not
+    ctx = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, device_scale_factor=2, bypass_csp=True)
+    pg = ctx.new_page()
+    pg.add_init_script("localStorage.setItem('fc-lang','de')")
+    pg.goto(url)
+    pg.wait_for_function(ready)
+    pg.wait_for_timeout(300)
+    bubble = lambda: pg.evaluate("(() => { const t = document.querySelector('.lab-tip'); return t && t.classList.contains('on') ? t.textContent : null; })()")
+    box = pg.locator(touch_sel).bounding_box()
+    pg.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    pg.wait_for_timeout(600)
+    check(bubble() is None, f"{tag}: a tap shows no bubble")
+    pg.evaluate(f"""(() => {{ const el = document.querySelector({touch_sel!r}); const r = el.getBoundingClientRect();
+      const o = {{ bubbles: true, pointerType: 'touch', pointerId: 7, clientX: r.x + r.width / 2, clientY: r.y + r.height / 2 }};
+      el.dispatchEvent(new PointerEvent('pointerdown', o)); window.__lp = () => el.dispatchEvent(new PointerEvent('pointerup', o)); }})()""")
+    pg.wait_for_timeout(250)
+    check(bubble() is None, f"{tag}: not yet at 250 ms of a press")
+    pg.wait_for_timeout(350)
+    check(bubble() is not None, f"{tag}: a long press shows the bubble")
+    pg.screenshot(path=str(OUT / f"{tag}-tip-longpress-de.png"))
+    pg.evaluate("window.__lp()")
+    pg.wait_for_timeout(200)
+    check(bubble() is not None, f"{tag}: the bubble stays a moment after the press")
+    pg.wait_for_timeout(1700)
+    check(bubble() is None, f"{tag}: then it goes")
+    ctx.close()
+
+
 with sync_playwright() as p:
     b = p.chromium.launch()
     for lang in ("en", "fr", "de"):
         run(b, lang, {"width": 1400, "height": 900}, False, True)
         run(b, lang, {"width": 390, "height": 844}, True, True)
+    print("[tips]")
+    tip_checks(b, URL, "window.hexLab", [("#rotate", "hx.rotate"), ("#mode-build", "hx.build"), ("#zoom-in", "hx.zoomIn")],
+               ".lab-nav [aria-disabled='true']", "#mode-build", "hexo")
     b.close()
 
 print(json.dumps({"failed": fails}, ensure_ascii=False))

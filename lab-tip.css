@@ -1,0 +1,62 @@
+/* Fence Challenge · lab-tip: the bubble that explains a control (lab-tip.js).
+ * Dark glass, a neon-cyan hairline, Manrope 13 px, a small arrow towards
+ * the control; above it, or below when there is no room. */
+.lab-tip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 10000;
+  max-width: 240px;
+  padding: 7px 11px 8px;
+  border-radius: 10px;
+  background: rgba(10, 13, 19, 0.92);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(47, 243, 255, 0.55);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 14px rgba(47, 243, 255, 0.14);
+  color: #e6faff;
+  font: 500 13px/1.35 "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  letter-spacing: 0.01em;
+  text-align: center;
+  overflow-wrap: break-word;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(3px);
+  transition: opacity 0.12s ease, transform 0.12s ease, visibility 0s linear 0.12s;
+}
+.lab-tip.on {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity 0.12s ease, transform 0.12s ease, visibility 0s;
+}
+.lab-tip.below { transform: translateY(-3px); }
+.lab-tip.below.on { transform: none; }
+
+/* The arrow: a small rotated square on the edge facing the control. */
+.lab-tip-arrow {
+  position: absolute;
+  bottom: -5px;
+  width: 9px;
+  height: 9px;
+  margin-left: -5px;
+  background: rgba(10, 13, 19, 0.96);
+  border-right: 1px solid rgba(47, 243, 255, 0.55);
+  border-bottom: 1px solid rgba(47, 243, 255, 0.55);
+  transform: rotate(45deg);
+}
+.lab-tip.below .lab-tip-arrow {
+  bottom: auto;
+  top: -5px;
+  border: 0;
+  border-left: 1px solid rgba(47, 243, 255, 0.55);
+  border-top: 1px solid rgba(47, 243, 255, 0.55);
+}
+
+/* A long press explains a control instead of opening the callout menu. */
+[data-lab-tip], .ctl, .chip, .math-chip { -webkit-touch-callout: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-tip, .lab-tip.on { transition: none; transform: none; }
+}

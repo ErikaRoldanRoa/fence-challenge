@@ -107,10 +107,10 @@
     arrows.setAttribute("aria-disabled", ref ? "false" : "true");
     arrows.title = ref ? t("hx.arrows") : t("hx.noArrows");
     const chosenPlaced = sel !== null && placed.has(sel);
-    $("remove").disabled = !chosenPlaced;
-    $("rotate").disabled = sel === null;
-    $("flip").disabled = sel === null;
-    $("undo").disabled = !undoStack.length;
+    $("remove").setAttribute("aria-disabled", chosenPlaced ? "false" : "true");
+    $("rotate").setAttribute("aria-disabled", sel === null ? "true" : "false");
+    $("flip").setAttribute("aria-disabled", sel === null ? "true" : "false");
+    $("undo").setAttribute("aria-disabled", undoStack.length ? "false" : "true");
   }
   function syncJump() {
     const j = $("jump");
