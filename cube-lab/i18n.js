@@ -7,6 +7,8 @@
   var NB = " ";
 
   var fr = {
+    "cu.s.overlap": "Elle chevauche une autre pièce" + NB + ": continue à la déplacer, ou elle revient en place quand tu la lâches.",
+    "cu.s.reverted": "Elle chevauchait" + NB + ": elle est revenue là où elle tenait.",
     "cu.docTitle.tetra": "8 tétracubes · Fence Challenge",
     "cu.docTitle.penta": "29 pentacubes · Fence Challenge",
     "cu.title": "une muraille en 3D",
@@ -67,7 +69,6 @@
     "cu.s.noRoom": "Pas de place ici pour cette pièce.",
     "cu.s.selected": "Pièce {n} choisie. Tourne-la, déplace-la ou remets-la dans la réserve.",
     "cu.s.selectFirst": "Choisis d’abord une pièce posée.",
-    "cu.s.blocked": "Pas possible" + NB + ": ça cogne ou ça sort de l’espace.",
     "cu.s.moved": "Pièce déplacée.",
     "cu.s.turned": "Pièce tournée.",
     "cu.s.removed": "Pièce remise dans la réserve.",
@@ -89,6 +90,8 @@
   };
 
   var de = {
+    "cu.s.overlap": "Es überlappt ein anderes Teil: Verschieb es weiter, sonst kehrt es beim Loslassen zurück.",
+    "cu.s.reverted": "Es überlappte: Es ist dorthin zurück, wo es passte.",
     "cu.docTitle.tetra": "8 Tetrakuben · Fence Challenge",
     "cu.docTitle.penta": "29 Pentakuben · Fence Challenge",
     "cu.title": "eine Mauer in 3D",
@@ -149,7 +152,6 @@
     "cu.s.noRoom": "Hier ist kein Platz für dieses Teil.",
     "cu.s.selected": "Teil {n} gewählt. Dreh es, verschieb es oder leg es zurück.",
     "cu.s.selectFirst": "Wähl zuerst ein gesetztes Teil.",
-    "cu.s.blocked": "Geht nicht: Es stößt an oder verlässt den Raum.",
     "cu.s.moved": "Teil verschoben.",
     "cu.s.turned": "Teil gedreht.",
     "cu.s.removed": "Teil zurückgelegt.",
@@ -171,6 +173,8 @@
   };
 
   var en = {
+    "cu.s.overlap": "It overlaps another piece: keep moving it, or it goes back when you let go.",
+    "cu.s.reverted": "It overlapped: it went back to where it fitted.",
     "cu.docTitle.tetra": "8 tetracubes · Fence Challenge",
     "cu.docTitle.penta": "29 pentacubes · Fence Challenge",
     "cu.title": "a wall in 3D",
@@ -231,7 +235,6 @@
     "cu.s.noRoom": "No room here for this piece.",
     "cu.s.selected": "Piece {n} chosen. Turn it, move it or put it back.",
     "cu.s.selectFirst": "Choose a placed piece first.",
-    "cu.s.blocked": "Not possible: it bumps into something or leaves the space.",
     "cu.s.moved": "Piece moved.",
     "cu.s.turned": "Piece turned.",
     "cu.s.removed": "Piece back in the tray.",

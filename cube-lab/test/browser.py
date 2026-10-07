@@ -197,14 +197,18 @@ def run(browser, name, w, h, touch):
         if moved == p0:
             print("    debug drag:", sel, cell, shift, p0, start, dest, pg.inner_text("#status"), st()["sel"])
 
-    # 7. a refused move shows red and changes nothing
+    # 7. a move out of the space is held in red; letting go brings it back
     s = st()
+    sel0 = s["sel"]
     for _ in range(12):
         pg.click('[data-nudge="left"]')
     for _ in range(12):
         pg.click('[data-nudge="up"]')
-    stuck = st()["pieces"][0]["cells"]
-    check(all(0 <= c[0] < 9 and 0 <= c[2] < 9 for c in stuck), "moves stop at the edge of the space")
+    check(st()["clash"] and st()["sel"] == sel0, "moved past the edge, the piece is held in red")
+    pg.keyboard.press("Escape")
+    back = st()["pieces"][0]["cells"]
+    check(all(0 <= c[0] < 9 and 0 <= c[2] < 9 for c in back) and not st()["clash"], "letting go there brings it back inside")
+    pg.evaluate(f"cubeLab.select({sel0})")
 
     # 8. put it back, undo
     n = len(st()["pieces"])
@@ -327,6 +331,43 @@ def run(browser, name, w, h, touch):
     ctx.close()
 
 
+def held_piece(browser):
+    # A held piece turns and moves freely; the camera stays still; letting go
+    # while it overlaps puts it back.
+    print("[held piece]")
+    ctx = browser.new_context(viewport={"width": 1400, "height": 900}, bypass_csp=True)
+    pg = ctx.new_page()
+    pg.add_init_script("localStorage.setItem('fc-lang','en')")
+    pg.goto(URL)
+    pg.wait_for_function("window.cubeLab")
+    st = lambda: pg.evaluate("cubeLab.state()")
+    line = [[2, 0, 4], [3, 0, 4], [4, 0, 4], [5, 0, 4]]
+    block = [[4, 0, 6], [5, 0, 6], [4, 0, 7], [5, 0, 7]]
+    pg.evaluate(f"cubeLab.place({json.dumps([line, block])})")
+    pg.evaluate("cubeLab.select(0)")
+    pg.wait_for_timeout(100)
+    cam0 = (st()["camTarget"], st()["camR"])
+    pg.click("#turn")
+    s = st()
+    check(s["clash"] and s["sel"] == 0, "a quarter turn into the other piece is kept, in red, still held")
+    check((s["camTarget"], s["camR"]) == cam0, "turning does not move the camera")
+    pg.screenshot(path=f"{OUT}/held-clash.png")
+    pg.click("#turn")
+    s = st()
+    got = sorted(map(tuple, s["pieces"][0]["cells"]))
+    check(not s["clash"] and got == [(3, 0, 4), (4, 0, 4), (5, 0, 4), (6, 0, 4)], "a half turn through the collision ends valid")
+    pg.click('[data-nudge="right"]')
+    check((st()["camTarget"], st()["camR"]) == cam0, "moving inside the picture does not move the camera")
+    pg.click("#undo")
+    pg.evaluate("cubeLab.select(0)")
+    pg.click("#turn")
+    check(st()["clash"], "overlapping again")
+    pg.keyboard.press("Escape")
+    s = st()
+    check(s["sel"] is None and not s["clash"] and sorted(map(tuple, s["pieces"][0]["cells"])) == sorted(map(tuple, line)), "letting go while overlapping puts it back")
+    ctx.close()
+
+
 def faces_only(browser):
     # ?conn=6: the chips speak of faces only and drop the corner arguments.
     print("[faces only]")
@@ -428,6 +469,7 @@ with sync_playwright() as p:
     run(b, "desktop", 1400, 900, False)
     run(b, "phone", 390, 844, True)
     faces_only(b)
+    held_piece(b)
     print("[tips]")
     tip_checks(b, URL, "window.cubeLab", [("#mode-penta", "cu.mode.pentaTip"), ("#turn", "cu.turnTip"), ("#cast", "cu.castTip"), ("#play-wrap", "cu.play.wrap")],
                ".lab-nav [aria-disabled='true']", "#mode-penta", "cube")

@@ -138,8 +138,15 @@
     return out;
   }
 
+  // The wall that counts: every piece but a held one that overlaps.
+  function wallCells() {
+    var out = [];
+    board().pieces.forEach(function (p) { if (!p.clash) p.cells.forEach(function (c) { out.push(c); }); });
+    return out;
+  }
+
   function measure() {
-    last = G.enclosed(allCells(), CONN);
+    last = G.enclosed(wallCells(), CONN);
     var r = board().room, was = solved;
     if (r) {
       var inside = {};
@@ -202,7 +209,8 @@
       p.cells.forEach(function (c) {
         cellPos(c, pos).add(off);
         dummy.position.copy(pos);
-        dummy.scale.setScalar(c[1] >= cut || scale <= 0 ? 0.0001 : scale);
+        // A held piece that overlaps is drawn as see-through red glass instead.
+        dummy.scale.setScalar(c[1] >= cut || scale <= 0 || p.clash ? 0.0001 : scale);
         dummy.updateMatrix();
         cubes.setMatrixAt(i, dummy.matrix);
         cubes.setColorAt(i, col);
@@ -283,6 +291,11 @@
       var g = new THREE.Mesh(shellGeo, selGlow);
       g.position.copy(l.position);
       outline.add(g);
+      if (p.clash) {
+        var r = new THREE.Mesh(boxGeo, ghostBad);
+        r.position.copy(l.position);
+        outline.add(r);
+      }
     });
     world.add(outline);
   }
@@ -426,6 +439,29 @@
     placeCamera();
   }
 
+  // Keep the camera still while editing; move it (smoothly) only when what
+  // is built would leave the picture.
+  var tween = null;
+  function ensureVisible() {
+    var sp = contentSphere(), v = new THREE.Vector3(), out = false;
+    camera.updateMatrixWorld();
+    var box = [[-1, -1, -1], [1, -1, -1], [-1, 1, -1], [1, 1, -1], [-1, -1, 1], [1, -1, 1], [-1, 1, 1], [1, 1, 1]];
+    var rr = sp.radius * 0.58;
+    box.forEach(function (d) {
+      v.set(sp.center.x + d[0] * rr, sp.center.y + d[1] * rr, sp.center.z + d[2] * rr).project(camera);
+      if (v.z > 1 || Math.abs(v.x) > 0.96 || Math.abs(v.y) > 0.96) out = true;
+    });
+    if (!out) return;
+    var from = { r: view.r, t: view.target.clone() };
+    fit();
+    var to = { r: view.r, t: view.target.clone() };
+    if (reduceMotion) return;
+    view.r = from.r;
+    view.target.copy(from.t);
+    placeCamera();
+    tween = { start: performance.now(), from: from, to: to };
+  }
+
   function placeCamera() {
     view.phi = Math.max(0.12, Math.min(Math.PI - 0.12, view.phi));
     view.r = Math.max(view.minR, Math.min(200, view.r));
@@ -482,14 +518,45 @@
     var b = board();
     if (i == null || isPlaced(i)) b.hand = null;
     else if (b.hand !== i) { b.hand = i; b.orient = 0; }
+    release();
     b.sel = null;
     draw();
     if (b.hand != null) say("cu.s.chosen", { n: i + 1 });
   }
 
+  /* The selected piece is held: turns and moves always apply. If it then
+   * overlaps another piece or leaves the space it shows red and does not
+   * count; letting go of it there puts it back where it last fitted. */
+  function where(cells) { return cells.map(G.key).sort().join(";"); }
+  function hold(p) { p.fit = p.cells.map(function (c) { return c.slice(); }); p.clash = false; }
+
+  // Let go of the held piece; true if it had to go back.
+  function release() {
+    var b = board(), p = b.sel != null ? b.pieces[b.sel] : null;
+    if (!p) return false;
+    var back = false;
+    if (p.clash) {
+      showConflict(p.cells);
+      p.cells = p.fit;
+      p.clash = false;
+      back = true;
+      say("cu.s.reverted");
+    }
+    if (b.selUndo && where(p.cells) === b.selUndo.at) {
+      // Back where it started: nothing to undo.
+      b.undo.pop();
+    }
+    b.selUndo = null;
+    delete p.fit;
+    if (back) measure();
+    return back;
+  }
+
   function select(pi) {
     var b = board();
+    release();
     b.sel = pi != null && b.pieces[pi] ? pi : null;
+    if (b.sel != null) hold(b.pieces[b.sel]);
     b.hand = null;
     cursor = null;
     draw();
@@ -498,6 +565,7 @@
 
   function letGo() {
     var b = board();
+    release();
     b.sel = null;
     b.hand = null;
     cursor = null;
@@ -515,13 +583,15 @@
     }
     remember();
     var b = board(), placedShape = b.hand;
+    release();
     b.pieces.push({ shape: placedShape, cells: cells });
     b.hand = null;
     b.sel = keepSelected ? b.pieces.length - 1 : null;
+    if (b.sel != null) hold(b.pieces[b.sel]);
     cursor = null;
     measure();
     draw();
-    fit();
+    ensureVisible();
     if (b.pieces.length === shapes[mode].length) say("cu.s.allUsed", { n: shapes[mode].length });
     else say("cu.s.placed", { n: placedShape + 1 });
     sayVolume();
@@ -530,6 +600,7 @@
 
   function removeSelected() {
     var b = board();
+    b.selUndo = null;
     if (b.sel == null || !b.pieces[b.sel]) { say("cu.s.selectFirst"); return; }
     remember();
     b.pieces.splice(b.sel, 1);
@@ -539,18 +610,29 @@
     say("cu.s.removed");
   }
 
+  // Apply a new pose to the held piece; it may overlap for now.
+  function setHeld(cells, word) {
+    var b = board(), p = b.pieces[b.sel];
+    if (!p.fit) hold(p);
+    if (!b.selUndo) {
+      remember();
+      b.selUndo = { at: where(p.cells) };
+    }
+    p.cells = cells;
+    p.clash = !fits(cells, b.sel);
+    if (!p.clash) p.fit = cells.map(function (c) { return c.slice(); });
+    measure();
+    draw();
+    ensureVisible();
+    if (p.clash) say("cu.s.overlap");
+    else { say(word); sayVolume(); }
+    return !p.clash;
+  }
+
   function moveSelected(d) {
     var b = board(), p = b.pieces[b.sel];
     if (!p) return false;
-    var cells = p.cells.map(function (c) { return [c[0] + d[0], c[1] + d[1], c[2] + d[2]]; });
-    if (!fits(cells, b.sel)) { showConflict(cells); say("cu.s.blocked"); return false; }
-    remember();
-    p.cells = cells;
-    measure();
-    draw();
-    say("cu.s.moved");
-    sayVolume();
-    return true;
+    return setHeld(p.cells.map(function (c) { return [c[0] + d[0], c[1] + d[1], c[2] + d[2]]; }), "cu.s.moved");
   }
 
   // Turning: turn spins about the vertical (y), tip rolls about the
@@ -569,14 +651,7 @@
       var turned = p.cells.map(function (c) { var q = r([c[0] - mid[0], c[1] - mid[1], c[2] - mid[2]]); return [q[0] + mid[0], q[1] + mid[1], q[2] + mid[2]]; });
       var lift = Math.min.apply(null, p.cells.map(function (c) { return c[1]; })) - Math.min.apply(null, turned.map(function (c) { return c[1]; }));
       turned = turned.map(function (c) { return [c[0], c[1] + lift, c[2]]; });
-      if (!fits(turned, b.sel)) { showConflict(turned); say("cu.s.blocked"); return; }
-      remember();
-      p.cells = turned;
-      measure();
-      draw();
-      fit();
-      say("cu.s.turned");
-      sayVolume();
+      setHeld(turned, "cu.s.turned");
       return;
     }
     var s = shapes[mode][b.hand];
@@ -594,6 +669,7 @@
     if (!b.undo.length) { say("cu.s.nothingToUndo"); return; }
     b.pieces = b.undo.pop();
     b.sel = null;
+    b.selUndo = null;
     if (b.hand != null && isPlaced(b.hand)) b.hand = null;
     measure();
     draw();
@@ -621,6 +697,7 @@
   function setCast(goal, quiet) {
     castGoal = goal;
     var b = board();
+    release();
     b.sel = null; b.hand = null; cursor = null;
     document.body.toggleAttribute("data-cast", goal === 1);
     $("cast").setAttribute("aria-pressed", goal ? "true" : "false");
@@ -891,6 +968,10 @@
   }
 
   function refresh(keepView) {
+    Object.keys(boards).forEach(function (k) {
+      boards[k].pieces.forEach(function (p) { if (p.clash && p.fit) p.cells = p.fit; p.clash = false; delete p.fit; });
+      boards[k].selUndo = null;
+    });
     document.body.setAttribute("data-mode", mode);
     document.body.setAttribute("data-play", play);
     document.title = t("cu.docTitle." + mode);
@@ -1124,17 +1205,12 @@
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinch = 0;
     if (drag && dragGhost && e.type === "pointerup") {
-      var b = board(), p = b.pieces[b.sel];
-      if (dragGhost.ok && dragGhost.moved && p) {
-        remember();
-        p.cells = dragGhost.cells;
-        measure();
-        say("cu.s.moved");
-        sayVolume();
-      } else if (!dragGhost.ok) say("cu.s.blocked");
+      var b = board(), p = b.pieces[b.sel], cells = dragGhost.cells, go = dragGhost.moved;
       dragGhost = null;
       drag = null;
-      draw();
+      // Dropped where it overlaps, it stays held, in red, like a turn.
+      if (go && p) setHeld(cells, "cu.s.moved");
+      else draw();
       return;
     }
     drag = null;
@@ -1249,9 +1325,9 @@
   });
   $("spread").addEventListener("input", function (e) {
     spread = +e.target.value / 100;
-    if (spread) { board().sel = null; board().hand = null; cursor = null; }
+    if (spread) { release(); board().sel = null; board().hand = null; cursor = null; }
     draw();
-    fit();
+    ensureVisible();
   });
   document.querySelectorAll("[data-lang-btn]").forEach(function (btn) {
     btn.addEventListener("click", function () { if (window.i18n) window.i18n.setLang(btn.getAttribute("data-lang-btn")); });
@@ -1364,6 +1440,7 @@
     loadWall: function (id) { var w = WALLS.find(function (x) { return x.id === id; }); if (w) loadWall(w); },
     setMode: setMode,
     setPlay: setPlay,
+    select: function (i) { select(i); },
     toggleCast: toggleCast,
     rooms: function () { return ROOMS.map(function (r) { return { id: r.id, step: r.step, room: r.room, witness: r.witness }; }); },
     // For tests: put pieces (lists of cells, shifted by `off`) on the board.
@@ -1376,13 +1453,14 @@
       });
       measure();
       draw();
-      fit();
+      ensureVisible();
     },
     state: function () {
       var b = board(), dist = camera.position.distanceTo(view.target);
       return { play: play, room: b.room ? b.room.id : null, roomCells: b.room ? b.room.cells : null, solved: solved, busy: busy,
         cast: cast, castGoal: castGoal, mode: mode, hand: b.hand, sel: b.sel, orient: b.orient, cursor: cursor,
         undo: b.undo.length, volume: last.volume, regions: last.regions, camR: dist, minR: view.minR, frames: frames,
+        camTarget: view.target.toArray(), clash: b.sel != null && b.pieces[b.sel] ? !!b.pieces[b.sel].clash : false,
         pieces: b.pieces.map(function (p) { return { shape: p.shape, cells: p.cells }; }) };
     }
   };
@@ -1401,6 +1479,13 @@
   // Draw only when something changed or moves.
   var frames = 0;
   function loop(now) {
+    if (tween) {
+      var q = Math.min(1, (now - tween.start) / 380), e = q * q * (3 - 2 * q);
+      view.r = tween.from.r + (tween.to.r - tween.from.r) * e;
+      view.target.lerpVectors(tween.from.t, tween.to.t, e);
+      placeCamera();
+      if (q >= 1) tween = null;
+    }
     if (castAnim) {
       var k = Math.min(1, (now - castAnim.start) / 1100);
       cast = castAnim.from + (castGoal - castAnim.from) * k;
