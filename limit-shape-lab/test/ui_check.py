@@ -47,8 +47,8 @@ with sync_playwright() as p:
             check(TITLES[lang] in pg.title(), f"{tag}: title in the language")
             check(sorted(st["chips"]) == ["arrow", "count", "gap", "loop"], f"{tag}: chips at n = 4: {st['chips']}")
             check(st["tiles"], f"{tag}: the tetrominoes sit on tiles")
-            nav = pg.eval_on_selector_all(".lab-nav > *", "els => els.map(e => e.getAttribute('aria-disabled') === 'true' ? 'home' : e.getAttribute('href'))")
-            check(nav == ["home", "../cube-lab/", "../hexomino-lab/", "../pentomino-dp-lab/"], f"{tag}: nav order {nav}")
+            nav = pg.eval_on_selector_all(".lab-nav > *", "els => els.map(e => e.getAttribute('href'))")
+            check(nav == ["../hub/", "../cube-lab/", "../hexomino-lab/", "../pentomino-dp-lab/"], f"{tag}: nav order {nav}")
             check(st["maxLoupe"] * abs(st["gap"]) <= 0.6 + 1e-9, f"{tag}: loupe capped at n = 4 (×{st['maxLoupe']:.2f})")
             check(pg.get_attribute("#fewer", "aria-disabled") == "true", f"{tag}: no step below 4")
             check(abs(st["gap"] - 0.17851) < 1e-4, f"{tag}: gap at n = 4 is 17.9 %")
@@ -123,14 +123,15 @@ with sync_playwright() as p:
                 pg.wait_for_timeout(450)
                 tip = pg.inner_text("#lab-tip") if pg.query_selector("#lab-tip") else ""
                 check(len(tip) > 5 and pg.get_attribute("#more", "title") is None, f"{tag}: + explains itself in a bubble")
-                home = pg.query_selector(".lab-nav [aria-disabled='true']")
+                home = pg.query_selector(".lab-nav a[href='../hub/']")
                 home.hover()
                 pg.wait_for_timeout(450)
-                check(len(pg.inner_text("#lab-tip")) > 10, f"{tag}: the disabled home explains itself")
-                url = pg.url
-                home.click(force=True)
-                pg.wait_for_timeout(300)
-                check(pg.url == url, f"{tag}: the disabled home does not navigate")
+                check(pg.inner_text("#lab-tip") == pg.evaluate("i18n.t('lab.home')"), f"{tag}: the home explains itself")
+                home.click()
+                pg.wait_for_url("**/hub/")
+                check(pg.locator("a.card").count() >= 11, f"{tag}: the home lands on the hub")
+                pg.go_back()
+                pg.wait_for_function("window.limitLab && !limitLab.busy()")
             if mobile:
                 cdp = ctx.new_cdp_session(pg)
                 def long_press(sel, ms=900):

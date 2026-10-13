@@ -81,11 +81,10 @@ with sync_playwright() as p:
             check(not ev(pg, "document.querySelector('[data-math=\"m.orders\"]').hidden"), f"{tag}: orders chip shows")
             press(pg, '[data-piece-id="I"]', phone); pg.wait_for_timeout(100)
             check(ev(pg, "dpLab.order") == "FVW", f"{tag}: I taken out")
-            # Bubbles and the disabled home.
+            # Bubbles and the home link to the hub.
             check(ev(pg, "document.querySelectorAll('[data-lab-tip]').length") >= 20, f"{tag}: bubbles on the controls")
-            before = pg.url
-            pg.click('.lab-nav [aria-disabled="true"]', force=True); pg.wait_for_timeout(200)
-            check(pg.url == before, f"{tag}: home disabled")
+            check(ev(pg, "document.querySelector('.lab-nav > :first-child').getAttribute('href')") == "../hub/", f"{tag}: home links to the hub")
+            check(ev(pg, "document.querySelector('.lab-nav > :first-child').getAttribute('data-lab-tip')") == ev(pg, "i18n.t('lab.home')"), f"{tag}: home explains itself")
             check(not ev(pg, "document.body.innerText.includes('2025')"), f"{tag}: no year on the page")
             check(ev(pg, "document.documentElement.scrollWidth <= window.innerWidth"), f"{tag}: no horizontal overflow")
             # The area number keeps its size after a language switch.

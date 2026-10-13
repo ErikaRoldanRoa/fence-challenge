@@ -1,0 +1,249 @@
+/* Fence Challenge · the hub of all the labs.
+ * One question on top, one shelf per paper, one card per lab (an icon and a
+ * question), the authors and the citation at the bottom. Shared controls,
+ * language switch and bubbles from ../play-ui.css and ../lab-tip.css. */
+:root {
+  --bg: #0d1117;
+  --text: #e9f7ff;
+  --muted: rgba(216, 246, 255, 0.62);
+  --muted2: rgba(216, 246, 255, 0.58);
+  --line: rgba(255, 255, 255, 0.1);
+  --pink: #ff3bd4;
+  --cyan: #2ff3ff;
+  --lime: #70ff7a;
+  --amber: #ffd24a;
+  --purple: #b388ff;
+  --focus: rgba(255, 255, 255, 0.7);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html, body { margin: 0; }
+body {
+  min-height: 100dvh;
+  background:
+    radial-gradient(900px 420px at 10% -10%, rgba(63, 184, 255, 0.14), transparent 60%),
+    radial-gradient(700px 440px at 100% -8%, rgba(255, 59, 212, 0.08), transparent 64%),
+    var(--bg);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  line-height: 1.45;
+}
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+cite { font-style: italic; }
+
+/* ---------- language switch (as in the labs) ---------- */
+.langSel {
+  position: absolute; top: 10px; right: 16px; z-index: 20;
+  display: flex; border-radius: 999px;
+  background: rgba(7, 6, 10, 0.82); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-family: var(--mono);
+}
+.langSel button {
+  cursor: pointer; border: none; color: rgba(255, 255, 255, 0.55);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.04em; border-radius: 999px;
+}
+.langSel button:hover { color: #fff; }
+.langSel button[aria-pressed="true"] { color: #07060a; }
+
+/* ---------- page ---------- */
+.hub {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 72px 24px max(48px, env(safe-area-inset-bottom));
+}
+.hero { text-align: center; margin: 0 0 36px; }
+.brand {
+  margin: 0 0 10px;
+  font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #9eefff;
+  text-shadow: 0 0 10px rgba(47, 243, 255, 0.45);
+}
+.hero h1 {
+  margin: 0;
+  font-size: clamp(30px, 5.2vw, 52px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+/* ---------- shelves ---------- */
+.shelf {
+  margin: 0 0 22px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.018);
+  border: 1px solid var(--line);
+}
+.shelfHead {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 6px 16px;
+  margin: 0 2px 14px;
+}
+.shelfHead h2 {
+  margin: 0;
+  font-size: 17px; font-weight: 800; letter-spacing: 0.005em; line-height: 1.25;
+}
+.meta { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; }
+.note {
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.04em; color: var(--muted2);
+}
+/* A link to a paper: a small pill, pressable, in a 44 px tall touch box. */
+.tag {
+  position: relative; z-index: 0;
+  display: inline-block; min-height: 44px; padding: 0 13px;
+  line-height: 44px;
+  color: var(--amber); text-decoration: none;
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.04em; white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.tag::after {
+  content: ""; position: absolute; inset: 8px 0; z-index: -1; border-radius: 999px;
+  border: 1px solid rgba(255, 210, 74, 0.34); background: rgba(255, 210, 74, 0.06);
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.tag .narrow { display: none; }
+/* Focus rings the pill itself, not its taller touch box. */
+.tag:focus-visible { outline: none; }
+.tag:focus-visible::after { box-shadow: 0 0 0 2px var(--focus); }
+@media (hover: hover) { .tag:hover::after { background: rgba(255, 210, 74, 0.15); border-color: rgba(255, 210, 74, 0.6); } }
+
+.cards {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;
+}
+.cards > li { display: flex; min-width: 0; }
+
+.card {
+  --c: var(--cyan);
+  position: relative;
+  flex: 1 1 auto;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 14px;
+  min-height: 150px;
+  padding: 16px 16px 18px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--c) 34%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c) 9%, transparent), rgba(255, 255, 255, 0.015));
+  color: var(--text);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+}
+.card.c-pink { --c: var(--pink); }
+.card.c-cyan { --c: var(--cyan); }
+.card.c-lime { --c: var(--lime); }
+.card.c-amber { --c: var(--amber); }
+.card.c-purple { --c: var(--purple); }
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--c) 70%, transparent);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 22px color-mix(in srgb, var(--c) 22%, transparent);
+  }
+}
+.card:active { transform: scale(0.985); }
+.card:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+
+.ico {
+  flex: 0 0 auto;
+  display: grid; place-items: center;
+  width: 60px; height: 60px; border-radius: 999px;
+  color: var(--c);
+  border: 1.5px solid color-mix(in srgb, var(--c) 60%, transparent);
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--c) 20%, transparent), rgba(7, 6, 10, 0.6) 75%);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--c) 26%, transparent);
+}
+.ico svg { width: 34px; height: 34px; display: block; overflow: visible; }
+
+.txt { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kicker {
+  font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--c);
+}
+.q {
+  font-size: 16px; font-weight: 700; line-height: 1.32;
+  overflow-wrap: break-word;
+}
+
+/* ---------- authors and citation ---------- */
+.credits {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px;
+  margin-top: 34px; padding: 22px 4px 0;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.credits h2 {
+  margin: 0 0 10px;
+  font-family: var(--mono); font-size: 11.5px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted2);
+}
+.credits p { margin: 0; }
+.paper { color: var(--text); font-weight: 700; margin-top: 12px !important; }
+.paper:first-of-type { margin-top: 0 !important; }
+.amp { color: var(--muted2); font-weight: 400; }
+.names { margin-top: 3px !important; }
+/* One name never breaks; the dot stays with the name before it. */
+.names span { white-space: nowrap; }
+.names span:not(:last-child)::after { content: " ·"; color: var(--muted2); }
+.hint { margin-bottom: 10px !important; }
+.bib { position: relative; }
+.bib pre {
+  margin: 0;
+  padding: 12px 56px 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(7, 6, 10, 0.55);
+  color: rgba(233, 247, 255, 0.82);
+  font: 11.5px/1.5 var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* A long field wraps under its value, not under the field name. */
+.bib .l { display: block; }
+.bib .l.f { --hang: 17ch; padding-left: var(--hang); text-indent: calc(-1 * var(--hang)); }
+.ctl.copy { position: absolute; top: 4px; right: 4px; }
+.ctl.copy .i-done { display: none; }
+.ctl.copy.done { --ring: var(--lime); --fg: var(--lime); }
+.ctl.copy.done .i-copy { display: none; }
+.ctl.copy.done .i-done { display: block; }
+.credits .meta { margin-top: 6px; }
+
+/* ---------- narrower ---------- */
+@media (max-width: 980px) {
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .credits { grid-template-columns: minmax(0, 1fr); }
+}
+/* Phones: 16 px gutter; each card one row, the icon left of its question. */
+@media (max-width: 560px) {
+  .hub { padding: 68px 16px max(36px, env(safe-area-inset-bottom)); }
+  .langSel { right: 12px; top: 8px; }
+  .hero { margin-bottom: 24px; }
+  .shelf { padding: 12px; border-radius: 18px; margin-bottom: 16px; }
+  .shelfHead { margin-bottom: 10px; }
+  .shelfHead h2 { font-size: 16px; }
+  .cards { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .card { flex-direction: row; align-items: center; gap: 14px; min-height: 76px; padding: 10px 14px 10px 10px; border-radius: 16px; }
+  .ico { width: 52px; height: 52px; }
+  .ico svg { width: 30px; height: 30px; }
+  .q { font-size: 15px; }
+  /* The two paper links share one row: the language as on the switch. */
+  .tag .wide { display: none; }
+  .tag .narrow { display: inline; }
+  .bib pre { font-size: 10.5px; padding-right: 48px; }
+  .bib .l.f { --hang: 4ch; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .tag::after { transition: none; }
+  .card:hover, .card:active { transform: none; }
+}

@@ -182,7 +182,7 @@ def run(browser, lang, vp, touch, shots):
 
 def tip_checks(browser, url, ready, items, home_sel, touch_sel, tag):
     """The shared bubble (../lab-tip.js): hover, keyboard focus, touch long
-    press, the disabled home, no native title, no layout shift."""
+    press, the home link, no native title, no layout shift."""
     for lang in ("en", "fr", "de"):
         ctx = browser.new_context(viewport={"width": 1400, "height": 900}, bypass_csp=True)
         pg = ctx.new_page()
@@ -207,17 +207,20 @@ def tip_checks(browser, url, ready, items, home_sel, touch_sel, tag):
             pg.screenshot(path=str(OUT / f"{tag}-tip-hover.png"))
         after = pg.evaluate("JSON.stringify([...document.querySelectorAll('.ctl, .chip, canvas')].map(e => { const r = e.getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; }))")
         check(before == after, f"{tag} {lang}: the bubble moves nothing")
-        # the disabled home explains itself and goes nowhere
-        url0 = pg.url
+        # the home explains itself and leads to the hub of all the labs
         box = pg.locator(home_sel).bounding_box()
         pg.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
         pg.wait_for_timeout(450)
-        check(bubble() == pg.evaluate("window.i18n.t('lab.homeSoon')"), f"{tag} {lang}: the disabled home explains itself")
+        check(bubble() == pg.evaluate("window.i18n.t('lab.home')"), f"{tag} {lang}: the home explains itself")
         if lang == "fr":
             pg.screenshot(path=str(OUT / f"{tag}-tip-home-fr.png"))
-        pg.click(home_sel, force=True)
+        check(pg.get_attribute(home_sel, "href") == "../hub/", f"{tag} {lang}: the home links to the hub")
+        pg.click(home_sel)
+        pg.wait_for_url("**/hub/")
+        check(pg.locator("a.card").count() >= 11, f"{tag} {lang}: the home lands on the hub")
+        pg.go_back()
+        pg.wait_for_function(ready)
         pg.wait_for_timeout(200)
-        check(pg.url == url0, f"{tag} {lang}: the disabled home does not navigate")
         # keyboard focus
         pg.mouse.move(5, 5)
         pg.focus(items[0][0])
@@ -261,7 +264,7 @@ with sync_playwright() as p:
         run(b, lang, {"width": 390, "height": 844}, True, True)
     print("[tips]")
     tip_checks(b, URL, "window.hexLab", [("#rotate", "hx.rotate"), ("#mode-build", "hx.build"), ("#zoom-in", "hx.zoomIn")],
-               ".lab-nav [aria-disabled='true']", "#mode-build", "hexo")
+               ".lab-nav a[href='../hub/']", "#mode-build", "hexo")
     b.close()
 
 print(json.dumps({"failed": fails}, ensure_ascii=False))

@@ -1,4 +1,4 @@
-"""Layout check of the four 2026 labs.
+"""Layout check of the four 2026 labs and the hub of all the labs.
 
 For each lab, viewport and state: no horizontal scroll, every visible control
 is hit at its centre, no two controls overlap, an open math card stays inside
@@ -20,6 +20,7 @@ LANGS = ["fr", "de", "en"]
 
 # Each lab: list of (state name, js to reach it, wait ms).
 STATES = {
+    "hub": [("idle", "", 0)],
     "cube-lab": [("idle", "", 0),
                  ("penta-last-wall", "document.getElementById('mode-penta').click();"
                   "setTimeout(()=>{const w=[...document.querySelectorAll('#walls button')];w[w.length-1].click();},300)", 9000)],
