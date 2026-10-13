@@ -66,7 +66,7 @@ with sync_playwright() as p:
                 text = pg.evaluate(TEXTS)
                 bad = sorted(set(m.group(0) for m in FORBIDDEN.finditer(text)))
                 check(not bad, f"{tag}: no optimum, no year 2025 in any string {bad}")
-                check("—" not in text, f"{tag}: no em dash")
+                check("\u2014" not in text, f"{tag}: no em dash")
                 small = pg.evaluate("""() => [...document.querySelectorAll('a, button')].filter(e => { const r = e.getBoundingClientRect(); return r.width < 43.5 || r.height < 43.5; }).map(e => e.textContent.trim().slice(0, 20))""")
                 check(not small, f"{tag}: every touch box at least 44 px {small}")
                 if OUT:
