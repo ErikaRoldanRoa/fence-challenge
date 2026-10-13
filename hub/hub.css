@@ -37,6 +37,7 @@ body {
   overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
 }
 cite { font-style: italic; }
+.i18n-wait body { visibility: hidden; }
 
 /* ---------- language switch (as in the labs) ---------- */
 .langSel {
@@ -66,6 +67,14 @@ cite { font-style: italic; }
   color: #9eefff;
   text-shadow: 0 0 10px rgba(47, 243, 255, 0.45);
 }
+/* The idea in one picture: pieces around, the enclosed area lit. */
+.fence { display: block; width: 116px; height: auto; margin: 0 auto 16px; overflow: visible; }
+.fence .pc { stroke-width: 1.4; stroke-linejoin: round; }
+.fence .p { fill: rgba(255, 59, 212, 0.2); stroke: var(--pink); }
+.fence .c { fill: rgba(47, 243, 255, 0.18); stroke: var(--cyan); }
+.fence .l { fill: rgba(112, 255, 122, 0.18); stroke: var(--lime); }
+.fence .in { fill: rgba(255, 210, 74, 0.72); filter: drop-shadow(0 0 4px rgba(255, 210, 74, 0.6)); }
+.fence .seams { fill: none; stroke: rgba(255, 255, 255, 0.22); stroke-width: 0.8; }
 .hero h1 {
   margin: 0;
   font-size: clamp(30px, 5.2vw, 52px);

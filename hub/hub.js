@@ -1,8 +1,13 @@
-/* Fence Challenge · the hub of all the labs: the language switch and the
- * BibTeX copy button. Everything else is plain links. */
+/* Fence Challenge · the hub of all the labs: the words in the reader's
+ * language, the language switch and the BibTeX copy button. Everything else
+ * is plain links. */
 (function () {
   "use strict";
   var t = function (k) { return window.i18n ? window.i18n.t(k) : k; };
+
+  // Loaded at the end of the body, before the first paint: the words go in now.
+  if (window.i18n) window.i18n.apply(document);
+  document.documentElement.classList.remove("i18n-wait");
 
   document.querySelectorAll("[data-lang-btn]").forEach(function (b) {
     b.addEventListener("click", function () { if (window.i18n) window.i18n.setLang(b.getAttribute("data-lang-btn")); });

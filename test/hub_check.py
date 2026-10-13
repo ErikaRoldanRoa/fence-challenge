@@ -2,7 +2,7 @@
 
 In Chromium and WebKit, at 390 x 844 and 1440 x 900, in FR / DE / EN: no
 console error, no horizontal scroll, no optimum and no year 2025 in any
-visible string, bubble or label; every card and link opens the right page
+visible string, bubble or label; no layout shift; every card and link opens the right page
 without errors; the language switch, the keyboard path and the copy button
 work; every lab's home leads back here.
 
@@ -47,11 +47,13 @@ with sync_playwright() as p:
                 tag = f"{eng} {w}x{h} {lang}"
                 ctx = b.new_context(viewport={"width": w, "height": h}, has_touch=touch, device_scale_factor=2 if touch else 1)
                 ctx.add_init_script("try{localStorage.setItem('fc-lang','%s')}catch(e){}" % lang)
+                ctx.add_init_script("window.__cls = 0; try { new PerformanceObserver((l) => { for (const e of l.getEntries()) if (!e.hadRecentInput) window.__cls += e.value; }).observe({ type: 'layout-shift', buffered: true }); } catch (e) {}")
                 pg = ctx.new_page(); errs = []
                 pg.on("pageerror", lambda e, errs=errs: errs.append(str(e)))
                 pg.on("console", lambda m, errs=errs: errs.append(m.text) if m.type == "error" else None)
                 pg.goto(HUB, wait_until="networkidle")
                 pg.wait_for_timeout(300)
+                check(pg.evaluate("window.__cls") < 0.001, f"{tag}: no layout shift while loading")
                 check(pg.inner_text("h1") == QUESTION[lang], f"{tag}: the question in the language")
                 check(pg.evaluate("document.documentElement.lang") == lang, f"{tag}: html lang")
                 check(pg.get_attribute(f'[data-lang-btn="{lang}"]', "aria-pressed") == "true", f"{tag}: language pressed")

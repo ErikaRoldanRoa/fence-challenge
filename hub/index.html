@@ -29,6 +29,14 @@
     <main class="hub">
       <header class="hero">
         <p class="brand">Fence Challenge</p>
+        <!-- Three pieces close a fence; the lit cells are what it encloses. -->
+        <svg class="fence" viewBox="-2 -2 64 52" role="img" data-i18n-aria-label="mh.fenceAria" aria-label="Three pieces close a fence around lit cells: the area it encloses">
+          <g class="in"><rect x="13.5" y="13.5" width="9" height="9" rx="1.6"/><rect x="25.5" y="13.5" width="9" height="9" rx="1.6"/><rect x="37.5" y="13.5" width="9" height="9" rx="1.6"/><rect x="13.5" y="25.5" width="9" height="9" rx="1.6"/><rect x="25.5" y="25.5" width="9" height="9" rx="1.6"/><rect x="37.5" y="25.5" width="9" height="9" rx="1.6"/></g>
+          <path class="pc p" d="M1 1h34v10H11v24H1z"/>
+          <path class="pc c" d="M37 1h22v34H49V11H37z"/>
+          <path class="pc l" d="M1 37h58v10H1z"/>
+          <path class="seams" d="M12 1v10M24 1v10M1 12h10M1 24h10M48 1v10M49 12h10M49 24h10M12 37v10M24 37v10M36 37v10M48 37v10"/>
+        </svg>
         <h1 data-i18n="mh.question">How much can a fence enclose?</h1>
       </header>
 
@@ -132,7 +140,7 @@
       </footer>
     </main>
 
+    <script src="hub.js?v=20261013a"></script>
     <script defer src="../lab-tip.js?v=20261013a"></script>
-    <script defer src="hub.js?v=20261013a"></script>
   </body>
 </html>

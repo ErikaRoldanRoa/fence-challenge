@@ -40,8 +40,8 @@ The labs, one per result:
   close and count its area.
 
 Every element of a lab has a small "∑" chip that opens the mathematics
-behind it, with the section of the paper it comes from. One hub bringing all
-the labs together is coming.
+behind it, with the section of the paper it comes from. All the labs of the
+three papers are gathered on one page: [hub/](hub/).
 
 ## Maximale Zäune mit Polyformen (2025)
 
@@ -111,6 +111,8 @@ developed by Dr. Erika Roldan · [The Learning Machine](https://erikaroldan.net)
 Serve the folder with any static file server (for example
 `python3 -m http.server`) and open `index.html`. Tests of the cube lab:
 `node cube-lab/test/geometry.test.js` and `python3 cube-lab/test/browser.py OUTDIR`.
+Check of the page of all the labs, with the server running:
+`python3 test/hub_check.py http://localhost:8000/ OUTDIR`.
 
 ## Citation
 

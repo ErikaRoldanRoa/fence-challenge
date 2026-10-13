@@ -7,6 +7,7 @@
   var fr = {
     "mh.docTitle": "Tous les labos · Fence Challenge",
     "mh.question": "Combien une barrière peut-elle enclore" + NB + "?",
+    "mh.fenceAria": "Trois pièces ferment une barrière autour de cases allumées" + NB + ": l’aire qu’elle enclôt",
     "mh.english": "en anglais",
     "mh.p1.journalTip": "Lire l’article",
     "mh.p1.arxivTip": "Lire la version anglaise sur arXiv",
@@ -46,6 +47,7 @@
   var de = {
     "mh.docTitle": "Alle Labore · Fence Challenge",
     "mh.question": "Wie viel kann ein Zaun einschließen?",
+    "mh.fenceAria": "Drei Teile schließen einen Zaun um leuchtende Zellen: die Fläche, die er einschließt",
     "mh.english": "auf Englisch",
     "mh.p1.journalTip": "Den Artikel lesen",
     "mh.p1.arxivTip": "Die englische Fassung auf arXiv lesen",
@@ -85,6 +87,7 @@
   var en = {
     "mh.docTitle": "All the labs · Fence Challenge",
     "mh.question": "How much can a fence enclose?",
+    "mh.fenceAria": "Three pieces close a fence around lit cells: the area it encloses",
     "mh.english": "English",
     "mh.p1.journalTip": "Read the article",
     "mh.p1.arxivTip": "Read the English version on arXiv",
@@ -125,4 +128,12 @@
   Object.assign(DICT.fr, fr);
   Object.assign(DICT.de, de);
   Object.assign(DICT.en, en);
+  // The page is written in English. In another language it stays unpainted
+  // until hub.js has put the words in place, so nothing jumps; never longer
+  // than a moment, even if something fails.
+  if (window.i18n && window.i18n.get() !== "en") {
+    var root = document.documentElement;
+    root.classList.add("i18n-wait");
+    window.setTimeout(function () { root.classList.remove("i18n-wait"); }, 1200);
+  }
 })();
