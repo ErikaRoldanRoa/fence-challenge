@@ -129,7 +129,7 @@ with sync_playwright() as p:
                 check(pg.inner_text("#lab-tip") == pg.evaluate("i18n.t('lab.home')"), f"{tag}: the home explains itself")
                 home.click()
                 pg.wait_for_url("**/hub/")
-                check(pg.locator("a.card").count() >= 11, f"{tag}: the home lands on the hub")
+                check(pg.locator("a.card").count() >= 10, f"{tag}: the home lands on the hub")
                 pg.go_back()
                 pg.wait_for_function("window.limitLab && !limitLab.busy()")
             if mobile:

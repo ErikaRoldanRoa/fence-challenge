@@ -84,6 +84,54 @@ cite { font-style: italic; }
   text-wrap: balance;
 }
 
+/* ---------- start here: the three warm-up boards ---------- */
+/* The doors share the shelves' columns: each warm-up board stands right
+   above the full lab it opens (square, hexagons, triangles). */
+.start { margin: 0 0 22px; padding: 0 19px; }
+.start h2 {
+  margin: 0 2px 10px;
+  font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--amber);
+}
+.doors {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;
+}
+.doors > li { display: flex; min-width: 0; }
+.door {
+  --c: var(--cyan);
+  flex: 1 1 auto;
+  display: flex; align-items: center; gap: 12px;
+  min-height: 68px; padding: 9px 14px 9px 9px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 12%, transparent), rgba(255, 255, 255, 0.015));
+  color: var(--text); text-decoration: none;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+}
+.door.c-pink { --c: var(--pink); }
+.door.c-lime { --c: var(--lime); }
+.door.c-cyan { --c: var(--cyan); }
+@media (hover: hover) {
+  .door:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--c) 80%, transparent);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 20px color-mix(in srgb, var(--c) 24%, transparent);
+  }
+}
+.door:active { transform: scale(0.985); }
+.door:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.dico {
+  flex: 0 0 auto; display: grid; place-items: center;
+  width: 48px; height: 48px; border-radius: 999px; color: var(--c);
+  border: 1.5px solid color-mix(in srgb, var(--c) 60%, transparent);
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--c) 20%, transparent), rgba(7, 6, 10, 0.6) 75%);
+}
+.dico svg { width: 28px; height: 28px; display: block; overflow: visible; }
+.dname { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dtitle { font-size: 15px; font-weight: 800; line-height: 1.25; color: var(--text); }
+
 /* ---------- shelves ---------- */
 .shelf {
   margin: 0 0 22px;
@@ -150,7 +198,6 @@ cite { font-style: italic; }
 .card.c-pink { --c: var(--pink); }
 .card.c-cyan { --c: var(--cyan); }
 .card.c-lime { --c: var(--lime); }
-.card.c-amber { --c: var(--amber); }
 .card.c-purple { --c: var(--purple); }
 @media (hover: hover) {
   .card:hover {
@@ -229,6 +276,7 @@ cite { font-style: italic; }
 
 /* ---------- narrower ---------- */
 @media (max-width: 980px) {
+  .doors { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .credits { grid-template-columns: minmax(0, 1fr); }
 }
@@ -238,6 +286,9 @@ cite { font-style: italic; }
   .langSel { right: 12px; top: 8px; }
   .hero { margin-bottom: 24px; }
   .shelf { padding: 12px; border-radius: 18px; margin-bottom: 16px; }
+  .start { padding: 0 13px; margin-bottom: 18px; }
+  .doors { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .door { min-height: 64px; border-radius: 16px; }
   .shelfHead { margin-bottom: 10px; }
   .shelfHead h2 { font-size: 16px; }
   .cards { grid-template-columns: minmax(0, 1fr); gap: 8px; }
@@ -253,6 +304,6 @@ cite { font-style: italic; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card, .tag::after { transition: none; }
-  .card:hover, .card:active { transform: none; }
+  .card, .door, .tag::after { transition: none; }
+  .card:hover, .card:active, .door:hover, .door:active { transform: none; }
 }

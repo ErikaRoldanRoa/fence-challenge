@@ -9,6 +9,22 @@
   if (window.i18n) window.i18n.apply(document);
   document.documentElement.classList.remove("i18n-wait");
 
+  // A mission's title (the first hub's own string) reads in two lines: its
+  // number small above, its name below, as the challenges on the shelves.
+  function doors() {
+    document.querySelectorAll(".dname[data-door]").forEach(function (el) {
+      var parts = t(el.getAttribute("data-door")).split(" · ");
+      if (parts.length !== 2) { el.textContent = parts.join(" · "); return; }
+      var k = document.createElement("span"), n = document.createElement("span");
+      k.className = "kicker"; k.textContent = parts[0];
+      n.className = "dtitle"; n.textContent = parts[1];
+      el.textContent = "";
+      el.appendChild(k); el.appendChild(document.createTextNode(" ")); el.appendChild(n);
+    });
+  }
+  doors();
+  document.addEventListener("fc-langchange", doors);
+
   document.querySelectorAll("[data-lang-btn]").forEach(function (b) {
     b.addEventListener("click", function () { if (window.i18n) window.i18n.setLang(b.getAttribute("data-lang-btn")); });
   });

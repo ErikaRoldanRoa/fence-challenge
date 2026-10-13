@@ -2,7 +2,8 @@
 
 In Chromium and WebKit, at 390 x 844 and 1440 x 900, in FR / DE / EN: no
 console error, no horizontal scroll, no optimum and no year 2025 in any
-visible string, bubble or label; no layout shift; every card and link opens the right page
+visible string, bubble or label; no layout shift; the three warm-up doors open
+the first hub at their mission; every card and link opens the right page
 without errors; the language switch, the keyboard path and the copy button
 work; every lab's home leads back here.
 
@@ -18,7 +19,8 @@ LANGS = ["en", "fr", "de"]
 VIEWS = [(390, 844, True), (1440, 900, False)]
 # Optima of the papers and of the boards: the hub asks, it never answers.
 FORBIDDEN = re.compile(r"(?<![\d.])(1597|1586|1588|111|128|52|1331|25544|2025)(?![\d])")
-CARDS = ["../square-lab/", "../hex-lab/", "../triangle-lab/", "../camera/",
+DOORS = ["../#sqT", "../#hexT", "../#triT"]
+CARDS = ["../square-lab/", "../hex-lab/", "../triangle-lab/",
          "../hexomino-lab/", "../pentomino-dp-lab/", "../cube-lab/", "../limit-shape-lab/",
          "../hexomino-lab/", "../pentomino-dp-lab/", "../cube-lab/"]
 QUESTION = {"en": "How much can a fence enclose?", "fr": "Combien une barrière peut-elle enclore ?",
@@ -61,6 +63,11 @@ with sync_playwright() as p:
                 check(pg.evaluate("document.querySelectorAll('body [title]').length") == 0, f"{tag}: no native title left")
                 hrefs = pg.eval_on_selector_all("a.card", "els => els.map(e => e.getAttribute('href'))")
                 check(hrefs == CARDS, f"{tag}: cards {hrefs}")
+                doors = pg.eval_on_selector_all("a.door", "els => els.map(e => e.getAttribute('href'))")
+                check(doors == DOORS, f"{tag}: doors {doors}")
+                names = pg.eval_on_selector_all(".dname", "els => els.map(e => [e.querySelector('.kicker') && e.querySelector('.kicker').textContent, e.querySelector('.dtitle') && e.querySelector('.dtitle').textContent])")
+                want = pg.evaluate("['hub.sqTitle', 'hub.hexTitle', 'hub.triTitle'].map(k => i18n.t(k).split(' · '))")
+                check(names == want, f"{tag}: door titles are the first hub's missions {names}")
                 tips = pg.eval_on_selector_all("a, button", "els => els.filter(e => !(e.getAttribute('data-lab-tip') || e.getAttribute('aria-label'))).map(e => e.outerHTML.slice(0, 60))")
                 check(not tips, f"{tag}: every control explains itself {tips}")
                 text = pg.evaluate(TEXTS)
@@ -83,6 +90,18 @@ with sync_playwright() as p:
                         pg.wait_for_url(want + "**")
                         pg.wait_for_load_state("networkidle")
                         check(pg.url.split("?")[0] == want, f"{tag}: card {i} opens {href}")
+                # Every door opens the first hub with its mission in view.
+                if lang == "en" or eng == "chromium":
+                    for i, href in enumerate(DOORS):
+                        pg.goto(HUB, wait_until="networkidle")
+                        door = pg.locator("a.door").nth(i)
+                        if touch: door.tap()
+                        else: door.click()
+                        pg.wait_for_url(BASE + href[3:])
+                        pg.wait_for_load_state("networkidle")
+                        pg.wait_for_timeout(300)
+                        box = pg.evaluate("(id => { const r = document.getElementById(id).getBoundingClientRect(); return [r.top, r.bottom, innerHeight]; })", href[4:])
+                        check(0 <= box[0] and box[1] <= box[2], f"{tag}: door {i} shows its mission {box}")
                 check(not errs, f"{tag}: no console error {errs[:3]}")
                 ctx.close()
 
@@ -96,14 +115,14 @@ with sync_playwright() as p:
         pg.goto(HUB, wait_until="networkidle")
         bubble = lambda: pg.evaluate("(() => { const t = document.querySelector('.lab-tip'); return t && t.classList.contains('on') ? t.textContent : null; })()")
         order = []
-        for _ in range(20):
+        for _ in range(22):
             pg.keyboard.press("Tab")
             order.append(pg.evaluate("(() => { const a = document.activeElement; return a.getAttribute('href') || a.id || a.getAttribute('data-lang-btn'); })()"))
         check(order[:3] == ["fr", "de", "en"], f"{eng}: Tab starts on the language switch {order[:3]}")
         # WebKit, like Safari, leaves links out of the Tab order by default.
         if eng == "chromium":
-            check(order[3:5] == ["https://doi.org/10.1515/dmvm-2025-0056", "https://arxiv.org/abs/2607.22379"] and order[5:16] == CARDS,
-                  f"{eng}: Tab then walks the paper links and the cards in order {order[3:16]}")
+            check(order[3:6] == DOORS and order[6:8] == ["https://doi.org/10.1515/dmvm-2025-0056", "https://arxiv.org/abs/2607.22379"] and order[8:18] == CARDS,
+                  f"{eng}: Tab then walks the doors, the paper links and the cards in order {order[3:18]}")
         pg.focus("a.card >> nth=0")
         if eng == "chromium":
             pg.keyboard.press("Shift+Tab"); pg.keyboard.press("Tab")
@@ -117,16 +136,21 @@ with sync_playwright() as p:
         pg.goto(HUB, wait_until="networkidle")
         # Hover: the bubble after a short delay, nothing moves.
         before = pg.evaluate("JSON.stringify([...document.querySelectorAll('.card, .tag, .ctl')].map(e => { const r = e.getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; }))")
-        box = pg.locator("a.card").nth(4).bounding_box()
+        box = pg.locator("a.card").nth(3).bounding_box()
         pg.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
         pg.wait_for_timeout(500)
         check(bubble() == pg.evaluate("i18n.t('mh.open.hexo')"), f"{eng}: hover on a card shows its bubble")
+        box = pg.locator("a.door").nth(1).bounding_box()
+        pg.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        pg.wait_for_timeout(500)
+        check(bubble() == pg.evaluate("i18n.t('mh.warm.hex')"), f"{eng}: hover on a door shows its bubble")
         pg.mouse.move(2, 2); pg.wait_for_timeout(300)
         after = pg.evaluate("JSON.stringify([...document.querySelectorAll('.card, .tag, .ctl')].map(e => { const r = e.getBoundingClientRect(); return [r.x, r.y, r.width, r.height]; }))")
         check(before == after, f"{eng}: no layout shift")
         # Language switch in place.
         pg.click('[data-lang-btn="de"]'); pg.wait_for_timeout(150)
         check(pg.inner_text("h1") == QUESTION["de"] and pg.title().startswith("Alle Labore"), f"{eng}: switch to German")
+        check(pg.inner_text(".door >> nth=0 >> .dtitle") == "Das Schachbrett", f"{eng}: the doors switch too")
         pg.click('[data-lang-btn="en"]'); pg.wait_for_timeout(150)
         # Copy the BibTeX.
         pg.locator("#copy").scroll_into_view_if_needed()
@@ -161,7 +185,7 @@ with sync_playwright() as p:
             pg.click(".lab-nav a[href='../hub/']")
             pg.wait_for_url("**/hub/")
             pg.wait_for_load_state("networkidle")
-            check(pg.locator("a.card").count() == len(CARDS), f"{eng}: {lab} home lands on the hub")
+            check(pg.locator("a.card").count() == len(CARDS) and pg.locator("a.door").count() == 3, f"{eng}: {lab} home lands on the hub")
             check(not errs, f"{eng}: {lab} and the hub without errors {errs[:3]}")
             pg.close()
         ctx.close()
