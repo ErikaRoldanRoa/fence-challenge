@@ -307,3 +307,9 @@ cite { font-style: italic; }
   .card, .door, .tag::after { transition: none; }
   .card:hover, .card:active, .door:hover, .door:active { transform: none; }
 }
+
+/* The signature, as on the Fence Challenge hub. */
+.signature { margin: 28px 0 8px; text-align: center; font-size: 12.5px; color: var(--muted); }
+.signature .tlm { color: var(--pink); font-weight: 900; letter-spacing: 0.11em; }
+.signature .ceo { color: var(--muted2); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; font-size: 10.5px; }
+.signature a { color: inherit; text-underline-offset: 3px; display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 0 4px; }
