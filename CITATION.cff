@@ -3,26 +3,26 @@ title: "Fence Challenge: interactive labs for polyomino fences and polycube wall
 message: "If you use these labs, please cite the paper they accompany and this repository."
 type: software
 authors:
-  - family-names: Brömme
-    given-names: Maximilian
   - family-names: Langlois-Rémillard
     given-names: Alexis
-  - family-names: Lyader
-    given-names: Mykhailo
   - family-names: Müßig
     given-names: Mia N.
-  - family-names: Norden
-    given-names: Matthes
   - family-names: Podhaisky
     given-names: Helmut
-  - family-names: Prietzel
-    given-names: Maximilian
   - family-names: Roldan
     given-names: Erika
   - family-names: Rote
     given-names: Günter
+  - family-names: Brömme
+    given-names: Maximilian
+  - family-names: Norden
+    given-names: Matthes
+  - family-names: Prietzel
+    given-names: Maximilian
   - family-names: Yu
     given-names: Daniel
+  - family-names: Lyader
+    given-names: Mykhailo
 repository-code: "https://github.com/ErikaRoldanRoa/fence-challenge"
 url: "https://erikaroldanroa.github.io/fence-challenge/"
 license: MIT
@@ -63,25 +63,25 @@ references:
   - type: article
     title: "Optimal Polyomino Fences"
     authors:
-      - family-names: Brömme
-        given-names: Maximilian
       - family-names: Langlois-Rémillard
         given-names: Alexis
-      - family-names: Lyader
-        given-names: Mykhailo
       - family-names: Müßig
         given-names: Mia N.
-      - family-names: Norden
-        given-names: Matthes
       - family-names: Podhaisky
         given-names: Helmut
-      - family-names: Prietzel
-        given-names: Maximilian
       - family-names: Roldan
         given-names: Erika
       - family-names: Rote
         given-names: Günter
+      - family-names: Brömme
+        given-names: Maximilian
+      - family-names: Norden
+        given-names: Matthes
+      - family-names: Prietzel
+        given-names: Maximilian
       - family-names: Yu
         given-names: Daniel
+      - family-names: Lyader
+        given-names: Mykhailo
     year: 2026
     notes: "In preparation"

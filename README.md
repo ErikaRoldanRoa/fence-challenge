@@ -7,10 +7,10 @@ the question, in the plane and in space.
 
 ## Optimal Polyomino Fences (2026)
 
-**Maximilian Brömme · [Alexis Langlois-Rémillard](https://alexisl-r.github.io/) ·
-Mykhailo Lyader · [Mia N. Müßig](https://miamuessig.de/) · Matthes Norden ·
-Helmut Podhaisky · Maximilian Prietzel ·
-[Erika Roldan](https://www.erikaroldan.net/) · Günter Rote · Daniel Yu**
+**[Alexis Langlois-Rémillard](https://alexisl-r.github.io/) · [Mia N. Müßig](https://miamuessig.de/) ·
+Helmut Podhaisky · [Erika Roldan](https://www.erikaroldan.net/) · Günter Rote ·
+Maximilian Brömme · Matthes Norden · Maximilian Prietzel · Daniel Yu ·
+Mykhailo Lyader**
 
 Paper: on arXiv soon; the arXiv link and the journal reference will appear
 here once available.
@@ -102,8 +102,8 @@ Fences can also be built by hand on the table, with a phone watching.
 
 ## Authors
 
-Each lab carries the authors of the paper it accompanies, listed
-alphabetically by last name, equal contribution. Interactive labs
+Each lab carries the authors of the paper it accompanies, in the order
+of that paper. Interactive labs
 developed by Dr. Erika Roldan · [The Learning Machine](https://erikaroldan.net).
 
 ## Run locally
@@ -117,15 +117,15 @@ Serve the folder with any static file server (for example
 If you use these labs, please cite the paper they accompany and, optionally,
 this repository. A machine-readable entry is in [`CITATION.cff`](CITATION.cff).
 
-> Brömme, M., Langlois-Rémillard, A., Lyader, M., Müßig, M. N., Norden, M.,
-> Podhaisky, H., Prietzel, M., Roldan, E., Rote, G. & Yu, D. (2026).
+> Langlois-Rémillard, A., Müßig, M. N., Podhaisky, H., Roldan, E., Rote, G.,
+> Brömme, M., Norden, M., Prietzel, M., Yu, D. & Lyader, M. (2026).
 > *Optimal Polyomino Fences.* In preparation.
 
 The labs themselves:
 
 ```bibtex
 @misc{FenceChallenge,
-  author       = {Br{\"o}mme, Maximilian and Langlois-R{\'e}millard, Alexis and Lyader, Mykhailo and M{\"u}{\ss}ig, Mia N. and Norden, Matthes and Podhaisky, Helmut and Prietzel, Maximilian and Roldan, Erika and Rote, G{\"u}nter and Yu, Daniel},
+  author       = {Langlois-R{\'e}millard, Alexis and M{\"u}{\ss}ig, Mia N. and Podhaisky, Helmut and Roldan, Erika and Rote, G{\"u}nter and Br{\"o}mme, Maximilian and Norden, Matthes and Prietzel, Maximilian and Yu, Daniel and Lyader, Mykhailo},
   title        = {Fence Challenge: interactive labs for polyomino fences and polycube walls},
   year         = {2026},
   howpublished = {\url{https://erikaroldanroa.github.io/fence-challenge/}},
