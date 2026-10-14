@@ -1,6 +1,6 @@
 /* Fence Challenge · the hub of all the labs: the words in the reader's
- * language, the language switch and the BibTeX copy button. Everything else
- * is plain links. */
+ * language, the language switch, the tiles' bubbles and their turn on touch
+ * screens, the manual drawer and its paper doors, the BibTeX copy button. */
 (function () {
   "use strict";
   var t = function (k) { return window.i18n ? window.i18n.t(k) : k; };
