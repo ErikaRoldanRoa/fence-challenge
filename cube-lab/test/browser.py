@@ -450,7 +450,7 @@ def tip_checks(browser, url, ready, items, home_sel, touch_sel, tag):
         check(pg.get_attribute(home_sel, "href") == "../hub/", f"{tag} {lang}: the home links to the hub")
         pg.click(home_sel)
         pg.wait_for_url("**/hub/")
-        check(pg.locator("a.card").count() >= 10, f"{tag} {lang}: the home lands on the hub")
+        check(pg.locator("a.piece").count() == 10, f"{tag} {lang}: the home lands on the hub")
         pg.go_back()
         pg.wait_for_function(ready)
         pg.wait_for_timeout(200)
