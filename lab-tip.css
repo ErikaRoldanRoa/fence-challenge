@@ -34,6 +34,7 @@
 /* An optional head line, in bold above the text (data-lab-tip-head). */
 .lab-tip-head { display: block; margin-bottom: 2px; font-size: 14px; font-weight: 800; color: #fff; }
 .lab-tip-head[hidden] { display: none; }
+.lab-tip.wide { max-width: min(340px, calc(100vw - 16px)); text-align: left; }
 .lab-tip.below { transform: translateY(-3px); }
 .lab-tip.below.on { transform: none; }
 

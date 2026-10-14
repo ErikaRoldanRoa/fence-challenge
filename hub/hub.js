@@ -73,6 +73,7 @@
     back = null;
     var block = open && paper && document.getElementById(paper);
     if (block) {
+      block.open = true;
       man.scrollTop = Math.max(0, block.offsetTop - 56);
       block.classList.remove("flash"); void block.offsetWidth; block.classList.add("flash");
     }

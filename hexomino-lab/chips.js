@@ -23,7 +23,7 @@
       },
       detail: {
         en: "Pieces may not overlap and must hang together edge to edge. Free cells connect even through a corner, so a gap at a corner lets the outside in.",
-        fr: "Les pièces ne se chevauchent pas et se tiennent arête contre arête. Les cases libres communiquent même par un coin : une fente en coin laisse entrer l’extérieur.",
+        fr: "Les pièces ne se chevauchent pas et se tiennent arête contre arête. Les cases libres communiquent même par un coin : une fente en coin laisse entrer l’extérieur.",
         de: "Die Teile überlappen nicht und hängen Kante an Kante zusammen. Freie Zellen hängen auch über Ecken zusammen: Eine Lücke an einer Ecke lässt das Äußere herein.",
       },
     },
@@ -38,7 +38,7 @@
       },
       detail: {
         en: "This is the previous best fence. Can you do better?",
-        fr: "C’est la meilleure barrière précédente. Feras-tu mieux ?",
+        fr: "C’est la meilleure barrière précédente. Feras-tu mieux ?",
         de: "Das ist der bisher beste Zaun. Schaffst du mehr?",
       },
     },
@@ -52,9 +52,9 @@
         de: "Kein Zaun aus den 35 Hexominos umschließt mehr als <b>1597</b> Zellen.",
       },
       detail: {
-        en: "Branch and bound with the Minkowski bound narrows the choices of arrows to 6 candidate multisets; dynamic programming then shows that none reaches 1598.<br>All optimal fences share <b>one</b> multiset of arrows: <b>244</b> optimal reference polygons, about <b>1.49·10<sup>21</sup></b> optimal fences.",
-        fr: "La séparation et évaluation, avec la borne de Minkowski, réduit les choix de flèches à 6 multiensembles candidats ; la programmation dynamique montre ensuite qu’aucun n’atteint 1598.<br>Toutes les barrières optimales partagent <b>un seul</b> multiensemble de flèches : <b>244</b> polygones de référence optimaux, environ <b>1,49·10<sup>21</sup></b> barrières optimales.",
-        de: "Branch and Bound mit der Minkowski-Schranke engt die Wahl der Pfeile auf 6 Kandidaten-Multimengen ein; dynamische Programmierung zeigt dann, dass keine 1598 erreicht.<br>Alle optimalen Zäune teilen <b>eine</b> Multimenge von Pfeilen: <b>244</b> optimale Referenzpolygone, etwa <b>1,49·10<sup>21</sup></b> optimale Zäune.",
+        en: "Branch and bound with the Minkowski bound, then the rule that the turns add up to 360°, narrow the choices of arrows down to 6 candidate multisets; dynamic programming then shows that none reaches 1598.<br>All optimal fences use the same arrows, up to turning and reflecting each one: <b>244</b> optimal reference polygons (up to symmetry), about <b>1.49·10<sup>21</sup></b> optimal fences.",
+        fr: "La séparation et évaluation avec la borne de Minkowski, puis la règle des angles qui font 360°, réduisent les choix de flèches à 6 multiensembles candidats ; la programmation dynamique montre ensuite qu’aucun n’atteint 1598.<br>Toutes les barrières optimales utilisent les mêmes flèches, à rotation et retournement près : <b>244</b> polygones de référence optimaux (à symétrie près), environ <b>1,49·10<sup>21</sup></b> barrières optimales.",
+        de: "Branch and Bound mit der Minkowski-Schranke und danach die Regel, dass die Drehungen 360° ergeben, engen die Wahl der Pfeile auf 6 Kandidaten-Multimengen ein; dynamische Programmierung zeigt dann, dass keine 1598 erreicht.<br>Alle optimalen Zäune verwenden dieselben Pfeile, bis auf Drehen und Spiegeln jedes einzelnen: <b>244</b> optimale Referenzpolygone (bis auf Symmetrie), etwa <b>1,49·10<sup>21</sup></b> optimale Zäune.",
       },
     },
     refvec: {
@@ -68,7 +68,7 @@
       },
       detail: {
         en: "<b class=\"kBlue\">Reference vector</b> " + vdef + ", between the midpoints of the <b class=\"kRed\">attachment edges</b>.<br><b class=\"kPink\">Correction</b> " + D + ": the signed area of the closed path from " + sub("m", "in") + " along the half attachment edge, the piece’s edges facing the region and the other half attachment edge to " + sub("m", "out") + ", then back along " + MINUS + i("v") + "; usually negative, a multiple of 1/8.<br>Rotation " + i("D") + ": the signed turning angle (counterclockwise positive) from the incoming to the outgoing attachment edge, plus 180°.",
-        fr: "<b class=\"kBlue\">Vecteur de référence</b> " + vdef + ", entre les milieux des <b class=\"kRed\">arêtes d’attache</b>.<br><b class=\"kPink\">Correction</b> " + D + " : l’aire signée du chemin fermé qui va de " + sub("m", "in") + " par la demi-arête d’attache, les arêtes de la pièce tournées vers la région et l’autre demi-arête jusqu’à " + sub("m", "out") + ", puis revient le long de " + MINUS + i("v") + " ; en général négative, multiple de 1/8.<br>Rotation " + i("D") + " : l’angle tourné, signé (sens trigonométrique positif), de l’arête d’attache entrante à la sortante, plus 180°.",
+        fr: "<b class=\"kBlue\">Vecteur de référence</b> " + vdef + ", entre les milieux des <b class=\"kRed\">arêtes d’attache</b>.<br><b class=\"kPink\">Correction</b> " + D + " : l’aire signée du chemin fermé qui va de " + sub("m", "in") + " par la demi-arête d’attache, les arêtes de la pièce tournées vers la région et l’autre demi-arête jusqu’à " + sub("m", "out") + ", puis revient le long de " + MINUS + i("v") + " ; en général négative, multiple de 1/8.<br>Rotation " + i("D") + " : l’angle tourné, signé (sens trigonométrique positif), de l’arête d’attache entrante à la sortante, plus 180°.",
         de: "<b class=\"kBlue\">Referenzvektor</b> " + vdef + ", zwischen den Mittelpunkten der <b class=\"kRed\">Anschlusskanten</b>.<br><b class=\"kPink\">Korrektur</b> " + D + ": die vorzeichenbehaftete Fläche des geschlossenen Wegs von " + sub("m", "in") + " über die halbe Anschlusskante, die der Region zugewandten Kanten des Teils und die andere halbe Anschlusskante nach " + sub("m", "out") + ", dann zurück entlang " + MINUS + i("v") + "; meist negativ, ein Vielfaches von 1/8.<br>Drehung " + i("D") + ": der vorzeichenbehaftete Drehwinkel (gegen den Uhrzeigersinn positiv) von der ein- zur ausgehenden Anschlusskante, plus 180°.",
       },
     },
@@ -92,13 +92,13 @@
       label: "eq:rotation-sum", lines: "1707-1722",
       section: { en: "Reference Vectors", fr: "Vecteurs de référence", de: "Referenzvektoren" },
       lead: {
-        en: "The turning angles add up to exactly one full turn.",
-        fr: "Les angles tournés s’additionnent en exactement un tour complet.",
-        de: "Die Drehwinkel ergeben zusammen genau eine volle Drehung.",
+        en: "Walking once around the region, you turn exactly once: the turning angles add up to one full turn.",
+        fr: "En faisant une fois le tour de la région, on tourne exactement d’un tour : les angles tournés font un tour complet.",
+        de: "Wer einmal um die Region herumgeht, dreht sich genau einmal: Die Drehwinkel ergeben zusammen eine volle Drehung.",
       },
       detail: {
         en: sub("D", "1") + " + … + " + sub("D", "k") + " = 360°. Most pieces of a good fence turn by 0°; the four <b class=\"kGold\">corner pieces</b> by +90°.",
-        fr: sub("D", "1") + " + … + " + sub("D", "k") + " = 360°. Dans une bonne barrière, la plupart des pièces tournent de 0° ; les quatre <b class=\"kGold\">pièces d’angle</b> de +90°.",
+        fr: sub("D", "1") + " + … + " + sub("D", "k") + " = 360°. Dans une bonne barrière, la plupart des pièces tournent de 0° ; les quatre <b class=\"kGold\">pièces d’angle</b> de +90°.",
         de: sub("D", "1") + " + … + " + sub("D", "k") + " = 360°. In einem guten Zaun drehen die meisten Teile um 0°, die vier <b class=\"kGold\">Eckteile</b> um +90°.",
       },
     },
@@ -108,13 +108,13 @@
       section: { en: "8-Way Partitioning", fr: "Partition en 8 directions", de: "Achtfache Aufteilung" },
       lead: {
         en: "Sorted by direction, arrows with fixed directions make the largest polygon: the convex one.",
-        fr: "Triées par direction, des flèches de directions fixées forment le plus grand polygone : le convexe.",
+        fr: "Triées par direction, des flèches de directions fixées forment le plus grand polygone : le convexe.",
         de: "Nach Richtung sortiert bilden Pfeile mit festen Richtungen das größte Polygon: das konvexe.",
       },
       detail: {
-        en: "That is the easy case. In <b>Problem P2</b> each arrow may also take any of its 8 rotations and reflections; choosing them is the hard part, solved by dynamic programming that grows four chains: <b class=\"cNE\">NE</b> · <b class=\"cNW\">NW</b> · <b class=\"cSW\">SW</b> · <b class=\"cSE\">SE</b>.",
-        fr: "C’est le cas facile. Dans le <b>problème P2</b>, chaque flèche peut aussi prendre ses 8 rotations et réflexions ; les choisir est la partie difficile, résolue par une programmation dynamique qui fait pousser quatre chaînes : <b class=\"cNE\">NE</b> · <b class=\"cNW\">NO</b> · <b class=\"cSW\">SO</b> · <b class=\"cSE\">SE</b>.",
-        de: "Das ist der einfache Fall. In <b>Problem P2</b> darf jeder Pfeil auch jede seiner 8 Drehungen und Spiegelungen annehmen; sie zu wählen ist der schwere Teil, gelöst durch dynamische Programmierung, die vier Ketten wachsen lässt: <b class=\"cNE\">NO</b> · <b class=\"cNW\">NW</b> · <b class=\"cSW\">SW</b> · <b class=\"cSE\">SO</b>.",
+        en: "That is the easy case. In <b>Problem P2</b> each arrow may also take any of its up to 8 rotations and reflections; choosing them is the hard part, solved by dynamic programming that grows four chains: <b class=\"cNE\">NE</b> · <b class=\"cNW\">NW</b> · <b class=\"cSW\">SW</b> · <b class=\"cSE\">SE</b>.",
+        fr: "C’est le cas facile. Dans le <b>problème P2</b>, chaque flèche peut aussi prendre l’une de ses 8 rotations et réflexions au plus ; les choisir est la partie difficile, résolue par une programmation dynamique qui fait pousser quatre chaînes : <b class=\"cNE\">NE</b> · <b class=\"cNW\">NO</b> · <b class=\"cSW\">SO</b> · <b class=\"cSE\">SE</b>.",
+        de: "Das ist der einfache Fall. In <b>Problem P2</b> darf jeder Pfeil auch jede seiner bis zu 8 Drehungen und Spiegelungen annehmen; sie zu wählen ist der schwere Teil, gelöst durch dynamische Programmierung, die vier Ketten wachsen lässt: <b class=\"cNE\">NO</b> · <b class=\"cNW\">NW</b> · <b class=\"cSW\">SW</b> · <b class=\"cSE\">SO</b>.",
       },
     },
     bound: {
@@ -123,12 +123,12 @@
       section: { en: "An Upper Bound via Minkowski Averages", fr: "Une borne supérieure par moyennes de Minkowski", de: "Eine obere Schranke über Minkowski-Mittel" },
       lead: {
         en: "However these arrows are turned, reflected and ordered, their polygon cannot exceed " + sub("F", "M") + ".",
-        fr: "Quelle que soit la façon de tourner, refléter et ordonner ces flèches, leur polygone ne dépasse pas " + sub("F", "M") + ".",
+        fr: "Quelle que soit la façon de tourner, retourner et ordonner ces flèches, leur polygone ne dépasse pas " + sub("F", "M") + ".",
         de: "Wie man diese Pfeile auch dreht, spiegelt und ordnet, ihr Polygon übersteigt " + sub("F", "M") + " nicht.",
       },
       detail: {
         en: sub("F", "M") + " is the area of the Minkowski average of the 8 rotated and reflected copies of the polygon, an upper bound for Problem P2. The bound is often remarkably sharp.",
-        fr: sub("F", "M") + " est l’aire de la moyenne de Minkowski des 8 copies tournées et reflétées du polygone, une borne supérieure pour le problème P2. La borne est souvent remarquablement serrée.",
+        fr: sub("F", "M") + " est l’aire de la moyenne de Minkowski des 8 copies tournées et retournées du polygone, une borne supérieure pour le problème P2. La borne est souvent remarquablement serrée.",
         de: sub("F", "M") + " ist die Fläche des Minkowski-Mittels der 8 gedrehten und gespiegelten Kopien des Polygons, eine obere Schranke für Problem P2. Die Schranke ist oft bemerkenswert scharf.",
       },
     },

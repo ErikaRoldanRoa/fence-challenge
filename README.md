@@ -30,8 +30,9 @@ here once available.
 The labs, one per result:
 
 - **Cube lab** ([cube-lab/](cube-lab/)): the 29 pentacubes can enclose a
-  volume of at most 52 cubes, and a wall reaching 52 exists; walls of
-  hexacubes (1331) and heptacubes (25544) show how far larger pieces go.
+  volume of at most 52 cubes, and a wall reaching 52 exists; the best
+  walls found so far for hexacubes (1331) and heptacubes (25544) show how
+  far larger pieces go.
   Build walls freely or wrap a given room, cut them open, spread them apart,
   and lift the wall away to hold the room alone. Printable pieces:
   [cube-lab/print/](cube-lab/print/).
@@ -54,7 +55,7 @@ The labs, one per result:
 Every element of a lab has a small "∑" chip that opens the mathematics
 behind it, with the section of the paper it comes from.
 
-## The follow-up in the DMVM Mitteilungen
+## The follow-up in the Mitteilungen der DMV
 
 In German, in preparation, by the authors of *Optimal Polyomino Fences*. It
 answers challenges 11, 12 and 13 of the first paper, which the labs above
@@ -65,7 +66,7 @@ let you try: the hexomino lab (challenge 11), the pentomino DP lab
 
 **[Alexis Langlois-Rémillard](https://alexisl-r.github.io/) ·
 [Mia N. Müßig](https://miamuessig.de/) ·
-[Erika Roldán](https://www.erikaroldan.net/)**
+[Erika Roldan](https://www.erikaroldan.net/)**
 
 *Mitteilungen der Deutschen Mathematiker-Vereinigung* **33**(3), 187–199,
 2025; doi:[10.1515/dmvm-2025-0056](https://doi.org/10.1515/dmvm-2025-0056).
@@ -77,7 +78,7 @@ The **fence challenge** asks for the largest area you can enclose.
 
 The labs let you build fences by hand on all three regular tilings of the
 plane (square: polyominoes, hexagonal: polyhexes, triangular: polyiamonds),
-dragging, rotating, flipping and snapping the pieces while it
+dragging, rotating, flipping and snapping the pieces while the lab
 measures the enclosed area. The maximum for each board is left for the player to
 discover. The interface is available in French, German and English.
 
@@ -168,14 +169,14 @@ To point to one lab, cite this entry together with the lab's address:
 | Limit-shape lab | https://erikaroldanroa.github.io/fence-challenge/limit-shape-lab/ |
 | Pentomino DP lab | https://erikaroldanroa.github.io/fence-challenge/pentomino-dp-lab/ |
 
-> Langlois-Rémillard, A., Müßig, M. N. & Roldán, É. (2025).
+> Langlois-Rémillard, A., Müßig, M. N. & Roldan, E. (2025).
 > *Maximale Zäune mit Polyformen.* Mitteilungen der Deutschen
 > Mathematiker-Vereinigung, **33**(3), 187–199.
 > <https://doi.org/10.1515/dmvm-2025-0056>
 
 An English version of the 2025 paper is available on arXiv:
 
-> Langlois-Rémillard, A., Müßig, M. N. & Roldán, É. (2026).
+> Langlois-Rémillard, A., Müßig, M. N. & Roldan, E. (2026).
 > *Extremal fences with polyforms.* arXiv:2607.22379.
 > <https://arxiv.org/abs/2607.22379>
 

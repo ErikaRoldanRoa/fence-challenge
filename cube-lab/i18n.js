@@ -4,7 +4,7 @@
  * space (U+202F) before ; : ! ? and inside guillemets. */
 (function () {
   "use strict";
-  var NB = " ";
+  var NB = "\u202F";
 
   var fr = {
     "cu.s.overlap": "Elle chevauche une autre pièce" + NB + ": continue à la déplacer, ou elle revient en place quand tu la lâches.",
@@ -41,7 +41,7 @@
     "cu.view.aria": "La vue",
     "cu.cast": "Enlever la muraille" + NB + ": le vide seul",
     "cu.castTip": "Enlever la muraille et garder le vide enfermé, comme un moulage",
-    "cu.cut": "Couper à la hauteur",
+    "cu.cut": "Couper à une hauteur",
     "cu.cutTip": "Cacher les étages du haut pour regarder dedans",
     "cu.spread": "Écarter les pièces",
     "cu.spreadTip": "Écarter les pièces pour les voir une à une",
@@ -55,9 +55,11 @@
     "cu.roomNext": "Poche suivante",
     "cu.print": "Télécharger les pièces à imprimer en 3D",
     "cu.printTip": "Les pièces à imprimer en 3D (cubes de 15 mm), en un fichier zip",
+    "cu.printRooms": "Télécharger les poches à imprimer en 3D",
+    "cu.printRoomsTip": "Les poches de vide à imprimer en 3D (cubes de 15 mm), en un fichier zip",
     "cu.hexo": "Le labo des hexominos",
     "lab.home": "Tous les labos",
-    "lab.toCube": "Les murs en 3D",
+    "lab.toCube": "Les murailles en 3D",
     "lab.toHexo": "Le labo des hexominos",
     "lab.toLimit": "La forme limite",
     "lab.toDp": "12 pentominos, un ordre",
@@ -71,6 +73,7 @@
     "cu.s.allUsed": "Les {n} pièces sont posées.",
     "cu.s.noRoom": "Pas de place ici pour cette pièce.",
     "cu.s.selected": "Pièce {n} choisie. Tourne-la, déplace-la ou remets-la dans la réserve.",
+    "cu.s.selectedWall": "Pièce choisie. Tourne-la, déplace-la ou remets-la dans la réserve.",
     "cu.s.selectFirst": "Choisis d’abord une pièce posée.",
     "cu.s.moved": "Pièce déplacée.",
     "cu.s.turned": "Pièce tournée.",
@@ -82,6 +85,7 @@
     "cu.s.busy": "Un instant, la muraille se monte.",
     "cu.s.paper": "Muraille ouverte. Écarte-la, coupe-la, démonte-la.",
     "cu.s.room": "Une poche de {k} cubes" + NB + ": bâtis une muraille tout autour.",
+    "cu.s.room1": "Une poche d’un seul cube" + NB + ": bâtis une muraille tout autour.",
     "cu.s.wrapped": "Emballée" + NB + "! La poche est enfermée.",
     "cu.s.cast": "Le vide enfermé, seul.",
     "cu.s.castEmpty": "Rien n’est encore enfermé.",
@@ -94,7 +98,7 @@
 
   var de = {
     "cu.s.overlap": "Es überlappt ein anderes Teil: Verschieb es weiter, sonst kehrt es beim Loslassen zurück.",
-    "cu.s.reverted": "Es überlappte: Es ist dorthin zurück, wo es passte.",
+    "cu.s.reverted": "Es überlappte: Es ist an seinen Platz zurückgekehrt.",
     "cu.docTitle.tetra": "8 Tetrakuben · Fence Challenge",
     "cu.docTitle.penta": "29 Pentakuben · Fence Challenge",
     "cu.title": "eine Mauer in 3D",
@@ -141,6 +145,8 @@
     "cu.roomNext": "Nächster Hohlraum",
     "cu.print": "Teile für den 3D-Druck herunterladen",
     "cu.printTip": "Die Teile für den 3D-Druck (Würfel von 15 mm), als eine Zip-Datei",
+    "cu.printRooms": "Die Hohlräume für den 3D-Druck herunterladen",
+    "cu.printRoomsTip": "Die Hohlräume für den 3D-Druck (Würfel von 15 mm), als eine Zip-Datei",
     "cu.hexo": "Das Hexomino-Labor",
     "lab.home": "Alle Labore",
     "lab.toCube": "Mauern in 3D",
@@ -157,6 +163,7 @@
     "cu.s.allUsed": "Alle {n} Teile sind gesetzt.",
     "cu.s.noRoom": "Hier ist kein Platz für dieses Teil.",
     "cu.s.selected": "Teil {n} gewählt. Dreh es, verschieb es oder leg es zurück.",
+    "cu.s.selectedWall": "Teil gewählt. Dreh es, verschieb es oder leg es zurück.",
     "cu.s.selectFirst": "Wähl zuerst ein gesetztes Teil.",
     "cu.s.moved": "Teil verschoben.",
     "cu.s.turned": "Teil gedreht.",
@@ -168,6 +175,7 @@
     "cu.s.busy": "Einen Moment, die Mauer wird aufgebaut.",
     "cu.s.paper": "Mauer geöffnet. Zieh sie auseinander, schneide sie an, bau sie ab.",
     "cu.s.room": "Ein Hohlraum aus {k} Würfeln: Bau eine Mauer rundherum.",
+    "cu.s.room1": "Ein Hohlraum aus einem einzigen Würfel: Bau eine Mauer rundherum.",
     "cu.s.wrapped": "Eingepackt! Der Hohlraum ist eingeschlossen.",
     "cu.s.cast": "Die eingeschlossene Leere, allein.",
     "cu.s.castEmpty": "Noch ist nichts eingeschlossen.",
@@ -227,6 +235,8 @@
     "cu.roomNext": "Next room",
     "cu.print": "Download the pieces to print in 3D",
     "cu.printTip": "The pieces to print in 3D (15 mm cubes), as one zip file",
+    "cu.printRooms": "Download the rooms to print in 3D",
+    "cu.printRoomsTip": "The rooms to print in 3D (15 mm cubes), as one zip file",
     "cu.hexo": "The hexomino lab",
     "lab.home": "All the labs",
     "lab.toCube": "Walls in 3D",
@@ -243,6 +253,7 @@
     "cu.s.allUsed": "All {n} pieces are placed.",
     "cu.s.noRoom": "No room here for this piece.",
     "cu.s.selected": "Piece {n} chosen. Turn it, move it or put it back.",
+    "cu.s.selectedWall": "Piece chosen. Turn it, move it or put it back.",
     "cu.s.selectFirst": "Choose a placed piece first.",
     "cu.s.moved": "Piece moved.",
     "cu.s.turned": "Piece turned.",
@@ -254,6 +265,7 @@
     "cu.s.busy": "One moment, the wall is going up.",
     "cu.s.paper": "Wall opened. Spread it, cut it, take it apart.",
     "cu.s.room": "A room of {k} cubes: build a wall all around it.",
+    "cu.s.room1": "A room of a single cube: build a wall all around it.",
     "cu.s.wrapped": "Wrapped! The room is shut in.",
     "cu.s.cast": "The shut-in emptiness, alone.",
     "cu.s.castEmpty": "Nothing is shut in yet.",

@@ -560,7 +560,10 @@
     b.hand = null;
     cursor = null;
     draw();
-    if (b.sel != null) say("cu.s.selected", { n: b.pieces[b.sel].shape >= 0 ? b.pieces[b.sel].shape + 1 : "·" });
+    if (b.sel != null) {
+      var sh = b.pieces[b.sel].shape;
+      if (sh >= 0) say("cu.s.selected", { n: sh + 1 }); else say("cu.s.selectedWall");
+    }
   }
 
   function letGo() {
@@ -1022,7 +1025,7 @@
     b.pieces = [];
     b.sel = null;
     b.hand = null;
-    if (!quiet) { refresh(); say("cu.s.room", { k: r.room.length }); }
+    if (!quiet) { refresh(); say(r.room.length === 1 ? "cu.s.room1" : "cu.s.room", { k: r.room.length }); }
   }
 
   // The ladder: a step back, the room on the floor, a step on, and a dot per
@@ -1068,7 +1071,13 @@
 
   // One download per context: the pieces of the step, or the rooms.
   function syncPrint() {
-    $("print").setAttribute("href", play === "wrap" ? "print/rooms.zip" : mode === "tetra" ? "print/tetracubes.zip" : "print/pentacubes.zip");
+    var a = $("print"), rooms = play === "wrap";
+    var label = rooms ? "cu.printRooms" : "cu.print", tip = rooms ? "cu.printRoomsTip" : "cu.printTip";
+    a.setAttribute("href", rooms ? "print/rooms.zip" : mode === "tetra" ? "print/tetracubes.zip" : "print/pentacubes.zip");
+    a.setAttribute("data-i18n-aria-label", label);
+    a.setAttribute("data-i18n-title", tip);
+    a.setAttribute("aria-label", t(label));
+    a.setAttribute("title", t(tip));
   }
 
   // ---------- the math chips: only those that explain what is on screen ----------
@@ -1100,9 +1109,10 @@
     if (opened) {
       var c = chip("m.wallinfo"), cubesN = 0;
       opened.pieces.forEach(function (p) { cubesN += p.length; });
-      c.setAttribute("data-math-vars", JSON.stringify({ k: WALLS.indexOf(opened) + 1, p: opened.pieces.length, n: opened.n, c: cubesN, v: G.enclosed([].concat.apply([], opened.pieces), CONN).volume }));
-      var best = opened.id === "penta_v52" && paperRule;
-      c.setAttribute("data-math-body", best ? "m.wallinfo.best.body" : "m.wallinfo.paper.body");
+      // Upper bounds of the paper under the corner rule: 1633 (hexacubes), 37446 (heptacubes).
+      var ub = { 6: 1633, 7: 37446 }[opened.n], best = opened.id === "penta_v52" && paperRule;
+      c.setAttribute("data-math-vars", JSON.stringify({ k: WALLS.indexOf(opened) + 1, p: opened.pieces.length, n: opened.n, c: cubesN, v: G.enclosed([].concat.apply([], opened.pieces), CONN).volume, ub: ub }));
+      c.setAttribute("data-math-body", best ? "m.wallinfo.best.body" : ub && paperRule ? "m.wallinfo.found.body" : "m.wallinfo.paper.body");
       if (best) chip("m.cast").setAttribute("data-math-body", "m.cast52.body");
     }
     if (b.room) {

@@ -34,7 +34,7 @@ preferred-citation:
       given-names: Alexis
     - family-names: Müßig
       given-names: Mia N.
-    - family-names: Roldán
+    - family-names: Roldan
       given-names: Erika
   journal: "Mitteilungen der Deutschen Mathematiker-Vereinigung"
   volume: 33
@@ -51,7 +51,7 @@ references:
         given-names: Alexis
       - family-names: Müßig
         given-names: Mia N.
-      - family-names: Roldán
+      - family-names: Roldan
         given-names: Erika
     year: 2026
     doi: "10.48550/arXiv.2607.22379"

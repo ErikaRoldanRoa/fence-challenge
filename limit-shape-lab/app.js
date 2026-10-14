@@ -33,9 +33,8 @@
     7: { best: 19733, bound: 19830 }, 8: { best: 279134, bound: 280389 },
     9: { best: 4003811, bound: 4052974 }, 10: { best: 60832848, bound: 61484424 },
   };
-  // The run behind the paper's curve at 500 cells: its chain ends at
-  // X + Y = 4.46826e8 after 4.5e6 vectors; there are about 1.9994e300 500-ominoes.
-  const RUN500 = { R: 4.46826e8, N: 4.5e6, A: 1.9994e300 };
+  // The paper's area estimate for the 500-omino fence, as printed (log10 of 1.3e605).
+  const AREA500_LOG10 = 605 + Math.log10(1.3);
   const LOUPE_GAP = 0.6;   // the loupe never stretches the largest gap past this
 
   let n = 4, pieces = [], chain = null, loupeV = 0, loupe = 1, sel = -1;
@@ -44,7 +43,7 @@
 
   // ---------- the work: a worker when possible, the page otherwise ----------
   let worker = null;
-  try { worker = new Worker("worker.js?v=20261014a"); } catch (e) { worker = null; }
+  try { worker = new Worker("worker.js?v=20261014c"); } catch (e) { worker = null; }
   const waiting = new Map();
   if (worker) {
     worker.onmessage = (e) => {
@@ -501,7 +500,8 @@
   }
   function fmtPct(d) {
     const s = fmtNum(Math.abs(d) * 100, n === GIANT ? 2 : 1);
-    return (d < 0 ? MINUS : "+") + s + " %";
+    const sep = lang() === "fr" ? "\u202f" : lang() === "de" ? "\u00a0" : "";
+    return (d < 0 ? MINUS : "+") + s + sep + "%";
   }
   function fmtSci(log10) {
     const e = Math.floor(log10), m = Math.pow(10, log10 - e);
@@ -570,7 +570,7 @@
     if (openChip && !want.has(openChip)) closeCard();
   }
   function live(id) {
-    const tag = (s) => `<span class="live">${s} · ${t("ls.live.computed")}</span>`;
+    const tag = (s, k) => `<span class="live">${s} · ${t(k || "ls.live.computed")}</span>`;
     const N0 = (x) => fmtNum(Math.round(x), 0);
     if (id === "count" && n !== GIANT) return tag(`<i>n</i> = ${n}: ${N0(pieces.length)}`);
     if (id === "loop" && chain && n !== GIANT) {
@@ -585,15 +585,9 @@
       else if (fz) paper = `<br>${t("ls.live.fence", { f: t("ls.live.best", { b: N0(fz.best), u: N0(fz.bound) }) })}`;
       return `<span class="live"><span class="f">${t("ls.live.loop")} ≈ ${N0(est)}</span> · ${t("ls.live.computed")}${paper}</span>`;
     }
-    if (id === "gap") return tag(`<i>n</i> = ${n}: ${fmtPct(maxGap())}`);
+    if (id === "gap") return tag(`<i>n</i> = ${n}: ${fmtPct(maxGap())}`, n === GIANT ? "ls.live.paper" : null);
     if (id === "sample") return tag(t("ls.samples", { s: N0(giantSamples) }));
-    if (id === "giant") {
-      // The paper's run: X + Y per vector, scaled to every 500-omino, each once (÷ 8).
-      const ratio = areaRatio(DATA.dev500);
-      const logR = Math.log10(RUN500.R / RUN500.N) + Math.log10(RUN500.A) - Math.log10(8);
-      const logArea = Math.log10(ratio * Math.PI) + 2 * logR;
-      return tag(`≈ ${fmtSci(logArea)}`);
-    }
+    if (id === "giant") return tag(`≈ ${fmtSci(AREA500_LOG10)}`, "ls.live.paper");
     return "";
   }
   // The card itself is the shared math-chip card; this lab provides its texts.

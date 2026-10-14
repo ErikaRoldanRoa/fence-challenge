@@ -157,6 +157,12 @@ with sync_playwright() as p:
         pg.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
         pg.wait_for_timeout(500)
         check(bubble() == pg.evaluate("i18n.t('hub.hexTitle').split(' · ')[0] + i18n.t('mh.warm.hex')"), f"{eng}: hover on a door shows its bubble")
+        # An author's circle: the name in bold, then the bio in the reader's language.
+        avc = pg.locator(".sheet2 .faces .av").nth(3)
+        avc.scroll_into_view_if_needed(); pg.wait_for_timeout(300); bb = avc.bounding_box()
+        pg.mouse.move(bb["x"] + bb["width"] / 2, bb["y"] + bb["height"] / 2); pg.wait_for_timeout(500)
+        check(bubble() == pg.evaluate("'Erika Roldan' + i18n.t('mh.bio.ER')"), f"{eng}: an author's circle shows the name and the bio")
+        pg.mouse.move(2, 2); pg.evaluate("scrollTo(0, 0)"); pg.wait_for_timeout(300)
         # While one piece is lifted, every other piece still takes the pointer.
         missed = []
         pieces = pg.locator("a.piece")
@@ -178,6 +184,7 @@ with sync_playwright() as p:
         # The manual: closed and out of reach, opens, closes three ways.
         man = lambda: pg.evaluate("(() => { const m = document.getElementById('manual'); return [m.classList.contains('open'), m.hasAttribute('inert'), getComputedStyle(m).visibility, document.getElementById('manualBtn').getAttribute('aria-expanded')]; })()")
         check(man() == [False, True, "hidden", "false"], f"{eng}: the manual starts closed {man()}")
+        check(pg.evaluate("[...document.querySelectorAll('details.mblock')].filter(d => d.open).length") == 0, f"{eng}: every part of the manual starts closed")
         ids = pg.eval_on_selector_all(".paperblock", "els => els.map(e => e.id)")
         check(ids == ["mP2", "mP3", "mP1"], f"{eng}: the technical paper first, then the two DMVM papers {ids}")
         pg.click("#manualBtn"); pg.wait_for_timeout(450)
@@ -194,10 +201,13 @@ with sync_playwright() as p:
         for door, block in (("#stripP2", "mP2"), ("#rowP1", "mP1"), ("#stripP3", "mP3")):
             pg.locator(door).scroll_into_view_if_needed(); pg.click(door); pg.wait_for_timeout(500)
             seen = pg.evaluate("(id => { const m = document.getElementById('manual').getBoundingClientRect(), b = document.getElementById(id).getBoundingClientRect(); return m.right > 0 && b.top >= 0 && b.top < innerHeight / 2; })", block)
-            check(man()[0] is True and seen, f"{eng}: {door} opens the manual at its paper")
+            check(man()[0] is True and seen and pg.evaluate("(id => document.getElementById(id).open)", block), f"{eng}: {door} opens the manual at its paper, unfolded")
             pg.keyboard.press("Escape"); pg.wait_for_timeout(450)
             check(pg.evaluate("'#' + document.activeElement.id") == door, f"{eng}: closing returns to {door}")
         pg.click("#manualBtn"); pg.wait_for_timeout(450)
+        # The manual's parts are closed until their heading is tapped.
+        pg.click("details.mblock:has(#cite) > summary"); pg.wait_for_timeout(200)
+        check(pg.evaluate("document.querySelector('details.mblock:has(#cite)').open"), f"{eng}: a tap on a heading opens its part")
         # Copy the BibTeX.
         pg.locator("#copy").scroll_into_view_if_needed()
         pg.click("#copy"); pg.wait_for_timeout(200)

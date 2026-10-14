@@ -87,6 +87,8 @@
     var hd = el.getAttribute("data-lab-tip-head") || "";
     head.textContent = hd;
     head.hidden = !hd;
+    // A long text (data-lab-tip-wide) gets a wider bubble, read left to right.
+    tip.classList.toggle("wide", el.hasAttribute("data-lab-tip-wide"));
     text.textContent = t;
     tip.classList.add("on");
     el.setAttribute("aria-describedby", (el.getAttribute("aria-describedby") || "").replace(/\blab-tip\b/, "").trim() + " lab-tip");

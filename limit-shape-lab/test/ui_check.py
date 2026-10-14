@@ -78,7 +78,7 @@ with sync_playwright() as p:
             check(abs(st["loupe"] * abs(st["gap"]) - 0.6) < 1e-6, f"{tag}: full loupe stretches the largest gap to 0.6")
             pg.click(".math-chip[data-chip='giant']")
             live = pg.inner_text(".math-pop .live")
-            check("603" in live, f"{tag}: the 500-cell estimate is about 1.9·10^603: {live}")
+            check("605" in live, f"{tag}: the 500-cell estimate is the paper's 1.3·10^605: {live}")
             pg.click("[data-lang-btn='" + ("de" if lang != "de" else "fr") + "']")
             check(pg.is_visible(".math-pop"), f"{tag}: the language switch keeps the card open")
             pg.click("[data-lang-btn='" + lang + "']")

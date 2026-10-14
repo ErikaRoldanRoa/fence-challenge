@@ -336,10 +336,10 @@
     eq.classList.toggle("arranged", phase !== "fence");
     const area = phase === "fence" ? ref.aRef : M.shoelace(polyFor(arrowState.perm));
     $("val-ref").textContent = fmt(area);
-    $("val-delta").textContent = fmt(ref.sumDelta);
+    $("val-delta").textContent = ref.sumDelta < 0 ? "(" + fmt(ref.sumDelta) + ")" : fmt(ref.sumDelta);
     $("val-area").textContent = fmt(ref.area);
     const b = $("bound-tag");
-    if (phase !== "shuffled") { b.textContent = "≤ " + fmt(M.minkowskiBound(ref.order.map((o) => o.v))); b.hidden = false; b.title = t("hx.boundTag", { f: b.textContent.slice(2) }); }
+    if (phase === "sorted") { b.textContent = "≤ " + fmt(M.minkowskiBound(ref.order.map((o) => o.v))); b.hidden = false; b.title = t("hx.boundTag", { f: b.textContent.slice(2) }); }
     else b.hidden = true;
   }
   function polyFor(perm) {

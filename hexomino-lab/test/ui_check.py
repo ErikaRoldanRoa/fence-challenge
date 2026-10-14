@@ -135,7 +135,8 @@ def run(browser, lang, vp, touch, shots):
     page.wait_for_timeout(300)
     check(sorted(chips(page)) == ["lemma", "refvec"], f"{tag}: chips on the arrows {chips(page)}")
     eq = [page.inner_text(f"#val-{k}") for k in ("ref", "delta", "area")]
-    check(eq == ["1663", "−66", "1597"], f"{tag}: equation reads {eq}")
+    check(eq == ["1663", "(−66)", "1597"], f"{tag}: equation reads {eq}")
+    check(not page.is_visible("#bound-tag"), f"{tag}: no bound inside the equation")
     page.screenshot(path=str(OUT / f"{tag}-arrows.png"))
     page.click("#corners")
     page.wait_for_timeout(200)
@@ -153,6 +154,8 @@ def run(browser, lang, vp, touch, shots):
     page.wait_for_timeout(1100)
     check(sorted(chips(page)) == ["bound", "p2"], f"{tag}: chips when sorted {chips(page)}")
     check(state(page)["phase"] == "sorted" and page.inner_text("#val-ref") == "1663", f"{tag}: sorted back to the convex 1663")
+    if "desk" in tag:
+        check(page.inner_text("#bound-tag") in ("≤ 1666.5625", "≤ 1666,5625"), f"{tag}: bound when sorted {page.inner_text('#bound-tag')}")
     page.screenshot(path=str(OUT / f"{tag}-sorted.png"))
 
     # Math chips: only the ones the state needs.
