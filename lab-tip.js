@@ -15,16 +15,19 @@
   var HOVER_MS = 250, PRESS_MS = 450, AFTER_PRESS_MS = 1600, GAP = 10, EDGE = 8;
   var CONTROLS = "button, a[href], [role='link'], [role='button'], input, select, label[title], label[data-lab-tip], .chip, [data-lab-tip-on]";
 
-  var tip = null, arrow = null, text = null, owner = null, timer = 0, hideTimer = 0, pressed = null, swallowClick = false;
+  var tip = null, arrow = null, text = null, head = null, owner = null, timer = 0, hideTimer = 0, pressed = null, swallowClick = false;
 
   function build() {
     tip = document.createElement("div");
     tip.className = "lab-tip";
     tip.setAttribute("role", "tooltip");
     tip.id = "lab-tip";
+    head = document.createElement("b");
+    head.className = "lab-tip-head";
     text = document.createElement("span");
     arrow = document.createElement("i");
     arrow.className = "lab-tip-arrow";
+    tip.appendChild(head);
     tip.appendChild(text);
     tip.appendChild(arrow);
     document.body.appendChild(tip);
@@ -58,7 +61,10 @@
 
   function place() {
     if (!owner) return;
-    var r = owner.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+    // A control may name the part it is seen as (data-lab-tip-anchor, a selector
+    // inside it): the bubble then points at that part.
+    var sel = owner.getAttribute("data-lab-tip-anchor"), part = sel && owner.querySelector(sel);
+    var r = (part || owner).getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
     var vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
     var cx = r.left + r.width / 2;
     var left = Math.max(EDGE, Math.min(vw - w - EDGE, cx - w / 2));
@@ -77,6 +83,10 @@
     if (!t) return;
     window.clearTimeout(hideTimer);
     owner = el;
+    // An optional head line (data-lab-tip-head) shows in bold above the text.
+    var hd = el.getAttribute("data-lab-tip-head") || "";
+    head.textContent = hd;
+    head.hidden = !hd;
     text.textContent = t;
     tip.classList.add("on");
     el.setAttribute("aria-describedby", (el.getAttribute("aria-describedby") || "").replace(/\blab-tip\b/, "").trim() + " lab-tip");
@@ -193,5 +203,5 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else start();
 
-  window.labTip = { show: show, hide: hide };
+  window.labTip = { show: show, hide: hide, place: place };
 })();

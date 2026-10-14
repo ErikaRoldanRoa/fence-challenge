@@ -20,142 +20,203 @@
     <script src="i18n.js?v=20261013a"></script>
   </head>
   <body>
-    <span class="langSel" aria-label="Language / Langue / Sprache" role="group">
-      <button type="button" data-lang-btn="fr" aria-pressed="false" lang="fr" title="Français">FR</button>
-      <button type="button" data-lang-btn="de" aria-pressed="false" lang="de" title="Deutsch">DE</button>
-      <button type="button" data-lang-btn="en" aria-pressed="false" lang="en" title="English">EN</button>
-    </span>
+    <div class="topright">
+      <button id="manualBtn" class="ctl manualBtn" type="button" aria-controls="manual" aria-expanded="false" data-i18n-title="mh.manualOpen" data-i18n-aria-label="mh.manualOpen" title="Open the manual" aria-label="Open the manual">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6.5C10 5 7 4.6 3.5 5v13c3.5-.4 6.5 0 8.5 1.5M12 6.5c2-1.5 5-1.9 8.5-1.5v13c-3.5-.4-6.5 0-8.5 1.5M12 6.5v13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="langSel" aria-label="Language / Langue / Sprache" role="group">
+        <button type="button" data-lang-btn="fr" aria-pressed="false" lang="fr" title="Français">FR</button>
+        <button type="button" data-lang-btn="de" aria-pressed="false" lang="de" title="Deutsch">DE</button>
+        <button type="button" data-lang-btn="en" aria-pressed="false" lang="en" title="English">EN</button>
+      </span>
+    </div>
+
 
     <main class="hub">
       <header class="hero">
-        <p class="brand">Fence Challenge</p>
-        <!-- Three pieces close a fence; the lit cells are what it encloses. -->
-        <svg class="fence" viewBox="-2 -2 64 52" role="img" data-i18n-aria-label="mh.fenceAria" aria-label="Three pieces close a fence around lit cells: the area it encloses">
-          <g class="in"><rect x="13.5" y="13.5" width="9" height="9" rx="1.6"/><rect x="25.5" y="13.5" width="9" height="9" rx="1.6"/><rect x="37.5" y="13.5" width="9" height="9" rx="1.6"/><rect x="13.5" y="25.5" width="9" height="9" rx="1.6"/><rect x="25.5" y="25.5" width="9" height="9" rx="1.6"/><rect x="37.5" y="25.5" width="9" height="9" rx="1.6"/></g>
-          <path class="pc p" d="M1 1h34v10H11v24H1z"/>
-          <path class="pc c" d="M37 1h22v34H49V11H37z"/>
-          <path class="pc l" d="M1 37h58v10H1z"/>
-          <path class="seams" d="M12 1v10M24 1v10M1 12h10M1 24h10M48 1v10M49 12h10M49 24h10M12 37v10M24 37v10M36 37v10M48 37v10"/>
-        </svg>
-        <h1 data-i18n="mh.question">How much can a fence enclose?</h1>
+        <a class="brand" href="../" data-i18n-title="mh.brandTip" title="The first Fence Challenge: three missions">Fence Challenge</a>
+        <h1 class="visually-hidden" data-i18n="mh.question">How much can a fence enclose?</h1>
       </header>
 
-      <!-- Start here: the three warm-up boards of the first hub, each opened
-           at its own mission (the title ids of ../index.html). -->
-      <section class="start" aria-labelledby="start">
-        <h2 id="start" data-i18n="mh.start">Start here</h2>
-        <ul class="doors">
-          <li><a class="door c-pink" href="../#sqT" data-i18n-title="mh.warm.sq" title="Warm up on a small square board">
-            <span class="dico" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><rect x="3" y="3" width="18" height="18" rx="2" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="1.5"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity=".6"/></svg></span>
-            <span class="dname" data-door="hub.sqTitle"><span class="kicker">Mission I</span> <span class="dtitle">The chessboard</span></span>
+      <!-- The board. One island per grid (squares, hexagons, triangles,
+           cubes), each a polyomino of cells; one piece per cell. Rows, top
+           to bottom: the warm-ups, the labs of the first paper, the labs of
+           Optimal Polyomino Fences, the walls below. The words live in the
+           bubbles and in the manual. -->
+      <div class="stage">
+        <ol class="board" data-i18n-aria-label="mh.boardAria" aria-label="The board of the labs">
+
+          <li class="rowtag r1" aria-hidden="true"><span class="rt-ico"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span><span class="rt-txt" data-i18n="mh.row1">Start</span></li>
+          <li class="rowtag r2"><button id="rowP1" class="rowdoor" type="button" data-paper="mP1" data-i18n-title="mh.meetOpen" title="The paper and its authors"><span class="rt-ico">1</span><span class="rt-txt" data-i18n="mh.row2">Paper 1</span></button></li>
+          <li class="rowtag r3"><button id="rowP2" class="rowdoor" type="button" data-paper="mP2" data-i18n-title="mh.meetOpen" title="The paper and its authors"><span class="rt-ico">2</span><span class="rt-txt" data-i18n="mh.row3">Paper 2</span></button></li>
+
+          <li class="cell sq e-t e-l e-r" style="--row:1;--col:1;--i:0"><a data-lab-tip-anchor=".slab" data-head="hub.sqTitle" class="piece door" href="../#sqT" data-i18n-title="mh.warm.sq" title="Warm up on a small square board">
+            <span class="slab">
+              <span class="face front"><span class="pico"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="2" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="1.5"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity=".6"/></svg></span></span>
+              <span class="face back"><span class="btitle dname" data-door="hub.sqTitle"><span class="kicker">Mission I</span> <span class="dtitle visually-hidden">The chessboard</span></span><span class="bdesc" data-i18n="mh.d.sq">Warm up on squares</span><span class="go"><span data-i18n="mh.go">Open</span> ▸</span></span>
+            </span>
           </a></li>
-          <li><a class="door c-lime" href="../#hexT" data-i18n-title="mh.warm.hex" title="Warm up on a small hexagon board">
-            <span class="dico" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12.00 8.10 15.38 10.05 15.38 13.95 12.00 15.90 8.62 13.95 8.62 10.05z M18.75 8.10 22.13 10.05 22.13 13.95 18.75 15.90 15.38 13.95 15.38 10.05z M15.38 13.95 18.75 15.90 18.75 19.80 15.38 21.75 12.00 19.80 12.00 15.90z M8.62 13.95 12.00 15.90 12.00 19.80 8.62 21.75 5.25 19.80 5.25 15.90z M5.25 8.10 8.62 10.05 8.62 13.95 5.25 15.90 1.87 13.95 1.87 10.05z M8.62 2.25 12.00 4.20 12.00 8.10 8.62 10.05 5.25 8.10 5.25 4.20z M15.38 2.25 18.75 4.20 18.75 8.10 15.38 10.05 12.00 8.10 12.00 4.20z" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg></span>
-            <span class="dname" data-door="hub.hexTitle"><span class="kicker">Mission II</span> <span class="dtitle">The honeycomb</span></span>
+          <li class="cell hx e-t e-l e-r" style="--row:1;--col:2;--i:1"><a data-lab-tip-anchor=".slab" data-head="hub.hexTitle" class="piece door" href="../#hexT" data-i18n-title="mh.warm.hex" title="Warm up on a small hexagon board">
+            <span class="slab">
+              <span class="face front"><span class="pico"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12.00 8.10 15.38 10.05 15.38 13.95 12.00 15.90 8.62 13.95 8.62 10.05z M18.75 8.10 22.13 10.05 22.13 13.95 18.75 15.90 15.38 13.95 15.38 10.05z M15.38 13.95 18.75 15.90 18.75 19.80 15.38 21.75 12.00 19.80 12.00 15.90z M8.62 13.95 12.00 15.90 12.00 19.80 8.62 21.75 5.25 19.80 5.25 15.90z M5.25 8.10 8.62 10.05 8.62 13.95 5.25 15.90 1.87 13.95 1.87 10.05z M8.62 2.25 12.00 4.20 12.00 8.10 8.62 10.05 5.25 8.10 5.25 4.20z M15.38 2.25 18.75 4.20 18.75 8.10 15.38 10.05 12.00 8.10 12.00 4.20z" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg></span></span>
+              <span class="face back"><span class="btitle dname" data-door="hub.hexTitle"><span class="kicker">Mission II</span> <span class="dtitle visually-hidden">The honeycomb</span></span><span class="bdesc" data-i18n="mh.d.hx">Warm up on hexagons</span><span class="go"><span data-i18n="mh.go">Open</span> ▸</span></span>
+            </span>
           </a></li>
-          <li><a class="door c-cyan" href="../#triT" data-i18n-title="mh.warm.tri" title="Warm up on a small triangle board">
-            <span class="dico" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M22 12 17 20.66H7L2 12l5-8.66h10z" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M2 12h20M7 3.34l10 17.32M17 3.34 7 20.66M4.5 7.67h15M4.5 16.33h15M12 3.34 7 12l5 8.66 5-8.66z" fill="none" stroke="currentColor" stroke-width="0.9" stroke-opacity=".6" stroke-linejoin="round"/></svg></span>
-            <span class="dname" data-door="hub.triTitle"><span class="kicker">Mission III</span> <span class="dtitle">The field of triangles</span></span>
+          <li class="cell tr e-t e-l e-r" style="--row:1;--col:3;--i:2"><a data-lab-tip-anchor=".slab" data-head="hub.triTitle" class="piece door" href="../#triT" data-i18n-title="mh.warm.tri" title="Warm up on a small triangle board">
+            <span class="slab">
+              <span class="face front"><span class="pico"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M22 12 17 20.66H7L2 12l5-8.66h10z" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M2 12h20M7 3.34l10 17.32M17 3.34 7 20.66M4.5 7.67h15M4.5 16.33h15M12 3.34 7 12l5 8.66 5-8.66z" fill="none" stroke="currentColor" stroke-width="0.9" stroke-opacity=".6" stroke-linejoin="round"/></svg></span></span>
+              <span class="face back"><span class="btitle dname" data-door="hub.triTitle"><span class="kicker">Mission III</span> <span class="dtitle visually-hidden">The field of triangles</span></span><span class="bdesc" data-i18n="mh.d.tr">Warm up on triangles</span><span class="go"><span data-i18n="mh.go">Open</span> ▸</span></span>
+            </span>
           </a></li>
+
+          <li class="cell sq e-l e-r" style="--row:2;--col:1;--i:3"><a data-lab-tip-anchor=".slab" data-head="mh.n.square" class="piece card" href="../square-lab/" data-i18n-title="mh.q.square" title="How much area can the 12 pentominoes enclose?">
+            <span class="slab">
+              <span class="face front"><span class="pico"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 4h10v10h-5v5H7z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 4v10M7 9h10M7 14h5" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity=".6"/></svg></span></span>
+              <span class="face back"><span class="btitle" data-i18n="mh.n.square">Pentominoes</span><span class="bdesc" data-i18n="mh.d.square">12 pieces, one fence</span><span class="go"><span data-i18n="mh.go">Open</span> ▸</span></span>
+            </span>
+          </a></li>
+          <li class="cell hx e-l e-r e-b" style="--row:2;--col:2;--i:4"><a data-lab-tip-anchor=".slab" data-head="mh.n.hex" class="piece card" href="../hex-lab/" data-i18n-title="mh.q.hex" title="How much area can the 7 tetrahexes enclose?">
+            <span class="slab">
+              <span class="face front"><span class="pico"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.64 6.05 7.58 7.75 7.58 11.15 4.64 12.85 1.69 11.15 1.69 7.75z M10.53 6.05 13.47 7.75 13.47 11.15 10.53 12.85 7.58 11.15 7.58 7.75z M13.47 11.15 16.42 12.85 16.42 16.25 13.47 17.95 10.53 16.25 10.53 12.85z M19.36 11.15 22.31 12.85 22.31 16.25 19.36 17.95 16.42 16.25 16.42 12.85z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></span></span>
+              <span class="face back"><span class="btitle" data-i18n="mh.n.hex">Tetrahexes</span><span class="bdesc" data-i18n="mh.d.hex">7 pieces, one fence</span><span class="go"><span data-i18n="mh.go">Open</span> ▸</span></span>
+            </span>
+          </a></li>
+          <li class="cell tr e-l e-r e-b" style="--row:2;--col:3;--i:5"><a data-lab-tip-anchor=".slab" data-head="mh.n.tri" class="piece card" href="../triangle-lab/" data-i18n-title="mh.q.tri" title="How much area can the 12 hexiamonds enclose?">
+            <span class="slab">
+              <span class="face front"><span class="pico"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M1.5 14.6h18l3-5.2h-18z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7.5 14.6 4.5 9.4M7.5 14.6l3-5.2M13.5 14.6l-3-5.2M13.5 14.6l3-5.2M19.5 14.6l-3-5.2" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity=".6"/></svg></span></span>
+              <span class="face back"><span class="btitle" data-i18n="mh.n.tri">Hexiamonds</span><span class="bdesc" data-i18n="mh.d.tri">12 pieces, one fence</span><span class="go"><span data-i18n="mh.go">Open</span> ▸</span></span>
+            </span>
+          </a></li>
+
+          <li class="cell sq e-l e-b" style="--row:3;--col:1;--i:6"><a data-lab-tip-anchor=".slab" data-head="mh.n.hexo" class="piece card" href="../hexomino-lab/" data-i18n-title="mh.q.hexo" title="How much area can the 35 hexominoes enclose?">
+            <span class="slab">
+              <span class="face front"><span class="pico"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 8h4V4h4v4h4v4h4v4h-8v4H8v-4H4z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 8v8M12 8v8M12 12h8M16 12v4M8 12h4" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity=".6"/></svg></span><span class="star" aria-hidden="true">★</span></span>
+              <span class="face back"><span class="btitle" data-i18n="mh.n.hexo">Hexominoes</span><span class="bdesc" data-i18n="mh.d.hexo">35 pieces, one fence</span><span class="chip-c">★11</span><span class="go"><span data-i18n="mh.go">Open</span> ▸</span></span>
+            </span>
+          </a></li>
+          <li class="cell sq e-t e-b" style="--row:3;--col:2;--i:7"><a data-lab-tip-anchor=".slab" data-head="mh.n.dp" class="piece card" href="../pentomino-dp-lab/" data-i18n-title="mh.q.dp" title="Does the order of the pieces change the enclosed area?">
+            <span class="slab">
+              <span class="face front"><span class="pico"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h4v4h4v4h8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="4" cy="7" r="1.6" fill="currentColor" fill-opacity=".5"/><circle cx="20" cy="15" r="1.8" fill="currentColor"/></svg></span><span class="star" aria-hidden="true">★</span></span>
+              <span class="face back"><span class="btitle" data-i18n="mh.n.dp">Orders</span><span class="bdesc" data-i18n="mh.d.dp">Does the order matter?</span><span class="chip-c">★12</span><span class="go"><span data-i18n="mh.go">Open</span> ▸</span></span>
+            </span>
+          </a></li>
+          <li class="cell sq e-t e-b e-r" style="--row:3;--col:3;--i:8"><a data-lab-tip-anchor=".slab" data-head="mh.n.limit" class="piece card" href="../limit-shape-lab/" data-i18n-title="mh.q.limit" title="What shape do the best fences of huge pieces take?">
+            <span class="slab">
+              <span class="face front"><span class="pico"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4.5c3.4 0 7.5 1.6 7.5 7.5s-4.1 7.5-7.5 7.5S4.5 15.4 4.5 12 8.6 4.5 12 4.5z" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="5.6" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="1.8 1.6" opacity="0.75"/></svg></span></span>
+              <span class="face back"><span class="btitle" data-i18n="mh.n.limit">Limit shape</span><span class="bdesc" data-i18n="mh.d.limit">Huge pieces, which shape?</span><span class="go"><span data-i18n="mh.go">Open</span> ▸</span></span>
+            </span>
+          </a></li>
+          <li class="cell cb e-t e-l e-r e-b" style="--row:4;--col:2;--i:9"><a data-lab-tip-anchor=".slab" data-head="mh.n.cube" class="piece card" href="../cube-lab/" data-i18n-title="mh.q.cube" title="How much volume can a wall of cubes close in?">
+            <span class="slab">
+              <span class="face front"><span class="pico"><svg viewBox="0 0 35.5 40.6" aria-hidden="true" focusable="false"><g stroke="#b388ff" stroke-width="1.1" stroke-linejoin="round"><polygon points="34.0,30.5 28.3,36.3 28.3,24.9 34.0,19.1" fill="#453763"/><polygon points="28.3,36.3 17.7,33.2 17.7,21.8 28.3,24.9" fill="#312847"/><polygon points="23.4,16.0 34.0,19.1 28.3,24.9 17.7,21.8" fill="#604a89"/><polygon points="23.4,16.0 17.7,21.8 17.7,10.4 23.4,4.6" fill="#453763"/><polygon points="17.7,21.8 7.1,18.7 7.1,7.3 17.7,10.4" fill="#312847"/><polygon points="12.8,1.5 23.4,4.6 17.7,10.4 7.1,7.3" fill="#604a89"/><polygon points="17.7,33.2 12.1,39.1 12.1,27.7 17.7,21.8" fill="#453763"/><polygon points="12.1,39.1 1.5,36.0 1.5,24.6 12.1,27.7" fill="#312847"/><polygon points="7.1,18.7 17.7,21.8 12.1,27.7 1.5,24.6" fill="#604a89"/></g></svg></span><span class="pico"><svg viewBox="0 0 46.1 40.9" aria-hidden="true" focusable="false"><g stroke="#b388ff" stroke-width="1.1" stroke-linejoin="round"><polygon points="28.3,36.3 17.7,33.2 17.7,21.8 28.3,24.9" fill="#312847"/><polygon points="23.4,16.0 34.0,19.1 28.3,24.9 17.7,21.8" fill="#604a89"/><polygon points="23.4,16.0 17.7,21.8 17.7,10.4 23.4,4.6" fill="#453763"/><polygon points="17.7,21.8 7.1,18.7 7.1,7.3 17.7,10.4" fill="#312847"/><polygon points="12.8,1.5 23.4,4.6 17.7,10.4 7.1,7.3" fill="#604a89"/><polygon points="17.7,33.2 12.1,39.1 12.1,27.7 17.7,21.8" fill="#453763"/><polygon points="12.1,39.1 1.5,36.0 1.5,24.6 12.1,27.7" fill="#312847"/><polygon points="7.1,18.7 17.7,21.8 12.1,27.7 1.5,24.6" fill="#604a89"/><polygon points="44.6,33.6 38.9,39.4 38.9,28.0 44.6,22.2" fill="#453763"/><polygon points="38.9,39.4 28.3,36.3 28.3,24.9 38.9,28.0" fill="#312847"/><polygon points="34.0,19.1 44.6,22.2 38.9,28.0 28.3,24.9" fill="#604a89"/></g></svg></span><span class="star" aria-hidden="true">★</span></span>
+              <span class="face back"><span class="btitle" data-i18n="mh.n.cube">Polycubes</span><span class="bdesc" data-i18n="mh.d.cube">Wall in a volume</span><span class="chip-c">★13</span><span class="go"><span data-i18n="mh.go">Open</span> ▸</span></span>
+            </span>
+          </a></li>
+        </ol>
+      </div>
+
+      <!-- The people behind the labs: one strip per paper, its authors as
+           initials (the full name in a bubble); a strip opens the manual at
+           that paper. -->
+      <section class="people" aria-labelledby="meet">
+        <h2 id="meet" class="meetH" data-i18n="mh.meet">Meet the people behind the labs</h2>
+        <ul class="strips">
+          <li><button id="stripP2" class="strip" type="button" data-paper="mP2" data-i18n-title="mh.meetOpen" title="The paper and its authors">
+            <span class="sico"><span class="rt-ico">2</span></span>
+            <span class="stitle"><cite lang="en">Optimal Polyomino Fences</cite></span>
+            <span class="faces"><span class="av a-pink" data-lab-tip-on data-lab-tip="Alexis Langlois-Rémillard" aria-hidden="true">AL</span><span class="av a-lime" data-lab-tip-on data-lab-tip="Mia N. Müßig" aria-hidden="true">MM</span><span class="av a-cyan" data-lab-tip-on data-lab-tip="Helmut Podhaisky" aria-hidden="true">HP</span><span class="av a-purple" data-lab-tip-on data-lab-tip="Erika Roldan" aria-hidden="true">ER</span><span class="av more" aria-hidden="true">+6</span></span><span class="visually-hidden">Alexis Langlois-Rémillard, Mia N. Müßig, Helmut Podhaisky, Erika Roldan, Günter Rote, Maximilian Brömme, Matthes Norden, Maximilian Prietzel, Daniel Yu, Mykhailo Lyader</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button></li>
+          <li><button id="stripP3" class="strip" type="button" data-paper="mP3" data-i18n-title="mh.meetOpen" title="The paper and its authors">
+            <span class="sico"><span class="chip-c">★</span></span>
+            <span class="stitle"><span data-i18n="mh.p3.card">DMVM follow-up</span> <span class="note" data-i18n="mh.p3.soon">in preparation</span></span>
+            <span class="faces"><span class="av a-pink" data-lab-tip-on data-lab-tip="Alexis Langlois-Rémillard" aria-hidden="true">AL</span><span class="av a-lime" data-lab-tip-on data-lab-tip="Mia N. Müßig" aria-hidden="true">MM</span><span class="av a-cyan" data-lab-tip-on data-lab-tip="Helmut Podhaisky" aria-hidden="true">HP</span><span class="av a-purple" data-lab-tip-on data-lab-tip="Erika Roldan" aria-hidden="true">ER</span><span class="av more" aria-hidden="true">+6</span></span><span class="visually-hidden">Alexis Langlois-Rémillard, Mia N. Müßig, Helmut Podhaisky, Erika Roldan, Günter Rote, Maximilian Brömme, Matthes Norden, Maximilian Prietzel, Daniel Yu, Mykhailo Lyader</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button></li>
+          <li><button id="stripP1" class="strip" type="button" data-paper="mP1" data-i18n-title="mh.meetOpen" title="The paper and its authors">
+            <span class="sico"><span class="rt-ico">1</span></span>
+            <span class="stitle"><cite lang="de">Maximale Zäune mit Polyformen</cite></span>
+            <span class="faces"><span class="av a-pink" data-lab-tip-on data-lab-tip="Alexis Langlois-Rémillard" aria-hidden="true">AL</span><span class="av a-lime" data-lab-tip-on data-lab-tip="Mia N. Müßig" aria-hidden="true">MM</span><span class="av a-cyan" data-lab-tip-on data-lab-tip="Erika Roldán" aria-hidden="true">ER</span></span><span class="visually-hidden">Alexis Langlois-Rémillard, Mia N. Müßig, Erika Roldán</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button></li>
         </ul>
       </section>
 
-      <!-- One shelf per paper; one card per lab, each a question. The three
-           puzzles of the last shelf sit under their labs of the shelf above. -->
-      <section class="shelf" aria-labelledby="p1">
-        <header class="shelfHead">
-          <h2 id="p1"><cite lang="de">Maximale Zäune mit Polyformen</cite></h2>
-          <p class="meta">
-            <a class="tag" href="https://doi.org/10.1515/dmvm-2025-0056" data-i18n-title="mh.p1.journalTip" title="Read the article">DMVM <span class="wide">Mitteilungen </span>33(3)</a>
-            <a class="tag" href="https://arxiv.org/abs/2607.22379" data-i18n-title="mh.p1.arxivTip" title="Read the English version on arXiv"><span class="wide" data-i18n="mh.english">English</span><span class="narrow" aria-hidden="true">EN</span> · arXiv:2607.22379</a>
-          </p>
-        </header>
-        <ul class="cards">
-          <li><a class="card c-pink" href="../square-lab/" data-i18n-title="mh.open.square" title="Open the square lab">
-            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M7 4h10v10h-5v5H7z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 4v10M7 9h10M7 14h5" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity=".6"/></svg></span>
-            <span class="q" data-i18n="mh.q.square">How much area can the 12 pentominoes enclose?</span>
-          </a></li>
-          <li><a class="card c-lime" href="../hex-lab/" data-i18n-title="mh.open.hex" title="Open the hexagon lab">
-            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4.64 6.05 7.58 7.75 7.58 11.15 4.64 12.85 1.69 11.15 1.69 7.75z M10.53 6.05 13.47 7.75 13.47 11.15 10.53 12.85 7.58 11.15 7.58 7.75z M13.47 11.15 16.42 12.85 16.42 16.25 13.47 17.95 10.53 16.25 10.53 12.85z M19.36 11.15 22.31 12.85 22.31 16.25 19.36 17.95 16.42 16.25 16.42 12.85z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></span>
-            <span class="q" data-i18n="mh.q.hex">How much area can the 7 tetrahexes enclose?</span>
-          </a></li>
-          <li><a class="card c-cyan" href="../triangle-lab/" data-i18n-title="mh.open.tri" title="Open the triangle lab">
-            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M1.5 14.6h18l3-5.2h-18z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7.5 14.6 4.5 9.4M7.5 14.6l3-5.2M13.5 14.6l-3-5.2M13.5 14.6l3-5.2M19.5 14.6l-3-5.2" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity=".6"/></svg></span>
-            <span class="q" data-i18n="mh.q.tri">How much area can the 12 hexiamonds enclose?</span>
-          </a></li>
-        </ul>
-      </section>
-
-      <section class="shelf" aria-labelledby="p2">
-        <header class="shelfHead">
-          <h2 id="p2"><cite lang="en">Optimal Polyomino Fences</cite></h2>
-          <p class="meta"><span class="note" data-i18n="mh.p2.status">arXiv soon</span></p>
-        </header>
-        <ul class="cards">
-          <li><a class="card c-cyan" href="../hexomino-lab/" data-i18n-title="mh.open.hexo" title="Open the hexomino lab">
-            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 8h4V4h4v4h4v4h4v4h-8v4H8v-4H4z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 8v8M12 8v8M12 12h8M16 12v4M8 12h4" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity=".6"/></svg></span>
-            <span class="q" data-i18n="mh.q.hexo">How much area can the 35 hexominoes enclose?</span>
-          </a></li>
-          <li><a class="card c-pink" href="../pentomino-dp-lab/" data-i18n-title="mh.open.dp" title="Open the lab of the pentomino orders">
-            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 7h4v4h4v4h8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="4" cy="7" r="1.6" fill="currentColor" fill-opacity=".5"/><circle cx="20" cy="15" r="1.8" fill="currentColor"/></svg></span>
-            <span class="q" data-i18n="mh.q.dp">Does the order of the pieces change the enclosed area?</span>
-          </a></li>
-          <li><a class="card c-lime" href="../cube-lab/" data-i18n-title="mh.open.cube" title="Open the cube lab">
-            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 3.5 19.5 7.7v8.6L12 20.5l-7.5-4.2V7.7z" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M4.5 7.7 12 12l7.5-4.3M12 12v8.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
-            <span class="q" data-i18n="mh.q.cube">How much volume can a wall of cubes close in?</span>
-          </a></li>
-          <li><a class="card c-purple" href="../limit-shape-lab/" data-i18n-title="mh.open.limit" title="Open the limit-shape lab">
-            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 4.5c3.4 0 7.5 1.6 7.5 7.5s-4.1 7.5-7.5 7.5S4.5 15.4 4.5 12 8.6 4.5 12 4.5z" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="5.6" fill="none" stroke="currentColor" stroke-width="1.1" stroke-dasharray="1.8 1.6" opacity="0.75"/></svg></span>
-            <span class="q" data-i18n="mh.q.limit">What shape do the best fences of huge pieces take?</span>
-          </a></li>
-        </ul>
-      </section>
-
-      <section class="shelf" aria-labelledby="p3">
-        <header class="shelfHead">
-          <h2 id="p3"><span data-i18n="mh.p3.title">The follow-up in the DMVM Mitteilungen</span></h2>
-          <p class="meta"><span class="note" data-i18n="mh.p3.status">in German, in preparation</span></p>
-        </header>
-        <ul class="cards">
-          <li><a class="card c-cyan" href="../hexomino-lab/" data-i18n-title="mh.open.hexo" title="Open the hexomino lab">
-            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 8h4V4h4v4h4v4h4v4h-8v4H8v-4H4z" fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 8v8M12 8v8M12 12h8M16 12v4M8 12h4" fill="none" stroke="currentColor" stroke-width="1" stroke-opacity=".6"/></svg></span>
-            <span class="txt"><span class="kicker" data-i18n="mh.r11">Challenge 11</span> <span class="q" data-i18n="mh.q.r11">Can the 35 hexominoes enclose more area than the best fence of the first paper?</span></span>
-          </a></li>
-          <li><a class="card c-pink" href="../pentomino-dp-lab/" data-i18n-title="mh.open.dp" title="Open the lab of the pentomino orders">
-            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 7h4v4h4v4h8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="4" cy="7" r="1.6" fill="currentColor" fill-opacity=".5"/><circle cx="20" cy="15" r="1.8" fill="currentColor"/></svg></span>
-            <span class="txt"><span class="kicker" data-i18n="mh.r12">Challenge 12</span> <span class="q" data-i18n="mh.q.r12">In the worst order of the 12 pentominoes, how much area can a fence still enclose?</span></span>
-          </a></li>
-          <li><a class="card c-lime" href="../cube-lab/" data-i18n-title="mh.open.cube" title="Open the cube lab">
-            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 3.5 19.5 7.7v8.6L12 20.5l-7.5-4.2V7.7z" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M4.5 7.7 12 12l7.5-4.3M12 12v8.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
-            <span class="txt"><span class="kicker" data-i18n="mh.r13">Challenge 13</span> <span class="q" data-i18n="mh.q.r13">How much volume can the 29 pentacubes wall in?</span></span>
-          </a></li>
-        </ul>
-      </section>
-
-      <footer class="credits">
-        <section class="block" aria-labelledby="authors">
-          <h2 id="authors" data-i18n="mh.authors">Authors</h2>
-          <p class="paper"><cite lang="de">Maximale Zäune mit Polyformen</cite></p>
-          <p class="names"><span>Alexis Langlois-Rémillard</span> <span>Mia N. Müßig</span> <span>Erika Roldán</span></p>
-          <p class="paper"><cite lang="en">Optimal Polyomino Fences</cite> <span class="amp">&amp;</span> <span data-i18n="mh.p3.short">the DMVM follow-up</span></p>
-          <p class="names"><span>Alexis Langlois-Rémillard</span> <span>Mia N. Müßig</span> <span>Helmut Podhaisky</span> <span>Erika Roldan</span> <span>Günter Rote</span> <span>Maximilian Brömme</span> <span>Matthes Norden</span> <span>Maximilian Prietzel</span> <span>Daniel Yu</span> <span>Mykhailo Lyader</span></p>
-        </section>
-        <section class="block" aria-labelledby="cite">
-          <h2 id="cite" data-i18n="mh.cite">How to cite</h2>
-          <p class="hint" data-i18n="mh.citeLine">Cite the paper of the lab you use, and the labs:</p>
-          <div class="bib">
-            <pre id="bibtex" lang="en"><span class="l">@misc{FenceChallenge,</span><span class="l f">  author       = {Langlois-R{\'e}millard, Alexis and M{\"u}{\ss}ig, Mia N. and Podhaisky, Helmut and Roldan, Erika and Rote, G{\"u}nter and Br{\"o}mme, Maximilian and Norden, Matthes and Prietzel, Maximilian and Yu, Daniel and Lyader, Mykhailo},</span><span class="l f">  title        = {Fence Challenge: interactive labs for polyomino fences and polycube walls},</span><span class="l f">  year         = {2026},</span><span class="l f">  howpublished = {\url{https://erikaroldanroa.github.io/fence-challenge/}},</span><span class="l f">  note         = {Source code: \url{https://github.com/ErikaRoldanRoa/fence-challenge}}</span><span class="l">}</span></pre>
-            <button id="copy" class="ctl copy" type="button" data-i18n-title="mh.copy" data-i18n-aria-label="mh.copy" title="Copy the BibTeX" aria-label="Copy the BibTeX">
-              <svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="8.5" y="8.5" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.5 5.5v-.5a1.5 1.5 0 0 0-1.5-1.5H6a1.5 1.5 0 0 0-1.5 1.5v8A1.5 1.5 0 0 0 6 14.5h.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-              <svg class="i-done" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5.5 12.5 4.2 4.2 8.8-9.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-          </div>
-          <p class="meta"><a class="tag" href="../CITATION.cff" data-i18n-title="mh.cffTip" title="The citation, machine-readable">CITATION.cff</a></p>
-        </section>
-        <p class="visually-hidden" id="status" role="status" aria-live="polite"></p>
-      </footer>
       <p class="signature"><span data-i18n="mh.credit">by</span> <span class="tlm">THE LEARNING MACHINE</span> · <span class="ceo">CEO</span> <a href="https://erikaroldan.net" target="_blank" rel="noopener" data-i18n-title="mh.creditTip" title="Erika Roldan’s website">Dr. Erika Roldan</a></p>
     </main>
+
+    <!-- The manual: everything the board leaves to the bubbles, written out. -->
+    <div class="scrim" id="scrim" hidden></div>
+    <aside id="manual" class="manual" aria-labelledby="manualTitle" inert>
+      <header class="mhead">
+        <h2 id="manualTitle" data-i18n="mh.manual">Manual</h2>
+        <button id="manualClose" class="ctl" type="button" data-i18n-title="mh.manualClose" data-i18n-aria-label="mh.manualClose" title="Close the manual" aria-label="Close the manual">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+        </button>
+      </header>
+
+      <section class="mblock" aria-labelledby="mBoard">
+        <h3 id="mBoard" data-i18n="mh.mBoard">The board</h3>
+        <ul class="legend">
+          <li><span class="lg isl"><i class="sw sq"></i><i class="sw hx"></i><i class="sw tr"></i><i class="sw cb"></i></span><span data-i18n="mh.lgIslands">One island per grid: squares, hexagons, triangles, cubes.</span></li>
+          <li><span class="lg"><span class="rt-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span></span><span data-i18n="mh.lgStart">Start with the three small missions.</span></li>
+          <li><span class="lg"><span class="rt-ico">1</span><span class="rt-ico">2</span></span><span data-i18n="mh.lgRows">Then the labs of the first paper, then those of the second.</span></li>
+          <li><span class="lg"><span class="chip-c">★11</span></span><span data-i18n="mh.lgChallenge">A challenge of the first paper, to try in that lab.</span></li>
+          <li><span class="lg"><span class="chip-n">×12</span></span><span data-i18n="mh.lgCount">How many pieces you play with.</span></li>
+          <li><span class="lg hand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V11m0-.5a1.5 1.5 0 0 1 3 0v3.5c0 3.6-2.4 6-6 6-2.6 0-4-1.2-5.4-3.4L4.4 13a1.5 1.5 0 0 1 2.5-1.6L9 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span data-i18n="mh.lgHover">Point at a piece, or press and hold it, to read its question.</span></li>
+        </ul>
+      </section>
+
+      <section class="mblock" aria-labelledby="mChallenges">
+        <h3 id="mChallenges" data-i18n="mh.mChallenges">The challenges</h3>
+        <ul class="challenges">
+          <li><span class="chip-c">★11</span> <span data-i18n="mh.q.r11">Can the 35 hexominoes enclose more area than the best fence of the first paper?</span></li>
+          <li><span class="chip-c">★12</span> <span data-i18n="mh.q.r12">In the worst order of the 12 pentominoes, how much area can a fence still enclose?</span></li>
+          <li><span class="chip-c">★13</span> <span data-i18n="mh.q.r13">How much volume can the 29 pentacubes wall in?</span></li>
+        </ul>
+      </section>
+
+      <section class="mblock paperblock" id="mP2" aria-labelledby="mP2h">
+        <h3 id="mP2h" class="paper"><span class="rt-ico">2</span> <cite lang="en">Optimal Polyomino Fences</cite></h3>
+        <p class="meta"><span class="note" data-i18n="mh.p2.status">arXiv soon</span></p>
+        <p class="abshead" data-i18n="mh.authors">Authors</p>
+        <span class="faces"><span class="av a-pink" data-lab-tip-on data-lab-tip="Alexis Langlois-Rémillard" aria-hidden="true">AL</span><span class="av a-lime" data-lab-tip-on data-lab-tip="Mia N. Müßig" aria-hidden="true">MM</span><span class="av a-cyan" data-lab-tip-on data-lab-tip="Helmut Podhaisky" aria-hidden="true">HP</span><span class="av a-purple" data-lab-tip-on data-lab-tip="Erika Roldan" aria-hidden="true">ER</span><span class="av a-amber" data-lab-tip-on data-lab-tip="Günter Rote" aria-hidden="true">GR</span><span class="av a-pink" data-lab-tip-on data-lab-tip="Maximilian Brömme" aria-hidden="true">MB</span><span class="av a-lime" data-lab-tip-on data-lab-tip="Matthes Norden" aria-hidden="true">MN</span><span class="av a-cyan" data-lab-tip-on data-lab-tip="Maximilian Prietzel" aria-hidden="true">MP</span><span class="av a-purple" data-lab-tip-on data-lab-tip="Daniel Yu" aria-hidden="true">DY</span><span class="av a-amber" data-lab-tip-on data-lab-tip="Mykhailo Lyader" aria-hidden="true">ML</span></span><span class="visually-hidden">Alexis Langlois-Rémillard, Mia N. Müßig, Helmut Podhaisky, Erika Roldan, Günter Rote, Maximilian Brömme, Matthes Norden, Maximilian Prietzel, Daniel Yu, Mykhailo Lyader</span>
+        <p class="names"><span>Alexis Langlois-Rémillard</span> <span>Mia N. Müßig</span> <span>Helmut Podhaisky</span> <span>Erika Roldan</span> <span>Günter Rote</span> <span>Maximilian Brömme</span> <span>Matthes Norden</span> <span>Maximilian Prietzel</span> <span>Daniel Yu</span> <span>Mykhailo Lyader</span></p>
+      </section>
+
+      <section class="mblock paperblock" id="mP3" aria-labelledby="mP3h">
+        <h3 id="mP3h" class="paper"><span class="chip-c">★</span> <span data-i18n="mh.p3.title">The follow-up in the DMVM Mitteilungen</span></h3>
+        <p class="meta"><span class="note" data-i18n="mh.p3.status">in German, in preparation</span></p>
+        <p class="abshead" data-i18n="mh.authors">Authors</p>
+        <span class="faces"><span class="av a-pink" data-lab-tip-on data-lab-tip="Alexis Langlois-Rémillard" aria-hidden="true">AL</span><span class="av a-lime" data-lab-tip-on data-lab-tip="Mia N. Müßig" aria-hidden="true">MM</span><span class="av a-cyan" data-lab-tip-on data-lab-tip="Helmut Podhaisky" aria-hidden="true">HP</span><span class="av a-purple" data-lab-tip-on data-lab-tip="Erika Roldan" aria-hidden="true">ER</span><span class="av a-amber" data-lab-tip-on data-lab-tip="Günter Rote" aria-hidden="true">GR</span><span class="av a-pink" data-lab-tip-on data-lab-tip="Maximilian Brömme" aria-hidden="true">MB</span><span class="av a-lime" data-lab-tip-on data-lab-tip="Matthes Norden" aria-hidden="true">MN</span><span class="av a-cyan" data-lab-tip-on data-lab-tip="Maximilian Prietzel" aria-hidden="true">MP</span><span class="av a-purple" data-lab-tip-on data-lab-tip="Daniel Yu" aria-hidden="true">DY</span><span class="av a-amber" data-lab-tip-on data-lab-tip="Mykhailo Lyader" aria-hidden="true">ML</span></span><span class="visually-hidden">Alexis Langlois-Rémillard, Mia N. Müßig, Helmut Podhaisky, Erika Roldan, Günter Rote, Maximilian Brömme, Matthes Norden, Maximilian Prietzel, Daniel Yu, Mykhailo Lyader</span>
+        <p class="names"><span>Alexis Langlois-Rémillard</span> <span>Mia N. Müßig</span> <span>Helmut Podhaisky</span> <span>Erika Roldan</span> <span>Günter Rote</span> <span>Maximilian Brömme</span> <span>Matthes Norden</span> <span>Maximilian Prietzel</span> <span>Daniel Yu</span> <span>Mykhailo Lyader</span></p>
+      </section>
+
+      <section class="mblock paperblock" id="mP1" aria-labelledby="mP1h">
+        <h3 id="mP1h" class="paper"><span class="rt-ico">1</span> <cite lang="de">Maximale Zäune mit Polyformen</cite></h3>
+        <p class="entitle" lang="en"><cite>Extremal fences with polyforms</cite></p>
+        <p class="abshead" data-i18n="mh.abstract">Abstract</p>
+        <p class="abstract" lang="en">We present results around an isoperimetric problem built on polyforms: What is the biggest enclosed area one can build using polyforms in each of the three plane tessellations? We give challenges to the readers and present Shimauchi’s proof of the biggest area a fence made of pentominoes can enclose. A translation of the instance using integer linear programming is also given. A companion web app is available to test some of the challenges we propose and for activities, and we included extra pages with a cutout handout of the board and pieces of the puzzles, so that you can print and cut them to read this paper hands on.</p>
+        <p class="abshead" data-i18n="mh.authors">Authors</p>
+        <span class="faces"><span class="av a-pink" data-lab-tip-on data-lab-tip="Alexis Langlois-Rémillard" aria-hidden="true">AL</span><span class="av a-lime" data-lab-tip-on data-lab-tip="Mia N. Müßig" aria-hidden="true">MM</span><span class="av a-cyan" data-lab-tip-on data-lab-tip="Erika Roldán" aria-hidden="true">ER</span></span><span class="visually-hidden">Alexis Langlois-Rémillard, Mia N. Müßig, Erika Roldán</span>
+        <p class="names"><span>Alexis Langlois-Rémillard</span> <span>Mia N. Müßig</span> <span>Erika Roldán</span></p>
+        <p class="meta">
+          <a class="tag" href="https://arxiv.org/abs/2607.22379" data-i18n-title="mh.p1.arxivTip" title="Read the English version on arXiv">arXiv · <span data-i18n="mh.english">English</span></a>
+          <a class="tag" href="https://doi.org/10.1515/dmvm-2025-0056" data-i18n-title="mh.p1.journalTip" title="Read the article">DMVM 33(3)</a>
+        </p>
+      </section>
+
+      <section class="mblock" aria-labelledby="cite">
+        <h3 id="cite" data-i18n="mh.cite">How to cite</h3>
+        <p class="hint" data-i18n="mh.citeLine">Cite the paper of the lab you use, and the labs:</p>
+        <div class="bib">
+          <pre id="bibtex" lang="en"><span class="l">@misc{FenceChallenge,</span><span class="l f">  author       = {Langlois-R{\'e}millard, Alexis and M{\"u}{\ss}ig, Mia N. and Podhaisky, Helmut and Roldan, Erika and Rote, G{\"u}nter and Br{\"o}mme, Maximilian and Norden, Matthes and Prietzel, Maximilian and Yu, Daniel and Lyader, Mykhailo},</span><span class="l f">  title        = {Fence Challenge: interactive labs for polyomino fences and polycube walls},</span><span class="l f">  year         = {2026},</span><span class="l f">  howpublished = {\url{https://erikaroldanroa.github.io/fence-challenge/}},</span><span class="l f">  note         = {Source code: \url{https://github.com/ErikaRoldanRoa/fence-challenge}}</span><span class="l">}</span></pre>
+          <button id="copy" class="ctl copy" type="button" data-i18n-title="mh.copy" data-i18n-aria-label="mh.copy" title="Copy the BibTeX" aria-label="Copy the BibTeX">
+            <svg class="i-copy" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="8.5" y="8.5" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.5 5.5v-.5a1.5 1.5 0 0 0-1.5-1.5H6a1.5 1.5 0 0 0-1.5 1.5v8A1.5 1.5 0 0 0 6 14.5h.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <svg class="i-done" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5.5 12.5 4.2 4.2 8.8-9.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <p class="meta"><a class="tag" href="../CITATION.cff" data-i18n-title="mh.cffTip" title="The citation, machine-readable">CITATION.cff</a></p>
+      </section>
+    </aside>
+    <p class="visually-hidden" id="status" role="status" aria-live="polite"></p>
 
     <script src="hub.js?v=20261013a"></script>
     <script defer src="../lab-tip.js?v=20261013a"></script>

@@ -31,6 +31,9 @@
   transform: none;
   transition: opacity 0.12s ease, transform 0.12s ease, visibility 0s;
 }
+/* An optional head line, in bold above the text (data-lab-tip-head). */
+.lab-tip-head { display: block; margin-bottom: 2px; font-size: 14px; font-weight: 800; color: #fff; }
+.lab-tip-head[hidden] { display: none; }
 .lab-tip.below { transform: translateY(-3px); }
 .lab-tip.below.on { transform: none; }
 

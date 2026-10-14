@@ -1,6 +1,8 @@
 /* Fence Challenge · the hub of all the labs.
- * One question on top, one shelf per paper, one card per lab (an icon and a
- * question), the authors and the citation at the bottom. Shared controls,
+ * One question on top, then the board: one island per grid, one tile per
+ * lab, tilted in 3D; only the walls, the one 3D lab, stand as a block. A
+ * piece comes closer when pointed at. The words live in the bubbles and in
+ * the manual on the right. Shared controls,
  * language switch and bubbles from ../play-ui.css and ../lab-tip.css. */
 :root {
   --bg: #0d1117;
@@ -13,6 +15,7 @@
   --lime: #70ff7a;
   --amber: #ffd24a;
   --purple: #b388ff;
+  --tilt: 30deg;
   --focus: rgba(255, 255, 255, 0.7);
   --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
@@ -40,8 +43,8 @@ cite { font-style: italic; }
 .i18n-wait body { visibility: hidden; }
 
 /* ---------- language switch (as in the labs) ---------- */
+.topright { position: absolute; top: 4px; right: 16px; z-index: 20; display: flex; align-items: center; gap: 6px; }
 .langSel {
-  position: absolute; top: 10px; right: 16px; z-index: 20;
   display: flex; border-radius: 999px;
   background: rgba(7, 6, 10, 0.82); backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -60,15 +63,18 @@ cite { font-style: italic; }
   margin: 0 auto;
   padding: 72px 24px max(48px, env(safe-area-inset-bottom));
 }
-.hero { text-align: center; margin: 0 0 36px; }
+/* No title, no picture: the brand, then the board. The question
+   stays as the page's heading for screen readers. */
+.hero { text-align: center; margin: -36px 0 0; }
 .brand {
-  margin: 0 0 10px;
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px;
+  margin: 0 0 2px; text-decoration: none;
   font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
   color: #9eefff;
   text-shadow: 0 0 10px rgba(47, 243, 255, 0.45);
 }
 /* The idea in one picture: pieces around, the enclosed area lit. */
-.fence { display: block; width: 116px; height: auto; margin: 0 auto 16px; overflow: visible; }
+.fence { display: block; width: 92px; height: auto; margin: 0 auto 16px; overflow: visible; }
 .fence .pc { stroke-width: 1.4; stroke-linejoin: round; }
 .fence .p { fill: rgba(255, 59, 212, 0.2); stroke: var(--pink); }
 .fence .c { fill: rgba(47, 243, 255, 0.18); stroke: var(--cyan); }
@@ -77,82 +83,323 @@ cite { font-style: italic; }
 .fence .seams { fill: none; stroke: rgba(255, 255, 255, 0.22); stroke-width: 0.8; }
 .hero h1 {
   margin: 0;
-  font-size: clamp(30px, 5.2vw, 52px);
+  font-size: clamp(28px, 4.4vw, 46px);
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.08;
   text-wrap: balance;
 }
 
-/* ---------- start here: the three warm-up boards ---------- */
-/* The doors share the shelves' columns: each warm-up board stands right
-   above the full lab it opens (square, hexagons, triangles). */
-.start { margin: 0 0 22px; padding: 0 19px; }
-.start h2 {
-  margin: 0 2px 10px;
-  font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.14em;
+
+/* ---------- the manual button (top right, beside the languages) ---------- */
+
+/* ---------- the board ---------- */
+.stage {
+  perspective: 1500px;
+  perspective-origin: 50% 0%;
+  padding: 6px 0 30px;
+}
+.board {
+  list-style: none; margin: 0 auto; padding: 0;
+  display: grid;
+  grid-template-columns: 112px repeat(3, 200px) 112px;
+  grid-template-rows: repeat(4, 160px);
+  justify-content: center;
+  transform: rotateX(var(--tilt));
+  transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+}
+.rowtag {
+  grid-column: 1; align-self: center; justify-self: end;
+  display: flex; align-items: center; gap: 8px; padding-right: 14px; white-space: nowrap;
+  font-family: var(--mono); font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted2);
+}
+.rowtag.r1 { grid-row: 1; color: var(--amber); }
+.rowtag.r2 { grid-row: 2; }
+.rowtag.r3 { grid-row: 3; }
+.rt-ico {
+  display: inline-grid; place-items: center; flex: 0 0 auto;
+  width: 26px; height: 26px; border-radius: 999px;
+  border: 1.5px solid currentColor;
+  font: 800 12px/1 var(--mono); letter-spacing: 0;
+}
+.rt-ico svg { width: 14px; height: 14px; }
+
+/* An island cell: its floor shows its grid; its outer edges are the fence. */
+.cell {
+  --c: var(--pink);
+  grid-row: var(--row); grid-column: calc(var(--col) + 1);
+  position: relative; display: flex; padding: 12px;
+  transform-style: preserve-3d;
+  border: 2px solid transparent;
+  background-color: color-mix(in srgb, var(--c) 6%, rgba(7, 6, 10, 0.55));
+}
+.cell.sq { --c: var(--pink); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Cpath d='M22 .5H.5V22' fill='none' stroke='%23ff3bd4' stroke-opacity='.2'/%3E%3C/svg%3E"); }
+.cell.hx { --c: var(--lime); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='48.5'%3E%3Cpath d='M14 0 28 8.08V24.25L14 32.33 0 24.25V8.08ZM14 32.33V48.5' fill='none' stroke='%2370ff7a' stroke-opacity='.2'/%3E%3C/svg%3E"); }
+.cell.tr { --c: var(--cyan); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='41.57'%3E%3Cpath d='M0 .5H24M0 20.78H24M0 0 24 41.57M24 0 0 41.57' fill='none' stroke='%232ff3ff' stroke-opacity='.18'/%3E%3C/svg%3E"); }
+.cell.cb { --c: var(--purple); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='13.86'%3E%3Cpath d='M0 6.93 12 0 24 6.93 12 13.86Z' fill='none' stroke='%23b388ff' stroke-opacity='.22'/%3E%3C/svg%3E"); }
+.cell.e-t { border-top-color: color-mix(in srgb, var(--c) 60%, transparent); }
+.cell.e-r { border-right-color: color-mix(in srgb, var(--c) 60%, transparent); }
+.cell.e-b { border-bottom-color: color-mix(in srgb, var(--c) 60%, transparent); }
+.cell.e-l { border-left-color: color-mix(in srgb, var(--c) 60%, transparent); }
+.cell.e-t.e-l { border-top-left-radius: 22px; }
+.cell.e-t.e-r { border-top-right-radius: 22px; }
+.cell.e-b.e-l { border-bottom-left-radius: 22px; }
+.cell.e-b.e-r { border-bottom-right-radius: 22px; }
+
+/* A piece: the link fills its cell and never moves (so a press always lands
+   on it); its slab rests on the cell. Pointed at, the slab rises, stands up
+   to face you and grows; the others step back. */
+.piece {
+  flex: 1 1 auto; display: flex; min-width: 0;
+  color: var(--text); text-decoration: none; text-align: center;
+  border-radius: 16px;
+  transform-style: preserve-3d;
+  transform: translateZ(1px); /* above the board's plane: the hit always lands here */
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.piece:focus-visible { outline: none; }
+.slab {
+  position: relative; flex: 1 1 auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 8px; min-width: 0;
+  border-radius: 16px;
+  border: 1.5px solid color-mix(in srgb, var(--c) 55%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c) 16%, #12141c), #0c0d13 85%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  transform: translateZ(1px);
+  transform-origin: 50% 100%;
+  transition: transform 0.32s cubic-bezier(.2, .8, .25, 1.15), box-shadow 0.32s ease, opacity 0.25s ease, filter 0.25s ease;
+  animation: land 0.6s cubic-bezier(.2, .8, .25, 1.1) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms + 80ms);
+}
+@keyframes land {
+  from { opacity: 0; transform: translateZ(140px); }
+  to { opacity: 1; transform: translateZ(1px); }
+}
+/* The walls are the one 3D lab: its piece is a raised block. */
+.cell.cb .slab {
+  box-shadow:
+    0 10px 0 color-mix(in srgb, var(--c) 32%, #050508),
+    0 20px 26px rgba(0, 0, 0, 0.55);
+  transform: translateZ(10px);
+}
+/* It runs the whole last row: its name in the middle, a tetracube on one
+   side and a pentacube on the other, the two families of the lab. */
+.cell.cb { grid-column: 2 / span 3; }
+.cell.cb .slab { flex-direction: row; justify-content: space-evenly; gap: 12px; }
+.cell.cb .pico svg { width: auto; height: 80px; }
+.cell.cb .pname { font-size: 18px; }
+.ptext { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+@media (hover: hover) {
+  .piece:hover .slab {
+    transform: translateZ(56px) rotateX(calc(-1 * var(--tilt))) scale(1.14);
+    box-shadow:
+      0 0 0 1.5px color-mix(in srgb, var(--c) 80%, transparent),
+      0 22px 40px rgba(0, 0, 0, 0.55),
+      0 0 34px color-mix(in srgb, var(--c) 35%, transparent);
+  }
+  .board:has(.piece:hover) .piece:not(:hover) .slab { opacity: 0.45; filter: saturate(0.5); transform: translateZ(1px); }
+  .piece:hover:active .slab { transform: translateZ(40px) rotateX(calc(-1 * var(--tilt))) scale(1.08); transition-duration: 0.08s; }
+}
+.piece:focus-visible .slab {
+  outline: 2px solid var(--focus); outline-offset: 3px;
+  transform: translateZ(56px) rotateX(calc(-1 * var(--tilt))) scale(1.14);
+}
+.board:has(.piece:focus-visible) .piece:not(:focus-visible) .slab { opacity: 0.45; filter: saturate(0.5); transform: translateZ(1px); }
+@media (hover: none) {
+  .piece:active .slab { transform: translateZ(1px) scale(0.96); transition-duration: 0.08s; }
+}
+
+/* A tile has two faces: the front is only its drawing; the back (turned to
+   on a phone, by a first tap) names the lab in one or two words, says one
+   short line and invites to open it. */
+.slab { transform-style: preserve-3d; }
+.face {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  -webkit-backface-visibility: hidden; backface-visibility: hidden;
+}
+.face.front { flex: 1 1 auto; position: static; }
+.face.back {
+  position: absolute; inset: 0; padding: 8px; border-radius: inherit;
+  transform: rotateY(180deg);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c) 22%, #12141c), #0c0d13 90%);
+}
+.piece.flipped .slab { transform: translateZ(1px) rotateY(180deg); }
+.btitle { font-size: 14px; font-weight: 800; line-height: 1.15; }
+.btitle .kicker { font-family: inherit; font-size: 14px; letter-spacing: 0; text-transform: none; color: var(--text); }
+.bdesc { font-size: 12px; line-height: 1.3; color: var(--muted); }
+.go {
+  display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 12px; border-radius: 999px;
+  background: var(--c); color: #0c0d13; font-size: 12px; font-weight: 800;
+}
+.star {
+  position: absolute; top: -2px; right: -2px;
+  display: grid; place-items: center; width: 22px; height: 22px; border-radius: 999px;
+  background: var(--amber); color: #1a1300; font-size: 12px; line-height: 1;
+  box-shadow: 0 0 10px rgba(255, 210, 74, 0.45);
+}
+.slab > .face.front { align-self: stretch; }
+.cell.cb .face.front { flex-direction: row; justify-content: center; gap: 72px; }
+.cell.cb .face.back { flex-direction: row; flex-wrap: wrap; align-content: center; gap: 6px 14px; padding: 12px 20px; }
+.cell.cb .bdesc { flex-basis: auto; }
+.pico { color: var(--c); filter: drop-shadow(0 0 10px color-mix(in srgb, var(--c) 45%, transparent)); }
+.pico svg { width: 58px; height: 58px; display: block; overflow: visible; }
+.pname { font-size: 15px; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
+.dname { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.kicker {
+  font-family: var(--mono); font-size: 12.5px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--c);
+}
+.dtitle { font-size: 14px; font-weight: 800; line-height: 1.2; }
+.chips { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
+.chip-n, .chip-c {
+  display: inline-flex; align-items: center; height: 21px; padding: 0 8px; border-radius: 999px;
+  font: 700 11px/1 var(--mono); letter-spacing: 0.02em; white-space: nowrap;
+}
+.chip-n { color: var(--c, var(--text)); border: 1px solid color-mix(in srgb, var(--c, #fff) 45%, transparent); background: rgba(7, 6, 10, 0.5); }
+.chip-c { color: #1a1300; background: var(--amber); box-shadow: 0 0 10px rgba(255, 210, 74, 0.35); }
+
+/* ---------- the people behind the labs ---------- */
+.people { max-width: 600px; margin: 8px auto 0; }
+/* One row of three, like the board above it. */
+.meetH {
+  margin: 0 0 10px; text-align: center;
+  font-family: var(--mono); font-size: 11.5px; font-weight: 700; letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--amber);
 }
-.doors {
-  list-style: none; margin: 0; padding: 0;
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;
+.strips { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.strips > li { display: flex; min-width: 0; }
+.strip {
+  width: 100%; min-height: 56px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  aspect-ratio: 1; padding: 12px 10px; border-radius: 18px; text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.025);
+  color: var(--text); font: inherit; text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
-.doors > li { display: flex; min-width: 0; }
-.door {
-  --c: var(--cyan);
-  flex: 1 1 auto;
-  display: flex; align-items: center; gap: 12px;
-  min-height: 68px; padding: 9px 14px 9px 9px;
-  border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
-  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 12%, transparent), rgba(255, 255, 255, 0.015));
-  color: var(--text); text-decoration: none;
-  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
-  transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+/* A paper is a sheet, not a tile: cream paper, dark ink, a folded corner,
+   a serif title, so it never reads as one more lab. */
+.strip {
+  position: relative;
+  background: linear-gradient(180deg, #f6f1e6, #ebe3d2);
+  border: 0; color: #1b1a17;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%);
 }
-.door.c-pink { --c: var(--pink); }
-.door.c-lime { --c: var(--lime); }
-.door.c-cyan { --c: var(--cyan); }
-@media (hover: hover) {
-  .door:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--c) 80%, transparent);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 20px color-mix(in srgb, var(--c) 24%, transparent);
-  }
+.strip::after {
+  content: ""; position: absolute; top: 0; right: 0; width: 22px; height: 22px;
+  background: linear-gradient(225deg, transparent 50%, #cfc4ad 50%);
+  border-bottom-left-radius: 4px;
 }
-.door:active { transform: scale(0.985); }
-.door:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
-.dico {
-  flex: 0 0 auto; display: grid; place-items: center;
-  width: 48px; height: 48px; border-radius: 999px; color: var(--c);
-  border: 1.5px solid color-mix(in srgb, var(--c) 60%, transparent);
-  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--c) 20%, transparent), rgba(7, 6, 10, 0.6) 75%);
+.strip .stitle { font-family: Georgia, "Times New Roman", serif; font-weight: 700; color: #1b1a17; text-align: center; overflow-wrap: normal; hyphens: manual; }
+.strip .stitle .note { font-family: var(--mono); color: #6b6455; }
+.strip .rt-ico { color: #1b1a17; border-color: #1b1a17; }
+.strip .av { border-color: #f1ebdf; }
+.strip .av.more { background: #1b1a17; color: #f6f1e6; }
+@media (hover: hover) { .strip:hover { transform: translateY(-3px) rotate(-0.6deg); box-shadow: 0 16px 30px rgba(0, 0, 0, 0.55); } }
+.strip:active { transform: scale(0.99); }
+.strip:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sico { flex: 0 0 auto; color: var(--muted2); }
+.stitle { flex: 0 1 auto; min-width: 0; font-size: 13.5px; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+.strip .chev { display: none; }
+.strip .faces { justify-content: center; }
+.stitle .note { display: block; line-height: 1.5; font-weight: 400; }
+.chev { flex: 0 0 auto; width: 18px; height: 18px; color: var(--muted2); }
+.faces { display: inline-flex; flex-wrap: wrap; padding-left: 6px; }
+.av {
+  --c: var(--pink);
+  display: inline-grid; place-items: center; width: 30px; height: 30px; margin-left: -6px;
+  border-radius: 999px; border: 2px solid #0d1117;
+  background: color-mix(in srgb, var(--c) 30%, #12141c); color: var(--c);
+  font: 800 10.5px/1 var(--mono); letter-spacing: 0.02em; cursor: default;
 }
-.dico svg { width: 28px; height: 28px; display: block; overflow: visible; }
-.dname { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.dtitle { font-size: 15px; font-weight: 800; line-height: 1.25; color: var(--text); }
+.av.more { --c: var(--muted2); background: #1a1d26; color: var(--text); }
+.av.a-pink { --c: var(--pink); } .av.a-lime { --c: var(--lime); } .av.a-cyan { --c: var(--cyan); }
+.av.a-purple { --c: var(--purple); } .av.a-amber { --c: var(--amber); }
 
-/* ---------- shelves ---------- */
-.shelf {
-  margin: 0 0 22px;
-  padding: 18px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.018);
-  border: 1px solid var(--line);
+/* The row labels on the board are doors to their paper. */
+.rowdoor {
+  /* 54 px on the tilted board is still 44 px or more on screen. */
+  display: inline-flex; align-items: center; gap: 8px; min-height: 54px; min-width: 50px;
+  padding: 0 6px; border: 0; border-radius: 999px; background: none; cursor: pointer;
+  color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit;
 }
-.shelfHead {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-  gap: 6px 16px;
-  margin: 0 2px 14px;
+@media (hover: hover) { .rowdoor:hover { color: var(--amber); } }
+.rowdoor:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; }
+
+/* In the manual: a paper and its people, the one just opened lit a moment. */
+.paperblock h3.paper {
+  font-family: inherit; font-size: 15px; letter-spacing: 0; text-transform: none; color: var(--text);
 }
-.shelfHead h2 {
-  margin: 0;
-  font-size: 17px; font-weight: 800; letter-spacing: 0.005em; line-height: 1.25;
+.paperblock .faces { margin: 4px 0 6px; }
+.entitle { margin-top: 2px !important; color: var(--muted); font-size: 13px; }
+.abshead {
+  margin: 12px 0 4px !important;
+  font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted2);
 }
+.abstract { color: var(--text); line-height: 1.5; font-size: 13px; }
+.paperblock .meta { margin-top: 8px; }
+.paperblock.flash { animation: flash 1.4s ease; }
+@keyframes flash { 0%, 40% { background: rgba(255, 210, 74, 0.1); } 100% { background: transparent; } }
+
+/* ---------- the manual: a drawer on the right ---------- */
+.scrim {
+  position: fixed; inset: 0; z-index: 40;
+  background: rgba(3, 3, 6, 0.55); backdrop-filter: blur(2px);
+}
+.scrim[hidden] { display: none; }
+.manual {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 50;
+  width: min(420px, 100vw);
+  overflow-y: auto; overscroll-behavior: contain;
+  padding: 10px 22px max(28px, env(safe-area-inset-bottom));
+  background: #0f1219;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: -24px 0 60px rgba(0, 0, 0, 0.5);
+  color: var(--muted); font-size: 13.5px;
+  transform: translateX(105%); visibility: hidden;
+  transition: transform 0.3s cubic-bezier(.2, .8, .25, 1), visibility 0s linear 0.3s;
+}
+.manual.open { transform: none; visibility: visible; transition: transform 0.3s cubic-bezier(.2, .8, .25, 1), visibility 0s; }
+.mhead {
+  position: sticky; top: -10px; z-index: 1;
+  display: flex; align-items: center; justify-content: space-between;
+  margin: -10px -22px 6px; padding: 10px 12px 6px 22px;
+  background: #0f1219;
+}
+.mhead h2 { margin: 0; font-size: 18px; font-weight: 800; color: var(--text); }
+.mblock { padding: 14px 0 16px; border-top: 1px solid var(--line); }
+.mblock h3 {
+  margin: 0 0 10px;
+  font-family: var(--mono); font-size: 11.5px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted2);
+}
+.mblock p { margin: 0; }
+.legend, .challenges { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.legend li { display: grid; grid-template-columns: 76px 1fr; align-items: center; gap: 10px; color: var(--text); }
+.lg { display: flex; gap: 4px; align-items: center; }
+.lg .rt-ico { color: var(--muted2); }
+.lg .rt-ico svg { color: var(--amber); }
+.lg.hand svg { width: 26px; height: 26px; color: var(--text); }
+.sw { display: block; width: 15px; height: 15px; border-radius: 4px; border: 1.5px solid var(--c); background: color-mix(in srgb, var(--c) 25%, transparent); }
+.sw.sq { --c: var(--pink); } .sw.hx { --c: var(--lime); } .sw.tr { --c: var(--cyan); } .sw.cb { --c: var(--purple); }
+.challenges li { color: var(--text); line-height: 1.4; }
+.challenges .chip-c { margin-right: 4px; }
+.mblock .paper { color: var(--text); font-weight: 700; margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.mblock .paper:first-of-type { margin-top: 0; }
+.mblock .paper .rt-ico { width: 22px; height: 22px; font-size: 11px; color: var(--muted2); }
+.mblock .paper .chip-c { height: 22px; }
 .meta { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; }
-.note {
-  font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.04em; color: var(--muted2);
-}
+.note { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.04em; color: var(--muted2); line-height: 30px; }
+.amp { color: var(--muted2); font-weight: 400; }
+.names { margin-top: 3px !important; }
+.names span { white-space: nowrap; }
+.names span:not(:last-child)::after { content: " ·"; color: var(--muted2); }
+.hint { margin-bottom: 10px !important; }
 /* A link to a paper: a small pill, pressable, in a 44 px tall touch box. */
 .tag {
   position: relative; z-index: 0;
@@ -173,85 +420,6 @@ cite { font-style: italic; }
 .tag:focus-visible::after { box-shadow: 0 0 0 2px var(--focus); }
 @media (hover: hover) { .tag:hover::after { background: rgba(255, 210, 74, 0.15); border-color: rgba(255, 210, 74, 0.6); } }
 
-.cards {
-  list-style: none; margin: 0; padding: 0;
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;
-}
-.cards > li { display: flex; min-width: 0; }
-
-.card {
-  --c: var(--cyan);
-  position: relative;
-  flex: 1 1 auto;
-  display: flex; flex-direction: column; align-items: flex-start; gap: 14px;
-  min-height: 150px;
-  padding: 16px 16px 18px;
-  border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--c) 34%, transparent);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--c) 9%, transparent), rgba(255, 255, 255, 0.015));
-  color: var(--text);
-  text-decoration: none;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
-}
-.card.c-pink { --c: var(--pink); }
-.card.c-cyan { --c: var(--cyan); }
-.card.c-lime { --c: var(--lime); }
-.card.c-purple { --c: var(--purple); }
-@media (hover: hover) {
-  .card:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--c) 70%, transparent);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 22px color-mix(in srgb, var(--c) 22%, transparent);
-  }
-}
-.card:active { transform: scale(0.985); }
-.card:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
-
-.ico {
-  flex: 0 0 auto;
-  display: grid; place-items: center;
-  width: 60px; height: 60px; border-radius: 999px;
-  color: var(--c);
-  border: 1.5px solid color-mix(in srgb, var(--c) 60%, transparent);
-  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--c) 20%, transparent), rgba(7, 6, 10, 0.6) 75%);
-  box-shadow: 0 0 16px color-mix(in srgb, var(--c) 26%, transparent);
-}
-.ico svg { width: 34px; height: 34px; display: block; overflow: visible; }
-
-.txt { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.kicker {
-  font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--c);
-}
-.q {
-  font-size: 16px; font-weight: 700; line-height: 1.32;
-  overflow-wrap: break-word;
-}
-
-/* ---------- authors and citation ---------- */
-.credits {
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px;
-  margin-top: 34px; padding: 22px 4px 0;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 13.5px;
-}
-.credits h2 {
-  margin: 0 0 10px;
-  font-family: var(--mono); font-size: 11.5px; font-weight: 700; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--muted2);
-}
-.credits p { margin: 0; }
-.paper { color: var(--text); font-weight: 700; margin-top: 12px !important; }
-.paper:first-of-type { margin-top: 0 !important; }
-.amp { color: var(--muted2); font-weight: 400; }
-.names { margin-top: 3px !important; }
-/* One name never breaks; the dot stays with the name before it. */
-.names span { white-space: nowrap; }
-.names span:not(:last-child)::after { content: " ·"; color: var(--muted2); }
-.hint { margin-bottom: 10px !important; }
 .bib { position: relative; }
 .bib pre {
   margin: 0;
@@ -272,40 +440,53 @@ cite { font-style: italic; }
 .ctl.copy.done { --ring: var(--lime); --fg: var(--lime); }
 .ctl.copy.done .i-copy { display: none; }
 .ctl.copy.done .i-done { display: block; }
-.credits .meta { margin-top: 6px; }
 
-/* ---------- narrower ---------- */
-@media (max-width: 980px) {
-  .doors { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .credits { grid-template-columns: minmax(0, 1fr); }
+/* ---------- narrower: the same board, the labels as icons ---------- */
+@media (max-width: 1040px) {
+  .board { grid-template-columns: 96px repeat(3, minmax(0, 176px)) 96px; grid-template-rows: repeat(4, 150px); }
 }
-/* Phones: 16 px gutter; each card one row, the icon left of its question. */
-@media (max-width: 560px) {
-  .hub { padding: 68px 16px max(36px, env(safe-area-inset-bottom)); }
-  .langSel { right: 12px; top: 8px; }
-  .hero { margin-bottom: 24px; }
-  .shelf { padding: 12px; border-radius: 18px; margin-bottom: 16px; }
-  .start { padding: 0 13px; margin-bottom: 18px; }
-  .doors { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .door { min-height: 64px; border-radius: 16px; }
-  .shelfHead { margin-bottom: 10px; }
-  .shelfHead h2 { font-size: 16px; }
-  .cards { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .card { flex-direction: row; align-items: center; gap: 14px; min-height: 76px; padding: 10px 14px 10px 10px; border-radius: 16px; }
-  .ico { width: 52px; height: 52px; }
-  .ico svg { width: 30px; height: 30px; }
-  .q { font-size: 15px; }
-  /* The two paper links share one row: the language as on the switch. */
-  .tag .wide { display: none; }
-  .tag .narrow { display: inline; }
+@media (max-width: 760px) {
+  :root { --tilt: 16deg; }
+  .hub { padding: 64px 16px max(36px, env(safe-area-inset-bottom)); }
+  .topright { right: 12px; }
+  .hero { margin: 0 0 2px; }
+  .stage { perspective: 900px; }
+  .board {
+    grid-template-columns: 50px repeat(3, minmax(0, 1fr)) 0;
+    grid-template-rows: repeat(4, 138px);
+  }
+  .rowtag { padding-right: 0; justify-self: start; }
+  .rowtag .rt-txt { display: none; }
+  .rowdoor { padding: 0; min-width: 50px; justify-content: center; }
+  .strips { gap: 6px; }
+  .strip { padding: 10px 6px; gap: 6px; }
+  .stitle { font-size: 12px; }
+  .stitle .note { font-size: 10.5px; }
+  .av { width: 24px; height: 24px; font-size: 9px; margin-left: -7px; }
+  .rt-ico { width: 24px; height: 24px; }
+  .cell { padding: 7px; }
+  .cell.cb .face.front { gap: 40px; }
+  .btitle, .btitle .kicker { font-size: 12.5px; }
+  .bdesc { font-size: 11px; }
+  .go { height: 24px; padding: 0 10px; font-size: 11px; }
+  .cell.cb .pico svg { height: 56px; }
+  .cell.cb .pname { font-size: 15px; }
+  .slab { border-radius: 14px; padding: 8px 4px; gap: 4px; }
+  .pico svg { width: 44px; height: 44px; }
+  .pname { font-size: 12.5px; overflow-wrap: normal; hyphens: auto; -webkit-hyphens: auto; }
+  .dtitle { font-size: 12.5px; }
+  .kicker { font-size: 11px; }
+  .chip-n, .chip-c { height: 19px; padding: 0 6px; font-size: 10px; }
   .bib pre { font-size: 10.5px; padding-right: 48px; }
   .bib .l.f { --hang: 4ch; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card, .door, .tag::after { transition: none; }
-  .card:hover, .card:active, .door:hover, .door:active { transform: none; }
+  .slab, .manual, .strip, .paperblock.flash { transition: none; animation: none; }
+  .piece.flipped .slab { transform: translateZ(1px) rotateY(180deg); }
+  .piece:hover .slab, .piece:focus-visible .slab, .piece:active .slab,
+  .board:has(.piece:hover) .piece:not(:hover) .slab,
+  .board:has(.piece:focus-visible) .piece:not(:focus-visible) .slab { transform: translateZ(1px); }
 }
 
 /* The signature, as on the Fence Challenge hub. */
