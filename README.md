@@ -1,9 +1,21 @@
 # Fence Challenge
 
-How much can a fence of polyforms enclose? Playable labs for two papers on
+How much can a fence of polyforms enclose? Playable labs for three papers on
 the question, in the plane and in space.
 
-**Play it: https://erikaroldanroa.github.io/fence-challenge/**
+**Play it: https://erikaroldanroa.github.io/fence-challenge/hub/**
+
+## The hub
+
+[hub/](hub/) gathers all the labs on one board. Each grid is an island
+(squares, hexagons, triangles, and the cubes below them), each lab is one
+tile, and the rows run from the three warm-up missions to the labs of the
+first paper and then of *Optimal Polyomino Fences*. A tile shows only its
+drawing; pointing at it shows its name and its question, and on a phone a
+first tap turns it over and a second tap opens the lab. Under the board, the
+papers and their authors; the manual on the right holds each paper with its
+abstract once it is public, its links, and how to cite the labs. The interface is available in
+French, German and English.
 
 ## Optimal Polyomino Fences (2026)
 
@@ -40,8 +52,14 @@ The labs, one per result:
   close and count its area.
 
 Every element of a lab has a small "∑" chip that opens the mathematics
-behind it, with the section of the paper it comes from. All the labs of the
-three papers are gathered on one page: [hub/](hub/).
+behind it, with the section of the paper it comes from.
+
+## The follow-up in the DMVM Mitteilungen
+
+In German, in preparation, by the authors of *Optimal Polyomino Fences*. It
+answers challenges 11, 12 and 13 of the first paper, which the labs above
+let you try: the hexomino lab (challenge 11), the pentomino DP lab
+(challenge 12) and the cube lab (challenge 13).
 
 ## Maximale Zäune mit Polyformen (2025)
 
@@ -63,15 +81,11 @@ dragging, rotating, flipping and snapping the pieces while it
 measures the enclosed area. The maximum for each board is left for the player to
 discover. The interface is available in French, German and English.
 
-The companion comes in two parts, by the same team. **This repository is the
-interactive, playable side.** Its computational counterpart is
-[`PhoenixSmaug/Pentomino-Farm`](https://github.com/PhoenixSmaug/Pentomino-Farm),
-a Julia integer-linear-programming solver (Gurobi) that finds and enumerates the
-optimal fences across the three tilings.
-
-- **Hub:** [erikaroldanroa.github.io/fence-challenge](https://erikaroldanroa.github.io/fence-challenge/):
+- **The first Fence Challenge page:** [erikaroldanroa.github.io/fence-challenge](https://erikaroldanroa.github.io/fence-challenge/):
   three mini-challenges, one per tiling; close a fence to unlock the full lab
-  for each.
+  for each. It is the page for workshops and outreach, with the printable kit
+  and the camera below, and the three warm-up tiles of the hub open its
+  missions.
 - Or open a lab directly:
   [square](square-lab/) · [hexagonal](hex-lab/) · [triangular](triangle-lab/).
 
@@ -109,10 +123,20 @@ developed by Dr. Erika Roldan · [The Learning Machine](https://erikaroldan.net)
 ## Run locally
 
 Serve the folder with any static file server (for example
-`python3 -m http.server`) and open `index.html`. Tests of the cube lab:
-`node cube-lab/test/geometry.test.js` and `python3 cube-lab/test/browser.py OUTDIR`.
-Check of the page of all the labs, with the server running:
-`python3 test/hub_check.py http://localhost:8000/ OUTDIR`.
+`python3 -m http.server`) and open `hub/`. The tests, from the repository
+root, with the server running on port 8000 where a base address is asked:
+
+- unit tests: `node cube-lab/test/geometry.test.js`,
+  `node hexomino-lab/test/fence-math.test.js`,
+  `node limit-shape-lab/test/limit-math.test.js`,
+  `node pentomino-dp-lab/test/dp.test.js`
+- the labs in a browser: `python3 cube-lab/test/browser.py OUTDIR`,
+  `python3 hexomino-lab/test/ui_check.py http://localhost:8000/ OUTDIR`,
+  `python3 limit-shape-lab/test/ui_check.py http://localhost:8000/ OUTDIR`,
+  `python3 pentomino-dp-lab/test/browser.py OUTDIR`
+- the hub and the layout of every lab:
+  `python3 test/hub_check.py http://localhost:8000/ OUTDIR`,
+  `python3 test/labs_layout.py http://localhost:8000/`
 
 ## Citation
 
