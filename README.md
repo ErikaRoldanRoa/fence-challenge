@@ -155,8 +155,7 @@ The labs themselves:
   author       = {Langlois-R{\'e}millard, Alexis and M{\"u}{\ss}ig, Mia N. and Podhaisky, Helmut and Roldan, Erika and Rote, G{\"u}nter and Br{\"o}mme, Maximilian and Norden, Matthes and Prietzel, Maximilian and Yu, Daniel and Lyader, Mykhailo},
   title        = {Fence Challenge: interactive labs for polyomino fences and polycube walls},
   year         = {2026},
-  howpublished = {\url{https://erikaroldanroa.github.io/fence-challenge/}},
-  note         = {Source code: \url{https://github.com/ErikaRoldanRoa/fence-challenge}}
+  howpublished = {\url{https://erikaroldanroa.github.io/fence-challenge/hub/}}
 }
 ```
 
