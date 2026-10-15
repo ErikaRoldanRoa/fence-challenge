@@ -1,8 +1,8 @@
 """Check of the hub of all the labs (hub/).
 
 In Chromium and WebKit, at 390 x 844 and 1440 x 900, in FR / DE / EN: no
-console error, no horizontal scroll, no optimum and no year 2025 in any
-visible string, bubble or label; no layout shift; the three warm-up doors open
+console error, no horizontal scroll, no optimum in any visible string,
+bubble or label, and no year 2025 outside an author's own bio; no layout shift; the three warm-up doors open
 the first hub at their mission; every card and link opens the right page
 without errors; the manual opens and closes (button, Escape, beside it) and
 stays out of the Tab path while closed; the language switch, the keyboard
@@ -19,7 +19,10 @@ HUB = BASE + "hub/"
 LANGS = ["en", "fr", "de"]
 VIEWS = [(390, 844, True), (1440, 900, False)]
 # Optima of the papers and of the boards: the hub asks, it never answers.
-FORBIDDEN = re.compile(r"(?<![\d.])(1597|1586|1588|111|128|52|1331|25544|2025)(?![\d])")
+FORBIDDEN = re.compile(r"(?<![\d.])(1597|1586|1588|111|128|52|1331|25544)(?![\d])")
+# No year 2025 either, except in an author's own bio (G. Rote, retired since 2025).
+YEAR = re.compile(r"(?<![\d.])2025(?![\d])")
+BIOS = "() => [...new Set(['fr', 'de', 'en'].flatMap((l) => Object.keys(DICT[l]).filter((k) => k.startsWith('mh.bio.')).map((k) => DICT[l][k])))]"
 DOORS = ["../#sqT", "../#hexT", "../#triT"]
 CARDS = ["../square-lab/", "../hex-lab/", "../triangle-lab/",
          "../hexomino-lab/", "../pentomino-dp-lab/", "../limit-shape-lab/", "../cube-lab/"]
@@ -72,8 +75,10 @@ with sync_playwright() as p:
                 tips = pg.eval_on_selector_all("a, button", "els => els.filter(e => !(e.getAttribute('data-lab-tip') || e.getAttribute('aria-label'))).map(e => e.outerHTML.slice(0, 60))")
                 check(not tips, f"{tag}: every control explains itself {tips}")
                 text = pg.evaluate(TEXTS)
-                bad = sorted(set(m.group(0) for m in FORBIDDEN.finditer(text)))
-                check(not bad, f"{tag}: no optimum, no year 2025 in any string {bad}")
+                rest = text
+                for bio in pg.evaluate(BIOS): rest = rest.replace(bio, "")
+                bad = sorted(set(m.group(0) for m in FORBIDDEN.finditer(text)) | set(m.group(0) for m in YEAR.finditer(rest)))
+                check(not bad, f"{tag}: no optimum in any string, no year 2025 outside the bios {bad}")
                 check("\u2014" not in text, f"{tag}: no em dash")
                 small = pg.evaluate("""() => [...document.querySelectorAll('a, button')].filter(e => { const r = e.getBoundingClientRect(); return r.width < 43.5 || r.height < 43.5; }).map(e => e.textContent.trim().slice(0, 20))""")
                 check(not small, f"{tag}: every touch box at least 44 px {small}")
