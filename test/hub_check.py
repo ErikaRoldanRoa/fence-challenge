@@ -19,7 +19,7 @@ HUB = BASE + "hub/"
 LANGS = ["en", "fr", "de"]
 VIEWS = [(390, 844, True), (1440, 900, False)]
 # Optima of the papers and of the boards: the hub asks, it never answers.
-FORBIDDEN = re.compile(r"(?<![\d.])(1597|1586|1588|111|128|52|1331|25544)(?![\d])")
+FORBIDDEN = re.compile(r"(?<![\d.])(1597|1586|1588|111|128|52|1331|25544|25872)(?![\d])")
 # No year 2025 either, except in an author's own bio (G. Rote, retired since 2025).
 YEAR = re.compile(r"(?<![\d.])2025(?![\d])")
 BIOS = "() => [...new Set(['fr', 'de', 'en'].flatMap((l) => Object.keys(DICT[l]).filter((k) => k.startsWith('mh.bio.')).map((k) => DICT[l][k])))]"

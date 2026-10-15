@@ -43,7 +43,7 @@ assert.deepStrictEqual(S.parse([[3, 3, 3], [7, 0, 0, 0], [7, 0, 1, 0], [9, 2, 2,
 
 // The three walls of walls.js: right pieces, no overlap, and the
 // announced volume under both rules.
-const expect = { penta_v52: [5, 29, 52], hexa_v1331: [6, 166, 1331], hepta_v25544: [7, 1020, 25544] };
+const expect = { penta_v52: [5, 29, 52], hexa_v1331: [6, 166, 1331], hepta_greedy_25872: [7, 1023, 25872] };
 assert.deepStrictEqual(WALLS.map((w) => w.id), Object.keys(expect));
 for (const w of WALLS) {
   const [n, count, vol] = expect[w.id];

@@ -31,7 +31,7 @@ The labs, one per result:
 
 - **Cube lab** ([cube-lab/](cube-lab/)): the 29 pentacubes can enclose a
   volume of at most 52 cubes, and a wall reaching 52 exists; the best
-  walls found so far for hexacubes (1331) and heptacubes (25544) show how
+  walls found so far for hexacubes (1331) and heptacubes (25872) show how
   far larger pieces go.
   Build walls freely or wrap a given room, cut them open, spread them apart,
   and lift the wall away to hold the room alone. Printable pieces:
