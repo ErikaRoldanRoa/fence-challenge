@@ -179,12 +179,16 @@
   // ---------- the loupe ----------
   function maxLoupe() { const g = Math.abs(maxGap()); return g > 0 ? Math.max(1, Math.min(200, LOUPE_GAP / g)) : 1; }
   function loupeAt(v) { return Math.max(1, Math.pow(maxLoupe(), v / 100)); }
+  // The loupe as shown: one decimal below ×10.
+  function loupeShown() {
+    const k = loupe < 10 ? Math.round(loupe * 10) / 10 : Math.round(loupe);
+    return fmtNum(k, k < 10 && k % 1 ? 1 : 0);
+  }
   function syncLoupe() {
     loupe = loupeAt(loupeV);
-    const k = loupe < 10 ? Math.round(loupe * 10) / 10 : Math.round(loupe);
-    $("loupe-x").textContent = "×" + fmtNum(k, k < 10 && k % 1 ? 1 : 0);
+    $("loupe-x").textContent = "×" + loupeShown();
     $("loupe").value = String(Math.round(loupeV));
-    $("loupe").setAttribute("aria-valuetext", t("ls.loupeAria", { k: fmtNum(k, k < 10 && k % 1 ? 1 : 0) }));
+    $("loupe").setAttribute("aria-valuetext", t("ls.loupeAria", { k: loupeShown() }));
   }
   function setLoupe(v) {
     loupeV = v;
@@ -192,7 +196,7 @@
     drawLoop(true);
   }
   $("loupe").addEventListener("input", (e) => setLoupe(+e.target.value));
-  $("loupe").addEventListener("change", () => status(t("ls.s.loupe", { k: Math.round(loupe) })));
+  $("loupe").addEventListener("change", () => status(t("ls.s.loupe", { k: loupeShown() })));
 
   // ---------- the loop ----------
   const loopCanvas = $("loop"), lctx = loopCanvas.getContext("2d");
@@ -393,7 +397,7 @@
     const label = n === GIANT ? t("ls.giantAria") : tiles ? t("ls.pieces", { count: fmtNum(pieces.length, 0), n }) : t("ls.fan", { count: fmtNum(pieces.length, 0), n });
     pc.setAttribute("aria-label", label);
     // The canvas explains itself through its box (the bubbles skip canvases).
-    pc.parentElement.setAttribute("data-lab-tip", n === GIANT ? t("ls.tipGiant") : tiles ? t("ls.tipTiles") : t("ls.tipFan"));
+    pc.parentElement.setAttribute("data-lab-tip", n === GIANT ? t(REDUCED ? "ls.tipGiantStill" : "ls.tipGiant") : tiles ? t("ls.tipTiles") : t("ls.tipFan"));
   }
   // One piece, fitted into a box, with its longest arrows.
   function drawShape(cells, pairs, color, x, y, bw, bh, fill, dpr, chosen, tile) {
@@ -501,12 +505,13 @@
     if (n === GIANT) {
       c.innerHTML = DICE + `<span>${fmtNum(giantSamples, 0)}</span><span class="visually-hidden">${t("ls.samples", { s: fmtNum(giantSamples, 0) })}</span>`;
     } else c.textContent = t("ls.count", { count: fmtNum(pieces.length, 0) });
-    if (n === GIANT) c.setAttribute("data-lab-tip", t("ls.tipSamples")); else c.removeAttribute("data-lab-tip");
+    if (n === GIANT) c.setAttribute("data-lab-tip", t(REDUCED ? "ls.tipSamplesStill" : "ls.tipSamples")); else c.removeAttribute("data-lab-tip");
     $("gap-value").textContent = fmtPct(maxGap());
   }
   // At 500 cells, the paper's sample behind the loop, in the corner of the stage.
   function syncSource() {
     $("src-tag").hidden = n !== GIANT;
+    $("src-tag").title = t(REDUCED ? "ls.srcStill" : "ls.src");
     $("src-count").textContent = t("ls.srcCount", { m: fmtNum(PAPER500 / 1e6, 1) });
   }
   function syncControls() {
