@@ -25,6 +25,7 @@
   function noteArea(card, info) {
     window.clearTimeout(liveTimers[card]);
     liveTimers[card] = window.setTimeout(() => {
+      if (isFence(info) && window.FenceContest) window.FenceContest.note(card, info.area);   // contest mode only (contest.js)
       const vars = { card: i18n.t(CARD_TITLE[card]), n: info.area, k: info.regionCount };
       let key = "hub.liveOpen";
       if (info.cornerLeak) key = "hub.liveLeak";

@@ -1,0 +1,37 @@
+<!doctype html><html><head><meta charset="utf-8"><title>sync</title></head><body>
+<script>
+// Sends the contest records the Fence Challenge queued on this phone (localStorage, same origin). No UI.
+(() => {
+  let busy = false, again = false;
+  const read = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || 'null') || d; } catch (e) { return d; } };
+  async function flush() {
+    if (busy) { again = true; return; } busy = true; again = false;
+    try {
+      const ctx = read('fc-contest', null);
+      if (!ctx || !ctx.api) return;
+      let team = '';
+      try { if (ctx.group === 'cigales') team = localStorage.getItem('cigales-team') || ''; } catch (e) {}
+      for (const r of read('fc-contest-queue', [])) {
+        if (r.workshop !== ctx.workshop) continue;
+        let ok = false;
+        for (let i = 0; i < 5 && !ok; i++) {
+          try {
+            const res = await fetch(ctx.api, { method: 'POST', headers: { 'Content-Type': 'text/plain' },
+              body: JSON.stringify({ action: 'submitFence', workshop: ctx.workshop, token: ctx.token, device: ctx.device, name: ctx.name, team, board: r.board, area: r.area }) });
+            const j = await res.json();
+            ok = j.status === 'ok' && !j.queued;
+          } catch (e) {}
+          if (!ok) await new Promise(s => setTimeout(s, 1500 * (i + 1)));
+        }
+        if (ok) {
+          const q = read('fc-contest-queue', []).filter(x => !(x.workshop === r.workshop && x.board === r.board && x.area <= r.area));
+          try { localStorage.setItem('fc-contest-queue', JSON.stringify(q)); } catch (e) {}
+        }
+      }
+    } finally { busy = false; if (again) setTimeout(flush, 50); }
+  }
+  addEventListener('message', e => { if (e.origin === location.origin && e.data === 'fc-contest-sync') flush(); });
+  addEventListener('storage', e => { if (e.key === 'fc-contest-queue') flush(); });
+  flush(); setInterval(flush, 20000);
+})();
+</script></body></html>
