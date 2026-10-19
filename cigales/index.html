@@ -30,6 +30,14 @@ h2{margin:0 0 6px;font-size:clamp(20px,3.6vw,30px);color:var(--c);letter-spacing
 .mine{display:flex;align-items:center;gap:12px;margin:0 0 14px;min-height:56px;font-weight:700;font-size:18px}
 .mine{flex-direction:column;text-align:center}
 .mine .big svg{width:160px;height:160px}
+.mine .big svg{animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px) rotate(-3deg)}}
+.mates{color:var(--gold);font-weight:800;font-size:16px;margin:-4px 0 6px}
+.burst{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}
+.burst i{position:absolute;width:14px;height:14px;border-radius:3px;top:-20px;animation:fall 1.6s cubic-bezier(.2,.6,.4,1) forwards}
+@keyframes fall{to{transform:translate(var(--dx),110vh) rotate(var(--r));opacity:.9}}
+.team{-webkit-tap-highlight-color:transparent}
+.team:active{transform:scale(.96)}
 .team.full{opacity:.45}
 .note{display:block;color:var(--gold);font-weight:700;font-size:15px;margin-top:6px}
 .dl{display:block;margin:12px auto 0;padding:10px 18px;border-radius:999px;border:2px solid var(--gold);background:transparent;color:var(--gold);font:inherit;font-weight:800;font-size:15px;cursor:pointer}
@@ -61,7 +69,7 @@ h2{margin:0 0 6px;font-size:clamp(20px,3.6vw,30px);color:var(--c);letter-spacing
   <p class="lead">Pour s'échauffer : un concours en équipes. Choisissez votre pentomino, changez d'équipe quand vous voulez. L'épreuve se dévoile au top départ.</p>
   <div class="mine" id="mine"></div>
   <div class="teams" id="teams"></div>
-  <p class="soon">Chaque téléphone compte une fois et se souvient de son équipe. Aucun nom, seulement le pentomino.</p>
+  <p class="soon">Chaque téléphone compte une fois et se souvient de son équipe : le jour du concours, rescanne le même QR. Aucun nom, seulement le pentomino.</p>
  </section>
 
  <section class="perf" style="--c:var(--mag)">
@@ -86,7 +94,7 @@ function render() {
   box.innerHTML = C.teams.map(([id, name, b, w, k]) => { const n = counts[id] || 0, full = n >= C.max && id !== mine; return `<button class="team${full ? ' full' : ''}" data-id="${id}" aria-pressed="${id === mine}">${C.bird(b, w, Math.min(n, C.max))}<span>${name}</span><small>${n} / ${C.max}</small></button>`; }).join('');
   const t = C.teams.find(x => x[0] === mine);
   if (!t && note) { me.innerHTML = `<span>${note}</span>`; return; }
-  me.innerHTML = t ? `<div class="big">${C.bird(t[2], t[3])}</div><span>Ton équipe : ${t[1]}${note ? `<em class="note">${note}</em>` : ''}<button class="dl" type="button">⬇ Télécharger mon pentomino</button></span>` : '<span>Choisis ton pentomino ↓</span>';
+  me.innerHTML = t ? `<div class="big">${C.bird(t[2], t[3], Math.max(1, Math.min(counts[t[0]] || 1, C.max)))}</div><div class="mates">${Math.max(1, counts[t[0]] || 1)} / ${C.max} dans ton équipe</div><span>Ton équipe : ${t[1]}${note ? `<em class="note">${note}</em>` : ''}<button class="dl" type="button">⬇ Télécharger mon pentomino</button></span>` : '<span>Choisis ton pentomino ↓</span>';
   const dl = me.querySelector('.dl'); if (dl) dl.onclick = () => download(t);
 }
 let note = '';
@@ -96,10 +104,25 @@ box.addEventListener('click', async e => {
   if (want !== mine && (counts[want] || 0) >= C.max) { note = 'Cette équipe est complète (5 sur 5) : choisis-en une autre.'; render(); return; }
   mine = want; note = ''; try { localStorage.setItem(KEY, mine); } catch (err) {}
   render();
+  const tt = C.teams.find(x => x[0] === mine); if (tt && mine !== before) { celebrate(tt[2]); counts[mine] = (counts[mine] || 0) + 1; if (before && counts[before]) counts[before]--; render(); }
+  setTimeout(() => document.getElementById('mine').scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
   let r = 'fail'; try { r = await C.join(device, mine); } catch (err) {}
   if (r === 'full') { mine = before; try { before ? localStorage.setItem(KEY, before) : localStorage.removeItem(KEY); } catch (err) {} note = 'Cette équipe vient de se remplir (5 sur 5) : choisis-en une autre.'; }
   refresh();
 });
+function celebrate(color) {
+  try { if (navigator.vibrate) navigator.vibrate([30, 40, 30]); } catch (e) {}
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const b = document.createElement('div'); b.className = 'burst';
+  const cols = [color, '#ffd24a', '#7ff2ff', '#ff4fd8', '#6dff7a'];
+  for (let i = 0; i < 40; i++) {
+    const q = document.createElement('i');
+    q.style.left = (Math.random() * 100) + 'vw'; q.style.background = cols[i % cols.length];
+    q.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px'); q.style.setProperty('--r', (Math.random() * 720 - 360) + 'deg');
+    q.style.animationDelay = (Math.random() * 0.35) + 's'; b.appendChild(q);
+  }
+  document.body.appendChild(b); setTimeout(() => b.remove(), 2400);
+}
 function download(t) {
   const svg = C.bird(t[2], t[3]).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" ');
   const img = new Image();
