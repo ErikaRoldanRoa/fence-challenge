@@ -3,8 +3,9 @@
  * midpoints; the arrows folded into 0..45 degrees, sorted by direction,
  * chained, and copied eight times into a loop; the loop against the circle
  * of radius R = X + Y; a loupe that magnifies the gap. For n = 4..10 every
- * piece is computed here; at 500 cells the loop is the paper's curve, and a
- * random 500-omino keeps changing in the pieces box. */
+ * piece is computed here; at 500 cells the loop is the paper's curve, from
+ * its 13.5 million random 500-ominoes, shown at ×1 on arrival, and the lab's
+ * own chain keeps drawing 500-ominoes in the pieces box. */
 (function () {
   "use strict";
   const S = window.LimitSampler, DATA = window.LIMIT_DATA, CHIPS = window.LIMIT_CHIPS;
@@ -33,17 +34,19 @@
     7: { best: 19733, bound: 19830 }, 8: { best: 279134, bound: 280389 },
     9: { best: 4003811, bound: 4052974 }, 10: { best: 60832848, bound: 61484424 },
   };
-  // The paper's area estimate for the 500-omino fence, as printed (log10 of 1.3e605).
-  const AREA500_LOG10 = 605 + Math.log10(1.3);
+  // The paper's area estimate for the 500-omino fence, each piece once, as printed (log10 of 2.0e603).
+  const AREA500_LOG10 = 603 + Math.log10(2.0);
+  // The random 500-ominoes behind the paper's loop.
+  const PAPER500 = 13.5e6;
   const LOUPE_GAP = 0.6;   // the loupe never stretches the largest gap past this
 
   let n = 4, pieces = [], chain = null, loupeV = 0, loupe = 1, sel = -1;
   let giant = null, giantSamples = 0, giantDrawn = 0, openChip = null;
-  let shown = null, anim = null, requestId = 0, loupeAnim = null, tiles = false;
+  let shown = null, anim = null, requestId = 0, tiles = false;
 
   // ---------- the work: a worker when possible, the page otherwise ----------
   let worker = null;
-  try { worker = new Worker("worker.js?v=20261014c"); } catch (e) { worker = null; }
+  try { worker = new Worker("worker.js?v=20261019a"); } catch (e) { worker = null; }
   const waiting = new Map();
   if (worker) {
     worker.onmessage = (e) => {
@@ -117,6 +120,8 @@
       pieces = [];
       chain = { R: 1, pts: DATA.dev500, edges: null };
       giantDrawn = 0;
+      // Arriving at 500 cells: the loupe back at ×1, where the loop lies on its circle.
+      if (from !== GIANT) loupeV = 0;
       runGiant(true);
     } else {
       runGiant(false);
@@ -132,9 +137,9 @@
     drawPieces();
     caption();
     syncChips();
+    syncSource();
     if (openChip) window.mathChip.refresh();
     status(k === GIANT ? t("ls.s.giant") : t("ls.s.n", { n: k, count: pieces.length, g: fmtPct(maxGap()) }));
-    if (k === GIANT && from !== GIANT && from !== null) sweepLoupe();
   }
   function orderPieces(k, raw) {
     if (k !== 4) return raw.map((p, i) => Object.assign({}, p, { color: COLORS[i % COLORS.length] }));
@@ -174,7 +179,6 @@
   // ---------- the loupe ----------
   function maxLoupe() { const g = Math.abs(maxGap()); return g > 0 ? Math.max(1, Math.min(200, LOUPE_GAP / g)) : 1; }
   function loupeAt(v) { return Math.max(1, Math.pow(maxLoupe(), v / 100)); }
-  function vFor(L) { const m = maxLoupe(); return m > 1 ? Math.max(0, Math.min(100, 100 * Math.log(L) / Math.log(m))) : 0; }
   function syncLoupe() {
     loupe = loupeAt(loupeV);
     const k = loupe < 10 ? Math.round(loupe * 10) / 10 : Math.round(loupe);
@@ -187,25 +191,7 @@
     syncLoupe();
     drawLoop(true);
   }
-  // Arriving at 500 cells: the loupe opens all the way once, then rests near ×40.
-  function sweepLoupe() {
-    cancelAnimationFrame(loupeAnim);
-    const rest = vFor(40);
-    if (REDUCED) { setLoupe(rest); return; }
-    const start = loupeV, t0 = performance.now();
-    const step = (now) => {
-      const f = (now - t0) / 2200;
-      let v;
-      if (f < 0.55) { const e = f / 0.55; v = start + (100 - start) * e * e * (3 - 2 * e); }
-      else if (f < 1) { const e = (f - 0.55) / 0.45; v = 100 + (rest - 100) * e * e * (3 - 2 * e); }
-      else v = rest;
-      setLoupe(v);
-      if (f < 1 && n === GIANT) loupeAnim = requestAnimationFrame(step);
-      else { loupeAnim = null; status(t("ls.s.loupe", { k: Math.round(loupe) })); }
-    };
-    loupeAnim = requestAnimationFrame(step);
-  }
-  $("loupe").addEventListener("input", (e) => { cancelAnimationFrame(loupeAnim); loupeAnim = null; setLoupe(+e.target.value); });
+  $("loupe").addEventListener("input", (e) => setLoupe(+e.target.value));
   $("loupe").addEventListener("change", () => status(t("ls.s.loupe", { k: Math.round(loupe) })));
 
   // ---------- the loop ----------
@@ -515,6 +501,11 @@
     } else c.textContent = t("ls.count", { count: fmtNum(pieces.length, 0) });
     $("gap-value").textContent = fmtPct(maxGap());
   }
+  // At 500 cells, the paper's sample behind the loop, in the corner of the stage.
+  function syncSource() {
+    $("src-tag").hidden = n !== GIANT;
+    $("src-count").textContent = t("ls.srcCount", { m: fmtNum(PAPER500 / 1e6, 1) });
+  }
   function syncControls() {
     const i = STEPS.indexOf(n);
     const fewer = $("fewer"), more = $("more");
@@ -540,7 +531,7 @@
     if (e.target.closest && e.target.closest("input, textarea")) return;
     if (e.key === "+" || e.key === "=") step(1);
     else if (e.key === "-" || e.key === "_") step(-1);
-    else if (e.key === "[" || e.key === "]") { cancelAnimationFrame(loupeAnim); setLoupe(Math.max(0, Math.min(100, loupeV + (e.key === "]" ? 10 : -10)))); }
+    else if (e.key === "[" || e.key === "]") setLoupe(Math.max(0, Math.min(100, loupeV + (e.key === "]" ? 10 : -10))));
   });
   function status(s) { $("status").textContent = s; }
 
@@ -606,7 +597,7 @@
   // ---------- language and size ----------
   document.querySelectorAll("[data-lang-btn]").forEach((b) => b.addEventListener("click", () => window.i18n.setLang(b.dataset.langBtn)));
   document.addEventListener("fc-langchange", () => {
-    syncControls(); caption(); syncChips(); syncLoupe(); syncPieceAccess();
+    syncControls(); caption(); syncChips(); syncSource(); syncLoupe(); syncPieceAccess();
     centreReadout();
   });
   new ResizeObserver(() => { drawLoop(true); drawPieces(); centreReadout(); }).observe(loopCanvas);
@@ -618,10 +609,10 @@
 
   // For tests and figure export.
   window.limitLab = {
-    state: () => ({ n, pieces: pieces.length, loupe, loupeV, maxLoupe: maxLoupe(), sel, tiles, gap: maxGap(), R: chain && chain.R, X: chain && chain.X, Y: chain && chain.Y, samples: giantSamples, chips: [...document.querySelectorAll(".math-chip")].filter((b) => !b.hidden).map((b) => b.dataset.chip) }),
-    setN, setLoupe: (v) => { cancelAnimationFrame(loupeAnim); loupeAnim = null; setLoupe(v); }, pick,
+    state: () => ({ n, pieces: pieces.length, loupe, loupeV, maxLoupe: maxLoupe(), sel, tiles, gap: maxGap(), R: chain && chain.R, X: chain && chain.X, Y: chain && chain.Y, samples: giantSamples, source: !$("src-tag").hidden, chips: [...document.querySelectorAll(".math-chip")].filter((b) => !b.hidden).map((b) => b.dataset.chip) }),
+    setN, setLoupe, pick,
     vectors: () => pieces.map((p) => p.vecs),
-    busy: () => anim !== null || loupeAnim !== null,
+    busy: () => anim !== null,
     areaRatio500: () => areaRatio(DATA.dev500),
   };
 })();

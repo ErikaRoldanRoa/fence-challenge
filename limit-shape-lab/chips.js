@@ -59,7 +59,7 @@
       },
     },
     gap: {
-      label: "sec:limit, fig:chain, fig:deviation, fig:longest-edge", lines: "2948-2953, 2958, 2975-2985, 3022-3028, 2652",
+      label: "sec:limit, fig:chain, fig:deviation, fig:longest-edge", lines: "3612-3624, 3716-3724, 3737, 3751, 3811, 2835",
       section: SEC_LIMIT,
       lead: {
         en: "If the arrows pointed evenly in all directions, the loop would come ever closer to this circle.",
@@ -67,27 +67,27 @@
         de: "Zeigten die Pfeile gleichmäßig in alle Richtungen, käme die Schleife diesem Kreis immer näher.",
       },
       detail: {
-        en: C + " is the centre of the loop, and " + X + ", " + Y + " are the coordinates where one eighth of the loop ends. The circle passes through the four points where the loop crosses the axes, where the gap is 0 by construction; its radius " + rF + " is the one the loop would have with evenly spread arrows. The gap says how far the loop is from the circle, relative to the radius: " + gapF + " for a point " + P + " of the loop. At 500 cells, on the paper’s curve, the loop bulges out by 0.40% at 45° and dips inside, by up to 0.11%, near the axes; the paper shows that a longest arrow is never exactly diagonal.",
-        fr: C + " est le centre de la boucle, et " + X + ", " + Y + " sont les coordonnées où finit un huitième de la boucle. Le cercle passe par les quatre points où la boucle croise les axes, où l’écart est nul par construction" + NB + "; son rayon " + rF + " est celui qu’aurait la boucle avec des flèches également réparties. L’écart dit à quelle distance la boucle est du cercle, rapportée au rayon" + NB + ": " + gapF + " pour un point " + P + " de la boucle. À 500 cases, sur la courbe de l’article, la boucle déborde de 0,40" + NB + "% à 45° et rentre à l’intérieur, jusqu’à 0,11" + NB + "%, près des axes" + NB + "; l’article montre qu’une plus longue flèche n’est jamais exactement diagonale.",
-        de: C + " ist der Mittelpunkt der Schleife, und " + X + ", " + Y + " sind die Koordinaten, an denen ein Achtel der Schleife endet. Der Kreis geht durch die vier Punkte, an denen die Schleife die Achsen schneidet und die Abweichung nach Konstruktion 0 ist; sein Radius " + rF + " ist der, den die Schleife bei gleichmäßig verteilten Pfeilen hätte. Die Abweichung gibt an, wie weit die Schleife vom Kreis entfernt ist, relativ zum Radius: " + gapF + " für einen Punkt " + P + " der Schleife. Bei 500 Zellen, auf der Kurve des Artikels, wölbt sich die Schleife bei 45° um 0,40" + NBSP + "% nach außen und liegt nahe den Achsen bis zu 0,11" + NBSP + "% innen; der Artikel zeigt, dass ein längster Pfeil nie genau diagonal ist.",
+        en: C + " is the centre of the loop, and " + X + ", " + Y + " are the coordinates where one eighth of the loop ends. The circle passes through the four points where the loop crosses the axes, where the gap is 0 by construction; its radius " + rF + " is the one the loop would have with evenly spread arrows. The gap says how far the loop is from the circle, relative to the radius: " + gapF + " for a point " + P + " of the loop. At 500 cells, on the paper’s curve, the loop bulges out by 0.42% at 45° and dips inside, by up to 0.10%, near the axes; the paper shows that a longest arrow is never exactly diagonal. At ×1 that is thinner than the line; the loupe stretches the gap, so that at ×40 the 0.42% looks like 17%.",
+        fr: C + " est le centre de la boucle, et " + X + ", " + Y + " sont les coordonnées où finit un huitième de la boucle. Le cercle passe par les quatre points où la boucle croise les axes, où l’écart est nul par construction" + NB + "; son rayon " + rF + " est celui qu’aurait la boucle avec des flèches également réparties. L’écart dit à quelle distance la boucle est du cercle, rapportée au rayon" + NB + ": " + gapF + " pour un point " + P + " de la boucle. À 500 cases, sur la courbe de l’article, la boucle déborde de 0,42" + NB + "% à 45° et rentre à l’intérieur, jusqu’à 0,10" + NB + "%, près des axes" + NB + "; l’article montre qu’une plus longue flèche n’est jamais exactement diagonale. À ×1, c’est plus fin que le trait" + NB + "; la loupe étire l’écart, si bien qu’à ×40 les 0,42" + NB + "% ressemblent à 17" + NB + "%.",
+        de: C + " ist der Mittelpunkt der Schleife, und " + X + ", " + Y + " sind die Koordinaten, an denen ein Achtel der Schleife endet. Der Kreis geht durch die vier Punkte, an denen die Schleife die Achsen schneidet und die Abweichung nach Konstruktion 0 ist; sein Radius " + rF + " ist der, den die Schleife bei gleichmäßig verteilten Pfeilen hätte. Die Abweichung gibt an, wie weit die Schleife vom Kreis entfernt ist, relativ zum Radius: " + gapF + " für einen Punkt " + P + " der Schleife. Bei 500 Zellen, auf der Kurve des Artikels, wölbt sich die Schleife bei 45° um 0,42" + NBSP + "% nach außen und liegt nahe den Achsen bis zu 0,10" + NBSP + "% innen; der Artikel zeigt, dass ein längster Pfeil nie genau diagonal ist. Bei ×1 ist das dünner als der Strich; die Lupe dehnt die Abweichung, sodass bei ×40 die 0,42" + NBSP + "% wie 17" + NBSP + "% aussehen.",
       },
     },
     sample: {
-      label: "sec:limit", lines: "2606-2610, 2627",
+      label: "sec:limit", lines: "3457-3462, 3484-3486",
       section: SEC_LIMIT,
       lead: {
-        en: "Too many to list: the lab draws random 500-ominoes with a chain that changes one cell at a time.",
-        fr: "Trop nombreux pour les lister" + NB + ": le labo tire des 500-ominos au hasard avec une chaîne qui change une case à la fois.",
-        de: "Zu viele zum Aufzählen: Das Labor zieht zufällige 500-Ominos mit einer Kette, die jeweils eine Zelle ändert.",
+        en: "Too many to list: random 500-ominoes are drawn with a chain that changes one cell at a time.",
+        fr: "Trop nombreux pour les lister" + NB + ": on tire des 500-ominos au hasard avec une chaîne qui change une case à la fois.",
+        de: "Zu viele zum Aufzählen: Zufällige 500-Ominos werden mit einer Kette gezogen, die jeweils eine Zelle ändert.",
       },
       detail: {
-        en: "Each step removes a random cell and adds a random free cell next to the rest. If the piece falls apart, it stays as it was, and that refused move still counts as a step: counted this way, after enough steps, every placed 500-omino (turned and flipped copies counted separately) is about equally likely. The loop at 500 cells is the paper’s curve, from 4.5 million 500-ominoes drawn by the paper’s own chain.",
-        fr: "Chaque pas retire une case au hasard et ajoute une case libre voisine au hasard. Si la pièce se sépare en morceaux, elle reste telle quelle, et ce refus compte quand même comme un pas" + NB + ": comptés ainsi, après assez de pas, tous les 500-ominos posés (copies tournées ou retournées comptées à part) sont à peu près également probables. La boucle à 500 cases est la courbe de l’article, issue de 4,5 millions de 500-ominos tirés par la chaîne de l’article.",
-        de: "Jeder Schritt entfernt eine zufällige Zelle und fügt eine zufällige freie Nachbarzelle hinzu. Zerfällt das Teil, bleibt es, wie es war, und dieser abgelehnte Zug zählt trotzdem als Schritt: So gezählt, ist nach genügend Schritten jedes gelegte 500-Omino (gedrehte und gespiegelte Kopien getrennt gezählt) etwa gleich wahrscheinlich. Die Schleife bei 500 Zellen ist die Kurve des Artikels, aus 4,5 Millionen 500-Ominos, gezogen mit der Kette des Artikels.",
+        en: "Each step removes a random cell and adds a random free cell next to the rest. If the piece falls apart, it stays as it was, and that refused move still counts as a step: counted this way, after enough steps, every placed 500-omino (turned and flipped copies counted separately) is about equally likely. The lab shows its chain every 4,000 steps, so neighbouring pictures look alike; the paper keeps one 500-omino every million steps. The loop in the middle is the paper’s: 13.5 million 500-ominoes, about 200 days of computing on one processor.",
+        fr: "Chaque pas retire une case au hasard et ajoute une case libre voisine au hasard. Si la pièce se sépare en morceaux, elle reste telle quelle, et ce refus compte quand même comme un pas" + NB + ": comptés ainsi, après assez de pas, tous les 500-ominos posés (copies tournées ou retournées comptées à part) sont à peu près également probables. Le labo montre sa chaîne tous les 4" + NB + "000 pas, si bien que deux images voisines se ressemblent" + NB + "; l’article garde un 500-omino par million de pas. La boucle du milieu est celle de l’article" + NB + ": 13,5 millions de 500-ominos, environ 200 jours de calcul sur un processeur.",
+        de: "Jeder Schritt entfernt eine zufällige Zelle und fügt eine zufällige freie Nachbarzelle hinzu. Zerfällt das Teil, bleibt es, wie es war, und dieser abgelehnte Zug zählt trotzdem als Schritt: So gezählt, ist nach genügend Schritten jedes gelegte 500-Omino (gedrehte und gespiegelte Kopien getrennt gezählt) etwa gleich wahrscheinlich. Das Labor zeigt seine Kette alle 4000 Schritte, daher sehen benachbarte Bilder einander ähnlich; der Artikel behält ein 500-Omino pro Million Schritte. Die Schleife in der Mitte ist die des Artikels: 13,5 Millionen 500-Ominos, etwa 200 Tage Rechenzeit eines Prozessors.",
       },
     },
     giant: {
-      label: "sec:limit, eq:an-asymptot", lines: "2590, 3048-3060",
+      label: "sec:limit, eq:an-asymptot", lines: "3172, 3839-3851",
       section: SEC_LIMIT,
       lead: {
         en: "There are about " + f("2.0·10<sup>300</sup>") + " different 500-ominoes.",
@@ -95,9 +95,9 @@
         de: "Es gibt etwa " + f("2,0·10<sup>300</sup>") + " verschiedene 500-Ominos.",
       },
       detail: {
-        en: "The paper takes the loop of its 4.5 million sampled pieces, eight copies of their sorted arrows, and scales it up as if it held all of them. Its area gives a rough estimate of the largest 500-omino fence; the corrections of the pieces are far too small to change it.",
-        fr: "L’article prend la boucle de ses 4,5 millions de pièces tirées, huit copies de leurs flèches triées, et l’agrandit comme si elle les contenait toutes. Son aire donne une estimation grossière de la plus grande barrière de 500-ominos" + NB + "; les corrections des pièces sont bien trop petites pour la changer.",
-        de: "Der Artikel nimmt die Schleife seiner 4,5 Millionen gezogenen Teile, acht Kopien ihrer sortierten Pfeile, und vergrößert sie so, als enthielte sie alle. Ihre Fläche ergibt eine grobe Schätzung für den größten Zaun aus 500-Ominos; die Korrekturen der Teile sind viel zu klein, um daran etwas zu ändern.",
+        en: "The paper takes the loop of its 13.5 million sampled pieces, eight copies of their sorted arrows, and scales it up as if it were made of all of them, each once. Its area gives a rough estimate of the largest 500-omino fence; the corrections of the pieces are far too small to change it.",
+        fr: "L’article prend la boucle de ses 13,5 millions de pièces tirées, huit copies de leurs flèches triées, et l’agrandit comme si elle était faite de toutes les pièces, chacune une fois. Son aire donne une estimation grossière de la plus grande barrière de 500-ominos" + NB + "; les corrections des pièces sont bien trop petites pour la changer.",
+        de: "Der Artikel nimmt die Schleife seiner 13,5 Millionen gezogenen Teile, acht Kopien ihrer sortierten Pfeile, und vergrößert sie so, als bestünde sie aus allen Teilen, jedes einmal. Ihre Fläche ergibt eine grobe Schätzung für den größten Zaun aus 500-Ominos; die Korrekturen der Teile sind viel zu klein, um daran etwas zu ändern.",
       },
     },
   };

@@ -132,9 +132,10 @@ assert.strictEqual(tet([[0, 0], [1, 0], [2, 0], [1, 1]]), "3,0,1"); checks++;
   let s = 0;
   for (let i = 0; i + 1 < p.length; i++) s += 0.5 * (1 + p[i][1]) * (1 + p[i + 1][1]) * Math.sin((p[i + 1][0] - p[i][0]) * Math.PI / 180);
   const ratio = (8 * s) / Math.PI;
-  near(ratio, 1.000869, 0.000002, "500: loop area over circle area, as in the paper's run");
-  const logA = Math.log10(ratio * Math.PI) + 2 * (Math.log10(4.46826e8 / 4.5e6) + Math.log10(1.9994e300) - Math.log10(8));
-  near(logA, 603.29, 0.01, "500: largest fence estimate about 1.9e603 (each piece once)");
+  near(ratio, 1.001057, 0.000002, "500: loop area over circle area, as in the paper's run");
+  // R = X + Y = 1.35831e9 for the paper's 13.5 million samples.
+  const logA = Math.log10(ratio * Math.PI) + 2 * (Math.log10(1.35831e9 / 13.5e6) + Math.log10(1.9994e300) - Math.log10(8));
+  near(logA, 603.30, 0.01, "500: largest fence estimate about 2.0e603 (each piece once), as printed");
 }
 
 // The paper's curves as drawn in the lab.
@@ -143,11 +144,11 @@ assert.strictEqual(tet([[0, 0], [1, 0], [2, 0], [1, 1]]), "3,0,1"); checks++;
   ok(h.length === 225, "225 buckets of 0.2 degrees");
   ok(h[1][2] === 0 && h[224][2] === 0, "buckets 0.2-0.4 and 44.8-45 are empty");
   const b = h.find((r) => Math.abs(r[0] - 26.7) < 1e-6);
-  near(b[1], 114.07, 0.01, "bucket 26.6-26.8: atypically long vectors");
+  near(b[1], 114.75, 0.01, "bucket 26.6-26.8: atypically long vectors");
   ok(b[2] < 0.01, "bucket 26.6-26.8: very few vectors");
   const d = DATA.dev500.map((p) => p[1]);
-  near(Math.min(...d), -0.00109, 0.00001, "500: smallest deviation");
-  near(Math.max(...d), 0.00399, 0.00001, "500: largest deviation");
+  near(Math.min(...d), -0.00104, 0.00001, "500: smallest deviation");
+  near(Math.max(...d), 0.00418, 0.00001, "500: largest deviation");
   ok(DATA.dev500[0][0] === 0 && DATA.dev500[DATA.dev500.length - 1][0] === 45, "500: phi from 0 to 45 degrees");
 }
 
