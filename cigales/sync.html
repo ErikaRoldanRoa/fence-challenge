@@ -33,5 +33,10 @@
   addEventListener('message', e => { if (e.origin === location.origin && e.data === 'fc-contest-sync') flush(); });
   addEventListener('storage', e => { if (e.key === 'fc-contest-queue') flush(); });
   flush(); setInterval(flush, 20000);
+  // The version the site serves now (cigales/version.txt, never cached): the page shows an update chip when it differs.
+  async function version() {
+    try { const v = (await (await fetch('version.txt', { cache: 'no-store' })).text()).trim(); if (v) parent.postMessage({ fcVersion: v }, location.origin); } catch (e) {}
+  }
+  version(); setInterval(version, 90000);
 })();
 </script></body></html>

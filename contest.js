@@ -5,6 +5,7 @@
 (() => {
   "use strict";
   // Loaded by the hub (index.html) and by the three labs of the printed boards (data-board sq20, hex6, tri10).
+  const VERSION = "2026-10-19d"; // = cigales/version.txt, bumped with every contest release
   const me = document.currentScript;
   const ROOT = me ? new URL(".", me.src).href : "";
   const LAB = me && me.dataset.board;
@@ -23,12 +24,14 @@
     ".pCard .icon.kit,.pCard .pMenuSep{display:none!important}" +
     ".pCard .pStatus{position:sticky;bottom:8px;z-index:6;padding:6px;margin:0 -6px;border-radius:999px;background:rgba(13,17,23,.88);backdrop-filter:blur(4px)}" +
     (LAB ? ".fc-contest{left:50%;top:auto;bottom:6px;transform:translateX(-50%);max-width:calc(100vw - 24px)}.fc-contest.pop{animation:none}" : "") +
+    ".fc-contest.upd{border-color:#6dff7a;box-shadow:0 0 22px -4px #6dff7a}" +
     ".fc-contest b{color:#ffd24a}.fc-contest.pop{animation:fcpop .7s}@keyframes fcpop{30%{transform:scale(1.15)}}";
   document.head.appendChild(css);
   const badge = document.createElement("a");
   badge.className = "fc-contest";
   badge.href = ctx.back ? new URL(ctx.back, location.origin).href : ROOT + "cigales/";
   const show = (board) => {
+    if (badge.classList.contains("upd")) return;
     const n = board ? best[board] : Math.max(0, ...Object.values(best));
     badge.innerHTML = "🏁 " + ctx.name.replace(/[<>&]/g, "") + (n ? " · record <b>" + n + "</b>" : " · concours");
   };
@@ -109,6 +112,14 @@
       return r;
     };
   }
+
+  // A newer site: the badge turns into « 🔄 mise à jour », one tap reloads (pseudonym and records stay on the phone).
+  addEventListener("message", (e) => {
+    if (e.origin !== location.origin || !e.data || typeof e.data.fcVersion !== "string" || e.data.fcVersion === VERSION) return;
+    badge.innerHTML = "🔄 <b>mise à jour</b> · update";
+    badge.classList.add("upd");
+    badge.onclick = (ev) => { ev.preventDefault(); location.reload(); };
+  });
 
   window.FenceContest = {
     placeOf,
