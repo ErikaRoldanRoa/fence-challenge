@@ -37,7 +37,7 @@
 
   // ---------- state ----------
   var mode = "tetra", play = "explore";
-  var boards = {}; // per step and way: { pieces: [{ shape, cells, hue }], hand, orient, sel, undo: [], space, room }
+  var boards = {}; // per step and way: { pieces: [{ shape, cells, hue }], hand, orient, sel, undo: [], space, room, opened }
   var shapes = {}; // per step: the n-cubes, each with its 24-orientation list
   Object.keys(MODES).forEach(function (m) {
     var list = G.polycubes(MODES[m].n);
@@ -535,6 +535,8 @@
 
   function chooseHand(i) {
     var b = board();
+    // While the tray is dimmed, no piece can be taken (keys included).
+    if (i != null && dimReason()) { say(dimReason()); return; }
     if (i == null || isPlaced(i)) b.hand = null;
     else if (b.hand !== i) { b.hand = i; b.orient = 0; }
     release();
@@ -690,6 +692,8 @@
     var b = board();
     if (!b.undo.length) { say("cu.s.nothingToUndo"); return; }
     var back = b.undo.pop();
+    // Another space or wall comes back: frame it as when it was opened.
+    var reframe = back.space !== b.space || (back.opened || null) !== (b.opened || null);
     b.pieces = back.pieces;
     b.opened = back.opened;
     setSpace(back.space);
@@ -698,9 +702,10 @@
     syncChips();
     b.sel = null;
     b.selUndo = null;
-    if (b.hand != null && isPlaced(b.hand)) b.hand = null;
+    if (b.hand != null && (isPlaced(b.hand) || (b.opened && b.opened.n !== 5))) b.hand = null;
     measure();
     draw();
+    if (reframe) fit(); else ensureVisible();
     say("cu.s.undone");
   }
 
@@ -989,7 +994,9 @@
   function setMode(m) {
     if (m === mode && cubes) return;
     if (play === "wrap") {
-      // In wrap, the step follows the room: the tetracubes have one room.
+      // In wrap, the step follows the room: back on a step, its board keeps
+      // its room and pieces; the first visit starts on the step's first room.
+      if (boards[m + "/wrap"].room) { mode = m; refresh(); return; }
       var r = LADDER.filter(function (x) { return x.step === m; })[0];
       if (r) { setRoom(r); return; }
     }
