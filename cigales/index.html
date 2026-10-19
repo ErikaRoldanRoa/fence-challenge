@@ -58,6 +58,8 @@ h2{margin:0 0 6px;font-size:clamp(20px,3.6vw,30px);color:var(--c);letter-spacing
 .credit b{color:var(--text)}
 .credit .me{color:var(--text);font-weight:800;font-size:26px;letter-spacing:.02em;margin-bottom:4px}
 .credit .web{display:inline-block;margin-top:14px;padding:12px 20px;border-radius:999px;border:2px solid var(--cyan);color:var(--cyan);font-weight:800;font-size:17px;text-decoration:none;box-shadow:0 0 18px -6px var(--cyan)}
+.opens{margin:0 0 16px;padding:12px 16px;border-radius:14px;border:2px solid var(--gold,#ffd24a);color:var(--text);font-weight:600;font-size:16px;line-height:1.45;box-shadow:0 0 22px -8px #ffd24a}
+.opens b{color:#ffd24a}
 </style>
 </head>
 <body>
@@ -68,6 +70,7 @@ h2{margin:0 0 6px;font-size:clamp(20px,3.6vw,30px);color:var(--c);letter-spacing
  <section style="--c:var(--green)">
   <h2>Le concours des pentominos</h2>
   <p class="lead">Pour s'échauffer : un concours en équipes. Choisissez votre pentomino, changez d'équipe quand vous voulez. L'épreuve se dévoile au top départ.</p>
+  <div class="opens">🏁 Le concours ouvre <b>mardi 20 octobre</b> ! On jouera sur le téléphone et avec de vraies pièces. Garde ton pentomino : son QR te ramène ici.</div>
   <div class="mine" id="mine"></div>
   <div class="teams" id="teams"></div>
   <p class="soon">Chaque téléphone compte une fois et se souvient de son équipe : le jour du concours, rescanne le même QR. Aucun nom, seulement le pentomino.</p>
@@ -135,20 +138,29 @@ function download(t) {
     g.fillStyle = '#ffffff'; g.fillRect(810, 810, 240, 240);
     try {
       const holder = document.createElement('div');
-      new QRCode(holder, { text: 'https://erikaroldanroa.github.io/c', width: 220, height: 220, colorDark: '#0d1117', colorLight: '#ffffff' });
+      new QRCode(holder, { text: 'https://erikaroldanroa.github.io/fence-challenge/cigales/?equipe=' + t[0], width: 220, height: 220, colorDark: '#0d1117', colorLight: '#ffffff' });
       const q = holder.querySelector('canvas');
       if (q) g.drawImage(q, 820, 820, 220, 220);
     } catch (e) {}
     g.textAlign = 'left';
     g.fillStyle = '#ffd24a'; g.font = '700 34px Manrope, sans-serif'; g.fillText('Enchivas · Les Cigales · CIRM', 40, 870);
-    g.fillStyle = '#e9f7ff'; g.font = '600 30px Manrope, sans-serif'; g.fillText('Le concours des pentominos :', 40, 950);
+    g.fillStyle = '#e9f7ff'; g.font = '600 30px Manrope, sans-serif'; g.fillText('Scanne-moi pour rejoindre l’équipe, ou va sur :', 40, 950);
     g.fillStyle = '#7ff2ff'; g.font = '800 44px Manrope, sans-serif'; g.fillText('erikaroldanroa.github.io/c', 40, 1010);
     const a = document.createElement('a'); a.href = cv.toDataURL('image/png'); a.download = 'pentomino-' + t[0] + '.png'; document.body.appendChild(a); a.click(); a.remove();
   };
   img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
 }
 async function refresh() { try { counts = await C.counts(); render(); } catch (e) {} }
-render(); refresh(); setInterval(refresh, 5000);
+// a teammate's pentomino QR carries its team (?equipe=z): a phone with no team joins it, a phone with a team is only told
+const invite = (new URLSearchParams(location.search).get('equipe') || '').toLowerCase();
+try { if (invite) history.replaceState(null, '', location.pathname); } catch (e) {}
+render();
+refresh().then(() => {
+  const t = C.teams.find(x => x[0] === invite); if (!t || invite === mine) return;
+  if (!mine) { const b = box.querySelector('[data-id="' + invite + '"]'); if (b) b.click(); return; }
+  note = 'On t\'invite dans l\'équipe ' + t[1] + ' : touche-la plus bas pour la rejoindre.'; render();
+});
+setInterval(refresh, 5000);
 if (mine && device) C.join(device, mine).catch(() => {});
 </script>
 </body>
