@@ -26,8 +26,19 @@ window.CIGALES = {
     const r = await fetch(this.api + '?action=getTeams&workshop=' + this.workshop, { cache: 'no-store' });
     return (await r.json()).teams || {};
   },
+  // Joins (or switches) and retries until the server confirms this very team: with a whole class scanning at once,
+  // a call can wait or fail (19.10 test: 4 of 30 lost without a retry). Only the latest choice is retried.
   async join(device, team) {
-    await fetch(this.api, { method: 'POST', headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'joinTeam', workshop: this.workshop, token: this.token, device, team }) });
+    this._want = team;
+    for (let i = 0; i < 8 && this._want === team; i++) {
+      try {
+        const r = await fetch(this.api, { method: 'POST', headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: 'joinTeam', workshop: this.workshop, token: this.token, device, team }) });
+        const j = await r.json();
+        if (j.status === 'ok' && j.team === team && !j.queued) return true;
+      } catch (e) {}
+      await new Promise(res => setTimeout(res, 1500 + Math.random() * 2500 * (i + 1)));
+    }
+    return false;
   },
 };
