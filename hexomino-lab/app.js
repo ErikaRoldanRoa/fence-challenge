@@ -75,8 +75,10 @@
 
   // ---------- board changes ----------
   function snapshot() { return [...placed.values()].map((p) => ({ index: p.index, cells: p.cells.map((c) => c.slice()) })); }
-  function pushUndo() { undoStack.push(snapshot()); if (undoStack.length > 300) undoStack.shift(); }
-  function put(index, cells) { placed.set(index, { index, cells }); for (const [x, y] of cells) occ.set(key(x, y), index); }
+  function pushUndo() { stopAssembly(); undoStack.push(snapshot()); if (undoStack.length > 300) undoStack.shift(); }
+  // Any edit of the board ends a running assembly: the visitor takes over.
+  function stopAssembly() { if (!anim) return; clearTimeout(anim.timer); anim = null; }
+  function put(index, cells) { lift(index); placed.set(index, { index, cells }); for (const [x, y] of cells) occ.set(key(x, y), index); }
   function lift(index) {
     const p = placed.get(index);
     if (!p) return;
@@ -229,6 +231,7 @@
     status(t("hx.s.removed", { n: analysis.area }));
   }
   function undo() {
+    stopAssembly();
     if (!undoStack.length) return;
     const snap = undoStack.pop();
     placed.clear(); occ.clear();
@@ -310,7 +313,7 @@
       put(p.index, p.cells); orient[p.index] = normalize(p.cells); refreshChip(p.index);
       anim.born.set(p.index, performance.now());
       changed();
-      setTimeout(step, stepMs);
+      anim.timer = setTimeout(step, stepMs);
     };
     step();
   }
@@ -598,6 +601,7 @@
     gesture = { start: p, last: p, cell, hit, type: e.pointerType, moved: false };
     // Pressing a placed piece chooses it at once, so a drag moves it.
     if (mode === "build" && hit !== undefined) {
+      stopAssembly();
       if (sel !== hit) { sel = hit; ghost = null; syncControls(); syncTray(); draw(); }
       gesture.dragFrom = cell; gesture.orig = placed.get(hit).cells.map((c) => c.slice());
     }
@@ -666,9 +670,27 @@
   canvas.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse" && ghost && !ghost.blocked) { ghost = null; draw(); } });
   canvas.addEventListener("wheel", (e) => { e.preventDefault(); const p = local(e); zoomAt(Math.exp(-e.deltaY * 0.0015), p[0], p[1]); }, { passive: false });
 
+  // The arrow under a tap: the nearest drawn arrow within about half a cell;
+  // in the fence order, also the piece under the tap.
+  function arrowAt(p) {
+    const starts = currentStarts();
+    let best = null, bd = Infinity;
+    ref.order.forEach((o, k) => {
+      const ax = X(starts[k][0]), ay = Y(starts[k][1]);
+      const dx = X(starts[k][0] + o.v[0]) - ax, dy = Y(starts[k][1] + o.v[1]) - ay, L = dx * dx + dy * dy || 1;
+      const u = Math.max(0, Math.min(1, ((p[0] - ax) * dx + (p[1] - ay) * dy) / L));
+      const d = Math.hypot(p[0] - ax - u * dx, p[1] - ay - u * dy);
+      if (d < bd) { bd = d; best = o.id; }
+    });
+    if (bd <= Math.max(12, view.s * 0.6)) return best;
+    if (arrowState.phase !== "fence") return null;
+    const c = screenToCell(p[0], p[1]), h = occ.get(key(c[0], c[1]));
+    return h === undefined ? null : h;
+  }
   function tap(g) {
     if (mode === "arrows") {
-      pickedArrow = g.hit !== undefined && pickedArrow !== g.hit ? g.hit : null;
+      const id = arrowAt(g.start);
+      pickedArrow = id !== null && pickedArrow !== id ? id : null;
       draw();
       return;
     }
@@ -682,10 +704,12 @@
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); return; }
     if (e.key === "Escape") { sel = null; ghost = null; syncControls(); syncTray(); draw(); return; }
     if (mode !== "build") return;
-    if (e.target.closest && e.target.closest(".tray, .math-pop, .langSel")) return;
+    if (e.target.closest && e.target.closest(".math-pop, .langSel")) return;
+    const inTray = !!(e.target.closest && e.target.closest(".tray"));
     const k = e.key;
     if (k === "r" || k === "R") transform(rot);
     else if (k === "f" || k === "F") transform(flp);
+    else if (inTray) return; // the tray keeps its own arrow keys, Enter and Space
     else if (k === "Delete" || k === "Backspace") removeSel();
     else if (k.startsWith("Arrow") && (e.target === canvas || e.target === document.body)) {
       e.preventDefault();

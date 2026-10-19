@@ -15,7 +15,7 @@
     area: {
       q: { en: "How is the area counted?", fr: "Comment l’aire est-elle comptée ?", de: "Wie wird die Fläche gezählt?" },
       label: "def:fence", lines: "281-292",
-      section: { en: "Fences and their Area", fr: "Les barrières et leur aire", de: "Zäune und ihre Fläche" },
+      section: { en: "Fences and their area", fr: "Les barrières et leur aire", de: "Zäune und ihre Fläche" },
       lead: {
         en: "The area is the number of cells in the largest enclosed region.",
         fr: "L’aire est le nombre de cases de la plus grande région enclose.",
@@ -45,22 +45,22 @@
     thm1597: {
       q: { en: "Why can no fence do better?", fr: "Pourquoi aucune barrière ne fait-elle mieux ?", de: "Warum geht es nicht besser?" },
       label: "thm:1597", lines: "1587-1589, 2054-2188, 2190-2211",
-      section: { en: "Hexomino Fence", fr: "La barrière d’hexominos", de: "Der Hexomino-Zaun" },
+      section: { en: "Hexomino fences", fr: "La barrière d’hexominos", de: "Der Hexomino-Zaun" },
       lead: {
         en: "No fence of the 35 hexominoes encloses more than <b>1597</b> cells.",
         fr: "Aucune barrière des 35 hexominos n’enferme plus de <b>1597</b> cases.",
         de: "Kein Zaun aus den 35 Hexominos umschließt mehr als <b>1597</b> Zellen.",
       },
       detail: {
-        en: "Branch and bound with the Minkowski bound, then the rule that the turns add up to 360°, narrow the choices of arrows down to 6 candidate multisets; dynamic programming then shows that none reaches 1598.<br>All optimal fences use the same arrows, up to turning and reflecting each one: <b>244</b> optimal reference polygons (up to symmetry), about <b>1.49·10<sup>21</sup></b> optimal fences.",
-        fr: "La séparation et évaluation avec la borne de Minkowski, puis la règle des angles qui font 360°, réduisent les choix de flèches à 6 multiensembles candidats ; la programmation dynamique montre ensuite qu’aucun n’atteint 1598.<br>Toutes les barrières optimales utilisent les mêmes flèches, à rotation et retournement près : <b>244</b> polygones de référence optimaux (à symétrie près), environ <b>1,49·10<sup>21</sup></b> barrières optimales.",
-        de: "Branch and Bound mit der Minkowski-Schranke und danach die Regel, dass die Drehungen 360° ergeben, engen die Wahl der Pfeile auf 6 Kandidaten-Multimengen ein; dynamische Programmierung zeigt dann, dass keine 1598 erreicht.<br>Alle optimalen Zäune verwenden dieselben Pfeile, bis auf Drehen und Spiegeln jedes einzelnen: <b>244</b> optimale Referenzpolygone (bis auf Symmetrie), etwa <b>1,49·10<sup>21</sup></b> optimale Zäune.",
+        en: "Branch and bound with the Minkowski bound, then two closing rules (the turns add up to 360°, the parity bits to an even number) and a sharper bound for two of the remaining multisets, narrow the choices of arrows down to 6 candidate multisets; dynamic programming then shows that none reaches 1598.<br>All optimal fences use the same arrows, up to turning and reflecting each one: <b>244</b> optimal reference polygons (up to symmetry), about <b>1.49·10<sup>21</sup></b> optimal fences.",
+        fr: "La séparation et évaluation avec la borne de Minkowski, puis deux règles de fermeture (les angles font 360°, les bits de parité une somme paire) et une borne plus fine pour deux des multiensembles restants, réduisent les choix de flèches à 6 multiensembles candidats ; la programmation dynamique montre ensuite qu’aucun n’atteint 1598.<br>Toutes les barrières optimales utilisent les mêmes flèches, à rotation et retournement près : <b>244</b> polygones de référence optimaux (à symétrie près), environ <b>1,49·10<sup>21</sup></b> barrières optimales.",
+        de: "Branch and Bound mit der Minkowski-Schranke, danach zwei Schließregeln (die Drehungen ergeben 360°, die Paritätsbits eine gerade Summe) und eine schärfere Schranke für zwei der übrigen Multimengen engen die Wahl der Pfeile auf 6 Kandidaten-Multimengen ein; dynamische Programmierung zeigt dann, dass keine 1598 erreicht.<br>Alle optimalen Zäune verwenden dieselben Pfeile, bis auf Drehen und Spiegeln jedes einzelnen: <b>244</b> optimale Referenzpolygone (bis auf Symmetrie), etwa <b>1,49·10<sup>21</sup></b> optimale Zäune.",
       },
     },
     refvec: {
       q: { en: "What is a reference vector?", fr: "Qu’est-ce qu’un vecteur de référence ?", de: "Was ist ein Referenzvektor?" },
       label: "def:reference-vector", lines: "1638-1675",
-      section: { en: "Reference Vectors", fr: "Vecteurs de référence", de: "Referenzvektoren" },
+      section: { en: "Reference vectors", fr: "Vecteurs de référence", de: "Referenzvektoren" },
       lead: {
         en: "Each piece becomes one arrow, from the middle of the edge it shares with the previous piece to the middle of the edge it shares with the next.",
         fr: "Chaque pièce devient une flèche, du milieu de l’arête partagée avec la pièce précédente au milieu de celle partagée avec la suivante.",
@@ -75,7 +75,7 @@
     lemma: {
       q: { en: "How do the arrows give the area?", fr: "Comment les flèches donnent-elles l’aire ?", de: "Wie ergeben die Pfeile die Fläche?" },
       label: "lem:area-decomposition", lines: "1686-1690, 1771-1773",
-      section: { en: "Reference Vectors", fr: "Vecteurs de référence", de: "Referenzvektoren" },
+      section: { en: "Reference vectors", fr: "Vecteurs de référence", de: "Referenzvektoren" },
       lead: {
         en: "Area of the fence = signed area of the arrow polygon + the corrections.",
         fr: "Aire de la barrière = aire signée du polygone des flèches + les corrections.",
@@ -90,7 +90,7 @@
     rotation: {
       q: { en: "Why do the turns add up to 360°?", fr: "Pourquoi les angles font-ils 360° ?", de: "Warum ergeben die Drehungen 360°?" },
       label: "eq:rotation-sum", lines: "1707-1722",
-      section: { en: "Reference Vectors", fr: "Vecteurs de référence", de: "Referenzvektoren" },
+      section: { en: "Reference vectors", fr: "Vecteurs de référence", de: "Referenzvektoren" },
       lead: {
         en: "Walking once around the region, you turn exactly once: the turning angles add up to one full turn.",
         fr: "En faisant une fois le tour de la région, on tourne exactement d’un tour : les angles tournés font un tour complet.",
@@ -105,31 +105,31 @@
     p2: {
       q: { en: "Why sort the arrows?", fr: "Pourquoi trier les flèches ?", de: "Warum die Pfeile sortieren?" },
       label: "sec:8way", lines: "1790-1815",
-      section: { en: "8-Way Partitioning", fr: "Partition en 8 directions", de: "Achtfache Aufteilung" },
+      section: { en: "Eight-way partitioning", fr: "Partition en huit directions", de: "Achtfache Aufteilung" },
       lead: {
         en: "Sorted by direction, arrows with fixed directions make the largest polygon: the convex one.",
         fr: "Triées par direction, des flèches de directions fixées forment le plus grand polygone : le convexe.",
         de: "Nach Richtung sortiert bilden Pfeile mit festen Richtungen das größte Polygon: das konvexe.",
       },
       detail: {
-        en: "That is the easy case. In <b>Problem P2</b> each arrow may also take any of its up to 8 rotations and reflections; choosing them is the hard part, solved by dynamic programming that grows four chains: <b class=\"cNE\">NE</b> · <b class=\"cNW\">NW</b> · <b class=\"cSW\">SW</b> · <b class=\"cSE\">SE</b>.",
-        fr: "C’est le cas facile. Dans le <b>problème P2</b>, chaque flèche peut aussi prendre l’une de ses 8 rotations et réflexions au plus ; les choisir est la partie difficile, résolue par une programmation dynamique qui fait pousser quatre chaînes : <b class=\"cNE\">NE</b> · <b class=\"cNW\">NO</b> · <b class=\"cSW\">SO</b> · <b class=\"cSE\">SE</b>.",
-        de: "Das ist der einfache Fall. In <b>Problem P2</b> darf jeder Pfeil auch jede seiner bis zu 8 Drehungen und Spiegelungen annehmen; sie zu wählen ist der schwere Teil, gelöst durch dynamische Programmierung, die vier Ketten wachsen lässt: <b class=\"cNE\">NO</b> · <b class=\"cNW\">NW</b> · <b class=\"cSW\">SW</b> · <b class=\"cSE\">SO</b>.",
+        en: "That is the easy case. In <b>Problem MaxPolygon</b> each arrow may also take any of its up to 8 rotations and reflections; choosing them is the hard part, solved by dynamic programming that grows four chains: <b class=\"cNE\">NE</b> · <b class=\"cNW\">NW</b> · <b class=\"cSW\">SW</b> · <b class=\"cSE\">SE</b>.",
+        fr: "C’est le cas facile. Dans le <b>problème MaxPolygon</b>, chaque flèche peut aussi prendre l’une de ses 8 rotations et réflexions au plus ; les choisir est la partie difficile, résolue par une programmation dynamique qui fait pousser quatre chaînes : <b class=\"cNE\">NE</b> · <b class=\"cNW\">NO</b> · <b class=\"cSW\">SO</b> · <b class=\"cSE\">SE</b>.",
+        de: "Das ist der einfache Fall. In <b>Problem MaxPolygon</b> darf jeder Pfeil auch jede seiner bis zu 8 Drehungen und Spiegelungen annehmen; sie zu wählen ist der schwere Teil, gelöst durch dynamische Programmierung, die vier Ketten wachsen lässt: <b class=\"cNE\">NO</b> · <b class=\"cNW\">NW</b> · <b class=\"cSW\">SW</b> · <b class=\"cSE\">SO</b>.",
       },
     },
     bound: {
       q: { en: "How big can the polygon get?", fr: "Jusqu’où le polygone peut-il grandir ?", de: "Wie groß kann das Polygon werden?" },
       label: "sec:minkowski", lines: "1944-2052",
-      section: { en: "An Upper Bound via Minkowski Averages", fr: "Une borne supérieure par moyennes de Minkowski", de: "Eine obere Schranke über Minkowski-Mittel" },
+      section: { en: "An upper bound via Minkowski averages", fr: "Une borne supérieure par moyennes de Minkowski", de: "Eine obere Schranke über Minkowski-Mittel" },
       lead: {
         en: "However these arrows are turned, reflected and ordered, their polygon cannot exceed " + sub("F", "M") + ".",
         fr: "Quelle que soit la façon de tourner, retourner et ordonner ces flèches, leur polygone ne dépasse pas " + sub("F", "M") + ".",
         de: "Wie man diese Pfeile auch dreht, spiegelt und ordnet, ihr Polygon übersteigt " + sub("F", "M") + " nicht.",
       },
       detail: {
-        en: sub("F", "M") + " is the area of the Minkowski average of the 8 rotated and reflected copies of the polygon, an upper bound for Problem P2. The bound is often remarkably sharp.",
-        fr: sub("F", "M") + " est l’aire de la moyenne de Minkowski des 8 copies tournées et retournées du polygone, une borne supérieure pour le problème P2. La borne est souvent remarquablement serrée.",
-        de: sub("F", "M") + " ist die Fläche des Minkowski-Mittels der 8 gedrehten und gespiegelten Kopien des Polygons, eine obere Schranke für Problem P2. Die Schranke ist oft bemerkenswert scharf.",
+        en: sub("F", "M") + " is the area of the Minkowski average of the 8 rotated and reflected copies of the polygon, an upper bound for Problem MaxPolygon. The bound is often remarkably sharp.",
+        fr: sub("F", "M") + " est l’aire de la moyenne de Minkowski des 8 copies tournées et retournées du polygone, une borne supérieure pour le problème MaxPolygon. La borne est souvent remarquablement serrée.",
+        de: sub("F", "M") + " ist die Fläche des Minkowski-Mittels der 8 gedrehten und gespiegelten Kopien des Polygons, eine obere Schranke für Problem MaxPolygon. Die Schranke ist oft bemerkenswert scharf.",
       },
     },
   };

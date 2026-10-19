@@ -135,6 +135,8 @@ body {
 /* ---------- math chips: only what the state needs, beside what they
  * explain with a gap (the shared math-chip.css draws them) ---------- */
 .chipHost { position: relative; display: inline-flex; align-items: center; gap: 8px; }
+/* A chip that is not needed keeps its place: the controls never move under the pointer. */
+.chipHost > .math-chip[hidden] { display: inline-grid; visibility: hidden; pointer-events: none; }
 
 /* ---------- the tray of 35 ---------- */
 .tray {
@@ -213,7 +215,9 @@ body {
   .measure { --area-num: 28px; padding: 0 14px 0 12px; }
   .jump { font-size: 13px; }
   #zoom-in, #zoom-out { display: none; }
-  .tray { grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 4px; overflow: visible; }
+  /* The tray never takes the board's height: a third of the screen at most, then it scrolls. */
+  .dock { max-height: 32dvh; }
+  .tray { grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 4px; overflow-y: auto; }
   .chip { padding: 3px; border-radius: 8px; }
   .tok { height: 34px; padding: 0 9px; font-size: 15px; gap: 5px; background: rgba(13, 17, 23, 0.9); }
   .tok .sw { display: none; }
@@ -221,6 +225,10 @@ body {
   .equation .op { font-size: 15px; }
   .bound { display: none; }
   .side-brand { font-size: 0.66rem; padding: 0 6px; }
+}
+/* Wider than a phone, narrower than a desk: the 35 pieces in two rows, so the board keeps its height. */
+@media (min-width: 600px) and (max-width: 860px) {
+  .tray { grid-template-columns: repeat(18, minmax(0, 1fr)); }
 }
 /* Narrow phones: the lab links get their own row, the second, at the right, as in the other labs. */
 @media (max-width: 520px) {
