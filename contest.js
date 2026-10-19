@@ -57,15 +57,17 @@
   // camera; once the board has been still for a moment, a closed fence is a candidate record.
   if (LAB && window.FenceAnalysis && typeof window.FenceAnalysis.analyze === "function") {
     const analyze = window.FenceAnalysis.analyze;
-    let timer = 0;
+    // The camera judges every frame: the same fence again keeps its pending count, so a fence
+    // held under the camera is counted 900 ms after it is first seen.
+    let timer = 0, pending = 0;
     window.FenceAnalysis.analyze = function () {
       const r = analyze.apply(this, arguments);
       try {
+        const fence = r && r.area >= 1 && r.regionCount === 1 && !r.cornerLeak;
+        if (fence && r.area === pending) return r;
         clearTimeout(timer);
-        if (r && r.area >= 1 && r.regionCount === 1 && !r.cornerLeak) {
-          const area = r.area;
-          timer = setTimeout(() => window.FenceContest.note(LAB, area), 900);
-        }
+        pending = fence ? r.area : 0;
+        if (fence) timer = setTimeout(() => { pending = 0; window.FenceContest.note(LAB, r.area); }, 900);
       } catch (e) {}
       return r;
     };
