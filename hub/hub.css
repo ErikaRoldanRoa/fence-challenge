@@ -233,6 +233,9 @@ cite { font-style: italic; }
   background: var(--amber); color: #1a1300; font-size: 12px; line-height: 1;
   box-shadow: 0 0 10px rgba(255, 210, 74, 0.45);
 }
+/* The corner star sits outside its face: Firefox does not hide it with the
+   face's back, so a turned tile hides it itself (the back has its own chip). */
+.piece.flipped .star { visibility: hidden; }
 .slab > .face.front { align-self: stretch; }
 .cell.cb .face.front { flex-direction: row; justify-content: center; gap: 72px; }
 .cell.cb .face.back { flex-direction: row; flex-wrap: wrap; align-content: center; gap: 6px 14px; padding: 12px 20px; }
@@ -480,6 +483,9 @@ cite { font-style: italic; }
     grid-template-columns: 50px repeat(3, minmax(0, 1fr)) 0;
     grid-template-rows: repeat(4, 138px);
   }
+  /* On a phone the turned tiles of the second paper (name, line, star and
+     Open) need more than 138 px. */
+  .board { grid-template-rows: repeat(2, 138px) 164px 138px; }
   .rowtag { padding-right: 0; justify-self: start; }
   .rowtag .rt-txt { display: none; }
   .rowdoor { padding: 0; min-width: 50px; justify-content: center; }

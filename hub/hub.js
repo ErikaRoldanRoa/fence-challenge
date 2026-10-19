@@ -53,6 +53,11 @@
     });
   });
   document.addEventListener("click", function (e) { if (!e.target.closest || !e.target.closest(".piece")) unflip(null); });
+  // iOS Safari sends no click for a tap on a plain area (main, the board's
+  // floor): a touch that ends outside every piece turns the tiles back too.
+  document.addEventListener("pointerup", function (e) {
+    if (e.pointerType === "touch" && (!e.target.closest || !e.target.closest(".piece"))) unflip(null);
+  });
 
   document.querySelectorAll("[data-lang-btn]").forEach(function (b) {
     b.addEventListener("click", function () { if (window.i18n) window.i18n.setLang(b.getAttribute("data-lang-btn")); });
@@ -67,6 +72,11 @@
     man.classList.toggle("open", open);
     if (open) man.removeAttribute("inert"); else man.setAttribute("inert", "");
     scrim.hidden = !open;
+    // While the manual is open, the page under the scrim is out of reach
+    // (Tab stays in the manual); it comes back before the focus returns.
+    [document.querySelector("main.hub"), document.querySelector(".topright")].forEach(function (el) {
+      if (el) { if (open) el.setAttribute("inert", ""); else el.removeAttribute("inert"); }
+    });
     btn.setAttribute("aria-expanded", open ? "true" : "false");
     if (window.labTip) window.labTip.hide();
     if (open) shut.focus({ preventScroll: true }); else (back || btn).focus({ preventScroll: true });

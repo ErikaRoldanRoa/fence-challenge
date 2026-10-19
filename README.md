@@ -41,11 +41,11 @@ The labs, one per result:
   optimal one, and switch to its arrow view, where each piece becomes one
   vector and sorting the vectors by direction shows the idea behind the
   proof.
-- **Limit-shape lab** ([limit-shape-lab/](limit-shape-lab/)): the best fences
-  of very large pieces are close to round but not round: at 500 cells their
-  shape bulges out by 0.4 % at the diagonal. Give every piece its longest
-  arrow, sort the arrows into a loop, step the size up to 500 cells, and look
-  through the loupe at where the loop leaves the circle.
+- **Limit-shape lab** ([limit-shape-lab/](limit-shape-lab/)): at 500 cells,
+  the longest arrows of 13.5 million random 500-ominoes, sorted into a loop,
+  stay within 0.42 % of a circle. Give every piece its longest arrow, sort the
+  arrows into a loop, step the size up to 500 cells, and look through the
+  loupe at where the loop leaves the circle.
 - **Pentomino DP lab** ([pentomino-dp-lab/](pentomino-dp-lab/)): with the 12
   pentominoes, the order of the pieces decides the area: every order reaches
   at least 111, the best reach 128. Choose pieces and an order, watch the
@@ -95,11 +95,13 @@ discover. The interface is available in French, German and English.
 Fences can also be built by hand on the table, with a phone watching.
 
 - **Printable kit:** [kit/](kit/) prints a board and its pieces on A4 or A3,
-  with colour ink only, for the three hub boards and the three full
-  challenges. The print icon on each hub card opens its sheets.
-- **Camera in the board:** the camera icon on each hub card and lab turns the
-  board itself into the camera window. Once the four corner marks are found,
-  the paper board is straightened cell on cell under the digital one, the
+  with colour ink only, for the three mission boards and the three full
+  challenges. The print icon on each mission card of the first Fence
+  Challenge page opens its sheets.
+- **Camera in the board:** the camera icon on each mission card and in each
+  lab of the first paper turns the board itself into the camera window. Once
+  the four corner marks are found, the paper board is straightened cell on
+  cell under the digital one, the
   enclosed area lights up, and the pieces read on paper are placed on the
   board when they hold still. [camera/](camera/) is the same camera as a page
   of its own, with a photo mode.
@@ -117,9 +119,10 @@ Fences can also be built by hand on the table, with a phone watching.
 
 ## Authors
 
-Each lab carries the authors of the paper it accompanies, in the order
-of that paper. Interactive labs
-developed by Dr. Erika Roldan · [The Learning Machine](https://erikaroldan.net).
+The hub names the authors of each paper, in the order of that paper; in
+the labs of the first paper, the credit line links to that paper and names
+its authors in its tooltip. Interactive labs developed by Dr. Erika Roldan ·
+[The Learning Machine](https://erikaroldan.net).
 
 ## Run locally
 
