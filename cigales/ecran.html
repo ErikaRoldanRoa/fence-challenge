@@ -52,6 +52,27 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:2vw}
 #back{position:fixed;right:1.5vw;top:2vh;z-index:5;width:5.5vw;height:7.8vw;border-radius:.6vw;background:url(img/enchivas-affiche.jpg) center/cover;cursor:pointer;border:3px solid #f3ec2b;box-shadow:0 0 24px -4px #f3ec2b;transition:transform .2s}
 #back:hover{transform:scale(1.06)}
 .opens{color:#ffd24a;font-weight:800;font-size:min(2.2vw,3.4vh);letter-spacing:.02em}
+#rank{display:none;grid-template-columns:repeat(3,1fr);gap:min(1.6vw,2.6vh);min-height:0}
+body.ranking #rank{display:grid}
+body.ranking #board{display:none}
+.col{min-height:0;border-radius:1.6vw;border:3px solid color-mix(in srgb,var(--c) 70%,transparent);box-shadow:0 0 34px -10px var(--c);background:rgba(255,255,255,.03);padding:2vh 1.6vw;display:flex;flex-direction:column;gap:1vh;overflow:hidden}
+.col h3{margin:0 0 .6vh;color:var(--c);font-size:min(2vw,3.6vh);letter-spacing:.04em}
+.col ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.9vh}
+.col li{display:flex;align-items:center;gap:1vw;font-size:min(1.9vw,3.4vh);font-weight:700;padding:.5vh .6vw;border-radius:.8vw}
+.col li:first-child{background:color-mix(in srgb,var(--c) 18%,transparent)}
+.col li .p{width:2.2em;color:var(--muted);font-weight:800}
+.col li:first-child .p{color:var(--gold)}
+.col li .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.col li .tm svg{width:min(2.6vw,4.4vh);height:min(2.6vw,4.4vh);display:block}
+.col li .a{font-weight:800;font-size:1.25em;color:var(--text)}
+.col li.new{animation:rec 1.6s ease}
+@keyframes rec{0%{background:var(--gold);color:#0d1117}100%{}}
+.col .empty{color:var(--muted);font-size:min(1.6vw,2.8vh)}
+.t .best{font-size:min(1.25vw,2.2vh);font-weight:800;color:var(--gold);min-height:1em}
+body.cirm header h1{font-size:min(3.6vw,6.4vh);letter-spacing:.08em;white-space:nowrap}
+.contest,.opens{white-space:nowrap}
+.credit .chair{margin-top:.6vh;font-size:1.2vw}
+.credit .chair b{color:var(--gold)}
 </style>
 </head>
 <body>
@@ -61,8 +82,9 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:2vw}
 <div class="pics"><img src="img/enchivas-hero.jpg" alt="Erika avec un ballon"><img src="img/enchivas-terrain.jpg" alt="Sur le terrain, une corde orange au sol"></div>
 <div class="who" style="font-size:2.4vw;font-weight:800">Dr. Erika Roldán Roa</div><div class="who">avec Begoña Cuquejo · erikaroldan.net</div><div class="who" style="font-weight:600;margin-top:1vh">Jeudi 22 octobre · l'atelier, puis la représentation</div><div class="go">→</div></div></div></div>
 <button id="back" aria-label="Affiche"></button>
-<header><div><div class="k">Les Cigales × La Performative · CIRM</div><h1>Enchivas</h1></div><div class="right"><div class="contest">Le concours des pentominos</div><div class="opens">🏁 ouvert du lundi 19 au jeudi 22 octobre</div><div class="total" id="total"></div></div></header>
+<header><div><div class="k">Les Cigales × La Performative · CIRM</div><h1>Enchivas</h1></div><div class="right"><div class="contest">Le concours des clôtures</div><div class="opens">🏁 ouvert du lundi 19 au jeudi 22 octobre</div><div class="total" id="total"></div></div></header>
 <div class="board" id="board"></div>
+<section id="rank"></section>
 <footer><div class="join"><div class="qr" id="qr"></div><span>Scanne, choisis ton pentomino,<br>change quand tu veux</span></div>
 <div class="credit"><div class="me">Dr. Erika Roldán Roa</div><div>avec <b>Begoña Cuquejo</b> · La Performative, Genève</div><div class="web">erikaroldan.net</div></div></footer>
 <script src="teams.js?v=20261019g"></script>
@@ -89,6 +111,38 @@ async function refresh() {
   document.getElementById('total').textContent = total ? total + (total > 1 ? ' téléphones' : ' téléphone') : '';
 }
 refresh(); setInterval(refresh, 3000);
+// The rankings (19.10): each phone's best fence per board, pseudonyms only; ties go to who got there first.
+const BOARDS = [['sq', 'Mission I · carrés', '#ff4fd8'], ['hex', 'Mission II · hexagones', '#6dff7a'], ['tri', 'Mission III · triangles', '#7ff2ff']];
+const rank = document.getElementById('rank');
+rank.innerHTML = BOARDS.map(([b, t, c]) => `<div class="col" style="--c:${c}"><h3>${t}</h3><ol id="r-${b}"></ol></div>`).join('');
+const esc = x => String(x).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+let seen = {};
+async function refreshRank() {
+  let j; try { j = await (await fetch(C.api + '?action=getFences&workshop=' + C.workshop, { cache: 'no-store' })).json(); } catch (e) { return; }
+  const rows = (j && j.fences) || [];
+  for (const [b] of BOARDS) {
+    const list = rows.filter(r => r.board === b).sort((x, y) => y.area - x.area || String(x.at).localeCompare(String(y.at))).slice(0, 8);
+    const ol = document.getElementById('r-' + b);
+    ol.innerHTML = list.length ? list.map((r, i) => {
+      const t = C.teams.find(x => x[0] === r.team), key = b + '|' + r.name + '|' + r.area, fresh = seen[b + '|' + r.name] !== undefined && seen[b + '|' + r.name] < r.area;
+      return `<li class="${fresh ? 'new' : ''}"><span class="p">${i + 1}</span>${t && C.group !== 'cirm' ? `<span class="tm">${C.bird(t[2], t[3])}</span>` : ''}<span class="nm">${esc(r.name || '·')}</span><span class="a">${r.area}</span></li>`;
+    }).join('') : '<li class="empty">à toi de jouer</li>';
+    for (const r of rows.filter(r => r.board === b)) seen[b + '|' + r.name] = r.area;
+  }
+  // each team's best fence, on its card (the Cigales)
+  if (C.group !== 'cirm') for (const [id] of C.teams) {
+    const el = document.getElementById('t-' + id); if (!el) continue;
+    let bt = el.querySelector('.best'); if (!bt) { bt = document.createElement('div'); bt.className = 'best'; el.appendChild(bt); }
+    const mine = rows.filter(r => r.team === id);
+    bt.textContent = BOARDS.map(([b], i) => { const m = Math.max(0, ...mine.filter(r => r.board === b).map(r => r.area)); return m ? ['▢', '⬡', '△'][i] + ' ' + m : ''; }).filter(Boolean).join('  ');
+  }
+}
+refreshRank(); setInterval(refreshRank, 5000);
+// The Cigales' screen alternates teams and rankings; the public's shows the rankings only. Key R switches by hand.
+if (C.group === 'cirm') { document.body.classList.add('ranking', 'cirm'); document.querySelector('header h1').textContent = 'Fence Challenge'; document.querySelector('footer .credit').insertAdjacentHTML('beforeend', '<div class="chair"><b>Chaire Jean-Morlet</b> · Prof. Dr. Eveliina Peltola · Prof. Dr. Rémi Rhodes</div>'); document.querySelector('.join span').innerHTML = 'Scanne, choisis un pseudo,<br>et joue · scan, pick a username, play'; document.title = 'Fence Challenge · CIRM'; }
+else setInterval(() => document.body.classList.toggle('ranking'), 20000);
+addEventListener('keydown', e => { if (e.key === 'r' || e.key === 'R') document.body.classList.toggle('ranking'); });
+
 const intro = document.getElementById('intro');
 function toggle(show) { intro.classList.toggle('gone', !show); }
 intro.addEventListener('click', () => toggle(false));

@@ -16,6 +16,7 @@
   css.textContent = ".fc-contest{position:fixed;left:8px;top:8px;z-index:50;display:flex;align-items:center;gap:8px;" +
     "padding:6px 14px;border-radius:999px;background:rgba(13,17,23,.92);border:2px solid #ffd24a;color:#fff;font:700 14px/1.2 Manrope,system-ui,sans-serif;" +
     "text-decoration:none;box-shadow:0 0 18px -6px #ffd24a;white-space:nowrap;max-width:calc(100vw - 180px);overflow:hidden;text-overflow:ellipsis}" +
+    ".pCard .icon.kit,.pCard .icon.launch,.pCard .pMenuSep{display:none!important}" +
     ".pCard .pStatus{position:sticky;bottom:8px;z-index:6;padding:6px;margin:0 -6px;border-radius:999px;background:rgba(13,17,23,.88);backdrop-filter:blur(4px)}" +
     ".fc-contest b{color:#ffd24a}.fc-contest.pop{animation:fcpop .7s}@keyframes fcpop{30%{transform:scale(1.15)}}";
   document.head.appendChild(css);
