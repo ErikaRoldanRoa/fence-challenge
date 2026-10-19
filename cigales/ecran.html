@@ -16,7 +16,8 @@ body{color:var(--text);font-family:Manrope,"Avenir Next",sans-serif;background:r
 header{display:flex;align-items:center;justify-content:space-between}
 .k{color:var(--gold);font-weight:800;letter-spacing:.22em;font-size:1.3vw;text-transform:uppercase}
 h1{margin:0;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);font-size:4.4vw;text-shadow:0 0 22px rgba(127,242,255,.55)}
-.total{font-size:1.8vw;font-weight:800;color:var(--gold)}
+.right{text-align:right}.contest{font-weight:800;font-size:3vw;color:var(--gold);letter-spacing:.06em;text-shadow:0 0 18px rgba(255,210,74,.5)}
+.total{font-size:1.8vw;font-weight:800;color:var(--text);margin-top:.6vh}
 .board{display:grid;grid-template-columns:repeat(5,1fr);gap:1.2vw;align-content:center;min-height:0}
 .t{border-radius:2vw;border:3px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);display:flex;flex-direction:column;align-items:center;
  padding:1.4vh 1vw;gap:.6vh;transition:border-color .4s,box-shadow .4s}
@@ -37,7 +38,7 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:2vw}
 </style>
 </head>
 <body>
-<header><div><div class="k">Les Cigales × La Performative · CIRM</div><h1>Enchivas</h1></div><div class="total" id="total"></div></header>
+<header><div><div class="k">Les Cigales × La Performative · CIRM</div><h1>Enchivas</h1></div><div class="right"><div class="contest">Le concours des oiseaux</div><div class="total" id="total"></div></div></header>
 <div class="board" id="board"></div>
 <footer><div class="join"><div class="qr" id="qr"></div><span>Scanne, choisis ton oiseau,<br>change quand tu veux</span></div>
 <div class="credit">Avec <b>Dr. Erika Roldán Roa</b> et <b>Begoña Cuquejo</b><br>La Performative, Genève</div></footer>
