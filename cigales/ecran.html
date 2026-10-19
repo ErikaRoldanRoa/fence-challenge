@@ -35,9 +35,23 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:2vw}
 .qr{background:#fff;padding:.8vw;border-radius:1vw;box-shadow:0 0 30px -6px var(--gold)}
 .credit{color:var(--muted);font-size:1.2vw;text-align:right}
 .credit b{color:var(--text)}
+#intro{position:fixed;inset:0;z-index:10;background:#f3ec2b;display:flex;align-items:center;justify-content:center;gap:5vw;cursor:pointer;transition:opacity .6s}
+#intro.gone{opacity:0;pointer-events:none}
+#intro img{height:92vh;box-shadow:0 2vh 6vh rgba(0,0,0,.25);border-radius:.6vw}
+#intro .side{max-width:34vw;color:#e8432a;font-family:Manrope,sans-serif}
+#intro .k2{font-weight:800;letter-spacing:.2em;font-size:1.3vw;text-transform:uppercase}
+#intro .big{font-weight:800;font-size:3.2vw;line-height:1.1;margin:2vh 0}
+#intro .who{font-size:1.6vw;font-weight:700;color:#1b1b1b}
+#intro .go{margin-top:5vh;display:inline-flex;align-items:center;justify-content:center;width:6vw;height:6vw;border-radius:50%;background:#e8432a;color:#f3ec2b;font-size:2.6vw}
+#back{position:fixed;right:1.2vw;top:1.2vw;z-index:5;width:3vw;height:4vw;border-radius:.4vw;background:url(img/enchivas-affiche.jpg) center/cover;opacity:.5;cursor:pointer;border:none}
+#back:hover{opacity:1}
 </style>
 </head>
 <body>
+<div id="intro" title="Cliquer pour continuer"><img src="img/enchivas-affiche.jpg" alt="Affiche Enchivas, conférence performative de foot et maths, La Performative">
+<div class="side"><div class="k2">Les Cigales × La Performative · CIRM</div><div class="big">Mathématiques, football et danse</div>
+<div class="who">Dr. Erika Roldán Roa et Begoña Cuquejo</div><div class="who" style="font-weight:600;margin-top:1vh">Jeudi 22 octobre · l'atelier, puis la représentation</div><div class="go">▶</div></div></div>
+<button id="back" aria-label="Affiche"></button>
 <header><div><div class="k">Les Cigales × La Performative · CIRM</div><h1>Enchivas</h1></div><div class="right"><div class="contest">Le concours des oiseaux</div><div class="total" id="total"></div></div></header>
 <div class="board" id="board"></div>
 <footer><div class="join"><div class="qr" id="qr"></div><span>Scanne, choisis ton oiseau,<br>change quand tu veux</span></div>
@@ -64,6 +78,12 @@ async function refresh() {
   document.getElementById('total').textContent = total ? total + (total > 1 ? ' téléphones' : ' téléphone') : '';
 }
 refresh(); setInterval(refresh, 3000);
+const intro = document.getElementById('intro');
+function toggle(show) { intro.classList.toggle('gone', !show); }
+intro.addEventListener('click', () => toggle(false));
+document.getElementById('back').addEventListener('click', e => { toggle(true); e.currentTarget.blur(); });
+addEventListener('keydown', e => { if ([' ', 'Enter'].includes(e.key)) e.preventDefault(); if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight') toggle(false); if (e.key === 'ArrowLeft' || e.key === 'Escape') toggle(true); });
+
 </script>
 </body>
 </html>
