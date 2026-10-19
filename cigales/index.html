@@ -87,9 +87,10 @@ h2{margin:0 0 6px;font-size:clamp(20px,3.6vw,30px);color:var(--c);letter-spacing
  <div class="credit"><div class="me">Dr. Erika Roldán Roa</div>avec <b>Begoña Cuquejo</b> · La Performative, Genève
   <a class="web" href="https://erikaroldan.net">Découvrez mon travail : erikaroldan.net →</a></div>
 </main>
-<script src="teams.js?v=20261019f"></script>
+<script src="teams.js?v=20261019g"></script>
 <script>
-const C = window.CIGALES, KEY = 'cigales-team', DEV = 'cigales-device';
+const C = window.CIGALES, KEY = C.group === 'cirm' ? 'cirm-team' : 'cigales-team', DEV = 'cigales-device';
+document.querySelector('.hcap .kicker').textContent = C.kicker;
 let mine = null, device = null;
 try { mine = localStorage.getItem(KEY); device = localStorage.getItem(DEV);
   if (!device) { device = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)); localStorage.setItem(DEV, device); } } catch (e) {}
@@ -131,7 +132,7 @@ function celebrate(color) {
 }
 // the team link (the same one as in the pentomino's QR): the phone's share sheet, else copied
 async function share(t, btn) {
-  const url = 'https://erikaroldanroa.github.io/fence-challenge/cigales/?equipe=' + t[0];
+  const url = C.base + 'equipe=' + t[0];
   try { if (navigator.share) { await navigator.share({ title: t[1], text: 'Rejoins mon équipe ' + t[1] + ' au concours des pentominos !', url }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
   try { await navigator.clipboard.writeText(url); btn.textContent = '✅ Lien copié : colle-le à ton amie'; } catch (e) { btn.textContent = url; }
   setTimeout(() => { btn.textContent = '🔗 Inviter dans mon équipe'; }, 4000);
@@ -147,14 +148,14 @@ function download(t) {
     g.fillStyle = '#ffffff'; g.fillRect(810, 810, 240, 240);
     try {
       const holder = document.createElement('div');
-      new QRCode(holder, { text: 'https://erikaroldanroa.github.io/fence-challenge/cigales/?equipe=' + t[0], width: 220, height: 220, colorDark: '#0d1117', colorLight: '#ffffff' });
+      new QRCode(holder, { text: C.base + 'equipe=' + t[0], width: 220, height: 220, colorDark: '#0d1117', colorLight: '#ffffff' });
       const q = holder.querySelector('canvas');
       if (q) g.drawImage(q, 820, 820, 220, 220);
     } catch (e) {}
     g.textAlign = 'left';
-    g.fillStyle = '#ffd24a'; g.font = '700 34px Manrope, sans-serif'; g.fillText('Enchivas · Les Cigales · CIRM', 40, 870);
+    g.fillStyle = '#ffd24a'; g.font = '700 34px Manrope, sans-serif'; g.fillText(C.tag, 40, 870);
     g.fillStyle = '#e9f7ff'; g.font = '600 30px Manrope, sans-serif'; g.fillText('Scanne-moi pour rejoindre l’équipe, ou va sur :', 40, 950);
-    g.fillStyle = '#7ff2ff'; g.font = '800 44px Manrope, sans-serif'; g.fillText('erikaroldanroa.github.io/c', 40, 1010);
+    g.fillStyle = '#7ff2ff'; g.font = '800 44px Manrope, sans-serif'; g.fillText(C.short, 40, 1010);
     const a = document.createElement('a'); a.href = cv.toDataURL('image/png'); a.download = 'pentomino-' + t[0] + '.png'; document.body.appendChild(a); a.click(); a.remove();
   };
   img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
@@ -162,7 +163,7 @@ function download(t) {
 async function refresh() { try { counts = await C.counts(); render(); } catch (e) {} }
 // a teammate's pentomino QR carries its team (?equipe=z): a phone with no team joins it, a phone with a team is only told
 const invite = (new URLSearchParams(location.search).get('equipe') || '').toLowerCase();
-try { if (invite) history.replaceState(null, '', location.pathname); } catch (e) {}
+try { if (invite) history.replaceState(null, '', location.pathname + C.query); } catch (e) {}
 render();
 refresh().then(() => {
   const t = C.teams.find(x => x[0] === invite); if (!t || invite === mine) return;

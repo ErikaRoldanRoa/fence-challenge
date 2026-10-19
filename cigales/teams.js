@@ -42,3 +42,12 @@ window.CIGALES = {
     return 'fail';
   },
 };
+
+// Two groups on the same pages (19.10): the Cigales (default) and everyone else at the CIRM (?g=cirm), each its own workshop and ranking.
+(function (C) {
+  const g = (new URLSearchParams(location.search).get('g') || '').toLowerCase();
+  if (g === 'cirm') Object.assign(C, { group: 'cirm', workshop: 'cirm-2026', token: 'zfY7q4Jn8GXf', kicker: 'CIRM · Chaire Jean-Morlet', tag: 'Enchivas · CIRM',
+    short: 'erikaroldanroa.github.io/cirm', base: 'https://erikaroldanroa.github.io/fence-challenge/cigales/?g=cirm&', query: '?g=cirm' });
+  else Object.assign(C, { group: 'cigales', kicker: 'Les Cigales × La Performative · CIRM', tag: 'Enchivas · Les Cigales · CIRM',
+    short: 'erikaroldanroa.github.io/c', base: 'https://erikaroldanroa.github.io/fence-challenge/cigales/?', query: '' });
+})(window.CIGALES);
