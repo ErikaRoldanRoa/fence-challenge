@@ -35,6 +35,8 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:2vw}
 .qr{background:#fff;padding:.8vw;border-radius:1vw;box-shadow:0 0 30px -6px var(--gold)}
 .credit{color:var(--muted);font-size:1.2vw;text-align:right}
 .credit b{color:var(--text)}
+.credit .me{color:var(--text);font-weight:800;font-size:min(2.4vw,4.2vh);letter-spacing:.02em}
+.credit .web{color:var(--cyan);font-weight:800;font-size:min(1.8vw,3.2vh);margin-top:.6vh}
 #intro{position:fixed;inset:0;z-index:10;background:#f3ec2b;display:flex;align-items:center;justify-content:center;gap:5vw;cursor:pointer;transition:opacity .6s}
 #intro.gone{opacity:0;pointer-events:none}
 #intro .poster{max-height:86vh;max-width:40vw;object-fit:contain;box-shadow:0 2vh 6vh rgba(0,0,0,.25);border-radius:.6vw}
@@ -55,12 +57,12 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:2vw}
 <div class="side"><div class="k2">Les Cigales × La Performative · CIRM</div><div class="big">Mathématiques, football et danse</div>
 <div class="what">Pendant l'atelier, on bouge, on joue avec une corde et un ballon, et on fait des mathématiques avec le corps : des mARThématiques.</div>
 <div class="pics"><img src="img/enchivas-hero.jpg" alt="Erika avec un ballon"><img src="img/enchivas-terrain.jpg" alt="Sur le terrain, une corde orange au sol"></div>
-<div class="who">Dr. Erika Roldán Roa et Begoña Cuquejo</div><div class="who" style="font-weight:600;margin-top:1vh">Jeudi 22 octobre · l'atelier, puis la représentation</div><div class="go">→</div></div></div></div>
+<div class="who" style="font-size:2.4vw;font-weight:800">Dr. Erika Roldán Roa</div><div class="who">avec Begoña Cuquejo · erikaroldan.net</div><div class="who" style="font-weight:600;margin-top:1vh">Jeudi 22 octobre · l'atelier, puis la représentation</div><div class="go">→</div></div></div></div>
 <button id="back" aria-label="Affiche"></button>
 <header><div><div class="k">Les Cigales × La Performative · CIRM</div><h1>Enchivas</h1></div><div class="right"><div class="contest">Le concours des oiseaux</div><div class="total" id="total"></div></div></header>
 <div class="board" id="board"></div>
 <footer><div class="join"><div class="qr" id="qr"></div><span>Scanne, choisis ton oiseau,<br>change quand tu veux</span></div>
-<div class="credit">Avec <b>Dr. Erika Roldán Roa</b> et <b>Begoña Cuquejo</b><br>La Performative, Genève</div></footer>
+<div class="credit"><div class="me">Dr. Erika Roldán Roa</div><div>avec <b>Begoña Cuquejo</b> · La Performative, Genève</div><div class="web">erikaroldan.net</div></div></footer>
 <script src="teams.js?v=20261019c"></script>
 <script>
 const C = window.CIGALES, board = document.getElementById('board');
