@@ -53,6 +53,43 @@
   };
   if (document.body) mount(); else document.addEventListener("DOMContentLoaded", mount);
 
+  // The camera reads whichever printed board is in view: another board's marks take the phone to
+  // that board's own place, its camera open (19.10: the 9 x 9 and the 20 x 20 from the same button).
+  const placeOf = (sheetId) => {
+    const B = window.FenceBoards;
+    const id = B && B.current ? B.current(sheetId) : sheetId;
+    const b = B && B.get && B.get(id);
+    if (!b || !b.home) return "";
+    return b.home.page === "hub" ? ROOT + "index.html#camera=" + b.home.card : ROOT + b.home.page + "/index.html#camera";
+  };
+  const wrapInboard = (I) => {
+    if (!I || typeof I.open !== "function" || I._contest) return I;
+    const open = I.open;
+    I.open = function (opts) {
+      const o = Object.assign({}, opts);
+      const own = opts && opts.onSheet;
+      o.onSheet = (sheetId) => {
+        const B = window.FenceBoards;
+        const here = B && B.current ? B.current(o.boardId) : o.boardId;
+        const there = B && B.current ? B.current(sheetId) : sheetId;
+        const go = there && there !== here && placeOf(sheetId);
+        if (go) { location.assign(go); return; }
+        if (own) own(sheetId);
+      };
+      return open.call(this, o);
+    };
+    I._contest = true;
+    return I;
+  };
+  if (window.FenceInboard) wrapInboard(window.FenceInboard);
+  else {
+    let held;
+    try {
+      Object.defineProperty(window, "FenceInboard", { configurable: true, enumerable: true,
+        get: () => held, set: (v) => { held = wrapInboard(v); } });
+    } catch (e) {}
+  }
+
   // In a lab: every verdict goes through the shared rule (fence-analysis.js), on screen or by the
   // camera; once the board has been still for a moment, a closed fence is a candidate record.
   if (LAB && window.FenceAnalysis && typeof window.FenceAnalysis.analyze === "function") {
@@ -74,6 +111,7 @@
   }
 
   window.FenceContest = {
+    placeOf,
     note(board, area) {
       if (!(area > (best[board] || 0))) return;
       best[board] = area;
