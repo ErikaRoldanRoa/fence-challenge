@@ -15,6 +15,7 @@ window.CIGALES = {
     ['mesange','Mésange charbonnière','#ffd84a','#1b2a3a','#5a5f66'],
     ['hirondelle','Hirondelle rustique','#2a3f7a','#e2544e','#1b1b1b'],
   ],
+  facts: {"flamant": "En Camargue, il se nourrit les pattes dans l'eau ; son rose vient de ce qu'il mange.", "guepier": "Il attrape guêpes et abeilles en plein vol, et creuse son nid dans les talus de sable.", "huppe": "Sa crête s'ouvre en éventail, et son « oup-oup-oup » résonne dans la garrigue.", "goeland": "Le goéland de Marseille : il niche sur les îles du Frioul et jusque sur les toits.", "martinet": "Il vit presque toujours en vol : il y mange et y dort, l'été au-dessus des toits.", "rollier": "Bleu turquoise, il revient chaque été d'Afrique pour nicher en Crau et en Camargue.", "bonelli": "L'un des rapaces les plus rares de France : quelques couples nichent dans les falaises de Provence.", "crecerellette": "Petit faucon venu d'Afrique, il passe l'été dans la plaine de la Crau.", "mesange": "La plus commune de nos mésanges : une cravate noire sur un ventre jaune.", "hirondelle": "Deux fois par an, elle traverse le Sahara, et revient souvent au même nid."},
   bird(body, wing, beak) {
     return '<svg viewBox="0 0 80 80" aria-hidden="true"><ellipse cx="38" cy="46" rx="24" ry="20" fill="'+body+'"/>'
       + '<circle cx="56" cy="30" r="13" fill="'+body+'"/><path d="M68 30 l10 3 -10 4z" fill="'+beak+'"/>'

@@ -61,7 +61,7 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:2vw}
 <div class="board" id="board"></div>
 <footer><div class="join"><div class="qr" id="qr"></div><span>Scanne, choisis ton oiseau,<br>change quand tu veux</span></div>
 <div class="credit">Avec <b>Dr. Erika Roldán Roa</b> et <b>Begoña Cuquejo</b><br>La Performative, Genève</div></footer>
-<script src="teams.js?v=20261019b"></script>
+<script src="teams.js?v=20261019c"></script>
 <script>
 const C = window.CIGALES, board = document.getElementById('board');
 board.innerHTML = C.teams.map(([id, name, b, w, k]) => `<div class="t" id="t-${id}" style="--c:${b}">${C.bird(b, w, k)}<div class="name">${name}</div><div class="dots"></div><div class="n">0</div></div>`).join('');
