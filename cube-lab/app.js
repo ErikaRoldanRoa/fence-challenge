@@ -89,6 +89,7 @@
   var boxGeo = new THREE.BoxGeometry(CUBE, CUBE, CUBE);
   var edgeGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(0.97, 0.97, 0.97));
   var shellGeo = new THREE.BoxGeometry(1.06, 1.06, 1.06);
+  var roomGeo = new THREE.BoxGeometry(0.62, 0.62, 0.62), roomCoreGeo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
   var cubeMat = new THREE.MeshStandardMaterial({ roughness: 0.55, metalness: 0.05 });
   // The room: white-gold light, a colour no piece wears.
   var roomMat = new THREE.MeshBasicMaterial({ color: 0xffcf5a, transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending });
@@ -305,8 +306,8 @@
     room = roomCore = null;
     var cells = last.enclosed.filter(function (c) { return c[1] < cut; });
     if (!cells.length || board().room) return;
-    room = new THREE.InstancedMesh(new THREE.BoxGeometry(0.62, 0.62, 0.62), roomMat, cells.length);
-    roomCore = new THREE.InstancedMesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), roomCoreMat, cells.length);
+    room = new THREE.InstancedMesh(roomGeo, roomMat, cells.length);
+    roomCore = new THREE.InstancedMesh(roomCoreGeo, roomCoreMat, cells.length);
     var pos = new THREE.Vector3();
     // The room stays put while the wall spreads away from it.
     cells.forEach(function (c, i) {
@@ -506,7 +507,25 @@
 
   // ---------- actions ----------
   function snapshot() {
-    return board().pieces.map(function (p) { return { shape: p.shape, hue: p.hue, cells: p.cells.map(function (c) { return c.slice(); }) }; });
+    var b = board();
+    return { pieces: b.pieces.map(function (p) { return { shape: p.shape, hue: p.hue, cells: p.cells.map(function (c) { return c.slice(); }) }; }),
+      opened: b.opened || null, space: b.space };
+  }
+  // The opened wall (if any) of the board on screen, and the space it needs.
+  function syncOpened() {
+    var b = board();
+    opened = b.opened || null;
+    document.body.toggleAttribute("data-opened", !!opened);
+    document.body.toggleAttribute("data-foreign", !!opened && opened.n !== 5);
+  }
+  function setSpace(s) {
+    var b = board();
+    if (b.space === s) return;
+    b.space = s;
+    buildFloor();
+    $("cut").max = String(s);
+    $("cut").value = String(s);
+    cut = Infinity;
   }
   function remember() {
     var b = board();
@@ -670,7 +689,13 @@
   function undo() {
     var b = board();
     if (!b.undo.length) { say("cu.s.nothingToUndo"); return; }
-    b.pieces = b.undo.pop();
+    var back = b.undo.pop();
+    b.pieces = back.pieces;
+    b.opened = back.opened;
+    setSpace(back.space);
+    syncOpened();
+    renderWalls();
+    syncChips();
     b.sel = null;
     b.selUndo = null;
     if (b.hand != null && isPlaced(b.hand)) b.hand = null;
@@ -685,8 +710,9 @@
     remember();
     b.pieces = [];
     b.sel = null;
-    opened = null;
-    document.body.removeAttribute("data-opened");
+    b.opened = null;
+    syncOpened();
+    setSpace(MODES[mode].space);
     measure();
     draw();
     fit();
@@ -764,9 +790,8 @@
     b.pieces = [];
     b.hand = null;
     b.sel = null;
-    opened = w;
-    document.body.setAttribute("data-opened", "");
-    document.body.toggleAttribute("data-foreign", w.n !== 5);
+    b.opened = w;
+    syncOpened();
     buildFloor();
     cut = Infinity;
     $("cut").max = String(b.space);
@@ -900,6 +925,8 @@
     $("turn").setAttribute("aria-disabled", any ? "false" : "true");
     $("tip").setAttribute("aria-disabled", any ? "false" : "true");
     $("undo").setAttribute("aria-disabled", b.undo.length ? "false" : "true");
+    // Nothing shut in, nothing to lift: the cast waits, dimmed (its bubble still explains it).
+    $("cast").setAttribute("aria-disabled", !castGoal && !cast && !last.volume ? "true" : "false");
   }
 
   // A small picture of a wall or room, drawn once by its own renderer.
@@ -996,7 +1023,8 @@
     $("play-wrap").setAttribute("aria-pressed", play === "wrap" ? "true" : "false");
     var b = board();
     if (castGoal || cast) { castGoal = 0; cast = 0; castAnim = null; document.body.removeAttribute("data-cast"); $("cast").setAttribute("aria-pressed", "false"); }
-    if (!(mode === "penta" && play === "explore")) { opened = null; document.body.removeAttribute("data-opened"); document.body.removeAttribute("data-foreign"); }
+    // Each board keeps the wall it opened: back on it, the wall's chips and dimmed tray come back too.
+    syncOpened();
     solved = false;
     cursor = null;
     buildFloor();
@@ -1017,7 +1045,7 @@
   function setRoom(r, quiet) {
     if (mode !== r.step || play !== "wrap") { mode = r.step; play = "wrap"; }
     var b = board();
-    if (b.room && b.room.id !== r.id && b.pieces.length) remember();
+    if (b.room && b.room.id !== r.id) b.undo = [];
     var s = b.space, hi = [0, 1, 2].map(function (a) { return Math.max.apply(null, r.room.map(function (c) { return c[a]; })); });
     // In the middle of the floor, one layer up: the wall goes under it too.
     var off = [Math.floor((s - hi[0] - 1) / 2), 1, Math.floor((s - hi[2] - 1) / 2)];
@@ -1493,8 +1521,12 @@
     renderer.setSize(r.width, r.height, false);
     camera.aspect = r.width / Math.max(1, r.height);
     camera.updateProjectionMatrix();
-    fit();
+    // Framed once; later (a phone's pad replacing the tray, a turned screen) the view
+    // stays as the visitor left it unless what is built would leave the picture.
+    var b = board();
+    if (!framed || !(b.pieces.length || b.room)) { framed = true; fit(); } else ensureVisible();
   }
+  var framed = false;
   window.addEventListener("resize", resize);
   if (window.ResizeObserver) new ResizeObserver(function () { resize(); }).observe(canvas);
 

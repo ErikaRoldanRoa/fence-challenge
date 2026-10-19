@@ -133,6 +133,7 @@ body[data-busy] #space { cursor: progress; }
 .ctl.castBtn { --ring: rgba(255, 211, 110, 0.6); --fill: rgba(255, 211, 110, 0.1); --fg: #ffd36e; }
 .ctl.castBtn[aria-pressed="true"] { --fill: #ffd36e; --fg: #07060a; }
 .ctl.castBtn[aria-pressed="true"]::before { box-shadow: 0 0 18px rgba(255, 211, 110, 0.55); }
+.ctl.castBtn[aria-disabled="true"] { opacity: 0.32; cursor: not-allowed; }
 
 /* ---------- the dock: pieces (or the move pad), actions, walls or rooms ---------- */
 .dock { grid-area: dock; display: flex; flex-direction: column; gap: 12px; min-height: 0; min-width: 0; }
@@ -291,7 +292,7 @@ body[data-play="explore"][data-mode="penta"] .wallsRow { display: flex; }
   .slider { flex-direction: row; width: auto; height: 44px; min-height: 0; max-height: none; padding: 0 12px; flex: 1 1 0; }
   .slider { min-width: 0; }
   .slider input { writing-mode: horizontal-tb; direction: ltr; width: 100%; min-width: 0; height: 24px; flex: 1 1 auto; }
-  /* Horizontal sliders drawn by the lab, so Safari shows the same colours as var(--room)hromium. */
+  /* Horizontal sliders drawn by the lab, so Safari shows the same colours as Chromium. */
   .slider input { -webkit-appearance: none; appearance: none; background: transparent; height: 28px; }
   .slider input::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: rgba(216, 246, 255, 0.18); }
   .slider input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: 50%; border: 0; background: var(--room); box-shadow: 0 0 10px var(--room); }

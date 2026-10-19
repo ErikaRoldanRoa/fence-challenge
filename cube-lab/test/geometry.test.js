@@ -51,7 +51,11 @@ for (const w of WALLS) {
   w.pieces.forEach((p) => { assert.strictEqual(p.length, n); assert.ok(G.isFaceConnected(p)); });
   const cells = w.pieces.flat();
   assert.strictEqual(new Set(cells.map(G.key)).size, cells.length, w.id + " overlap");
-  if (n === 5) assert.strictEqual(new Set(w.pieces.map((p) => G.canon(p))).size, count, w.id + " pieces distinct");
+  // every n-cube exactly once (mirror twins apart): 29, 166, 1023
+  const names = new Set(w.pieces.map((p) => G.canon(p)));
+  assert.strictEqual(names.size, count, w.id + " pieces distinct");
+  assert.strictEqual(G.polycubes(n).length, count, w.id + " one of each");
+  G.polycubes(n).forEach((p) => assert.ok(names.has(G.canon(p)), w.id + " misses a piece"));
   for (const conn of [26, 6]) {
     const r = G.enclosed(cells, conn);
     assert.strictEqual(r.volume, vol, w.id + " conn " + conn);
