@@ -392,6 +392,8 @@
     if (tiles) pc.setAttribute("tabindex", "0"); else pc.removeAttribute("tabindex");
     const label = n === GIANT ? t("ls.giantAria") : tiles ? t("ls.pieces", { count: fmtNum(pieces.length, 0), n }) : t("ls.fan", { count: fmtNum(pieces.length, 0), n });
     pc.setAttribute("aria-label", label);
+    // The canvas explains itself through its box (the bubbles skip canvases).
+    pc.parentElement.setAttribute("data-lab-tip", n === GIANT ? t("ls.tipGiant") : tiles ? t("ls.tipTiles") : t("ls.tipFan"));
   }
   // One piece, fitted into a box, with its longest arrows.
   function drawShape(cells, pairs, color, x, y, bw, bh, fill, dpr, chosen, tile) {
@@ -499,6 +501,7 @@
     if (n === GIANT) {
       c.innerHTML = DICE + `<span>${fmtNum(giantSamples, 0)}</span><span class="visually-hidden">${t("ls.samples", { s: fmtNum(giantSamples, 0) })}</span>`;
     } else c.textContent = t("ls.count", { count: fmtNum(pieces.length, 0) });
+    if (n === GIANT) c.setAttribute("data-lab-tip", t("ls.tipSamples")); else c.removeAttribute("data-lab-tip");
     $("gap-value").textContent = fmtPct(maxGap());
   }
   // At 500 cells, the paper's sample behind the loop, in the corner of the stage.
@@ -513,7 +516,9 @@
     more.setAttribute("aria-disabled", i >= STEPS.length - 1 ? "true" : "false");
     fewer.classList.toggle("skip", n === GIANT);
     more.classList.toggle("skip", n === 10);
-    const fk = n === GIANT ? "ls.fromGiant" : "ls.fewer", mk = n === 10 ? "ls.toGiant" : "ls.more";
+    // At the ends, the greyed step says where the lab stops instead of what it cannot do.
+    const fk = n === GIANT ? "ls.fromGiant" : i <= 0 ? "ls.fewest" : "ls.fewer";
+    const mk = n === 10 ? "ls.toGiant" : i >= STEPS.length - 1 ? "ls.most" : "ls.more";
     for (const [b, k] of [[fewer, fk], [more, mk]]) {
       b.dataset.i18nTitle = k; b.dataset.i18nAriaLabel = k;
       b.setAttribute("aria-label", t(k)); b.setAttribute("data-lab-tip", t(k));

@@ -11,7 +11,7 @@
   const SEC_LIMIT = { en: "The limit shape", fr: "La forme limite", de: "Die Grenzform" };
   const SEC_LARGER = { en: "Larger fences", fr: "Les grandes barrières", de: "Größere Zäune" };
   const SEC_INTRO = { en: "Introduction", fr: "Introduction", de: "Einleitung" };
-  const R = i("R"), X = i("X"), Y = i("Y"), C = i("C"), P = i("P");
+  const R = i("R"), X = i("X"), Y = i("Y"), C = i("K"), P = i("P");
   const gapF = f("(|" + P + " " + MINUS + " " + C + "| " + MINUS + " " + R + ") / " + R);
   const rF = f(R + " = " + X + " + " + Y);
 
@@ -25,9 +25,9 @@
         de: "Die Teile aus " + i("n") + " Zellen, gezählt bis auf Drehung und Spiegelung.",
       },
       detail: {
-        en: "12, 35, 108, 369 pieces for 5 to 8 cells; 1285 for 9; 4655 for 10. For 500 cells there are about " + f("2.0·10<sup>300</sup>") + ".",
-        fr: "12, 35, 108, 369 pièces pour 5 à 8 cases" + NB + "; 1285 pour 9" + NB + "; 4655 pour 10. Pour 500 cases, il y en a environ " + f("2,0·10<sup>300</sup>") + ".",
-        de: "12, 35, 108, 369 Teile für 5 bis 8 Zellen; 1285 für 9; 4655 für 10. Für 500 Zellen sind es etwa " + f("2,0·10<sup>300</sup>") + ".",
+        en: "5, 12, 35, 108, 369 pieces for 4 to 8 cells; 1,285 for 9; 4,655 for 10. For 500 cells the paper estimates about " + f("2.0·10<sup>300</sup>") + ".",
+        fr: "5, 12, 35, 108, 369 pièces pour 4 à 8 cases" + NB + "; 1" + NB + "285 pour 9" + NB + "; 4" + NB + "655 pour 10. Pour 500 cases, l’article en estime environ " + f("2,0·10<sup>300</sup>") + ".",
+        de: "5, 12, 35, 108, 369 Teile für 4 bis 8 Zellen; 1.285 für 9; 4.655 für 10. Für 500 Zellen schätzt der Artikel etwa " + f("2,0·10<sup>300</sup>") + ".",
       },
     },
     arrow: {
@@ -53,9 +53,9 @@
         de: "Die Schleife verwendet jedes Teil achtmal: die Pfeile nach Richtung sortiert, aneinandergelegt und achtmal kopiert.",
       },
       detail: {
-        en: "Shrunk by 8, so that each piece counts once, the loop gives a rough estimate of the largest fence. It ignores how the pieces really fit together, and for small " + i("n") + " it lands above the true maximum. Below, the estimate next to the paper’s fences.",
-        fr: "Réduite d’un facteur 8, pour que chaque pièce compte une fois, la boucle donne une estimation grossière de la plus grande barrière. Elle ignore comment les pièces s’assemblent vraiment et, pour les petits " + i("n") + ", elle dépasse le vrai maximum. Ci-dessous, l’estimation à côté des barrières de l’article.",
-        de: "Um den Faktor 8 verkleinert, sodass jedes Teil einmal zählt, liefert die Schleife eine grobe Schätzung des größten Zauns. Sie ignoriert, wie die Teile wirklich zusammenpassen, und liegt für kleine " + i("n") + " über dem wahren Maximum. Unten die Schätzung neben den Zäunen des Artikels.",
+        en: "Shrunk by 8, so that each piece counts once, the loop gives a rough estimate of the largest fence. It ignores how the pieces really fit together: for 5 to 7 cells it lands above the true maximum, for 8 to 10 between the best fence found and the upper bound. A fence’s own reference polygon uses each piece once, in one of eight directions, with four corner pieces near 45°; for 9 cells its gap to the circle, in the paper, and the loop’s agree to within 0.04% of the radius. Below, the estimate next to the paper’s fences.",
+        fr: "Réduite d’un facteur 8, pour que chaque pièce compte une fois, la boucle donne une estimation grossière de la plus grande barrière. Elle ignore comment les pièces s’assemblent vraiment" + NB + ": de 5 à 7 cases, elle dépasse le vrai maximum" + NB + "; de 8 à 10, elle tombe entre la meilleure barrière trouvée et la borne supérieure. Le polygone de référence d’une barrière utilise chaque pièce une fois, dans l’une de huit directions, avec quatre pièces de coin près de 45°" + NB + "; pour 9 cases, son écart au cercle, dans l’article, et celui de la boucle coïncident à 0,04" + NB + "% du rayon près. Ci-dessous, l’estimation à côté des barrières de l’article.",
+        de: "Um den Faktor 8 verkleinert, sodass jedes Teil einmal zählt, liefert die Schleife eine grobe Schätzung des größten Zauns. Sie ignoriert, wie die Teile wirklich zusammenpassen: Für 5 bis 7 Zellen liegt sie über dem wahren Maximum, für 8 bis 10 zwischen dem besten gefundenen Zaun und der oberen Schranke. Das Referenzpolygon eines Zauns verwendet jedes Teil einmal, in einer von acht Richtungen, mit vier Eckteilen nahe 45°; für 9 Zellen stimmen seine Abweichung vom Kreis, im Artikel, und die der Schleife bis auf 0,04" + NBSP + "% des Radius überein. Unten die Schätzung neben den Zäunen des Artikels.",
       },
     },
     gap: {
@@ -90,14 +90,14 @@
       label: "sec:limit, eq:an-asymptot", lines: "3172, 3839-3851",
       section: SEC_LIMIT,
       lead: {
-        en: "There are about " + f("2.0·10<sup>300</sup>") + " different 500-ominoes.",
-        fr: "Il existe environ " + f("2,0·10<sup>300</sup>") + " 500-ominos différents.",
-        de: "Es gibt etwa " + f("2,0·10<sup>300</sup>") + " verschiedene 500-Ominos.",
+        en: "The paper estimates about " + f("2.0·10<sup>300</sup>") + " different 500-ominoes, somewhere between about " + f("10<sup>297</sup>") + " and " + f("10<sup>323</sup>") + ".",
+        fr: "L’article estime qu’il existe environ " + f("2,0·10<sup>300</sup>") + " 500-ominos différents, quelque part entre environ " + f("10<sup>297</sup>") + " et " + f("10<sup>323</sup>") + ".",
+        de: "Der Artikel schätzt etwa " + f("2,0·10<sup>300</sup>") + " verschiedene 500-Ominos, irgendwo zwischen etwa " + f("10<sup>297</sup>") + " und " + f("10<sup>323</sup>") + ".",
       },
       detail: {
-        en: "The paper takes the loop of its 13.5 million sampled pieces, eight copies of their sorted arrows, and scales it up as if it were made of all of them, each once. Its area gives a rough estimate of the largest 500-omino fence; the corrections of the pieces are far too small to change it.",
-        fr: "L’article prend la boucle de ses 13,5 millions de pièces tirées, huit copies de leurs flèches triées, et l’agrandit comme si elle était faite de toutes les pièces, chacune une fois. Son aire donne une estimation grossière de la plus grande barrière de 500-ominos" + NB + "; les corrections des pièces sont bien trop petites pour la changer.",
-        de: "Der Artikel nimmt die Schleife seiner 13,5 Millionen gezogenen Teile, acht Kopien ihrer sortierten Pfeile, und vergrößert sie so, als bestünde sie aus allen Teilen, jedes einmal. Ihre Fläche ergibt eine grobe Schätzung für den größten Zaun aus 500-Ominos; die Korrekturen der Teile sind viel zu klein, um daran etwas zu ändern.",
+        en: "The paper takes the loop of its 13.5 million sampled pieces, eight copies of their sorted arrows (108 million arrows), and scales it up as if it were made of all the 500-ominoes, each once. Its area gives a rough estimate of the largest 500-omino fence; the corrections of the pieces are far too small to change it.",
+        fr: "L’article prend la boucle de ses 13,5 millions de pièces tirées, huit copies de leurs flèches triées (108 millions de flèches), et l’agrandit comme si elle était faite de tous les 500-ominos, chacun une fois. Son aire donne une estimation grossière de la plus grande barrière de 500-ominos" + NB + "; les corrections des pièces sont bien trop petites pour la changer.",
+        de: "Der Artikel nimmt die Schleife seiner 13,5 Millionen gezogenen Teile, acht Kopien ihrer sortierten Pfeile (108 Millionen Pfeile), und vergrößert sie so, als bestünde sie aus allen 500-Ominos, jedes einmal. Ihre Fläche ergibt eine grobe Schätzung für den größten Zaun aus 500-Ominos; die Korrekturen der Teile sind viel zu klein, um daran etwas zu ändern.",
       },
     },
   };
