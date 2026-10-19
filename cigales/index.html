@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Les Cigales · Enchivas</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../fonts/manrope.css?v=20261015a">
+<style>
+:root{--bg:#0d1117;--text:#e9f7ff;--cyan:#7ff2ff;--mag:#ff4fd8;--green:#6dff7a;--gold:#ffd24a;--muted:#8aa0b2}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg)}
+body{min-height:100vh;color:var(--text);font-family:Manrope,"Avenir Next","Segoe UI",sans-serif;
+ background:radial-gradient(ellipse at 50% -10%,#1a2633 0,var(--bg) 60%);padding:28px 16px 40px}
+main{max-width:980px;margin:0 auto}
+.kicker{text-align:center;color:var(--gold);font-weight:800;letter-spacing:.22em;font-size:12px;text-transform:uppercase}
+h1{text-align:center;margin:10px 0 26px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);
+ font-size:clamp(30px,7vw,64px);text-shadow:0 0 18px rgba(127,242,255,.55)}
+section{border-radius:22px;padding:22px 18px;margin:18px 0;border:2px solid var(--c);
+ background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.01));box-shadow:0 0 22px -8px var(--c),inset 0 0 30px -20px var(--c)}
+h2{margin:0 0 6px;font-size:clamp(20px,3.6vw,30px);color:var(--c);letter-spacing:.04em}
+.lead{margin:0 0 16px;font-size:clamp(16px,2.4vw,21px);line-height:1.4}
+.mine{display:flex;align-items:center;gap:12px;margin:0 0 14px;min-height:56px;font-weight:700;font-size:18px}
+.mine svg{width:52px;height:52px}
+.teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.team{appearance:none;border:2px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(255,255,255,.03);color:var(--text);
+ padding:12px 8px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;
+ transition:transform .15s,border-color .15s,box-shadow .15s}
+.team svg{width:72px;height:72px}
+.team:hover{transform:translateY(-2px)}
+.team[aria-pressed="true"]{border-color:var(--gold);box-shadow:0 0 18px -4px var(--gold);background:rgba(255,210,74,.08)}
+.team small{color:var(--gold);font-size:11px;letter-spacing:2px;min-height:14px}
+.soon{color:var(--muted);font-size:15px;margin:14px 0 0}
+.perf p{margin:0 0 10px;font-size:clamp(16px,2.4vw,21px);line-height:1.45}
+.when{display:inline-block;margin-top:6px;padding:6px 14px;border-radius:999px;border:2px solid var(--mag);color:var(--mag);font-weight:800;font-size:15px}
+.credit{text-align:center;color:var(--muted);margin-top:26px;font-size:14px;letter-spacing:.04em;line-height:1.6}
+.credit b{color:var(--text)}
+</style>
+</head>
+<body>
+<main>
+ <div class="kicker">Les Cigales × La Performative · CIRM</div>
+ <h1>Enchivas</h1>
+
+ <section style="--c:var(--green)">
+  <h2>Échauffement : un défi en équipes</h2>
+  <p class="lead">Choisissez votre oiseau. Vous pouvez changer d'équipe quand vous voulez. Le défi se dévoile au top départ.</p>
+  <div class="mine" id="mine"></div>
+  <div class="teams" id="teams"></div>
+  <p class="soon">Chaque téléphone compte une fois et se souvient de son équipe. Aucun nom, seulement l'oiseau.</p>
+ </section>
+
+ <section class="perf" style="--c:var(--mag)">
+  <h2>Puis : la performance</h2>
+  <p><b>Enchivas</b> est une conférence-performance : des mathématiques, du football et de la danse, sur scène.</p>
+  <span class="when">Jeudi 22 octobre · l'atelier, puis la représentation vers 17 h</span>
+ </section>
+
+ <div class="credit">Avec <b>Dr. Erika Roldán Roa</b> et <b>Begoña Cuquejo</b><br>La Performative, Genève</div>
+</main>
+<script src="teams.js?v=20261019a"></script>
+<script>
+const C = window.CIGALES, KEY = 'cigales-team', DEV = 'cigales-device';
+let mine = null, device = null;
+try { mine = localStorage.getItem(KEY); device = localStorage.getItem(DEV);
+  if (!device) { device = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)); localStorage.setItem(DEV, device); } } catch (e) {}
+const box = document.getElementById('teams'), me = document.getElementById('mine');
+let counts = {};
+function render() {
+  box.innerHTML = C.teams.map(([id, name, b, w, k]) => `<button class="team" data-id="${id}" aria-pressed="${id === mine}">${C.bird(b, w, k)}<span>${name}</span><small>${'●'.repeat(Math.min(counts[id] || 0, 12)) || '·'}</small></button>`).join('');
+  const t = C.teams.find(x => x[0] === mine);
+  me.innerHTML = t ? `${C.bird(t[2], t[3], t[4])}<span>Ton équipe : ${t[1]}</span>` : '<span>Choisis ton oiseau ↓</span>';
+}
+box.addEventListener('click', async e => {
+  const b = e.target.closest('.team'); if (!b) return;
+  mine = b.dataset.id; try { localStorage.setItem(KEY, mine); } catch (err) {}
+  render();
+  try { await C.join(device, mine); } catch (err) {}
+  refresh();
+});
+async function refresh() { try { counts = await C.counts(); render(); } catch (e) {} }
+render(); refresh(); setInterval(refresh, 5000);
+if (mine && device) C.join(device, mine).catch(() => {});
+</script>
+</body>
+</html>

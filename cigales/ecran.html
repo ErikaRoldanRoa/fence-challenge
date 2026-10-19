@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Enchivas · les équipes</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../fonts/manrope.css?v=20261015a">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--bg:#0d1117;--text:#e9f7ff;--cyan:#7ff2ff;--gold:#ffd24a;--muted:#8aa0b2}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);overflow:hidden}
+body{color:var(--text);font-family:Manrope,"Avenir Next",sans-serif;background:radial-gradient(ellipse at 50% -10%,#1a2633 0,var(--bg) 60%);
+ display:grid;grid-template-rows:auto 1fr auto;padding:2.5vh 3vw;gap:1.5vh}
+header{display:flex;align-items:center;justify-content:space-between}
+.k{color:var(--gold);font-weight:800;letter-spacing:.22em;font-size:1.3vw;text-transform:uppercase}
+h1{margin:0;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);font-size:4.4vw;text-shadow:0 0 22px rgba(127,242,255,.55)}
+.total{font-size:1.8vw;font-weight:800;color:var(--gold)}
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:1.2vw;align-content:center;min-height:0}
+.t{border-radius:2vw;border:3px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);display:flex;flex-direction:column;align-items:center;
+ padding:1.4vh 1vw;gap:.6vh;transition:border-color .4s,box-shadow .4s}
+.t.on{border-color:var(--c);box-shadow:0 0 34px -8px var(--c)}
+.t svg{width:6.5vw;height:6.5vw}
+.t.pop svg{animation:pop .9s ease}
+@keyframes pop{0%{transform:scale(1)}30%{transform:scale(1.25) rotate(-6deg)}60%{transform:scale(.95) rotate(4deg)}100%{transform:scale(1)}}
+.t.on svg .wing{transform-origin:37px 45px;animation:flap 1.2s ease-in-out infinite}
+@keyframes flap{50%{transform:rotate(-14deg)}}
+.name{font-weight:800;font-size:1.35vw;text-align:center}
+.dots{color:var(--c);font-size:1.6vw;letter-spacing:.25vw;min-height:2.2vw;text-align:center;line-height:1}
+.n{font-weight:800;font-size:2.4vw;color:var(--text)}
+footer{display:flex;align-items:center;justify-content:space-between;gap:2vw}
+.join{display:flex;align-items:center;gap:1.6vw;font-size:1.8vw;font-weight:700}
+.qr{background:#fff;padding:.8vw;border-radius:1vw;box-shadow:0 0 30px -6px var(--gold)}
+.credit{color:var(--muted);font-size:1.2vw;text-align:right}
+.credit b{color:var(--text)}
+</style>
+</head>
+<body>
+<header><div><div class="k">Les Cigales × La Performative · CIRM</div><h1>Enchivas</h1></div><div class="total" id="total"></div></header>
+<div class="board" id="board"></div>
+<footer><div class="join"><div class="qr" id="qr"></div><span>Scanne, choisis ton oiseau,<br>change quand tu veux</span></div>
+<div class="credit">Avec <b>Dr. Erika Roldán Roa</b> et <b>Begoña Cuquejo</b><br>La Performative, Genève</div></footer>
+<script src="teams.js?v=20261019a"></script>
+<script>
+const C = window.CIGALES, board = document.getElementById('board');
+board.innerHTML = C.teams.map(([id, name, b, w, k]) => `<div class="t" id="t-${id}" style="--c:${b}">${C.bird(b, w, k)}<div class="name">${name}</div><div class="dots"></div><div class="n">0</div></div>`).join('');
+const join = new URL('./', location.href).href;
+new QRCode(document.getElementById('qr'), { text: join, width: Math.round(innerWidth * 0.09), height: Math.round(innerWidth * 0.09), colorDark: '#0d1117' });
+let last = {};
+async function refresh() {
+  let counts; try { counts = await C.counts(); } catch (e) { return; }
+  let total = 0;
+  for (const [id] of C.teams) {
+    const n = counts[id] || 0; total += n;
+    const el = document.getElementById('t-' + id);
+    el.classList.toggle('on', n > 0);
+    el.querySelector('.n').textContent = n;
+    el.querySelector('.dots').textContent = '●'.repeat(Math.min(n, 12));
+    if ((last[id] || 0) < n) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+  }
+  last = counts;
+  document.getElementById('total').textContent = total ? total + (total > 1 ? ' téléphones' : ' téléphone') : '';
+}
+refresh(); setInterval(refresh, 3000);
+</script>
+</body>
+</html>
