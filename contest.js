@@ -36,6 +36,12 @@
   frame.style.cssText = "position:absolute;width:1px;height:1px;border:0;opacity:0;pointer-events:none;left:-9999px";
   document.body.appendChild(frame);
 
+  // Straight to the first board when coming from the contest page.
+  if (location.hash === "#jouer") {
+    const first = document.querySelector('[data-tiling="sq"]');
+    if (first) setTimeout(() => first.scrollIntoView({ block: "start", behavior: "smooth" }), 300);
+  }
+
   window.FenceContest = {
     note(board, area) {
       if (!(area > (best[board] || 0))) return;

@@ -77,6 +77,7 @@ h2{margin:0 0 6px;font-size:clamp(20px,3.6vw,30px);color:var(--c);letter-spacing
 .cirm-hero h1{margin:6px 0 0;font-weight:800;line-height:.95;font-size:clamp(40px,12vw,64px);background:linear-gradient(95deg,#ff4fd8,#ffd24a 50%,#7ff2ff);-webkit-background-clip:text;background-clip:text;color:transparent}
 .cirm-hero .d{display:inline-block;margin-top:14px;padding:6px 14px;border-radius:999px;border:2px solid #ffd24a;color:#ffd24a;font-weight:800;font-size:15px}
 .cirm-hero svg{display:block;width:62%;margin:16px auto 0}
+.cirm-hero .who{margin:16px 0 0;background:rgba(13,17,23,.6)}
 .cirm-chair{margin-top:10px;font-size:15px;color:var(--muted)}
 .cirm-chair b{display:block;color:var(--text);font-size:22px;margin-top:4px}
 .cirm-chair span{color:#ffd24a;font-weight:800}
@@ -202,6 +203,7 @@ if (C.group === 'cirm') {   // the CIRM special: the poster's look, no teams
   document.title = 'Fence Challenge · CIRM';
   document.querySelector('.hero').outerHTML = '<div class="cirm-hero"><div class="k">CIRM · Luminy · Chaire Jean-Morlet</div><div class="fc">Fence Challenge</div><h1>Le concours<br>des clôtures</h1><div class="d">Du lundi 19 au jeudi 22 octobre</div>' + FENCE_ART + '</div>';
   document.querySelector('section h2').textContent = 'Édition spéciale CIRM · CIRM special';
+  const hero = document.querySelector('.cirm-hero'); hero.insertBefore(document.getElementById('who'), hero.querySelector('svg'));   // the pseudonym and Play first, at the top
   document.querySelector('.credit').insertAdjacentHTML('beforeend', '<div class="cirm-chair">Avec le soutien de la <span>Chaire Jean-Morlet</span><b>Prof. Dr. Eveliina Peltola</b>avec Prof. Dr. Rémi Rhodes</div>');
 }
 if (C.group === 'cirm') {
@@ -218,7 +220,7 @@ who.addEventListener('submit', e => {
     localStorage.setItem(NAME, name);
     localStorage.setItem('fc-contest', JSON.stringify({ api: C.api, workshop: C.workshop, token: C.token, device, name, team: C.group === 'cirm' ? '' : (mine || ''), group: C.group, back: location.pathname + C.query }));
   } catch (err) {}
-  location.href = '../index.html';
+  location.href = '../index.html#jouer';
 });
 if (mine && device) C.join(device, mine).catch(() => {});
 </script>
