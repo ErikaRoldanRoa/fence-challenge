@@ -6,6 +6,7 @@
 <title>Les Cigales · Enchivas</title>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../fonts/manrope.css?v=20261015a">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{--bg:#0d1117;--text:#e9f7ff;--cyan:#7ff2ff;--mag:#ff4fd8;--green:#6dff7a;--gold:#ffd24a;--muted:#8aa0b2}
 *{box-sizing:border-box}
@@ -130,7 +131,15 @@ function download(t) {
     const cv = document.createElement('canvas'); cv.width = cv.height = 1080; const g = cv.getContext('2d');
     g.fillStyle = '#0d1117'; g.fillRect(0, 0, 1080, 1080); g.drawImage(img, 0, 40, 1080, 1080);
     g.fillStyle = '#e9f7ff'; g.font = '800 64px Manrope, sans-serif'; g.textAlign = 'center'; g.fillText(t[1], 540, 120);
-    g.fillStyle = '#ffd24a'; g.font = '700 34px Manrope, sans-serif'; g.fillText('Enchivas · Les Cigales · CIRM', 540, 1020);
+    g.fillStyle = '#ffd24a'; g.font = '700 34px Manrope, sans-serif'; g.fillText('Enchivas · Les Cigales · CIRM', 400, 990);
+    // the way back to the contest: a QR and the short link (19.10: « their pentomino triggers the website for the contest »)
+    try {
+      const holder = document.createElement('div');
+      new QRCode(holder, { text: 'https://erikaroldanroa.github.io/c', width: 220, height: 220, colorDark: '#0d1117', colorLight: '#ffffff' });
+      const q = holder.querySelector('canvas');
+      if (q) { g.fillStyle = '#fff'; g.fillRect(820, 800, 240, 240); g.drawImage(q, 830, 810, 220, 220); }
+      g.fillStyle = '#7ff2ff'; g.font = '700 30px Manrope, sans-serif'; g.textAlign = 'left'; g.fillText('erikaroldanroa.github.io/c', 40, 1060);
+    } catch (e) {}
     const a = document.createElement('a'); a.href = cv.toDataURL('image/png'); a.download = 'pentomino-' + t[0] + '.png'; document.body.appendChild(a); a.click(); a.remove();
   };
   img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
