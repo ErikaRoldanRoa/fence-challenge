@@ -22,6 +22,7 @@
     "text-decoration:none;box-shadow:0 0 18px -6px #ffd24a;white-space:nowrap;max-width:calc(100vw - 180px);overflow:hidden;text-overflow:ellipsis}" +
     ".pCard .icon.kit,.pCard .pMenuSep{display:none!important}" +
     ".pCard .pStatus{position:sticky;bottom:8px;z-index:6;padding:6px;margin:0 -6px;border-radius:999px;background:rgba(13,17,23,.88);backdrop-filter:blur(4px)}" +
+    (LAB ? ".fc-contest{left:50%;top:auto;bottom:6px;transform:translateX(-50%);max-width:calc(100vw - 24px)}.fc-contest.pop{animation:none}" : "") +
     ".fc-contest b{color:#ffd24a}.fc-contest.pop{animation:fcpop .7s}@keyframes fcpop{30%{transform:scale(1.15)}}";
   document.head.appendChild(css);
   const badge = document.createElement("a");

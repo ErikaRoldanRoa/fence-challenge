@@ -115,7 +115,7 @@ refresh(); setInterval(refresh, 3000);
 // The rankings (19.10): each phone's best fence per board, pseudonyms only; ties go to who got there first.
 // Top row: the hub's three missions; bottom row: the big printed boards (the labs, by hand or by camera).
 const BOARDS = [['sq', 'Mission I · carrés', '#ff4fd8', '▢'], ['hex', 'Mission II · hexagones', '#6dff7a', '⬡'], ['tri', 'Mission III · triangles', '#7ff2ff', '△'],
-  ['sq20', '📷 20 × 20 · pentominos', '#ff4fd8', '▣'], ['hex6', '📷 grand hexagone · tétrahexes', '#6dff7a', '⬢'], ['tri10', '📷 grand triangle · hexiamants', '#7ff2ff', '▲']];
+  ['sq20', '📷 carrés 20 × 20 · pentominos', '#ff4fd8', '▣'], ['hex6', '📷 hexagones · tétrahexes', '#6dff7a', '⬢'], ['tri10', '📷 triangles · hexiamants', '#7ff2ff', '▲']];
 const rank = document.getElementById('rank');
 rank.innerHTML = BOARDS.map(([b, t, c], i) => `<div class="col${i > 2 ? ' big' : ''}" style="--c:${c}"><h3>${t}</h3><ol id="r-${b}"></ol></div>`).join('');
 const esc = x => String(x).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
