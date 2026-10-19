@@ -97,7 +97,8 @@
     $("area-value").textContent = analysis.area;
     if (analysis.area !== before) { const pill = $("area-pill"); pill.classList.remove("bump"); void pill.offsetWidth; pill.classList.add("bump"); }
     if (!anim && loaded && sig() !== loadedSnap) loaded = null;
-    if (!ref && mode === "arrows") setMode("build");
+    // In the arrows view a changed board (an undo) starts again from its own arrows.
+    if (mode === "arrows") setMode(ref ? "arrows" : "build");
     syncControls();
     syncTray();
     syncChips();
@@ -124,7 +125,8 @@
   }
 
   // ---------- tray ----------
-  const COLS = () => (PHONE.matches ? 9 : 5);
+  // The tray's columns as laid out (5, 9 or 18, with the width).
+  const COLS = () => getComputedStyle(trayEl).gridTemplateColumns.split(" ").filter((s) => s && s !== "none").length || (PHONE.matches ? 9 : 5);
   function miniSvg(cells, hue) {
     const w = Math.max(...cells.map((c) => c[0])) + 1, h = Math.max(...cells.map((c) => c[1])) + 1;
     const n = Math.max(w, h);
@@ -339,6 +341,7 @@
     eq.classList.toggle("arranged", phase !== "fence");
     const area = phase === "fence" ? ref.aRef : M.shoelace(polyFor(arrowState.perm));
     $("val-ref").textContent = fmt(area);
+    $("tok-ref").title = t(phase === "fence" ? "hx.polygon" : phase === "sorted" ? "hx.polySorted" : "hx.polyShuffled");
     $("val-delta").textContent = ref.sumDelta < 0 ? "(" + fmt(ref.sumDelta) + ")" : fmt(ref.sumDelta);
     $("val-area").textContent = fmt(ref.area);
     const b = $("bound-tag");
@@ -601,7 +604,6 @@
     gesture = { start: p, last: p, cell, hit, type: e.pointerType, moved: false };
     // Pressing a placed piece chooses it at once, so a drag moves it.
     if (mode === "build" && hit !== undefined) {
-      stopAssembly();
       if (sel !== hit) { sel = hit; ghost = null; syncControls(); syncTray(); draw(); }
       gesture.dragFrom = cell; gesture.orig = placed.get(hit).cells.map((c) => c.slice());
     }
@@ -634,6 +636,7 @@
     if (!gesture.moved && Math.hypot(p[0] - gesture.start[0], p[1] - gesture.start[1]) < (SLOP[gesture.type] || 8)) return;
     gesture.moved = true;
     if (gesture.dragFrom) {
+      stopAssembly(); // a drag is an edit: the visitor takes over
       const c = screenToCell(p[0], p[1]);
       const dx = c[0] - gesture.dragFrom[0], dy = c[1] - gesture.dragFrom[1];
       const next = gesture.orig.map(([x, y]) => [x + dx, y + dy]);
@@ -670,8 +673,8 @@
   canvas.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse" && ghost && !ghost.blocked) { ghost = null; draw(); } });
   canvas.addEventListener("wheel", (e) => { e.preventDefault(); const p = local(e); zoomAt(Math.exp(-e.deltaY * 0.0015), p[0], p[1]); }, { passive: false });
 
-  // The arrow under a tap: the nearest drawn arrow within about half a cell;
-  // in the fence order, also the piece under the tap.
+  // The arrow under a tap: the nearest drawn arrow within 0.6 of a cell (12 px
+  // at least); in the fence order, also a piece around the region under the tap.
   function arrowAt(p) {
     const starts = currentStarts();
     let best = null, bd = Infinity;
@@ -685,7 +688,7 @@
     if (bd <= Math.max(12, view.s * 0.6)) return best;
     if (arrowState.phase !== "fence") return null;
     const c = screenToCell(p[0], p[1]), h = occ.get(key(c[0], c[1]));
-    return h === undefined ? null : h;
+    return h !== undefined && ref.order.some((o) => o.id === h) ? h : null;
   }
   function tap(g) {
     if (mode === "arrows") {
@@ -707,6 +710,7 @@
     if (e.target.closest && e.target.closest(".math-pop, .langSel")) return;
     const inTray = !!(e.target.closest && e.target.closest(".tray"));
     const k = e.key;
+    if (e.ctrlKey || e.metaKey || e.altKey) return; // the browser's own shortcuts
     if (k === "r" || k === "R") transform(rot);
     else if (k === "f" || k === "F") transform(flp);
     else if (inTray) return; // the tray keeps its own arrow keys, Enter and Space

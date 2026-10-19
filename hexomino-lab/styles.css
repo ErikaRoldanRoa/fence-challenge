@@ -137,6 +137,8 @@ body {
 .chipHost { position: relative; display: inline-flex; align-items: center; gap: 8px; }
 /* A chip that is not needed keeps its place: the controls never move under the pointer. */
 .chipHost > .math-chip[hidden] { display: inline-grid; visibility: hidden; pointer-events: none; }
+/* In the equation it takes no room: it shows only in the sorted order, where the rest is hidden. */
+.equation .chipHost > .math-chip[hidden] { display: none; }
 
 /* ---------- the tray of 35 ---------- */
 .tray {
