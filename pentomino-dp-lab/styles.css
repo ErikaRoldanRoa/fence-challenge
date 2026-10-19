@@ -60,6 +60,8 @@
 /* Chips beside a control keep their 40 px hit area off the control. */
 .math-chip::after { inset: -9px; }
 .dp-sidechip { align-self: center; margin: 0 6px; }
+/* A reveal's chip keeps its slot while hidden, so the button never moves under the finger. */
+.boardbar .dp-sidechip[hidden] { display: inline-flex; visibility: hidden; }
 .dp-layerchip { position: absolute; top: 12px; right: 12px; z-index: 3; }
 
 /* Play turns into pause while it runs. */
@@ -101,7 +103,12 @@
     margin-left: calc((var(--board-size) - 100vw + 20px) / 2);
     justify-content: flex-start;
     padding-right: 212px;
+    position: relative;
   }
+  .dp-prev { position: absolute; z-index: 3; left: 16px; top: calc(100% + 18px); margin-left: 0 !important; }
+  /* The links row spans the width: only its links take taps, the readout under the pill stays reachable. */
+  .lab-nav { pointer-events: none; }
+  .lab-nav > a { pointer-events: auto; }
   .lab-nav {
     width: calc(100vw - 20px);
     margin-left: calc((var(--board-size) - 100vw + 20px) / 2);

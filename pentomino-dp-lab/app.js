@@ -17,7 +17,7 @@
     F: "#ff6b6b", I: "#f59f00", L: "#ffd43b", N: "#38d9a9", P: "#94d82d", T: "#22b8cf",
     U: "#4dabf7", V: "#748ffc", W: "#9775fa", X: "#da77f2", Y: "#f06595", Z: "#ffa8a8"
   };
-  var SEED = "FIV", MIN_PIECES = 3;
+  var SEED = "FIV", MIN_PIECES = 2;
   var STEP_MS = 620, EDGE_MS = 24, TWEEN_MS = 350, PAD = 24;
 
   var canon = function (cells) { return L._internals.canonicalizeShape(cells).key; };
@@ -45,7 +45,7 @@
 
   var engine = null, boardSize = 0, ox = 0, oy = 0;
   var order = [], own = null, loaded = null, last = null;
-  var run = null, timer = 0, playing = false;
+  var run = null, timer = 0, phaseTimer = 0, playing = false;
   var view = null, tween = null, raf = 0, veil = 1;
 
   /* ---------- order and tray ---------- */
@@ -126,9 +126,11 @@
   /* ---------- the run ---------- */
 
   function stopTimers() { window.clearTimeout(timer); timer = 0; playing = false; }
+  // A new order: also the closing animation (zoom, trace) stops.
+  function stopAll() { stopTimers(); window.clearTimeout(phaseTimer); phaseTimer = 0; window.cancelAnimationFrame(raf); }
 
   function resetRun() {
-    stopTimers();
+    stopAll();
     run = null;
     pill.textContent = "0";
     layout.dataset.phase = "idle";
@@ -192,8 +194,8 @@
     r.tr.forEach(function (pc, j) {
       for (var k = 0; k + 1 < pc.path.length; k++) r.fan.push({ a: pc.path[k], b: pc.path[k + 1], piece: j });
     });
-    window.clearTimeout(timer);
-    timer = window.setTimeout(function () {
+    window.clearTimeout(phaseTimer);
+    phaseTimer = window.setTimeout(function () {
       fitEngineToFence(r);
       goView(engineView(), true, function () {
         if (run !== r) return;
@@ -214,7 +216,7 @@
       pill.textContent = fmt(r.sum);
       chipArea.setAttribute("data-math-vars", JSON.stringify({ sum: fmt(r.sum) }));
       draw();
-      timer = window.setTimeout(traceTick, EDGE_MS);
+      phaseTimer = window.setTimeout(traceTick, EDGE_MS);
       return;
     }
     if (r.placed < r.tr.length) { r.placed = r.tr.length; placeUpTo(r.placed); }
@@ -225,7 +227,7 @@
     pill.textContent = fmt(r.flood);
     say(r.valid ? "dp.s.closed" : "dp.s.bound", { n: fmt(r.res.best) });
     compareWithLast(r);
-    if (order.length === MIN_PIECES && letters(order) === SEED) invite();
+    if (letters(order) === SEED) invite();
     playing = false;
     syncTray(); syncControls(); draw();
   }
@@ -516,7 +518,7 @@
       var i = Math.min(r.step, n), lay = r.res.layers[i], st = lay.size, co = corners(lay);
       chipLayer.setAttribute("data-math-vars", JSON.stringify({
         i: i, n: n, tried: r.res.tried[i].toLocaleString(locale()),
-        states: st.toLocaleString(locale()), statesWord: plural(st, "dp.state1", "dp.stateN"),
+        states: st.toLocaleString(locale()), statesWord: plural(st, "dp.kept1", "dp.keptN"),
         corners: co.toLocaleString(locale()), cornersWord: plural(co, "dp.corner1", "dp.cornerN"),
         best: r.res.best != null ? fmt(r.res.best) : "", flood: r.flood != null ? fmt(r.flood) : ""
       }));
@@ -550,6 +552,10 @@
   }
 
   function bind() {
+    // The board is a display: no tap or drag reaches the piece engine under it.
+    ["pointerdown", "pointermove", "pointerup", "pointercancel"].forEach(function (type) {
+      stage.addEventListener(type, function (e) { if (e.target === board) e.stopPropagation(); }, true);
+    });
     $("dp-step").addEventListener("click", function () { stopTimers(); step(); });
     $("dp-play").addEventListener("click", play);
     $("dp-shuffle").addEventListener("click", shuffle);
@@ -570,6 +576,7 @@
     document.addEventListener("keydown", function (e) {
       var tag = e.target && e.target.tagName;
       if (tag === "BUTTON" || tag === "A" || tag === "INPUT" || e.target.getAttribute && e.target.getAttribute("role") === "link") return;
+      if (window.mathChip && window.mathChip.isOpen && window.mathChip.isOpen()) return;
       if (e.key === " ") { e.preventDefault(); stopTimers(); step(); }
       else if (e.key === "Enter") { e.preventDefault(); play(); }
     });
