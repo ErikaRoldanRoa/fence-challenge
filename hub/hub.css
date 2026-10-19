@@ -219,6 +219,8 @@ cite { font-style: italic; }
   transform: rotateY(180deg);
   background: linear-gradient(180deg, color-mix(in srgb, var(--c) 22%, #12141c), #0c0d13 90%);
 }
+/* What a turned tile says keeps its size: on a tight tile it reaches into the padding. */
+.face.back > * { flex-shrink: 0; }
 .piece.flipped .slab { transform: translateZ(1px) rotateY(180deg); }
 .btitle { font-size: 14px; font-weight: 800; line-height: 1.15; }
 .btitle .kicker { font-family: inherit; font-size: 14px; letter-spacing: 0; text-transform: none; color: var(--text); }
@@ -479,13 +481,12 @@ cite { font-style: italic; }
   .topright { right: 12px; }
   .hero { margin: 0 0 2px; }
   .stage { perspective: 900px; }
-  .board {
-    grid-template-columns: 50px repeat(3, minmax(0, 1fr)) 0;
-    grid-template-rows: repeat(4, 138px);
-  }
   /* On a phone the turned tiles of the second paper (name, line, star and
      Open) need more than 138 px. */
-  .board { grid-template-rows: repeat(2, 138px) 164px 138px; }
+  .board {
+    grid-template-columns: 50px repeat(3, minmax(0, 1fr)) 0;
+    grid-template-rows: repeat(2, 138px) 172px 138px;
+  }
   .rowtag { padding-right: 0; justify-self: start; }
   .rowtag .rt-txt { display: none; }
   .rowdoor { padding: 0; min-width: 50px; justify-content: center; }

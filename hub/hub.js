@@ -37,7 +37,7 @@
 
   // On a touch screen a first tap turns the tile over (its name, one line,
   // Open); a second tap on it opens the lab. A tap elsewhere turns it back.
-  // Mouse and keyboard open the lab at once.
+  // Mouse and keyboard (a click without a pointer) open the lab at once.
   var touch = false;
   document.addEventListener("pointerdown", function (e) { touch = e.pointerType === "touch"; }, true);
   function unflip(except) {
@@ -45,7 +45,7 @@
   }
   document.querySelectorAll(".piece").forEach(function (p) {
     p.addEventListener("click", function (e) {
-      if (!touch || p.classList.contains("flipped")) return;
+      if (!touch || e.detail === 0 || p.classList.contains("flipped")) return;
       e.preventDefault();
       unflip(p);
       p.classList.add("flipped");

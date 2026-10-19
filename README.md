@@ -119,7 +119,7 @@ Fences can also be built by hand on the table, with a phone watching.
 
 ## Authors
 
-The hub names the authors of each paper, in the order of that paper; in
+The hub's manual names the authors of each paper, in the order of that paper; in
 the labs of the first paper, the credit line links to that paper and names
 its authors in its tooltip. Interactive labs developed by Dr. Erika Roldan ·
 [The Learning Machine](https://erikaroldan.net).
