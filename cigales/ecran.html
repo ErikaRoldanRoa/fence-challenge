@@ -22,7 +22,8 @@ h1{margin:0;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:
 .t{min-height:0;overflow:hidden;justify-content:center;border-radius:2vw;border:3px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);display:flex;flex-direction:column;align-items:center;
  padding:1vh 1vw;gap:.4vh;transition:border-color .4s,box-shadow .4s}
 .t.on{border-color:var(--c);box-shadow:0 0 34px -8px var(--c)}
-.t svg{width:min(6.5vw,11vh);height:min(6.5vw,11vh);flex:none}
+.t.full{box-shadow:0 0 44px -4px var(--c)}
+.t svg{width:min(10vw,17vh);height:min(10vw,17vh);flex:none}
 .t.pop svg{animation:pop .9s ease}
 @keyframes pop{0%{transform:scale(1)}30%{transform:scale(1.25) rotate(-6deg)}60%{transform:scale(.95) rotate(4deg)}100%{transform:scale(1)}}
 .t.on svg .wing{transform-origin:37px 45px;animation:flap 1.2s ease-in-out infinite}
@@ -63,10 +64,10 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:2vw}
 <div class="board" id="board"></div>
 <footer><div class="join"><div class="qr" id="qr"></div><span>Scanne, choisis ton pentomino,<br>change quand tu veux</span></div>
 <div class="credit"><div class="me">Dr. Erika Roldán Roa</div><div>avec <b>Begoña Cuquejo</b> · La Performative, Genève</div><div class="web">erikaroldan.net</div></div></footer>
-<script src="teams.js?v=20261019e"></script>
+<script src="teams.js?v=20261019f"></script>
 <script>
 const C = window.CIGALES, board = document.getElementById('board');
-board.innerHTML = C.teams.map(([id, name, b, w, k]) => `<div class="t" id="t-${id}" style="--c:${b}">${C.bird(b, w)}<div class="name">${name}</div><div class="dots"></div><div class="n">0</div></div>`).join('');
+board.innerHTML = C.teams.map(([id, name, b, w, k]) => `<div class="t" id="t-${id}" style="--c:${b}"><div class="pic">${C.bird(b, w, 0)}</div><div class="name">${name}</div><div class="n">0 / ${C.max}</div></div>`).join('');
 const join = new URL('./', location.href).href;
 new QRCode(document.getElementById('qr'), { text: join, width: Math.round(Math.min(innerWidth * 0.09, innerHeight * 0.17)), height: Math.round(Math.min(innerWidth * 0.09, innerHeight * 0.17)), colorDark: '#0d1117' });
 let last = {};
@@ -77,8 +78,9 @@ async function refresh() {
     const n = counts[id] || 0; total += n;
     const el = document.getElementById('t-' + id);
     el.classList.toggle('on', n > 0);
-    el.querySelector('.n').textContent = n;
-    el.querySelector('.dots').textContent = '●'.repeat(Math.min(n, 12));
+    el.querySelector('.n').textContent = n + ' / ' + C.max;
+    const t = C.teams.find(x => x[0] === id); el.querySelector('.pic').innerHTML = C.bird(t[2], t[3], Math.min(n, C.max));
+    el.classList.toggle('full', n >= C.max);
     if ((last[id] || 0) < n) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
   }
   last = counts;

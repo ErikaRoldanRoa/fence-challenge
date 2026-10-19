@@ -30,6 +30,8 @@ h2{margin:0 0 6px;font-size:clamp(20px,3.6vw,30px);color:var(--c);letter-spacing
 .mine{display:flex;align-items:center;gap:12px;margin:0 0 14px;min-height:56px;font-weight:700;font-size:18px}
 .mine{flex-direction:column;text-align:center}
 .mine .big svg{width:160px;height:160px}
+.team.full{opacity:.45}
+.note{display:block;color:var(--gold);font-weight:700;font-size:15px;margin-top:6px}
 .dl{display:block;margin:12px auto 0;padding:10px 18px;border-radius:999px;border:2px solid var(--gold);background:transparent;color:var(--gold);font:inherit;font-weight:800;font-size:15px;cursor:pointer}
 .mine em{display:block;font-style:normal;font-weight:500;font-size:15px;color:var(--muted);margin-top:4px;line-height:1.35}
 .teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
@@ -72,7 +74,7 @@ h2{margin:0 0 6px;font-size:clamp(20px,3.6vw,30px);color:var(--c);letter-spacing
  <div class="credit"><div class="me">Dr. Erika Roldán Roa</div>avec <b>Begoña Cuquejo</b> · La Performative, Genève
   <a class="web" href="https://erikaroldan.net">Découvrez mon travail : erikaroldan.net →</a></div>
 </main>
-<script src="teams.js?v=20261019e"></script>
+<script src="teams.js?v=20261019f"></script>
 <script>
 const C = window.CIGALES, KEY = 'cigales-team', DEV = 'cigales-device';
 let mine = null, device = null;
@@ -81,16 +83,21 @@ try { mine = localStorage.getItem(KEY); device = localStorage.getItem(DEV);
 const box = document.getElementById('teams'), me = document.getElementById('mine');
 let counts = {};
 function render() {
-  box.innerHTML = C.teams.map(([id, name, b, w, k]) => `<button class="team" data-id="${id}" aria-pressed="${id === mine}">${C.bird(b, w)}<span>${name}</span><small>${'●'.repeat(Math.min(counts[id] || 0, 12)) || '·'}</small></button>`).join('');
+  box.innerHTML = C.teams.map(([id, name, b, w, k]) => { const n = counts[id] || 0, full = n >= C.max && id !== mine; return `<button class="team${full ? ' full' : ''}" data-id="${id}" aria-pressed="${id === mine}">${C.bird(b, w, Math.min(n, C.max))}<span>${name}</span><small>${n} / ${C.max}</small></button>`; }).join('');
   const t = C.teams.find(x => x[0] === mine);
-  me.innerHTML = t ? `<div class="big">${C.bird(t[2], t[3])}</div><span>Ton équipe : ${t[1]}<button class="dl" type="button">⬇ Télécharger mon pentomino</button></span>` : '<span>Choisis ton pentomino ↓</span>';
+  if (!t && note) { me.innerHTML = `<span>${note}</span>`; return; }
+  me.innerHTML = t ? `<div class="big">${C.bird(t[2], t[3])}</div><span>Ton équipe : ${t[1]}${note ? `<em class="note">${note}</em>` : ''}<button class="dl" type="button">⬇ Télécharger mon pentomino</button></span>` : '<span>Choisis ton pentomino ↓</span>';
   const dl = me.querySelector('.dl'); if (dl) dl.onclick = () => download(t);
 }
+let note = '';
 box.addEventListener('click', async e => {
   const b = e.target.closest('.team'); if (!b) return;
-  mine = b.dataset.id; try { localStorage.setItem(KEY, mine); } catch (err) {}
+  const want = b.dataset.id, before = mine;
+  if (want !== mine && (counts[want] || 0) >= C.max) { note = 'Cette équipe est complète (5 sur 5) : choisis-en une autre.'; render(); return; }
+  mine = want; note = ''; try { localStorage.setItem(KEY, mine); } catch (err) {}
   render();
-  try { await C.join(device, mine); } catch (err) {}
+  let r = 'fail'; try { r = await C.join(device, mine); } catch (err) {}
+  if (r === 'full') { mine = before; try { before ? localStorage.setItem(KEY, before) : localStorage.removeItem(KEY); } catch (err) {} note = 'Cette équipe vient de se remplir (5 sur 5) : choisis-en une autre.'; }
   refresh();
 });
 function download(t) {
