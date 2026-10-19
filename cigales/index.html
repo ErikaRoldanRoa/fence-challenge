@@ -70,6 +70,9 @@ h2{margin:0 0 6px;font-size:clamp(20px,3.6vw,30px);color:var(--c);letter-spacing
 .who input:focus{outline:none;border-color:var(--cyan)}
 .who.need input{border-color:#ff6b6b;animation:shake .35s}
 @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.who .paper{display:flex;align-items:center;gap:8px;margin-top:10px}
+.who .paper span{flex:1;font-weight:700;font-size:15px;color:var(--muted)}
+.who .paper button{flex:none;width:52px;height:46px;border-radius:14px;border:2px solid #7ff2ff;background:rgba(127,242,255,.1);color:#fff;font:inherit;font-size:24px;font-weight:800;cursor:pointer}
 .who .play{flex:none;padding:10px 18px;border:0;border-radius:999px;background:#ffd24a;color:#0d1117;font:inherit;font-weight:800;font-size:17px;cursor:pointer;box-shadow:0 0 22px -4px #ffd24a}
 .cirm-hero{padding:22px 18px 18px;border-radius:22px;background:radial-gradient(120% 80% at 10% 0%,rgba(255,79,216,.25),transparent 60%),radial-gradient(120% 80% at 100% 40%,rgba(127,242,255,.18),transparent 60%),#0b0f16;border:1px solid rgba(255,255,255,.08);text-align:left}
 .cirm-hero .k{font-weight:800;letter-spacing:.28em;font-size:12px;color:#7ff2ff;text-transform:uppercase}
@@ -117,6 +120,7 @@ body.is-cirm main{max-width:560px;margin:0 auto;padding:0}
   <form class="who" id="who" autocomplete="off">
    <label for="pseudo">Ton pseudo <small>(pas ton vrai nom) · username</small></label>
    <div class="row"><input id="pseudo" maxlength="20" placeholder="ton pseudo" autocomplete="nickname" enterkeyhint="go"><button class="play" id="play" type="submit">▶ Jouer</button></div>
+   <div class="paper"><span>📷 plateaux imprimés</span><button type="submit" data-go="../square-lab/index.html#camera">▢</button><button type="submit" data-go="../hex-lab/index.html#camera">⬡</button><button type="submit" data-go="../triangle-lab/index.html#camera">△</button></div>
   </form>
   <div class="mine" id="mine"></div>
   <div class="teams" id="teams"></div>
@@ -249,7 +253,7 @@ who.addEventListener('submit', e => {
     localStorage.setItem(NAME, name);
     localStorage.setItem('fc-contest', JSON.stringify({ api: C.api, workshop: C.workshop, token: C.token, device, name, team: C.group === 'cirm' ? '' : (mine || ''), group: C.group, back: location.pathname + C.query }));
   } catch (err) {}
-  location.href = '../index.html#jouer';
+  location.href = (e.submitter && e.submitter.dataset.go) || '../index.html#jouer';
 });
 if (mine && device) C.join(device, mine).catch(() => {});
 </script>

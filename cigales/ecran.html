@@ -52,13 +52,14 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:2vw}
 #back{position:fixed;right:1.5vw;top:2vh;z-index:5;width:5.5vw;height:7.8vw;border-radius:.6vw;background:url(img/enchivas-affiche.jpg) center/cover;cursor:pointer;border:3px solid #f3ec2b;box-shadow:0 0 24px -4px #f3ec2b;transition:transform .2s}
 #back:hover{transform:scale(1.06)}
 .opens{color:#ffd24a;font-weight:800;font-size:min(2.2vw,3.4vh);letter-spacing:.02em}
-#rank{display:none;grid-template-columns:repeat(3,1fr);gap:min(1.6vw,2.6vh);min-height:0}
+#rank{display:none;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;gap:min(1.2vw,1.8vh);min-height:0}
 body.ranking #rank{display:grid}
 body.ranking #board{display:none}
-.col{min-height:0;border-radius:1.6vw;border:3px solid color-mix(in srgb,var(--c) 70%,transparent);box-shadow:0 0 34px -10px var(--c);background:rgba(255,255,255,.03);padding:2vh 1.6vw;display:flex;flex-direction:column;gap:1vh;overflow:hidden}
-.col h3{margin:0 0 .6vh;color:var(--c);font-size:min(2vw,3.6vh);letter-spacing:.04em}
-.col ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.9vh}
-.col li{display:flex;align-items:center;gap:1vw;font-size:min(1.9vw,3.4vh);font-weight:700;padding:.5vh .6vw;border-radius:.8vw}
+.col{min-height:0;border-radius:1.6vw;border:3px solid color-mix(in srgb,var(--c) 70%,transparent);box-shadow:0 0 34px -10px var(--c);background:rgba(255,255,255,.03);padding:1.2vh 1.4vw;display:flex;flex-direction:column;gap:.5vh;overflow:hidden}
+.col.big{border-style:dashed;background:rgba(255,255,255,.05)}
+.col h3{margin:0 0 .3vh;color:var(--c);font-size:min(1.7vw,2.8vh);letter-spacing:.04em}
+.col ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.4vh}
+.col li{display:flex;align-items:center;gap:1vw;font-size:min(1.6vw,2.6vh);font-weight:700;padding:.3vh .6vw;border-radius:.8vw}
 .col li:first-child{background:color-mix(in srgb,var(--c) 18%,transparent)}
 .col li .p{width:2.2em;color:var(--muted);font-weight:800}
 .col li:first-child .p{color:var(--gold)}
@@ -112,16 +113,18 @@ async function refresh() {
 }
 refresh(); setInterval(refresh, 3000);
 // The rankings (19.10): each phone's best fence per board, pseudonyms only; ties go to who got there first.
-const BOARDS = [['sq', 'Mission I · carrés', '#ff4fd8'], ['hex', 'Mission II · hexagones', '#6dff7a'], ['tri', 'Mission III · triangles', '#7ff2ff']];
+// Top row: the hub's three missions; bottom row: the big printed boards (the labs, by hand or by camera).
+const BOARDS = [['sq', 'Mission I · carrés', '#ff4fd8', '▢'], ['hex', 'Mission II · hexagones', '#6dff7a', '⬡'], ['tri', 'Mission III · triangles', '#7ff2ff', '△'],
+  ['sq20', '📷 20 × 20 · pentominos', '#ff4fd8', '▣'], ['hex6', '📷 grand hexagone · tétrahexes', '#6dff7a', '⬢'], ['tri10', '📷 grand triangle · hexiamants', '#7ff2ff', '▲']];
 const rank = document.getElementById('rank');
-rank.innerHTML = BOARDS.map(([b, t, c]) => `<div class="col" style="--c:${c}"><h3>${t}</h3><ol id="r-${b}"></ol></div>`).join('');
+rank.innerHTML = BOARDS.map(([b, t, c], i) => `<div class="col${i > 2 ? ' big' : ''}" style="--c:${c}"><h3>${t}</h3><ol id="r-${b}"></ol></div>`).join('');
 const esc = x => String(x).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
 let seen = {};
 async function refreshRank() {
   let j; try { j = await (await fetch(C.api + '?action=getFences&workshop=' + C.workshop, { cache: 'no-store' })).json(); } catch (e) { return; }
   const rows = (j && j.fences) || [];
   for (const [b] of BOARDS) {
-    const list = rows.filter(r => r.board === b).sort((x, y) => y.area - x.area || String(x.at).localeCompare(String(y.at))).slice(0, 8);
+    const list = rows.filter(r => r.board === b).sort((x, y) => y.area - x.area || String(x.at).localeCompare(String(y.at))).slice(0, 5);
     const ol = document.getElementById('r-' + b);
     ol.innerHTML = list.length ? list.map((r, i) => {
       const t = C.teams.find(x => x[0] === r.team), key = b + '|' + r.name + '|' + r.area, fresh = seen[b + '|' + r.name] !== undefined && seen[b + '|' + r.name] < r.area;
@@ -134,7 +137,7 @@ async function refreshRank() {
     const el = document.getElementById('t-' + id); if (!el) continue;
     let bt = el.querySelector('.best'); if (!bt) { bt = document.createElement('div'); bt.className = 'best'; el.appendChild(bt); }
     const mine = rows.filter(r => r.team === id);
-    bt.textContent = BOARDS.map(([b], i) => { const m = Math.max(0, ...mine.filter(r => r.board === b).map(r => r.area)); return m ? ['▢', '⬡', '△'][i] + ' ' + m : ''; }).filter(Boolean).join('  ');
+    bt.textContent = BOARDS.map(([b, , , g]) => { const m = Math.max(0, ...mine.filter(r => r.board === b).map(r => r.area)); return m ? g + ' ' + m : ''; }).filter(Boolean).join('  ');
   }
 }
 refreshRank(); setInterval(refreshRank, 5000);
