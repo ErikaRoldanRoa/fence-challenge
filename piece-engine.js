@@ -228,6 +228,7 @@
         }
         if (reorientPlacedPiece(selected, next)) {
           state.freshPieceId = selected.id; // the next tap on it only selects it
+          state._grabOffset = null; // a new shape: no grabbed cell to follow
           setStatus(`${verb} ${selected.typeId}.`);
           resetArea();
           render();
@@ -322,6 +323,13 @@
         state.freshPieceId = null;
         setSelectedPieceId(occupiedBy);
         state.draggingPieceId = occupiedBy;
+        // Keep the grabbed cell under the pointer: the piece follows the
+        // pointer by the offset between that cell and the piece's marker.
+        const grabbed = state.placedPieces.find((p) => p.id === occupiedBy);
+        const markerEntry = grabbed && state.board.map.get(lattice.cellKey(grabbed.marker));
+        state._grabOffset = markerEntry
+          ? { x: nearest.centroid.x - markerEntry.centroid.x, y: nearest.centroid.y - markerEntry.centroid.y }
+          : null;
         try { dom.canvas.setPointerCapture(event.pointerId); } catch (e) {  }
         refreshTray();
         render();
@@ -350,7 +358,9 @@
       const type = state.pieceTypeMap.get(piece.typeId);
       const variant = type.variants[piece.variantIndex];
       const point = pointerToCanvas(event);
-      const nearest = lattice.findNearestBoardCell(screenToWorld(point), state.board, (entry) =>
+      const world = screenToWorld(point);
+      const off = state._grabOffset || { x: 0, y: 0 };
+      const nearest = lattice.findNearestBoardCell({ x: world.x - off.x, y: world.y - off.y }, state.board, (entry) =>
         lattice.markerConstraint(variant, entry)
       );
       if (!nearest) return;
@@ -377,6 +387,7 @@
         setStatus("Drag to move a piece. Edge-only fences enclose area.");
       }
       state.draggingPieceId = null;
+      state._grabOffset = null;
       try {
         if (dom.canvas.hasPointerCapture(event.pointerId)) {
           dom.canvas.releasePointerCapture(event.pointerId);
