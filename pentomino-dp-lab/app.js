@@ -184,7 +184,9 @@
     if (r.res.best == null || r.res.best <= 0) {
       r.phase = "none";
       layout.dataset.phase = "none";
-      say("dp.s.open");
+      // Back at the start but nothing enclosed (two pieces can just touch): area 0.
+      r.zero = r.res.best != null;
+      say(r.zero ? "dp.s.zero" : "dp.s.open");
       playing = false;
       return;
     }
@@ -233,6 +235,8 @@
   }
 
   // Same pieces, another order: the previous area, struck, beside the pill.
+  var prevTip = null; // its two areas, for its bubble in any language
+  function syncPrevTip() { if (prevTip) prevEl.setAttribute("data-lab-tip", t("dp.prevTip", { a: fmt(prevTip.a), b: fmt(prevTip.b) })); }
   function compareWithLast(r) {
     var set = order.slice().sort(function (a, b) { return a - b; }).join(",");
     prevEl.hidden = true;
@@ -243,7 +247,8 @@
       var dd = document.createElement("span"); dd.className = d > 0 ? "up" : "down";
       dd.textContent = (d > 0 ? "+" : "−") + fmt(Math.abs(d));
       prevEl.appendChild(s); prevEl.appendChild(dd);
-      prevEl.setAttribute("data-lab-tip", t("dp.prevTip", { a: fmt(last.area), b: fmt(r.res.best) }));
+      prevTip = { a: last.area, b: r.res.best };
+      syncPrevTip();
       prevEl.hidden = false;
     }
     last = { set: set, order: letters(order), area: r.res.best };
@@ -510,7 +515,7 @@
     var showLayer = r && r.step > 0;
     chipLayer.hidden = !showLayer;
     if (showLayer) {
-      var key = phase === "done" ? (r.valid ? "m.close" : "m.bound") : phase === "none" ? "m.none" : "m.layer";
+      var key = phase === "done" ? (r.valid ? "m.close" : "m.bound") : phase === "none" ? (r.zero ? "m.zero" : "m.none") : "m.layer";
       chipLayer.setAttribute("data-math", key);
       chipLayer.setAttribute("aria-label", t(key + ".title"));
       chipLayer.setAttribute("data-lab-tip", t(key + ".title"));
@@ -569,7 +574,7 @@
       b.addEventListener("click", function () { if (window.i18n) window.i18n.setLang(b.getAttribute("data-lang-btn")); });
     });
     document.addEventListener("fc-langchange", function () {
-      syncTray(); syncControls();
+      syncTray(); syncControls(); syncPrevTip();
       if (run && run.phase === "done") pill.textContent = fmt(run.flood);
       else if (run && run.phase === "trace") pill.textContent = fmt(run.sum);
     });
