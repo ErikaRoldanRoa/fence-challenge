@@ -15,42 +15,47 @@ body{color:var(--text);font-family:Manrope,"Avenir Next",sans-serif;background:r
  display:grid;grid-template-rows:auto 1fr auto;padding:2.5vh 3vw;gap:1.5vh}
 header{display:flex;align-items:center;justify-content:space-between}
 .k{color:var(--gold);font-weight:800;letter-spacing:.22em;font-size:1.3vw;text-transform:uppercase}
-h1{margin:0;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);font-size:4.4vw;text-shadow:0 0 22px rgba(127,242,255,.55)}
-.right{text-align:right}.contest{font-weight:800;font-size:3vw;color:var(--gold);letter-spacing:.06em;text-shadow:0 0 18px rgba(255,210,74,.5)}
+h1{margin:0;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);font-size:min(4.4vw,8vh);text-shadow:0 0 22px rgba(127,242,255,.55)}
+.right{text-align:right;margin-right:8vw}.contest{font-weight:800;font-size:min(3vw,5.4vh);color:var(--gold);letter-spacing:.06em;text-shadow:0 0 18px rgba(255,210,74,.5)}
 .total{font-size:1.8vw;font-weight:800;color:var(--text);margin-top:.6vh}
-.board{display:grid;grid-template-columns:repeat(5,1fr);gap:1.2vw;align-content:center;min-height:0}
-.t{border-radius:2vw;border:3px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);display:flex;flex-direction:column;align-items:center;
- padding:1.4vh 1vw;gap:.6vh;transition:border-color .4s,box-shadow .4s}
+.board{display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:1fr 1fr;gap:min(1.2vw,2vh);min-height:0}
+.t{min-height:0;overflow:hidden;justify-content:center;border-radius:2vw;border:3px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);display:flex;flex-direction:column;align-items:center;
+ padding:1vh 1vw;gap:.4vh;transition:border-color .4s,box-shadow .4s}
 .t.on{border-color:var(--c);box-shadow:0 0 34px -8px var(--c)}
-.t svg{width:6.5vw;height:6.5vw}
+.t svg{width:min(6.5vw,11vh);height:min(6.5vw,11vh);flex:none}
 .t.pop svg{animation:pop .9s ease}
 @keyframes pop{0%{transform:scale(1)}30%{transform:scale(1.25) rotate(-6deg)}60%{transform:scale(.95) rotate(4deg)}100%{transform:scale(1)}}
 .t.on svg .wing{transform-origin:37px 45px;animation:flap 1.2s ease-in-out infinite}
 @keyframes flap{50%{transform:rotate(-14deg)}}
-.name{font-weight:800;font-size:1.35vw;text-align:center}
-.dots{color:var(--c);font-size:1.6vw;letter-spacing:.25vw;min-height:2.2vw;text-align:center;line-height:1}
-.n{font-weight:800;font-size:2.4vw;color:var(--text)}
+.name{font-weight:800;font-size:min(1.35vw,2.4vh);text-align:center}
+.dots{color:var(--c);font-size:min(1.6vw,2.6vh);letter-spacing:.25vw;min-height:min(2.2vw,3vh);text-align:center;line-height:1}
+.n{font-weight:800;font-size:min(2.4vw,4.2vh);color:var(--text)}
 footer{display:flex;align-items:center;justify-content:space-between;gap:2vw}
-.join{display:flex;align-items:center;gap:1.6vw;font-size:1.8vw;font-weight:700}
+.join{display:flex;align-items:center;gap:1.6vw;font-size:min(1.8vw,3.2vh);font-weight:700}
 .qr{background:#fff;padding:.8vw;border-radius:1vw;box-shadow:0 0 30px -6px var(--gold)}
 .credit{color:var(--muted);font-size:1.2vw;text-align:right}
 .credit b{color:var(--text)}
 #intro{position:fixed;inset:0;z-index:10;background:#f3ec2b;display:flex;align-items:center;justify-content:center;gap:5vw;cursor:pointer;transition:opacity .6s}
 #intro.gone{opacity:0;pointer-events:none}
-#intro img{height:92vh;box-shadow:0 2vh 6vh rgba(0,0,0,.25);border-radius:.6vw}
+#intro .poster{max-height:86vh;max-width:40vw;object-fit:contain;box-shadow:0 2vh 6vh rgba(0,0,0,.25);border-radius:.6vw}
+#intro .pics{display:flex;gap:1vw;margin:2.4vh 0}
+#intro .pics img{width:15vw;height:10vw;object-fit:cover;border-radius:1vw;box-shadow:0 1vh 3vh rgba(0,0,0,.2)}
+#intro .what{font-size:1.5vw;font-weight:600;color:#1b1b1b;line-height:1.35}
 #intro .side{max-width:34vw;color:#e8432a;font-family:Manrope,sans-serif}
 #intro .k2{font-weight:800;letter-spacing:.2em;font-size:1.3vw;text-transform:uppercase}
-#intro .big{font-weight:800;font-size:3.2vw;line-height:1.1;margin:2vh 0}
+#intro .big{font-weight:800;font-size:2.8vw;line-height:1.1;margin:1.6vh 0}
 #intro .who{font-size:1.6vw;font-weight:700;color:#1b1b1b}
 #intro .go{margin-top:5vh;display:inline-flex;align-items:center;justify-content:center;width:6vw;height:6vw;border-radius:50%;background:#e8432a;color:#f3ec2b;font-size:2.6vw}
-#back{position:fixed;right:1.2vw;top:1.2vw;z-index:5;width:3vw;height:4vw;border-radius:.4vw;background:url(img/enchivas-affiche.jpg) center/cover;opacity:.5;cursor:pointer;border:none}
-#back:hover{opacity:1}
+#back{position:fixed;right:1.5vw;top:2vh;z-index:5;width:5.5vw;height:7.8vw;border-radius:.6vw;background:url(img/enchivas-affiche.jpg) center/cover;cursor:pointer;border:3px solid #f3ec2b;box-shadow:0 0 24px -4px #f3ec2b;transition:transform .2s}
+#back:hover{transform:scale(1.06)}
 </style>
 </head>
 <body>
-<div id="intro" title="Cliquer pour continuer"><img src="img/enchivas-affiche.jpg" alt="Affiche Enchivas, conférence performative de foot et maths, La Performative">
+<div id="intro" title="Cliquer pour continuer"><img class="poster" src="img/enchivas-affiche.jpg" alt="Affiche Enchivas, conférence performative de foot et maths, La Performative">
 <div class="side"><div class="k2">Les Cigales × La Performative · CIRM</div><div class="big">Mathématiques, football et danse</div>
-<div class="who">Dr. Erika Roldán Roa et Begoña Cuquejo</div><div class="who" style="font-weight:600;margin-top:1vh">Jeudi 22 octobre · l'atelier, puis la représentation</div><div class="go">→</div></div></div>
+<div class="what">Pendant l'atelier, on bouge, on joue avec une corde et un ballon, et on fait des mathématiques avec le corps : des mARThématiques.</div>
+<div class="pics"><img src="img/enchivas-hero.jpg" alt="Erika avec un ballon"><img src="img/enchivas-terrain.jpg" alt="Sur le terrain, une corde orange au sol"></div>
+<div class="who">Dr. Erika Roldán Roa et Begoña Cuquejo</div><div class="who" style="font-weight:600;margin-top:1vh">Jeudi 22 octobre · l'atelier, puis la représentation</div><div class="go">→</div></div></div></div>
 <button id="back" aria-label="Affiche"></button>
 <header><div><div class="k">Les Cigales × La Performative · CIRM</div><h1>Enchivas</h1></div><div class="right"><div class="contest">Le concours des oiseaux</div><div class="total" id="total"></div></div></header>
 <div class="board" id="board"></div>
@@ -61,7 +66,7 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:2vw}
 const C = window.CIGALES, board = document.getElementById('board');
 board.innerHTML = C.teams.map(([id, name, b, w, k]) => `<div class="t" id="t-${id}" style="--c:${b}">${C.bird(b, w, k)}<div class="name">${name}</div><div class="dots"></div><div class="n">0</div></div>`).join('');
 const join = new URL('./', location.href).href;
-new QRCode(document.getElementById('qr'), { text: join, width: Math.round(innerWidth * 0.09), height: Math.round(innerWidth * 0.09), colorDark: '#0d1117' });
+new QRCode(document.getElementById('qr'), { text: join, width: Math.round(Math.min(innerWidth * 0.09, innerHeight * 0.17)), height: Math.round(Math.min(innerWidth * 0.09, innerHeight * 0.17)), colorDark: '#0d1117' });
 let last = {};
 async function refresh() {
   let counts; try { counts = await C.counts(); } catch (e) { return; }
