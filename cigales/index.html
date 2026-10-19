@@ -13,6 +13,13 @@ html,body{margin:0;background:var(--bg)}
 body{min-height:100vh;color:var(--text);font-family:Manrope,"Avenir Next","Segoe UI",sans-serif;
  background:radial-gradient(ellipse at 50% -10%,#1a2633 0,var(--bg) 60%);padding:28px 16px 40px}
 main{max-width:980px;margin:0 auto}
+.hero{position:relative;border-radius:24px;overflow:hidden;margin:0 0 18px;box-shadow:0 0 30px -10px var(--cyan)}
+.hero img{display:block;width:100%;height:clamp(300px,62vh,560px);object-fit:cover;object-position:30% 30%}
+.hcap{position:absolute;inset:auto 0 0 0;padding:18px 16px 18px;background:linear-gradient(180deg,rgba(13,17,23,0),rgba(13,17,23,.92) 55%)}
+.hcap h1{margin:4px 0 10px}
+.tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.tags span{padding:5px 14px;border-radius:999px;font-weight:800;font-size:14px;letter-spacing:.08em;text-transform:uppercase;border:2px solid var(--gold);color:var(--gold);background:rgba(13,17,23,.5)}
+.ph{display:block;width:100%;border-radius:16px;margin:4px 0 12px;max-height:340px;object-fit:cover}
 .kicker{text-align:center;color:var(--gold);font-weight:800;letter-spacing:.22em;font-size:12px;text-transform:uppercase}
 h1{text-align:center;margin:10px 0 26px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan);
  font-size:clamp(30px,7vw,64px);text-shadow:0 0 18px rgba(127,242,255,.55)}
@@ -39,8 +46,8 @@ h2{margin:0 0 6px;font-size:clamp(20px,3.6vw,30px);color:var(--c);letter-spacing
 </head>
 <body>
 <main>
- <div class="kicker">Les Cigales × La Performative · CIRM</div>
- <h1>Enchivas</h1>
+ <div class="hero"><img src="img/enchivas-hero.jpg" alt="Erika, un ballon à la main, en t-shirt orange, sur un terrain de football">
+  <div class="hcap"><div class="kicker">Les Cigales × La Performative · CIRM</div><h1>Enchivas</h1><div class="tags"><span>maths</span><span>football</span><span>danse</span></div></div></div>
 
  <section style="--c:var(--green)">
   <h2>Le concours des oiseaux</h2>
@@ -53,6 +60,7 @@ h2{margin:0 0 6px;font-size:clamp(20px,3.6vw,30px);color:var(--c);letter-spacing
  <section class="perf" style="--c:var(--mag)">
   <h2>Puis : la performance</h2>
   <p><b>Enchivas</b> est une conférence-performance : des mathématiques, du football et de la danse, sur scène.</p>
+  <img class="ph" src="img/enchivas-terrain.jpg" alt="Deux joueuses sur un terrain de football, une corde orange au sol">
   <span class="when">Jeudi 22 octobre · l'atelier, puis la représentation vers 17 h</span>
  </section>
 
