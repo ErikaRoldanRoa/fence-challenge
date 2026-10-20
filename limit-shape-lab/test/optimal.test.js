@@ -220,6 +220,26 @@ for (const n of NS) {
     if (j) eq(sg[0], g.seg[j - 1][1], `n = ${n}: segment ${j} starts where ${j - 1} ends`);
   });
 
+  // ---- 8b. the fence drawn behind the polygon: the polygon runs through the middle of each attachment edge, which is a side of
+  // a cell of the piece before and of a cell of the piece after ----
+  const sq = P.cellsOf(e);
+  eq(sq.map((q) => q.length), e.pieces.map(() => n), `n = ${n}: ${n} cells per piece in the polygon's plane`);
+  const edgesOfPiece = sq.map((q) => P.outlineOf(q));
+  const hasEdgeAt = (list, px, py) => list.some((ed) => (ed[0] + ed[2]) / 2 === px && (ed[1] + ed[3]) / 2 === py);
+  g.seg.forEach((sgm, j) => {
+    const [vx, vy] = sgm[0], prev = (j + K - 1) % K;
+    ok(hasEdgeAt(edgesOfPiece[j], vx, vy), `n = ${n}: the polygon's corner ${j} is the middle of a side of piece ${j}`);
+    ok(hasEdgeAt(edgesOfPiece[prev], vx, vy), `n = ${n}: ... and of a side of piece ${prev}, the attachment edge they share`);
+    const [wx, wy] = sgm[1];
+    ok(hasEdgeAt(edgesOfPiece[j], wx, wy) && hasEdgeAt(edgesOfPiece[(j + 1) % K], wx, wy), `n = ${n}: the corner after piece ${j} is the middle of a side of it and of the next piece`);
+  });
+  // the pieces' squares are disjoint and make the fence of the data (area of the largest region: counted by the lab's own function)
+  const seen = new Set();
+  sq.forEach((q) => q.forEach((c) => { const k = c[0] + "," + c[1]; ok(!seen.has(k), `n = ${n}: a cell lies in one piece only (plane)`); seen.add(k); }));
+  // the reach: the cells lie around the circle, by a factor the stage scales for
+  const rc = P.reach(g, sq);
+  ok(rc >= 1 && rc < 2, `n = ${n}: the cells reach ${rc.toFixed(3)} times the circle's radius from its centre`);
+
   // ---- 9. which pieces take their longest arrow (the card writes the count), by brute force over boundary-edge midpoints ----
   let longest = 0;
   e.pieces.forEach((p) => {

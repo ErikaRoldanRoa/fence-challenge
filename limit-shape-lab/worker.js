@@ -1,7 +1,7 @@
 /* Fence Challenge · limit-shape lab: the heavy work, off the page's thread.
  * "giant": a running chain of 500-ominoes, one sample every 8 n proposals,
  * started from a 500-omino that already went through a burn-in. */
-importScripts("sampler.js?v=20261020b", "data/start500.js?v=20261020b");
+importScripts("sampler.js?v=20261020c", "data/start500.js?v=20261020c");
 
 var S = self.LimitSampler;
 var chain = null, running = false, samples = 0, left = 0;

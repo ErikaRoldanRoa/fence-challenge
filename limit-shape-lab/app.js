@@ -47,17 +47,23 @@
   const PAPER500 = 13.5e6;
   const LOUPE_GAP = 0.6;   // the loupe never stretches the largest gap past this
   const LOOP_FILL = 0.42;  // the loop's farthest point from the stage's centre, in parts of its shorter side
+  const CELLS_FILL = 0.46; // the same for the farthest cell of the fence drawn behind an optimal polygon
+  const CELLS_FADE = 0.6;  // the fence fades out as the loupe grows past ×1 and is gone at ×1.6: the loupe bends the polygon
 
   let n = 4, pieces = [], chain = null, loupeV = 0, loupe = 1, sel = -1;
   let fence = null, selKind = -1, kindSpots = [];   // n = 4..15: the fence's polygon, the chosen kind of arrow, its dots
   let giant = null, giantSamples = 0, giantDrawn = 0, openChip = null;
   let shown = null, anim = null, tiles = false;
+  // The fence itself behind an optimal polygon (n = 4..6): its cells in the polygon's plane, per piece, and their outlines. rhoNow is
+  // how far they reach beyond the circle (1 where there are none): the stage shrinks the circle by it, so that the cells stay on the
+  // stage, and the change eases with the morph, as cellsFade lets the cells come in when the morph ends. hov: the tile under a mouse.
+  let fenceCells = null, rhoNow = 1, rhoTo = 1, cellsFade = 1, hov = -1;
   // An optimal fence (n = 4..6): its pieces are the tiles of the left box when each fits, else that box shows the kinds.
   const optimal = () => !!fence && n !== GIANT && n <= LAST_OPT;
 
   // ---------- the 500-omino chain: a worker when possible, the page otherwise ----------
   let worker = null;
-  try { worker = new Worker("worker.js?v=20261020b"); } catch (e) { worker = null; }
+  try { worker = new Worker("worker.js?v=20261020c"); } catch (e) { worker = null; }
   if (worker) {
     worker.onmessage = (e) => { if (e.data.type === "giant") onGiant(e.data); };
     worker.onerror = () => { worker = null; };
@@ -112,6 +118,7 @@
     $("n-value").textContent = String(k);
     const pill = $("n-pill");
     pill.classList.remove("bump"); void pill.offsetWidth; pill.classList.add("bump");
+    fenceCells = null; rhoTo = 1; hov = -1;
     if (k === GIANT) {
       pieces = []; fence = null;
       chain = { R: 1, pts: DATA.dev500, edges: null };
@@ -128,6 +135,9 @@
       } else {
         fence = G.build(G.fromPieces(OPT[k]));
         pieces = tilesOf(OPT[k]);
+        const sq = G.cellsOf(OPT[k]);
+        fenceCells = { sq, edges: sq.map(G.outlineOf) };
+        rhoTo = G.reach(fence, sq);
       }
       chain = { R: fence.R, pts: null, edges: null, vecs: G.folded(fence) };
     }
@@ -142,16 +152,26 @@
     syncChips();
     syncSource();
     if (openChip) window.mathChip.refresh();
-    status(k === GIANT ? t("ls.s.giant") : t(optimal() ? "ls.s.opt" : "ls.s.fence", { n: k, count: fmtNum(pieceCount(), 0), g: fmtPct(maxGap()), a: fmtNum(fence.L, 0) }));
+    statusN();
     // The pill and the gap change width with n: centre them again.
     centreReadout();
+  }
+  // What the status says about the size on show, and what it says now (a choice, or the size).
+  function statusN() {
+    status(n === GIANT ? t("ls.s.giant") : t(optimal() ? "ls.s.opt" : "ls.s.fence", { n, count: fmtNum(pieceCount(), 0), g: fmtPct(maxGap()), a: fmtNum(fence.L, 0) }));
+  }
+  function sayState() {
+    if (!chain) return;
+    if (sel >= 0) sayPiece(); else if (selKind >= 0) sayKind(); else statusN();
   }
   // The tiles of an optimal fence: its pieces in the order of the polygon, each as the fence places it, with the arrow
   // between its two attachment edges (and those edges), in the doubled coordinates from the centre of a cell that
   // drawShape wants. The tetrominoes keep the hub's colours; the others take the palette five by five round the polygon,
   // so that two neighbouring sides never wear neighbouring hues.
   const TETRO_COLOR = new Map(TETRO.map((h) => [S.canonical(h.cells).key, h.color]));
+  let tileExt = 0;   // the longest side of the biggest piece of the tiles on show: all the pieces are drawn at one cell size
   function tilesOf(e) {
+    tileExt = Math.max(...e.pieces.map((p) => { const x = extentOf(p.c); return Math.max(x.w, x.h); }));
     return e.pieces.map((p, i) => ({
       cells: p.c,
       pairs: [[[p.i[0] - 1, p.i[1] - 1], [p.o[0] - 1, p.o[1] - 1]]],
@@ -228,7 +248,7 @@
   }
   function morphTo(poly) {
     const to = resample(poly);
-    const from = shown || to;
+    const from = shown || to, rhoFrom = rhoNow;
     const t0 = performance.now(), dur = REDUCED ? 0 : 420;
     cancelAnimationFrame(anim);
     const tick = (now) => {
@@ -236,6 +256,8 @@
       const mid = new Float64Array(720);
       for (let i = 0; i < 720; i++) mid[i] = from[i] + (to[i] - from[i]) * e;
       shown = mid;
+      rhoNow = rhoFrom + (rhoTo - rhoFrom) * e;
+      cellsFade = f >= 1 ? 1 : Math.max(0, (f - 0.55) / 0.45);
       anim = f < 1 ? requestAnimationFrame(tick) : null;
       drawLoop(f >= 1);
     };
@@ -257,7 +279,7 @@
     let peak = 0;
     for (let i = 0; i < 720; i++) peak = Math.max(peak, loupe * shown[i]);
     if (fence) peak = Math.max(peak, loupe * fence.gap.max);   // the corners are sharper than 720 directions
-    const R = (Math.min(box.w, box.h) * LOOP_FILL) / (1 + Math.max(0, peak));
+    const R = (Math.min(box.w, box.h) * Math.min(LOOP_FILL, CELLS_FILL / rhoNow)) / (1 + Math.max(0, peak));
     const at = (th, d) => {
       const r = R * (1 + loupe * d), a = th * Math.PI / 180;
       return [cx + r * Math.sin(a), cy + r * Math.cos(a)];
@@ -291,6 +313,7 @@
     ctx.closePath();
     ctx.fillStyle = "rgba(47, 243, 255, 0.07)";
     ctx.fill();
+    if (fenceCells) drawCells(ctx, at, dpr);
     if (exact && fence) drawFence(ctx, at, dpr);
     else {
       ctx.save();
@@ -299,6 +322,45 @@
       ctx.stroke();
       ctx.restore();
     }
+  }
+  // The fence itself, behind the polygon: every cell in its piece's colour, the pieces outlined. The polygon runs through the middle
+  // of the edges where neighbouring pieces meet (the paper's two pictures of the optimal fence in one). The loupe bends the polygon
+  // radially about the circle; the cells are mapped by the same map, so they stay with it, and they fade out as it grows. A chosen
+  // piece is full, the others step back; the piece under the mouse is a little fuller.
+  function drawCells(ctx, at, dpr) {
+    const k = (loupe <= 1.0001 ? 1 : Math.max(0, 1 - (loupe - 1) / CELLS_FADE)) * cellsFade;
+    if (k < 0.01) return;
+    const sub = loupe > 1.0001 ? 4 : 1;   // a side is a curve under the loupe
+    const pt = (x, y) => { const q = G.polar(fence, x, y); return at(q[0], q[1]); };
+    const trace = (x1, y1, x2, y2, first) => {
+      for (let i = first ? 0 : 1; i <= sub; i++) {
+        const p = pt(x1 + (x2 - x1) * i / sub, y1 + (y2 - y1) * i / sub);
+        if (first && i === 0) ctx.moveTo(p[0], p[1]); else ctx.lineTo(p[0], p[1]);
+      }
+    };
+    ctx.save();
+    ctx.lineJoin = "round";
+    fenceCells.sq.forEach((piece, i) => {
+      const lit = tiles && i === sel, back = tiles && sel >= 0 && !lit, near = tiles && i === hov && !lit;
+      ctx.globalAlpha = k * (lit ? 0.9 : back ? 0.12 : near ? 0.55 : 0.3);
+      ctx.fillStyle = pieces[i] ? pieces[i].color : "#7f83ff";
+      ctx.beginPath();
+      for (const [x, y] of piece) {
+        trace(x, y, x + 1, y, true); trace(x + 1, y, x + 1, y + 1); trace(x + 1, y + 1, x, y + 1); trace(x, y + 1, x, y);
+        ctx.closePath();
+      }
+      ctx.fill();
+    });
+    ctx.lineWidth = Math.max(1, 1.3 * dpr);
+    fenceCells.edges.forEach((edges, i) => {
+      const lit = tiles && i === sel;
+      ctx.globalAlpha = k * (lit ? 0.95 : tiles && sel >= 0 ? 0.25 : 0.55);
+      ctx.strokeStyle = lit ? "#ffffff" : "rgba(4, 10, 20, 0.9)";
+      ctx.beginPath();
+      for (const [x1, y1, x2, y2] of edges) trace(x1, y1, x2, y2, true);
+      ctx.stroke();
+    });
+    ctx.restore();
   }
   // A fence of the paper, exactly: each side is traced from the polygon's own corners, point by point in the
   // plane, so that the corners stay sharp under the loupe and a straight side bends only as the loupe says.
@@ -368,6 +430,13 @@
     if (tiles) fence.seg.forEach((sg, i) => { if (pieces[i].corner) ring(sg[0], sg[1]); });
     else for (const kc of chain.vecs) if (kc[3]) for (const [a, b] of G.placesOf(fence, kc[0], kc[1])) ring(a, b);
     ctx.restore();
+    // The piece under the mouse, a little less than the chosen one.
+    if (tiles && hov >= 0 && hov !== sel && fence.seg[hov]) {
+      ctx.save();
+      ctx.lineCap = "round"; ctx.globalAlpha = 0.7; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 3.4 * dpr;
+      strokeSide(ctx, fence.seg[hov][0], fence.seg[hov][1], at);
+      ctx.restore();
+    }
     // The chosen piece, or the places of the chosen kind of arrow, in white.
     const lit = tiles ? (sel >= 0 ? [fence.seg[sel]] : []) : (selKind >= 0 ? G.placesOf(fence, chain.vecs[selKind][0], chain.vecs[selKind][1]) : []);
     if (lit.length) {
@@ -403,7 +472,7 @@
     if (!!grid !== tiles) {
       // the box changed the way it shows the pieces: what was chosen is let go, and the caption and the status say so
       const had = sel >= 0 || selKind >= 0;
-      sel = -1; selKind = -1;
+      sel = -1; selKind = -1; hov = -1;
       tiles = !!grid;
       if (had) { caption(); status(t(tiles ? "ls.s.noPiece" : "ls.s.noKind")); }
     }
@@ -415,7 +484,7 @@
       pieces.forEach((p, i) => {
         const x = ox + (i % grid.cols) * s, y = oy + Math.floor(i / grid.cols) * s;
         slots.push([x, y, s]);
-        drawShape(p.cells, p.pairs, p.color, x, y, s, s, tileFill(s, dpr), dpr, i === sel, true, true, p.corner);
+        drawShape(p.cells, p.pairs, p.color, x, y, s, s, tileFill(s, dpr), dpr, i === sel, true, true, p.corner, tileExt, i === hov && i !== sel);
       });
     } else if (fence) drawKinds(w, h, dpr);
     syncPieceAccess();
@@ -516,19 +585,26 @@
   }
   // A piece's cells fitted into a box: the cell size and the maps from grid coordinates to the canvas. Rows grow
   // downwards, as on the hub's boards.
-  function fitShape(cells, x, y, bw, bh, fill) {
+  function extentOf(cells) {
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     for (const [cx, cy] of cells) { minX = Math.min(minX, cx); maxX = Math.max(maxX, cx + 1); minY = Math.min(minY, cy); maxY = Math.max(maxY, cy + 1); }
-    const u = Math.min(bw / (maxX - minX), bh / (maxY - minY)) * fill;
+    return { minX, maxX, minY, maxY, w: maxX - minX, h: maxY - minY };
+  }
+  // With `ext` (the longest side of the biggest piece of the set) every piece has the same cell size, the biggest one filling
+  // its box; without it the piece is fitted to its box alone.
+  function fitShape(cells, x, y, bw, bh, fill, ext) {
+    const { minX, maxX, minY, maxY, w, h } = extentOf(cells);
+    const u = (ext ? Math.min(bw, bh) / ext : Math.min(bw / w, bh / h)) * fill;
     const X0 = x + bw / 2 - ((minX + maxX) / 2) * u, Y0 = y + bh / 2 - ((minY + maxY) / 2) * u;
     return { u, sx: (gx) => X0 + gx * u, sy: (gy) => Y0 + gy * u };
   }
-  const tileFill = (s, dpr) => (s < 44 * dpr ? 0.82 : 0.66);
+  // The biggest piece of the set fills this part of its tile (smaller tiles give it more room).
+  const tileFill = (s, dpr) => (s < 44 * dpr ? 0.9 : 0.8);
   // One piece, fitted into a box, with its arrows (the 500-omino's longest ones; an optimal fence's piece has its
   // one arrow, and `marks` draws the two unit edges whose midpoints the arrow joins: its attachment edges). On a tile,
   // `corner` gives a corner piece its pink border, as its ring on the polygon.
-  function drawShape(cells, pairs, color, x, y, bw, bh, fill, dpr, chosen, tile, marks, corner) {
-    const { u, sx, sy } = fitShape(cells, x, y, bw, bh, fill);
+  function drawShape(cells, pairs, color, x, y, bw, bh, fill, dpr, chosen, tile, marks, corner, ext, hover) {
+    const { u, sx, sy } = fitShape(cells, x, y, bw, bh, fill, ext);
     const ctx = pctx;
     // Each piece on its own tile, as in the labs' trays.
     if (tile) {
@@ -538,8 +614,8 @@
       ctx.fillStyle = chosen ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0.035)";
       ctx.fill();
       if (chosen) { ctx.shadowColor = "rgba(255, 255, 255, 0.25)"; ctx.shadowBlur = 14 * dpr; }
-      ctx.strokeStyle = chosen ? "#ffffff" : corner ? "rgba(255, 95, 179, 0.9)" : "rgba(255, 255, 255, 0.1)";
-      ctx.lineWidth = (chosen || corner ? 1.5 : 1) * dpr;
+      ctx.strokeStyle = chosen ? "#ffffff" : hover ? "rgba(255, 255, 255, 0.6)" : corner ? "rgba(255, 95, 179, 0.9)" : "rgba(255, 255, 255, 0.1)";
+      ctx.lineWidth = (chosen || hover || corner ? 1.5 : 1) * dpr;
       ctx.stroke();
       ctx.restore();
     }
@@ -652,14 +728,22 @@
     if (window.labTip) window.labTip.hide();
     const [x, y, dpr] = canvasXY(e), i = hit(x, y, dpr, PICK_RADIUS);
     scrub = { id: e.pointerId, was: chosen(), first: i, moved: false };
+    hov = -1;
     try { pc.setPointerCapture(e.pointerId); } catch (err) { /* already released */ }
     if (i >= 0 && i !== chosen()) choose(i, true);
   });
   pc.addEventListener("pointermove", (e) => {
-    if (!scrub || e.pointerId !== scrub.id) return;
+    if (!scrub || e.pointerId !== scrub.id) {
+      // A mouse over the tiles previews the piece's side of the polygon.
+      if (!tiles || e.pointerType !== "mouse" || scrub) return;
+      const [x, y, dpr] = canvasXY(e), i = hit(x, y, dpr, 0);
+      if (i !== hov) { hov = i; drawPieces(); redraw(); }
+      return;
+    }
     const [x, y, dpr] = canvasXY(e), i = hit(x, y, dpr, SCRUB_RADIUS);
     if (i >= 0 && i !== chosen()) { scrub.moved = true; choose(i, true); }
   });
+  pc.addEventListener("pointerleave", () => { if (hov >= 0) { hov = -1; drawPieces(); redraw(); } });
   function endScrub(e) {
     if (!scrub || e.pointerId !== scrub.id) return;
     const s = scrub;
@@ -742,14 +826,20 @@
       for (let k = 4; k <= LAST_FENCE; k++) {
         const g = k >= FIRST_FENCE ? GREEDY[k] : OPT[k] && G.fromPieces(OPT[k]);
         if (!g) continue;
-        const P = G.build(g);
-        fencePts.push({ max: P.gap.max, pts: G.samples(P, 0.5) });
+        const P = G.build(g), pts = G.samples(P, 0.5);
+        let rho = 1;
+        if (k < FIRST_FENCE) {   // the fence's cells too: every corner of every cell, in the polygon's polar terms
+          const sq = G.cellsOf(OPT[k]);
+          rho = G.reach(P, sq);
+          sq.forEach((piece) => piece.forEach((q) => { for (let dx = 0; dx <= 1; dx++) for (let dy = 0; dy <= 1; dy++) pts.push(G.polar(P, q[0] + dx, q[1] + dy)); }));
+        }
+        fencePts.push({ max: P.gap.max, rho, pts });
       }
     }
     const st = loopCanvas.getBoundingClientRect(), r = tag.getBoundingClientRect(), m = 4;
     const cx = st.left + st.width / 2, cy = st.top + st.height / 2;
     tag.classList.toggle("short", fencePts.some((f) => {
-      const R = Math.min(st.width, st.height) * LOOP_FILL / (1 + f.max);
+      const R = Math.min(st.width, st.height) * Math.min(LOOP_FILL, CELLS_FILL / f.rho) / (1 + f.max);
       return f.pts.some(([th, g]) => {
         const a = th * Math.PI / 180, x = cx + R * (1 + g) * Math.sin(a), y = cy + R * (1 + g) * Math.cos(a);
         return x > r.left - m && x < r.right + m && y > r.top - m && y < r.bottom + m;
@@ -883,6 +973,7 @@
   document.querySelectorAll("[data-lang-btn]").forEach((b) => b.addEventListener("click", () => window.i18n.setLang(b.dataset.langBtn)));
   document.addEventListener("fc-langchange", () => {
     syncControls(); caption(); syncChips(); syncSource(); syncLoupe(); drawPieces();
+    sayState();
     centreReadout();
   });
   new ResizeObserver(() => { drawPieces(); drawLoop(true); centreReadout(); fitTag(); }).observe(loopCanvas);
@@ -899,7 +990,7 @@
   // For tests and figure export.
   window.limitLab = {
     state: () => ({ n, pieces: pieceCount(), loupe, loupeV, maxLoupe: maxLoupe(), sel, tiles, gap: maxGap(), R: chain && chain.R, samples: giantSamples, source: !$("src-tag").hidden, chips: [...document.querySelectorAll(".math-chip")].filter((b) => !b.hidden).map((b) => b.dataset.chip),
-      fence: !!fence && n !== GIANT, optimal: optimal(), kinds: fence && n !== GIANT ? chain.vecs.length : 0, corners: fence && n !== GIANT ? fence.corners.length : 0, selKind, area: fence && n !== GIANT ? fence.area : 0 }),
+      fence: !!fence && n !== GIANT, optimal: optimal(), cells: fenceCells ? fenceCells.sq.reduce((a, q) => a + q.length, 0) : 0, hover: hov, rho: rhoNow, kinds: fence && n !== GIANT ? chain.vecs.length : 0, corners: fence && n !== GIANT ? fence.corners.length : 0, selKind, area: fence && n !== GIANT ? fence.area : 0 }),
     setN, setLoupe, pick, pickKind,
     kindAt: (i) => chain && chain.vecs ? chain.vecs[i] : null,
     // where a kind's dot sits on the screen, for the browser tests
@@ -919,8 +1010,21 @@
     tickSpots: (i) => {
       const q = slots[i], p = pieces[i];
       if (!q || !p) return null;
-      const dpr = pc.width / pc.getBoundingClientRect().width, f = fitShape(p.cells, q[0], q[1], q[2], q[2], tileFill(q[2], dpr));
+      const dpr = pc.width / pc.getBoundingClientRect().width, f = fitShape(p.cells, q[0], q[1], q[2], q[2], tileFill(q[2], dpr), tileExt);
       return { u: f.u, slot: q.slice(), ends: p.pairs[0].map((m) => [f.sx(m[0] / 2 + 0.5), f.sy(m[1] / 2 + 0.5), Math.abs(m[0]) % 2 === 1]) };
+    },
+    // for the browser tests: where the middle of the k-th cell of piece i, and the corner j of the polygon, lie on the screen
+    cellSpot: (i, k, dx = 0, dy = 0) => {
+      if (!fenceCells || !fenceCells.sq[i] || !fenceCells.sq[i][k]) return null;
+      const c = fenceCells.sq[i][k], r = loopCanvas.getBoundingClientRect(), d = loopCanvas.width / r.width;
+      const q = G.polar(fence, c[0] + 0.5 + dx, c[1] + 0.5 + dy), p = stageMap(loopCanvas.width, loopCanvas.height).at(q[0], q[1]);
+      return [r.left + p[0] / d, r.top + p[1] / d];
+    },
+    cornerSpot: (j) => {
+      if (!fence || !fence.seg[j]) return null;
+      const r = loopCanvas.getBoundingClientRect(), d = loopCanvas.width / r.width, c = fence.seg[j][0];
+      const q = G.polar(fence, c[0], c[1]), p = stageMap(loopCanvas.width, loopCanvas.height).at(q[0], q[1]);
+      return [r.left + p[0] / d, r.top + p[1] / d];
     },
     // for the browser tests: a point of the pieces canvas that lies in no tile's slot, or null
     freeSpot: () => {

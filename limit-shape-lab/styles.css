@@ -257,5 +257,5 @@ body:has(.math-pop:not([hidden])) .lab > .langSel { z-index: 10002; }
 @media (prefers-reduced-motion: reduce) {
   .measure.bump { animation: none; }
 }
-.caption { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.caption { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 16ch; }
 .caption .dice { width: 16px; height: 16px; flex: 0 0 auto; }

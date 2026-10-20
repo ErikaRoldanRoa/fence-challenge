@@ -192,6 +192,40 @@
     };
   }
 
+  // The cells of an optimal fence in the polygon's own plane, per piece: the lower-left corner [x, y] of each unit square, y
+  // upwards. The polygon starts at the middle of the first piece's incoming attachment edge, so the grid is shifted by half of
+  // that edge's doubled coordinates; rows count downwards in the data.
+  function cellsOf(e) {
+    var ox = e.pieces[0].i[0] / 2, oy = e.pieces[0].i[1] / 2;
+    return e.pieces.map(function (p) {
+      return p.c.map(function (c) { return [c[0] - ox, oy - c[1] - 1]; });
+    });
+  }
+
+  // The outline of a set of unit squares (lower-left corners): the sides that no square of the set shares, as [x1, y1, x2, y2].
+  function outlineOf(squares) {
+    var have = new Set(squares.map(function (q) { return q[0] + "," + q[1]; })), out = [];
+    squares.forEach(function (q) {
+      var x = q[0], y = q[1];
+      if (!have.has(x + "," + (y - 1))) out.push([x, y, x + 1, y]);
+      if (!have.has(x + "," + (y + 1))) out.push([x, y + 1, x + 1, y + 1]);
+      if (!have.has((x - 1) + "," + y)) out.push([x, y, x, y + 1]);
+      if (!have.has((x + 1) + "," + y)) out.push([x + 1, y, x + 1, y + 1]);
+    });
+    return out;
+  }
+
+  // How far the fence's cells reach from the circle's centre K, in parts of the circle's radius R (1 or more).
+  function reach(P, cells) {
+    var far = 0;
+    cells.forEach(function (piece) {
+      piece.forEach(function (q) {
+        for (var dx = 0; dx <= 1; dx++) for (var dy = 0; dy <= 1; dy++) far = Math.max(far, Math.hypot(q[0] + dx - P.kx, q[1] + dy - P.ky));
+      });
+    });
+    return Math.max(1, far / P.R);
+  }
+
   // The area of the largest region that the pieces enclose, as in the paper's definition of a fence: free cells
   // count as connected when they touch at a corner (8 neighbours), the outside is the free component that reaches
   // the border, and the regions are the 8-connected components of the free cells that are not outside.
@@ -229,7 +263,7 @@
   var API = {
     build: build, gapAt: gapAt, sideAt: sideAt, samples: samples, range: range, sectorCorners: sectorCorners,
     folded: folded, placesOf: placesOf, polar: polar, theta: theta, isCorner: isCorner,
-    fromPieces: fromPieces, regionArea: regionArea,
+    fromPieces: fromPieces, regionArea: regionArea, cellsOf: cellsOf, outlineOf: outlineOf, reach: reach,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.LimitPolygon = API;

@@ -35,6 +35,9 @@
 .lab-tip-head { display: block; margin-bottom: 2px; font-size: 14px; font-weight: 800; color: #fff; }
 .lab-tip-head[hidden] { display: none; }
 .lab-tip.wide { max-width: min(340px, calc(100vw - 16px)); text-align: left; }
+/* Beside a control that is as tall as the screen: no arrow, and it does not slide. */
+.lab-tip.side, .lab-tip.side.on { transform: none; }
+.lab-tip.side .lab-tip-arrow { display: none; }
 .lab-tip.below { transform: translateY(-3px); }
 .lab-tip.below.on { transform: none; }
 

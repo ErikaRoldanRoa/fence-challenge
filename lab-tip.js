@@ -64,16 +64,26 @@
     // A control may name the part it is seen as (data-lab-tip-anchor, a selector
     // inside it): the bubble then points at that part.
     var sel = owner.getAttribute("data-lab-tip-anchor"), part = sel && owner.querySelector(sel);
+    // The bubble is measured at the corner, not where it last stood: beside the right edge it would shrink to fit and
+    // be placed with those sizes.
+    tip.style.left = "0px"; tip.style.top = "0px";
     var r = (part || owner).getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
     var vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
     var cx = r.left + r.width / 2;
     var left = Math.max(EDGE, Math.min(vw - w - EDGE, cx - w / 2));
-    var top = r.top - h - GAP, below = false;
+    var top = r.top - h - GAP, below = false, side = false;
     if (top < EDGE) { top = r.bottom + GAP; below = true; }
-    if (top + h > vh - EDGE) top = Math.max(EDGE, vh - h - EDGE);
+    if (top + h > vh - EDGE) {
+      // No room above or below (a control as tall as the screen): beside it, on the side with room, so that it does not cover it.
+      if (r.right + GAP + w <= vw - EDGE) { left = r.right + GAP; side = true; }
+      else if (r.left - GAP - w >= EDGE) { left = r.left - GAP - w; side = true; }
+      top = side ? Math.max(EDGE, Math.min(vh - h - EDGE, r.top + r.height / 2 - h / 2)) : Math.max(EDGE, vh - h - EDGE);
+      below = false;
+    }
     tip.style.left = Math.round(left) + "px";
     tip.style.top = Math.round(top) + "px";
     tip.classList.toggle("below", below);
+    tip.classList.toggle("side", side);
     arrow.style.left = Math.round(Math.max(12, Math.min(w - 12, cx - left))) + "px";
   }
 
