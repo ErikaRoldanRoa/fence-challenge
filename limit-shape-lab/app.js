@@ -897,6 +897,8 @@
   // A link may open the lab on a size of its own: .../limit-shape-lab/?n=11
   const asked = +new URLSearchParams(location.search).get("n");
   setN(STEPS.includes(asked) ? asked : 4);
+  // The readout and the fence's tag are measured again once the fonts have come.
+  if (document.fonts) document.fonts.ready.then(() => { centreReadout(); fitTag(); });
 
   // For tests and figure export.
   window.limitLab = {
