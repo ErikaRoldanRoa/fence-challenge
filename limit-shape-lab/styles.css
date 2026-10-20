@@ -115,14 +115,14 @@ body:has(.math-pop:not([hidden])) .lab > .langSel { z-index: 10002; }
 /* ---------- math chips: only what the state needs, beside what they
  * explain with a gap (the shared math-chip.css draws them) ---------- */
 .chipHost { position: relative; display: inline-flex; align-items: center; gap: 8px; }
-/* The loop's own chip sits in a corner of the stage, over the drawing. */
+/* The polygon's chip sits in a corner of the stage, over the drawing. */
 .chipHost.corner { position: absolute; top: 10px; right: 10px; }
 /* At 500 cells, the top left of the stage names the paper's sample behind the loop. */
 .tok.srcTag { position: absolute; top: 10px; left: 10px; height: 30px; padding: 0 10px; gap: 6px; font-size: 13px; color: var(--muted); }
 .tok.srcTag[hidden] { display: none; }
 .srcTag strong { color: var(--text); }
 .srcIcon { width: 17px; height: 17px; flex: 0 0 auto; }
-/* From 7 to 15 cells the same corner names the greedy fence; on a small stage the polygon leaves
+/* From 4 to 15 cells the same corner names the fence (optimal, then greedy); on a small stage the polygon leaves
  * the corner no room for words, and the icon stands alone (app.js, fitTag). */
 .tok.srcTag.short { aspect-ratio: 1; padding: 0; justify-content: center; }
 .srcTag.short strong { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

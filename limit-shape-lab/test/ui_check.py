@@ -1,6 +1,6 @@
 """Limit-shape lab · browser checks.
 
-Usage: python3 limit-shape-lab/test/ui_check.py <base-url> <outdir>
+Usage: python3 limit-shape-lab/test/ui_check.py <base-url> <outdir> [--only=desk:en]
 (base-url serves the repository root, e.g. http://127.0.0.1:8811/)
 Desktop and phone, FR / DE / EN: no console errors, the size steps (4..15, then 500),
 the optimal fences for n = 4..6 (their pieces on tiles, the chosen piece lit on the polygon,
@@ -31,12 +31,19 @@ def check(cond, msg):
 
 
 VIEWS = [("desk", {"width": 1400, "height": 900}, False), ("phone", {"width": 390, "height": 844}, True)]
+LANGS = ["fr", "de", "en"]
+# --only=desk:en runs one view in one language (a quick check while working); no argument runs all six
+for a in sys.argv[3:]:
+    if a.startswith("--only="):
+        v, l = a.split("=", 1)[1].split(":")
+        VIEWS = [x for x in VIEWS if x[0] == v]
+        LANGS = [l]
 TITLES = {"fr": "Forme limite", "de": "Grenzform", "en": "Limit shape"}
 
 with sync_playwright() as p:
     browser = p.chromium.launch()
     for view, size, mobile in VIEWS:
-        for lang in ["fr", "de", "en"]:
+        for lang in LANGS:
             ctx = browser.new_context(viewport=size, is_mobile=mobile, has_touch=mobile, bypass_csp=True)  # lets the test poll state; the page itself keeps its policy
             ctx.add_init_script(f"try {{ localStorage.setItem('fc-lang', '{lang}'); }} catch (e) {{}}")
             pg = ctx.new_page()
@@ -228,7 +235,7 @@ with sync_playwright() as p:
             check(pg.is_visible("#fence-tag") and pg.evaluate("i18n.t('ls.fenceName')") in name, f"{tag}: at n = 11 the stage names the greedy fence: {name!r}")
             pg.evaluate("limitLab.setN(9)")
             pg.wait_for_function("limitLab.state().n === 9 && !limitLab.busy()")
-            # The loop's accessible name says polygon at 9 and loop at 4; the canvas is not blank; the full loupe stretches the gap to 0.6.
+            # The stage's accessible name says greedy polygon at 9 and optimal polygon at 4; the canvas is not blank; the full loupe stretches the gap to 0.6.
             check(pg.get_attribute("#loop", "aria-label") == pg.evaluate("i18n.t('ls.fence')"), f"{tag}: the loop's name at n = 9 names the polygon")
             check(pg.get_attribute("#gap-tok", "data-lab-tip") == pg.evaluate("i18n.t('ls.gapPoly')"), f"{tag}: the gap says polygon at n = 9")
             lit = pg.evaluate("(() => { const c = document.getElementById('loop'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let k = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) k++; return k; })()")
@@ -308,6 +315,168 @@ with sync_playwright() as p:
             pg.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2) if not mobile else pg.tap("#pieces", position={"x": box["width"] / 2, "y": box["height"] / 2})
             check(pg.evaluate("limitLab.state().sel") >= 0, f"{tag}: a tap on a piece chooses it")
 
+            # ---- the pieces as the fence places them: each feature of the stage and of the tiles fails here when it breaks ----
+            pg.evaluate("limitLab.setN(5)")
+            pg.wait_for_function("limitLab.state().n === 5 && limitLab.state().tiles && !limitLab.busy()")
+            pg.evaluate("limitLab.setLoupe(0)")
+            hexrgb = lambda h: [int(h[i:i + 2], 16) for i in (1, 3, 5)]
+            # How opaque a side is at the fraction f of its length: the most opaque pixel of its own colour in a 5 x 5 window (the dashed
+            # circle and a thin interior fill, of other colours, may lie beneath it; the edge of a stroke is lighter than its middle).
+            stage_alpha = """(([i, f, rgb]) => { const c = document.getElementById('loop'), r = c.getBoundingClientRect(), d = c.width / r.width, p = limitLab.sideSpot(i, f);
+              const px = Math.round((p[0] - r.left) * d), py = Math.round((p[1] - r.top) * d), a = c.getContext('2d').getImageData(px - 2, py - 2, 5, 5).data;
+              let best = 0; for (let j = 0; j < a.length; j += 4)
+                if (Math.abs(a[j] - rgb[0]) + Math.abs(a[j + 1] - rgb[1]) + Math.abs(a[j + 2] - rgb[2]) <= 45) best = Math.max(best, a[j + 3]);
+              return best; })"""
+            alphas = lambda i, rgb: [pg.evaluate(stage_alpha, [i, f, rgb]) for f in (0.5, 0.3, 0.7)]
+            ring_hits = """((i) => { const c = document.getElementById('loop'), r = c.getBoundingClientRect(), d = c.width / r.width, p = limitLab.sideSpot(i);
+              const px = (p[0] - r.left) * d, py = (p[1] - r.top) * d, g = c.getContext('2d'); let k = 0;
+              for (let a = 0; a < 360; a += 15) { const x = Math.round(px + 6 * d * Math.cos(a * Math.PI / 180)), y = Math.round(py + 6 * d * Math.sin(a * Math.PI / 180));
+                const q = g.getImageData(x - 1, y - 1, 3, 3).data;
+                for (let j = 0; j < q.length; j += 4) if (q[j] > 220 && q[j + 1] > 60 && q[j + 1] < 140 && q[j + 2] > 140 && q[j + 2] < 215 && q[j + 3] > 120) { k++; break; } }
+              return k; })"""
+            pcs = pg.evaluate("[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => limitLab.pieceAt(i))")
+            # each side wears its own piece's colour; the corner pieces, and only they, wear a ring on the polygon
+            off = [i for i, q in enumerate(pcs) if max(alphas(i, hexrgb(q["color"]))) < 235]
+            check(not off, f"{tag}: n = 5: each side of the polygon wears its piece's colour, fully opaque {off}")
+            rings = [pg.evaluate(ring_hits, i) for i in range(12)]
+            check(all((rings[i] >= 12) == bool(pcs[i]["corner"]) for i in range(12)) and sum(1 for q in pcs if q["corner"]) == 4, f"{tag}: n = 5: the four corner pieces wear a ring, no other piece does: {rings}")
+            # a chosen piece is white, the other sides are dimmed (half as bright)
+            pg.evaluate("limitLab.pick(4)")
+            dim = []
+            for i, q in enumerate(pcs):
+                al = alphas(i, [255, 255, 255] if i == 4 else hexrgb(q["color"]))
+                if i == 4: ok_i = max(al) >= 240       # lit in white, fully opaque
+                else: ok_i = 100 <= min(al) <= 165 and max(al) < 215   # dimmed to half, still there (two strokes may overlap at one of the places)
+                if not ok_i: dim.append((i, al))
+            check(not dim, f"{tag}: n = 5: the chosen piece is white and the other sides are dimmed {dim[:3]}")
+            pg.evaluate("limitLab.pick(4)")
+            # each tile's arrow is the polygon's arrow of that piece, and the attachment ticks lie along their edges
+            wrong = [i for i, q in enumerate(pcs) if pg.evaluate(f"limitLab.arrowAt({i})") != [q["pair"][1][0] - q["pair"][0][0], -(q["pair"][1][1] - q["pair"][0][1])]]
+            check(not wrong, f"{tag}: n = 5: each tile's arrow points where its side of the polygon points {wrong}")
+            white = """(([x, y, r]) => { const c = document.getElementById('pieces'), g = c.getContext('2d'), a = g.getImageData(Math.round(x - r), Math.round(y - r), 2 * r + 1, 2 * r + 1).data;
+              for (let j = 0; j < a.length; j += 4) if (a[j] > 235 && a[j + 1] > 235 && a[j + 2] > 235 && a[j + 3] > 200) return true; return false; })"""
+            bad = []
+            for i in range(12):
+                ts = pg.evaluate(f"limitLab.tickSpots({i})")
+                dpr = pg.evaluate("document.getElementById('pieces').width / document.getElementById('pieces').getBoundingClientRect().width")
+                u, r = ts["u"], max(1, round(0.5 * dpr))
+                for x, y, vertical in ts["ends"]:
+                    along, across = 0.3 * u, max(3 * dpr, 0.3 * u)
+                    on = [(x, y - along), (x, y + along)] if vertical else [(x - along, y), (x + along, y)]
+                    offp = [(x - across, y), (x + across, y)] if vertical else [(x, y - across), (x, y + across)]
+                    # the arrow may cover one side of a tick (it leaves the edge into the piece), never both; nothing white lies across it
+                    if not any(pg.evaluate(white, [px, py, r]) for px, py in on) or any(pg.evaluate(white, [px, py, r]) for px, py in offp): bad.append(i)
+            check(not bad, f"{tag}: n = 5: the white ticks lie along the attachment edges of the pieces {sorted(set(bad))}")
+            # the four corner pieces' tiles have a pink border, the others do not (the pixel on the middle of the tile's left border)
+            border = """(([x, y, s, dpr]) => { const g = Math.max(1.5 * dpr, Math.min(3 * dpr, s * 0.05)), a = document.getElementById('pieces').getContext('2d').getImageData(Math.round(x + g) - 1, Math.round(y + s / 2), 3, 1).data;
+              let hit = false; for (let j = 0; j < a.length; j += 4) if (a[j] > 220 && a[j + 1] > 60 && a[j + 1] < 140 && a[j + 2] > 140 && a[j + 2] < 215 && a[j + 3] > 150) hit = true; return hit; })"""
+            dpr5 = pg.evaluate("document.getElementById('pieces').width / document.getElementById('pieces').getBoundingClientRect().width")
+            pinks = [pg.evaluate(border, pg.evaluate(f"limitLab.tickSpots({i}).slot") + [dpr5]) for i in range(12)]
+            check(pinks == [bool(q["corner"]) for q in pcs], f"{tag}: n = 5: the four corner pieces' tiles have the pink border, the others do not {pinks}")
+            pg.evaluate("limitLab.setN(4)")
+            pg.wait_for_function("limitLab.state().n === 4 && limitLab.state().tiles && !limitLab.busy()")
+            p4 = pg.evaluate("[0, 1, 2, 3, 4].map((i) => limitLab.pieceAt(i))")
+            check(sorted(q["color"] for q in p4) == sorted(["#ff5b7f", "#ff9d1e", "#2de2d5", "#7f83ff", "#ffd84a"]), f"{tag}: n = 4: the tetrominoes keep the hub's five colours {[q['color'] for q in p4]}")
+            check(sum(1 for q in p4 if q["corner"]) == 4, f"{tag}: n = 4: four corner pieces")
+            # the words: the stage's tag, the status after a size, the caption of a chosen piece
+            fixt = lambda v, w: ("−" if v < 0 else "") + (f"{abs(v):.1f}" if abs(v) % 1 else f"{int(abs(v))}")
+            def pairs(dx2, dy2):
+                x, y = [fixt(v / 2, lang).replace(".", "," if lang != "en" else ".") for v in (dx2, dy2)]
+                return {"en": f"({x}, {y})", "fr": f"({x} ; {y})", "de": f"({x}; {y})"}[lang]
+            squeeze = lambda t: re.sub(r"[  ]", " ", t)
+            tag4 = pg.get_attribute("#fence-tag", "data-lab-tip") or pg.get_attribute("#fence-tag", "title")
+            check(tag4 == pg.evaluate("i18n.t('ls.optTip')"), f"{tag}: n = 4: the tag's bubble describes the optimal fence")
+            st4 = squeeze(pg.inner_text("#status"))
+            check(re.search(r"\b9\b", st4) and not re.search(r"(?i)greedy|gloutonne|11[.,]5", st4), f"{tag}: n = 4: the status says optimal and 9 cells, not greedy: {st4!r}")
+            pg.evaluate("limitLab.setN(5)")
+            pg.wait_for_function("limitLab.state().n === 5 && limitLab.state().tiles && !limitLab.busy()")
+            st5 = squeeze(pg.inner_text("#status"))
+            check("128" in st5 and "141" not in st5 and not re.search(r"(?i)greedy|gloutonne", st5), f"{tag}: n = 5: the status says 128 cells, not the polygon's area, not greedy: {st5!r}")
+            for i in (0, 4, 7, 11):
+                pg.evaluate(f"limitLab.pick({i})")
+                a2 = pg.evaluate(f"limitLab.arrowAt({i})")
+                want = f"{i + 1}/12 · {pairs(a2[0], a2[1])}"
+                check(squeeze(pg.inner_text("#caption")) == squeeze(want), f"{tag}: n = 5: the caption of piece {i + 1} is its arrow as drawn, x then y: {pg.inner_text('#caption')!r} vs {want!r}")
+                want_status = pg.evaluate("(a) => i18n.t('ls.s.pick', a)", {"i": i + 1, "count": "12", "pair": pairs(a2[0], a2[1])})
+                check(squeeze(pg.inner_text("#status")) == squeeze(want_status), f"{tag}: n = 5: the status of piece {i + 1}: {pg.inner_text('#status')!r}")
+            pg.evaluate("limitLab.pick(11)")
+            # the keys: with nothing chosen, ArrowRight goes to the first piece and ArrowLeft to the last; the bubble goes at once
+            pg.focus("[data-lang-btn='en']")
+            pg.keyboard.press("Tab")   # by the keyboard from the language buttons into the box: its bubble explains it
+            check(pg.evaluate("document.activeElement.id") == "pieces" and pg.is_visible("#lab-tip.on") and pg.inner_text("#lab-tip") == pg.evaluate("i18n.t('ls.tipTiles')"), f"{tag}: Tab into the pieces box shows its bubble")
+            pg.keyboard.press("ArrowRight")
+            check(pg.evaluate("limitLab.state().sel") == 0 and not pg.is_visible("#lab-tip.on"), f"{tag}: ArrowRight with nothing chosen chooses the first piece, and the bubble is gone")
+            pg.keyboard.press("Escape")
+            pg.keyboard.press("ArrowLeft")
+            check(pg.evaluate("limitLab.state().sel") == 11, f"{tag}: ArrowLeft with nothing chosen chooses the last piece")
+            pg.keyboard.press("ArrowUp"); pg.keyboard.press("Escape")
+            check(pg.evaluate("limitLab.state().sel") == -1, f"{tag}: ArrowUp then Escape lets go")
+            # a slide over the tiles chooses the one under the finger (or the held mouse), release keeps it; a tap away from every tile lets go
+            a, b = pg.evaluate("limitLab.tileSpot(0)"), pg.evaluate("limitLab.tileSpot(3)")
+            if mobile:
+                cdp = ctx.new_cdp_session(pg)
+                touch = lambda kind, pt=None: cdp.send("Input.dispatchTouchEvent", {"type": kind, "touchPoints": [{"x": pt[0], "y": pt[1], "id": 9}] if pt else []})
+                touch("touchStart", a)
+                for k in range(1, 9):
+                    touch("touchMove", (a[0] + (b[0] - a[0]) * k / 8, a[1] + (b[1] - a[1]) * k / 8))
+                held = pg.evaluate("limitLab.state().sel")
+                touch("touchEnd")
+            else:
+                pg.mouse.move(a[0], a[1]); pg.mouse.down(); pg.mouse.move(b[0], b[1], steps=8)
+                held = pg.evaluate("limitLab.state().sel")
+                pg.mouse.up()
+            check(held == 3 and pg.evaluate("limitLab.state().sel") == 3, f"{tag}: a slide over the tiles chooses the one under it, and release keeps it ({held})")
+            fs = pg.evaluate("limitLab.freeSpot()")
+            if fs:
+                pg.evaluate("limitLab.pick(3)") if pg.evaluate("limitLab.state().sel") != 3 else None
+                pg.mouse.click(fs[0], fs[1]) if not mobile else pg.touchscreen.tap(fs[0], fs[1])
+                check(pg.evaluate("limitLab.state().sel") == -1, f"{tag}: a tap away from every tile lets go")
+            pg.evaluate("limitLab.setN(4)")
+            pg.wait_for_function("limitLab.state().n === 4 && limitLab.state().tiles && !limitLab.busy()")
+            # the gap card at n = 4 says the dip, not the bulge
+            pg.click(".math-chip[data-chip='gap']")
+            live = squeeze(pg.inner_text(".math-pop .live"))
+            check("−27" in live and "25" not in live, f"{tag}: n = 4: the gap card reads the largest gap, the 27.1 % dip: {live!r}")
+            pg.click(".math-pop .math-close")
+            # the box flips between tiles and kinds when it becomes small: what was chosen is let go and the texts say so
+            home = pg.viewport_size
+            pg.evaluate("limitLab.setN(6)")
+            pg.wait_for_function("limitLab.state().n === 6 && limitLab.state().tiles && !limitLab.busy()")
+            pg.evaluate("limitLab.pick(3)")
+            pg.set_viewport_size({"width": 480, "height": 300})
+            pg.wait_for_function("!limitLab.state().tiles", timeout=5000)
+            st = pg.evaluate("limitLab.state()")
+            cap = squeeze(pg.inner_text("#caption"))
+            check(st["sel"] == -1 and st["selKind"] == -1 and "/" not in cap and squeeze(pg.inner_text("#status")) == squeeze(pg.evaluate("i18n.t('ls.s.noKind')")),
+                  f"{tag}: n = 6 in a small box: the piece is let go and the caption and the status say so ({cap!r}, {pg.inner_text('#status')!r})")
+            check(st["kinds"] == 9 and st["optimal"], f"{tag}: n = 6 in a small box: the 9 kinds of arrows of the optimal fence")
+            k = pg.evaluate("(() => { for (let i = 0; i < 9; i++) { const v = limitLab.kindAt(i); if (v[3]) return i; } return -1; })()")
+            pg.evaluate(f"limitLab.pickKind({k})")
+            want_corner = pg.evaluate("(a) => i18n.t('ls.s.cornerArrow', a)", {"pair": pairs(5, 5)})
+            check(squeeze(pg.inner_text("#status")) == squeeze(want_corner), f"{tag}: n = 6 in a small box: the corner kind is the corner pieces' arrow, one piece for each of the four corners: {pg.inner_text('#status')!r}")
+            pg.evaluate("limitLab.setN(5)")
+            pg.wait_for_function("limitLab.state().n === 5 && !limitLab.busy()")
+            small5 = False
+            for w_, h_ in ((420, 240), (380, 220), (340, 200), (300, 180)):
+                pg.set_viewport_size({"width": w_, "height": h_})
+                pg.wait_for_timeout(200)
+                if not pg.evaluate("limitLab.state().tiles"): small5 = True; break
+            check(small5, f"{tag}: n = 5 in a very small box shows the kinds of arrows")
+            if small5:
+                one = pg.evaluate("(() => { for (let i = 0; i < limitLab.state().kinds; i++) { const v = limitLab.kindAt(i); if (v[3] && v[2] !== 4) return i; } return -1; })()")
+                check(one >= 0, f"{tag}: n = 5: a corner kind that is the arrow of one piece only")
+                pg.evaluate(f"limitLab.pickKind({one})")
+                kd = pg.evaluate(f"limitLab.kindAt({one})")
+                want_kind = pg.evaluate("(a) => i18n.t('ls.s.kind', a)", {"pair": pairs(kd[0] * 2, kd[1] * 2), "m": "1", "k": "1"})
+                check(squeeze(pg.inner_text("#status")) == squeeze(want_kind), f"{tag}: n = 5: a corner arrow of one piece is told as any arrow: {pg.inner_text('#status')!r}")
+            pg.set_viewport_size(home)
+            pg.evaluate("limitLab.setN(6)")
+            pg.wait_for_function("limitLab.state().n === 6 && limitLab.state().tiles && !limitLab.busy()", timeout=5000)
+            cap = squeeze(pg.inner_text("#caption"))
+            check(pg.evaluate("limitLab.state().selKind") == -1 and "·" not in cap.replace(" · " + squeeze(pg.evaluate("i18n.t('ls.optName')")), ""), f"{tag}: n = 6 back in a large box: nothing stays chosen, the caption is the count: {cap!r}")
+            pg.evaluate("limitLab.setN(4)")
+            pg.wait_for_function("limitLab.state().n === 4 && limitLab.state().tiles && !limitLab.busy()")
+
             # Bubbles (hover only where there is a mouse).
             if not mobile:
                 pg.hover("#more")
@@ -360,6 +529,28 @@ with sync_playwright() as p:
             check(ow, f"{tag}: no horizontal overflow")
             check(not errors, f"{tag}: no console errors {errors[:2]}")
             ctx.close()
+    # The page keeps its Content-Security-Policy (no inline script, no eval): once more with the policy enforced, the sizes
+    # that matter and a piece chosen; the page's own state is polled with evaluate, which the policy does not touch.
+    ctx = browser.new_context(viewport={"width": 1400, "height": 900})
+    pg = ctx.new_page()
+    errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.on("console", lambda m: errs.append(m.text) if m.type in ("error", "warning") else None)
+    pg.goto(BASE, wait_until="networkidle")
+    def settled():
+        for _ in range(150):
+            if pg.evaluate("!!window.limitLab && !limitLab.busy()"): return True
+            pg.wait_for_timeout(100)
+        return False
+    check(settled(), "policy on: the lab opens")
+    for k in (4, 5, 6, 9, 500, 4):
+        pg.evaluate(f"limitLab.setN({k})")
+        check(settled() and pg.evaluate("limitLab.state().n") == k, f"policy on: n = {k}")
+        if k in (4, 5, 6):
+            pg.evaluate("limitLab.pick(2)")
+            check(pg.evaluate("limitLab.state().sel") == 2, f"policy on: a piece chosen at n = {k}")
+    check(not errs, f"policy on: no console error or warning {errs[:2]}")
+    ctx.close()
     browser.close()
 
 print(f"\nlimit-shape ui: {count - len(failures)}/{count} passed")

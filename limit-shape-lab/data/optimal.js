@@ -1,11 +1,10 @@
-/* Fence Challenge · limit-shape lab: the optimal fences of the tetrominoes, pentominoes and hexominoes (n = 4, 5, 6).
- * One fence for each n: all the free n-ominoes, each used once, enclosing the largest region that any fence of
- * them can (9, 128, 1597 cells; the paper proves it). Per piece: c = its cells in the fence, as [column, row from
- * the top]; i, o = the midpoints of its incoming and outgoing attachment edges, in doubled coordinates of the same
- * grid [2 x column, 2 x row]. The pieces are listed in the order of the reference polygon: sorted by direction from
- * the south, counterclockwise (as data/greedy.js); a piece's arrow is o - i, the polygon is the arrows end to end.
- * Generated from three letter grids; each fence was rebuilt from this data and checked against the paper's
- * Definition of the reference vector and its Lemma on the area decomposition (A = polygon + corrections). */
+/* Fence Challenge · limit-shape lab: an optimal fence of the tetrominoes, one of the pentominoes, one of the hexominoes (n = 4, 5, 6).
+ * Each uses all the free n-ominoes, once each, and encloses 9, 128, 1597 cells: the most that any fence of them encloses (the paper
+ * calls them optimal). Per piece: c = its cells in the fence, as [column, row from the top]; i, o = the midpoints of its incoming
+ * and outgoing attachment edges, in doubled coordinates of the same grid [2 x column, 2 x row]. The pieces are listed in the order
+ * of the reference polygon: sorted by direction from the south, counterclockwise (as data/greedy.js); a piece's arrow is o - i, the
+ * polygon is the arrows end to end. Generated from three letter grids; each fence was rebuilt from this data and checked against
+ * the paper's definition of the reference vector and its lemma on the area decomposition (A = polygon + corrections). */
 (function (root) {
   "use strict";
   var OPTIMAL = {

@@ -4,7 +4,7 @@
  * 8-connected, as the paper's Definition of a fence), the boundary of that region and the pieces along it, the attachment
  * edges, the reference vectors, the corrections, the rotations and the parity bits (the paper's two equations), and the
  * Lemma on the area decomposition, A = polygon + corrections, exactly. The multisets of arrows are the ones the paper prints
- * for the optimal pentomino and hexomino fences. COUNT, GAP below are regression constants of this pipeline, not the paper's. */
+ * for the optimal pentomino and hexomino fences. GAP below is a regression constant of this pipeline, not the paper's. */
 "use strict";
 const assert = require("assert");
 const S = require("../sampler.js");
@@ -233,7 +233,24 @@ for (const n of NS) {
     if (d * d + d2 * d2 === best) longest++;
   });
   eq(longest, { 4: 0, 5: 7, 6: 30 }[n], `n = ${n}: ${longest} of ${K} pieces take their longest arrow`);
+  // what the arrow card says: the four corner pieces never take their longest arrow (half-integral arrows are never the
+  // longest), and one straight piece in each fence gives its longest up too
+  const gaveUp = e.pieces.filter((p) => {
+    const set = new Set(p.c.map((c) => key(c[0], c[1]))), mids = [];
+    for (const [c, r] of p.c) for (const [dx, dy] of N4) if (!set.has(key(c + dx, r + dy))) mids.push([2 * c + 1 + dx, 2 * r + 1 + dy]);
+    let best = 0;
+    for (const a of mids) for (const b of mids) best = Math.max(best, (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2);
+    return (p.o[0] - p.i[0]) ** 2 + (p.o[1] - p.i[1]) ** 2 < best;
+  });
+  const isCorner = (p) => (p.o[0] - p.i[0]) % 2 !== 0;
+  ok(e.pieces.filter(isCorner).length === 4 && e.pieces.filter(isCorner).every((p) => gaveUp.includes(p)), `n = ${n}: the four corner pieces give up their longest arrow`);
+  eq(gaveUp.filter((p) => !isCorner(p)).length, 1, `n = ${n}: one straight piece gives up its longest arrow`);
 }
+
+// ---- 9b. the data as generated from the three fences: an edit of data/optimal.js is deliberate or it fails here ----
+const crypto = require("crypto");
+const digest = crypto.createHash("sha256").update(JSON.stringify(OPT)).digest("hex");
+eq(digest, "f5171c2cc889582e2a4d96a758f0e63ddb0d1c2c220bc44459873f83f1118edc", "the shipped fences are the ones this test was written for");
 
 // ---- 10. what the paper prints about these fences ----
 function kinds(e) {

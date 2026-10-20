@@ -42,13 +42,13 @@ The labs, one per result:
   vector and sorting the vectors by direction shows the idea behind the
   proof.
 - **Limit-shape lab** ([limit-shape-lab/](limit-shape-lab/)): the reference
-  polygons of the optimal fences (4 to 6 cells) and of the greedy fences (7 to
-  15 cells) stay within 27.1 % of a circle at 4 cells, 10.0 % at 6, 8.7 % at 7
-  and 4.5 % at 15; at 500 cells, the longest arrows of 13.5 million random
-  500-ominoes, sorted into a loop, stay within 0.42 %. Step the size up to 500
-  cells, tap a piece or an arrow to see where it lies on the polygon, and look
-  through the loupe at where the polygon leaves the circle. A link can open the
-  lab on a size, for example `limit-shape-lab/?n=11`.
+  polygon of an optimal fence (4 to 6 cells) and of the greedy fences (7 to 15
+  cells) has a largest gap to a circle of 27.1 % at 4 cells, 10.0 % at 6,
+  8.7 % at 7 and 4.5 % at 15; at 500 cells, the longest arrows of 13.5 million
+  random 500-ominoes, sorted into a loop, stay within 0.42 %. Step the size up
+  to 500 cells, tap a piece or an arrow to see where it lies on the polygon,
+  and look through the loupe at where the polygon leaves the circle. A link can
+  open the lab on a size, for example `limit-shape-lab/?n=11`.
 - **Pentomino DP lab** ([pentomino-dp-lab/](pentomino-dp-lab/)): with the 12
   pentominoes, the order of the pieces decides the area: every order reaches
   at least 111, the best reach 128. Choose pieces and an order, watch the
