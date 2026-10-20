@@ -158,6 +158,8 @@
     syncSource();
     if (openChip) window.mathChip.refresh();
     status(k === GIANT ? t("ls.s.giant") : t("ls.s.n", { n: k, count: fmtNum(pieceCount(), 0), g: fmtPct(maxGap()) }));
+    // The pill and the gap change width with n: centre them again.
+    centreReadout();
   }
   function orderPieces(k, raw) {
     if (k !== 4) return raw.map((p, i) => Object.assign({}, p, { color: COLORS[i % COLORS.length] }));
@@ -812,7 +814,7 @@
   syncLoupe();
   // A link may open the lab on a size of its own: .../limit-shape-lab/?n=11
   const asked = +new URLSearchParams(location.search).get("n");
-  setN(STEPS.includes(asked) ? asked : 4).then(centreReadout);
+  setN(STEPS.includes(asked) ? asked : 4);
 
   // For tests and figure export.
   window.limitLab = {

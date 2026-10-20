@@ -45,7 +45,7 @@ body {
   gap: 8px 14px;
   padding: max(8px, env(safe-area-inset-top)) 14px max(8px, env(safe-area-inset-bottom));
 }
-.readout { grid-area: read; display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
+.readout { grid-area: read; display: flex; flex: none; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
 .topnav { grid-area: nav; display: flex; align-items: center; gap: 8px; }
 .langSel { grid-area: lang; align-self: center; justify-self: end; }
 .dock { grid-area: dock; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -57,6 +57,17 @@ body {
 .strip { grid-area: strip; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; }
 .bar { grid-area: bar; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .side-brand { flex: 1 1 auto; min-width: 0; }
+
+/* Between phones and wide screens the top row also takes the dock's empty corner, so that the
+ * steps and the gap keep their room (app.js still centres them over the loop where it can). */
+@media (min-width: 861px) and (max-width: 1100px) {
+  .lab {
+    grid-template-areas:
+      "read read read nav lang lang"
+      "dock stage stage stage stage strip"
+      "dock bar bar bar bar strip";
+  }
+}
 
 #loop { display: block; width: 100%; height: 100%; cursor: default; }
 .stage:has(#loop:focus-visible) { box-shadow: inset 0 0 0 2px var(--focus); }
@@ -194,7 +205,12 @@ body {
     gap: 6px 10px;
     padding: max(6px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
   }
-  .stage { aspect-ratio: 1 / 1; height: calc(100dvh - 12px); width: auto; max-height: none; }
+  /* The loop's square, sized both ways (WebKit gives an auto column no width from the aspect ratio
+   * alone), and never so wide that the controls on the right get less than 300 px. */
+  .stage {
+    --side: min(calc(100dvh - 12px), calc(100vw - 310px - max(10px, env(safe-area-inset-left)) - max(10px, env(safe-area-inset-right))));
+    width: var(--side); height: var(--side); max-height: none; align-self: center;
+  }
   .topMid { display: contents; }
   .topMid .readout { grid-area: read; }
   .gapBox { grid-area: gap; }
@@ -217,6 +233,22 @@ body {
   .capRow { flex-direction: column; width: 84px; flex: 0 0 auto; }
   .chipHost.inline { flex-direction: column; }
   .side-brand { font-size: 0.66rem; }
+}
+/* Narrow phones, and phones held sideways whose right column is narrow: the steps and the language
+ * switch draw closer, so that the switch never covers + (at 500 the pill is widest) and the gap's
+ * chip keeps clear of the home. */
+@media (max-width: 389px), (max-height: 520px) and (orientation: landscape) and (max-aspect-ratio: 41/20) {
+  .langSel { gap: 0; padding: 0 2px; }
+  .readout { gap: 2px; }
+  .lab-nav { gap: 4px; }
+}
+/* Narrower still: the controls of the two top rows also get a little smaller (touch boxes 32 to 40 px). */
+@media (max-width: 359px), (max-height: 520px) and (orientation: landscape) and (max-aspect-ratio: 41/20) {
+  .langSel button { min-width: 32px; }
+  .lab-nav { gap: 2px; }
+  .ctl.nav { width: 38px; }
+  .readout .ctl.step { width: 40px; }
+  .tok { padding: 0 8px; gap: 6px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .measure.bump { animation: none; }
