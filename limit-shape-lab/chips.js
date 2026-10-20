@@ -11,13 +11,14 @@
   const SEC_LIMIT = { en: "The limit shape", fr: "La forme limite", de: "Die Grenzform" };
   const SEC_LARGER = { en: "Larger fences", fr: "Les grandes barrières", de: "Größere Zäune" };
   const SEC_INTRO = { en: "Introduction", fr: "Introduction", de: "Einleitung" };
+  const SEC_GREEDY = { en: "Heuristic greedy solver", fr: "Le solveur glouton heuristique", de: "Der heuristische Greedy-Löser" };
   const R = i("R"), X = i("X"), Y = i("Y"), C = i("K"), P = i("P");
   const gapF = f("(|" + P + " " + MINUS + " " + C + "| " + MINUS + " " + R + ") / " + R);
   const rF = f(R + " = " + X + " + " + Y);
 
   const CHIPS = {
     count: {
-      label: "sec:introduction, sec:larger-fences, tab:heur, eq:an-asymptot", lines: "97, 2389-2392, 2524-2549, 2590",
+      label: "sec:larger-fences, tab:heur, eq:an-asymptot", lines: "3189-3198, 3403-3430",
       section: SEC_LARGER,
       lead: {
         en: "The pieces of " + i("n") + " cells, counted up to turning and flipping.",
@@ -25,9 +26,9 @@
         de: "Die Teile aus " + i("n") + " Zellen, gezählt bis auf Drehung und Spiegelung.",
       },
       detail: {
-        en: "5, 12, 35, 108, 369 pieces for 4 to 8 cells; 1,285 for 9; 4,655 for 10. For 500 cells the paper estimates about " + f("2.0·10<sup>300</sup>") + ".",
-        fr: "5, 12, 35, 108, 369 pièces pour 4 à 8 cases" + NB + "; 1" + NB + "285 pour 9" + NB + "; 4" + NB + "655 pour 10. Pour 500 cases, l’article en estime environ " + f("2,0·10<sup>300</sup>") + ".",
-        de: "5, 12, 35, 108, 369 Teile für 4 bis 8 Zellen; 1.285 für 9; 4.655 für 10. Für 500 Zellen schätzt der Artikel etwa " + f("2,0·10<sup>300</sup>") + ".",
+        en: "5, 12, 35, 108, 369 pieces for 4 to 8 cells; 1,285 for 9; 4,655 for 10; 17,073 for 11; 63,600 for 12; 238,591 for 13; 901,971 for 14; 3,426,576 for 15. For 500 cells the paper estimates about " + f("2.0·10<sup>300</sup>") + ".",
+        fr: "5, 12, 35, 108, 369 pièces pour 4 à 8 cases" + NB + "; 1" + NB + "285 pour 9" + NB + "; 4" + NB + "655 pour 10" + NB + "; 17" + NB + "073 pour 11" + NB + "; 63" + NB + "600 pour 12" + NB + "; 238" + NB + "591 pour 13" + NB + "; 901" + NB + "971 pour 14" + NB + "; 3" + NB + "426" + NB + "576 pour 15. Pour 500 cases, l’article en estime environ " + f("2,0·10<sup>300</sup>") + ".",
+        de: "5, 12, 35, 108, 369 Teile für 4 bis 8 Zellen; 1.285 für 9; 4.655 für 10; 17.073 für 11; 63.600 für 12; 238.591 für 13; 901.971 für 14; 3.426.576 für 15. Für 500 Zellen schätzt der Artikel etwa " + f("2,0·10<sup>300</sup>") + ".",
       },
     },
     arrow: {
@@ -53,9 +54,9 @@
         de: "Die Schleife verwendet jedes Teil achtmal: die Pfeile nach Richtung sortiert, aneinandergelegt und achtmal kopiert.",
       },
       detail: {
-        en: "Shrunk by 8, so that each piece counts once, the loop gives a rough estimate of the largest fence. It ignores how the pieces really fit together: for 5 to 7 cells it lands above the true maximum, for 8 to 10 between the best fence found and the upper bound. A fence’s own reference polygon uses each piece once, in one of eight directions, with four corner pieces at 45°; for 9 cells its gap to the circle, in the paper, and the loop’s agree to within 0.04% of the radius. Below, the estimate next to the paper’s fences.",
-        fr: "Réduite d’un facteur 8, pour que chaque pièce compte une fois, la boucle donne une estimation grossière de la plus grande barrière. Elle ignore comment les pièces s’assemblent vraiment" + NB + ": de 5 à 7 cases, elle dépasse le vrai maximum" + NB + "; de 8 à 10, elle tombe entre la meilleure barrière trouvée et la borne supérieure. Le polygone de référence d’une barrière utilise chaque pièce une fois, dans l’une de huit directions, avec quatre pièces de coin à 45°" + NB + "; pour 9 cases, son écart au cercle, dans l’article, et celui de la boucle coïncident à 0,04" + NB + "% du rayon près. Ci-dessous, l’estimation à côté des barrières de l’article.",
-        de: "Um den Faktor 8 verkleinert, sodass jedes Teil einmal zählt, liefert die Schleife eine grobe Schätzung des größten Zauns. Sie ignoriert, wie die Teile wirklich zusammenpassen: Für 5 bis 7 Zellen liegt sie über dem wahren Maximum, für 8 bis 10 zwischen dem besten gefundenen Zaun und der oberen Schranke. Das Referenzpolygon eines Zauns verwendet jedes Teil einmal, in einer von acht Richtungen, mit vier Eckteilen bei 45°; für 9 Zellen stimmen seine Abweichung vom Kreis, im Artikel, und die der Schleife bis auf 0,04" + NBSP + "% des Radius überein. Unten die Schätzung neben den Zäunen des Artikels.",
+        en: "Shrunk by 8, so that each piece counts once, the loop gives a rough estimate of the largest fence. It ignores how the pieces really fit together: for 5 and 6 cells it lands above the true maximum. From 7 cells on, the lab draws the greedy fence’s own reference polygon instead, which uses each piece once, in one of eight directions, with four corner pieces at 45°. Below, the estimate next to the paper’s fences.",
+        fr: "Réduite d’un facteur 8, pour que chaque pièce compte une fois, la boucle donne une estimation grossière de la plus grande barrière. Elle ignore comment les pièces s’assemblent vraiment" + NB + ": pour 5 et 6 cases, elle dépasse le vrai maximum. À partir de 7 cases, le labo dessine plutôt le polygone de référence de la barrière gloutonne, qui utilise chaque pièce une fois, dans l’une de huit directions, avec quatre pièces de coin à 45°. Ci-dessous, l’estimation à côté des barrières de l’article.",
+        de: "Um den Faktor 8 verkleinert, sodass jedes Teil einmal zählt, liefert die Schleife eine grobe Schätzung des größten Zauns. Sie ignoriert, wie die Teile wirklich zusammenpassen: Für 5 und 6 Zellen liegt sie über dem wahren Maximum. Ab 7 Zellen zeichnet das Labor stattdessen das Referenzpolygon des Greedy-Zauns, das jedes Teil einmal verwendet, in einer von acht Richtungen, mit vier Eckteilen bei 45°. Unten die Schätzung neben den Zäunen des Artikels.",
       },
     },
     gap: {
@@ -70,6 +71,48 @@
         en: C + " is the centre of the loop, and " + X + ", " + Y + " are the coordinates where one eighth of the loop ends. The circle passes through the four points where the loop crosses the axes, where the gap is 0 by construction; its radius " + rF + " is the one the loop would have with evenly spread arrows. The gap says how far the loop is from the circle, relative to the radius: " + gapF + " for a point " + P + " of the loop. At 500 cells, on the paper’s curve, the loop bulges out by 0.42% at 45° and dips inside, by up to 0.10%, near the axes; the paper shows that a longest arrow is never exactly diagonal. At ×1 that is thinner than the line; the loupe stretches the gap, so that at ×40 the 0.42% looks like 17%.",
         fr: C + " est le centre de la boucle, et " + X + ", " + Y + " sont les coordonnées où finit un huitième de la boucle. Le cercle passe par les quatre points où la boucle croise les axes, où l’écart est nul par construction" + NB + "; son rayon " + rF + " est celui qu’aurait la boucle avec des flèches également réparties. L’écart dit à quelle distance la boucle est du cercle, rapportée au rayon" + NB + ": " + gapF + " pour un point " + P + " de la boucle. À 500 cases, sur la courbe de l’article, la boucle déborde de 0,42" + NB + "% à 45° et rentre à l’intérieur, jusqu’à 0,10" + NB + "%, près des axes" + NB + "; l’article montre qu’une plus longue flèche n’est jamais exactement diagonale. À ×1, c’est plus fin que le trait" + NB + "; la loupe étire l’écart, si bien qu’à ×40 les 0,42" + NB + "% ressemblent à 17" + NB + "%.",
         de: C + " ist der Mittelpunkt der Schleife, und " + X + ", " + Y + " sind die Koordinaten, an denen ein Achtel der Schleife endet. Der Kreis geht durch die vier Punkte, an denen die Schleife die Achsen schneidet und die Abweichung nach Konstruktion 0 ist; sein Radius " + rF + " ist der, den die Schleife bei gleichmäßig verteilten Pfeilen hätte. Die Abweichung gibt an, wie weit die Schleife vom Kreis entfernt ist, relativ zum Radius: " + gapF + " für einen Punkt " + P + " der Schleife. Bei 500 Zellen, auf der Kurve des Artikels, wölbt sich die Schleife bei 45° um 0,42" + NBSP + "% nach außen und liegt nahe den Achsen bis zu 0,10" + NBSP + "% innen; der Artikel zeigt, dass ein längster Pfeil nie genau diagonal ist. Bei ×1 ist das dünner als der Strich; die Lupe dehnt die Abweichung, sodass bei ×40 die 0,42" + NBSP + "% wie 17" + NBSP + "% aussehen.",
+      },
+    },
+    polygon: {
+      label: "sec:larger-fences, tab:heur, lem:area-decomposition, fig:large-ref-polygons", lines: "3297-3345, 3403-3430, 2108-2117, 3432-3437",
+      section: SEC_GREEDY,
+      lead: {
+        en: "The greedy fence uses every piece once, almost always with its longest arrow, turned or flipped so that the arrows close up; laid end to end by direction, they make this polygon.",
+        fr: "La barrière gloutonne utilise chaque pièce une fois, presque toujours avec sa plus longue flèche, tournée ou retournée pour que les flèches se referment" + NB + "; posées bout à bout par direction, elles font ce polygone.",
+        de: "Der Greedy-Zaun verwendet jedes Teil einmal, fast immer mit seinem längsten Pfeil, gedreht oder gespiegelt, sodass sich die Pfeile schließen; nach Richtung aneinandergelegt ergeben sie dieses Polygon.",
+      },
+      detail: {
+        en: "Four corner pieces, chosen among those whose diagonally opposite corners are (⌈" + i("n") + "/2⌉, ⌈" + i("n") + "/2⌉) apart, are set beforehand, at 45°, with the arrow (⌈" + i("n") + "/2⌉ " + MINUS + " ½, ⌈" + i("n") + "/2⌉ " + MINUS + " ½). The other arrows are dealt out longest first, each to whichever of the eight arcs keeps the sums as balanced as possible, and a few corrective swaps close the loop. When the parity asks for it, one L-shaped piece is used like a stick of " + i("n") + " " + MINUS + " 1 cells. The polygon is not eight copies of one sector: its eight sectors differ a little. The area of the fence is the polygon’s plus the corrections of the pieces, which are usually negative (the lemma on the area decomposition).",
+        fr: "Quatre pièces de coin, choisies parmi celles dont deux coins opposés en diagonale sont décalés de (⌈" + i("n") + "/2⌉, ⌈" + i("n") + "/2⌉), sont posées d’avance, à 45°, avec la flèche (⌈" + i("n") + "/2⌉ " + MINUS + " ½, ⌈" + i("n") + "/2⌉ " + MINUS + " ½). Les autres flèches sont distribuées de la plus longue à la plus courte, chacune dans celui des huit arcs qui garde les sommes aussi équilibrées que possible, et quelques échanges correctifs referment la boucle. Quand la parité l’exige, une pièce en L est utilisée comme un bâton de " + i("n") + " " + MINUS + " 1 cases. Le polygone n’est pas huit copies d’un même secteur" + NB + ": ses huit secteurs diffèrent un peu. L’aire de la barrière est celle du polygone plus les corrections des pièces, le plus souvent négatives (le lemme sur la décomposition de l’aire).",
+        de: "Vier Eckteile, ausgewählt unter denen, bei denen diagonal gegenüberliegende Ecken um (⌈" + i("n") + "/2⌉, ⌈" + i("n") + "/2⌉) versetzt sind, werden vorab bei 45° festgelegt, mit dem Pfeil (⌈" + i("n") + "/2⌉ " + MINUS + " ½, ⌈" + i("n") + "/2⌉ " + MINUS + " ½). Die übrigen Pfeile werden vom längsten an verteilt, jeder in denjenigen der acht Bögen, der die Summen möglichst ausgleicht, und einige korrigierende Vertauschungen schließen die Schleife. Verlangt die Parität es, wird ein L-förmiges Teil wie ein Stab aus " + i("n") + " " + MINUS + " 1 Zellen verwendet. Das Polygon besteht nicht aus acht Kopien eines Sektors: Seine acht Sektoren unterscheiden sich ein wenig. Die Fläche des Zauns ist die des Polygons plus die Korrekturen der Teile, die meist negativ sind (das Lemma zur Zerlegung der Fläche).",
+      },
+    },
+    arrowFence: {
+      label: "sec:larger-fences, def:reference-vector, sec:limit", lines: "3297-3310, 2071-2092, 3511-3523",
+      section: SEC_GREEDY,
+      lead: {
+        en: "Each piece gets one arrow: its longest, between the midpoints of two of its boundary edges.",
+        fr: "Chaque pièce reçoit une flèche" + NB + ": sa plus longue, entre les milieux de deux de ses arêtes de bord.",
+        de: "Jedes Teil bekommt einen Pfeil: seinen längsten, zwischen den Mittelpunkten zweier seiner Randkanten.",
+      },
+      detail: {
+        en: "The polygon keeps these arrows, turned or flipped to point anywhere between 0° and 360°. Here they are folded back between 0° and 45°: one dot per kind of arrow, bigger when more pieces share it. Apart from the four corner pieces, which take the diagonal arrow instead (in pink), and sometimes one more piece, every piece keeps its longest arrow. When several arrows tie for the longest, the greedy solver lets the piece’s correction decide.",
+        fr: "Le polygone garde ces flèches, tournées ou retournées pour pointer n’importe où entre 0° et 360°. Ici elles sont repliées entre 0° et 45°" + NB + ": un point par sorte de flèche, plus gros quand plus de pièces la partagent. À part les quatre pièces de coin, qui prennent la flèche diagonale à la place (en rose), et parfois une pièce de plus, chaque pièce garde sa plus longue flèche. Quand plusieurs flèches sont ex æquo, le solveur glouton laisse la correction de la pièce décider.",
+        de: "Das Polygon behält diese Pfeile, gedreht oder gespiegelt, sodass sie in alle Richtungen von 0° bis 360° zeigen. Hier sind sie wieder zwischen 0° und 45° gefaltet: ein Punkt je Pfeilart, größer, wenn mehr Teile diesen Pfeil teilen. Außer den vier Eckteilen, die stattdessen den diagonalen Pfeil nehmen (in Rosa), und manchmal einem weiteren Teil behält jedes Teil seinen längsten Pfeil. Sind mehrere Pfeile gleich lang, lässt der Greedy-Löser die Korrektur des Teils entscheiden.",
+      },
+    },
+    gapFence: {
+      label: "fig:deviation, fig:large-ref-polygons, sec:limit", lines: "3733-3743, 3799-3818, 3432-3437",
+      section: SEC_LIMIT,
+      lead: {
+        en: "The gap says how far the polygon is from a circle, relative to the circle’s radius.",
+        fr: "L’écart dit à quelle distance le polygone est d’un cercle, rapportée au rayon du cercle.",
+        de: "Die Abweichung gibt an, wie weit das Polygon von einem Kreis entfernt ist, relativ zum Radius des Kreises.",
+      },
+      detail: {
+        en: "The circle is the paper’s: its centre " + C + " is the middle of the polygon’s bounding box and its radius " + R + " is half the box’s height, so it touches the bottom and the top. The gap in a direction is " + gapF + " for the point " + P + " of the polygon in that direction: positive outside the circle, negative inside. Below, the largest gap over the whole polygon, and the range in the sector from south to south-east, the one the paper’s deviation figure shows. As " + i("n") + " grows the gap shrinks slowly, and its largest values stay near the four diagonals, where the corner pieces sit.",
+        fr: "Le cercle est celui de l’article" + NB + ": son centre " + C + " est le milieu de la boîte englobante du polygone et son rayon " + R + " est la moitié de la hauteur de la boîte, si bien qu’il touche le bas et le haut. L’écart dans une direction vaut " + gapF + " pour le point " + P + " du polygone dans cette direction" + NB + ": positif à l’extérieur du cercle, négatif à l’intérieur. Ci-dessous, le plus grand écart sur tout le polygone, et l’intervalle dans le secteur du sud au sud-est, celui que montre la figure de l’écart de l’article. Quand " + i("n") + " grandit, l’écart diminue lentement, et ses plus grandes valeurs restent près des quatre diagonales, là où se trouvent les pièces de coin.",
+        de: "Der Kreis ist der des Artikels: Sein Mittelpunkt " + C + " ist die Mitte des umschließenden Rechtecks des Polygons, und sein Radius " + R + " ist die halbe Höhe des Rechtecks, sodass er das Rechteck unten und oben berührt. Die Abweichung in einer Richtung ist " + gapF + " für den Punkt " + P + " des Polygons in dieser Richtung: positiv außerhalb des Kreises, negativ innerhalb. Unten die größte Abweichung über das ganze Polygon und der Bereich im Sektor von Süden bis Südosten, den die Abweichungsabbildung des Artikels zeigt. Wächst " + i("n") + ", sinkt die Abweichung langsam, und ihre größten Werte bleiben nahe den vier Diagonalen, wo die Eckteile sitzen.",
       },
     },
     sample: {

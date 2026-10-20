@@ -41,11 +41,13 @@ The labs, one per result:
   optimal one, and switch to its arrow view, where each piece becomes one
   vector and sorting the vectors by direction shows the idea behind the
   proof.
-- **Limit-shape lab** ([limit-shape-lab/](limit-shape-lab/)): at 500 cells,
-  the longest arrows of 13.5 million random 500-ominoes, sorted into a loop,
-  stay within 0.42 % of a circle. Give every piece its longest arrow, sort the
-  arrows into a loop, step the size up to 500 cells, and look through the
-  loupe at where the loop leaves the circle.
+- **Limit-shape lab** ([limit-shape-lab/](limit-shape-lab/)): the polygons of
+  the greedy fences, almost every piece with its longest arrow, stay within 8.7 % of a circle
+  at 7 cells and within 4.5 % at 15; at 500 cells, the longest arrows of 13.5
+  million random 500-ominoes, sorted into a loop, stay within 0.42 %. Step the
+  size up to 500 cells, tap an arrow to see where it lies on the polygon, and
+  look through the loupe at where the polygon leaves the circle. A link can open
+  the lab on a size, for example `limit-shape-lab/?n=11`.
 - **Pentomino DP lab** ([pentomino-dp-lab/](pentomino-dp-lab/)): with the 12
   pentominoes, the order of the pieces decides the area: every order reaches
   at least 111, the best reach 128. Choose pieces and an order, watch the
@@ -133,6 +135,7 @@ root, with the server running on port 8000 where a base address is asked:
 - unit tests: `node cube-lab/test/geometry.test.js`,
   `node hexomino-lab/test/fence-math.test.js`,
   `node limit-shape-lab/test/limit-math.test.js`,
+  `node limit-shape-lab/test/polygon.test.js`,
   `node pentomino-dp-lab/test/dp.test.js`
 - the labs in a browser: `python3 cube-lab/test/browser.py OUTDIR`,
   `python3 hexomino-lab/test/ui_check.py http://localhost:8000/ OUTDIR`,

@@ -28,7 +28,9 @@ STATES = {
                      ("reveal", "document.getElementById('reveal').click()", 9000),
                      ("arrows", "document.getElementById('mode-arrows').click()", 800)],
     "limit-shape-lab": [("idle", "", 0),
-                        ("n500", "for(let i=0;i<7;i++)document.getElementById('more').click()", 4500)],
+                        ("n9", "limitLab.setN(9)", 1500),
+                        ("n11-card", "limitLab.setN(11); setTimeout(()=>document.querySelector(\".math-chip[data-chip='polygon']\").click(), 500)", 2200),
+                        ("n500", "limitLab.setN(500)", 4500)],
     "pentomino-dp-lab": [("idle", "", 0),
                          ("worst", "document.getElementById('dp-worst').click()", 14000)],
 }
