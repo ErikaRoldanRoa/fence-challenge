@@ -2,9 +2,10 @@
 <script>
 // Sends the contest records the Fence Challenge queued on this phone (localStorage, same origin). No UI.
 (() => {
-  let busy = false, again = false;
+  let busy = false, again = false, closed = false;
   const read = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || 'null') || d; } catch (e) { return d; } };
   async function flush() {
+    if (closed) return;
     if (busy) { again = true; return; } busy = true; again = false;
     try {
       const ctx = read('fc-contest', null);
@@ -20,9 +21,14 @@
               body: JSON.stringify({ action: 'submitFence', workshop: ctx.workshop, token: ctx.token, device: ctx.device, name: ctx.name, team, board: r.board, area: r.area }) });
             const j = await res.json();
             ok = j.status === 'ok' && !j.queued;
+            // The contest is over (Thursday 19:30): nothing more is sent, the page is told once.
+            if (j.status === 'closed') { closed = true; try { parent.postMessage({ fcClosed: j.closes || true }, location.origin); } catch (e) {} break; }
+            // Where this record stands on its board among all players: the page celebrates (party already; trophy if it leads).
+            if (ok && typeof j.top === 'number') { try { parent.postMessage({ fcRank: { board: r.board, area: j.best, top: j.top, leader: !!j.leader, record: !!j.record } }, location.origin); } catch (e) {} }
           } catch (e) {}
           if (!ok) await new Promise(s => setTimeout(s, 1500 * (i + 1)));
         }
+        if (closed) { try { localStorage.setItem('fc-contest-queue', JSON.stringify(read('fc-contest-queue', []).filter(x => x.workshop !== r.workshop))); } catch (e) {} break; }
         if (ok) {
           const q = read('fc-contest-queue', []).filter(x => !(x.workshop === r.workshop && x.board === r.board && x.area <= r.area));
           try { localStorage.setItem('fc-contest-queue', JSON.stringify(q)); } catch (e) {}

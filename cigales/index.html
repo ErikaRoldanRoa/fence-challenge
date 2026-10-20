@@ -116,7 +116,7 @@ body.is-cirm main{max-width:560px;margin:0 auto;padding:0}
  <section style="--c:var(--green)">
   <h2>Le concours des clôtures</h2>
   <p class="lead" id="lead">Un concours en équipes : choisis ton pentomino, choisis un pseudo, puis joue. Change d'équipe quand tu veux.</p>
-  <div class="opens">🏁 Ouvert <b>du lundi 19 au jeudi 22 octobre</b> : chaque nouvelle clôture record compte, sur le téléphone et avec de vraies pièces.</div>
+  <div class="opens">🏁 Ouvert <b>du lundi 19 au jeudi 22 octobre, jusqu’à 19 h 30</b> : chaque nouvelle clôture record compte, sur le téléphone et avec de vraies pièces.</div>
   <form class="who" id="who" autocomplete="off">
    <label for="pseudo">Ton pseudo <small>(pas ton vrai nom) · username</small></label>
    <div class="row"><input id="pseudo" maxlength="20" placeholder="ton pseudo" autocomplete="nickname" enterkeyhint="go"></div>
@@ -137,7 +137,7 @@ body.is-cirm main{max-width:560px;margin:0 auto;padding:0}
  <div class="credit"><div class="me">Dr. Erika Roldán Roa</div>avec <b>Begoña Cuquejo</b> · La Performative, Genève
   <a class="web" href="https://erikaroldan.net">Découvrez mon travail : erikaroldan.net →</a></div>
 </main>
-<script src="teams.js?v=20261019g"></script>
+<script src="teams.js?v=20261020a"></script>
 <script>
 const C = window.CIGALES, KEY = C.group === 'cirm' ? 'cirm-team' : 'cigales-team', DEV = 'cigales-device';
 document.querySelector('.hcap .kicker').textContent = C.kicker;
@@ -245,8 +245,16 @@ if (C.group === 'cirm') {   // the CIRM special: one screen, no scrolling, no te
 if (C.group === 'cirm') {
   box.style.display = 'none'; me.style.display = 'none';
 }
+// Thursday 19:30: the contest is over, the server takes no more records; the page says so and plays no more.
+if (C.over()) {
+  const op = document.querySelector('.opens');
+  if (op) op.innerHTML = '🏁 <b>Le concours est terminé</b> : merci d’avoir joué ! Les résultats sont sur l’écran.';
+  who.querySelectorAll('button, input').forEach(b => { b.disabled = true; b.setAttribute('aria-disabled', 'true'); });
+  box.style.pointerEvents = 'none';
+}
 who.addEventListener('submit', e => {
   e.preventDefault();
+  if (C.over()) return;
   const name = pseudo.value.replace(/[<>"'`\\]/g, '').replace(/\s+/g, ' ').trim().slice(0, 20);
   if (!name) { who.classList.remove('need'); void who.offsetWidth; who.classList.add('need'); pseudo.focus(); return; }
   try {
