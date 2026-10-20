@@ -541,7 +541,7 @@
     if (selKind >= 0) {
       const k = chain.vecs[selKind];
       status(t(k[3] ? "ls.s.cornerArrow" : "ls.s.kind", { pair: t("ls.pair", { x: fmtHalf(k[0]), y: fmtHalf(k[1]) }), m: fmtNum(k[2], 0), k: G.placesOf(fence, k[0], k[1]).length }));
-    }
+    } else status(t("ls.s.noKind"));
   }
   function syncPieceAccess() {
     const kinds = !!fence && n !== GIANT;
@@ -623,7 +623,7 @@
     sel = sel === i ? -1 : i;
     drawPieces();
     drawLoop(true);
-    if (sel >= 0) status(t("ls.s.pick", { i: sel + 1 }));
+    status(sel >= 0 ? t("ls.s.pick", { i: sel + 1 }) : t("ls.s.noPiece"));
   }
   pc.addEventListener("click", (e) => {
     const r = pc.getBoundingClientRect(), dpr = pc.width / r.width;
@@ -717,10 +717,15 @@
   $("fewer").addEventListener("click", () => step(-1));
   $("more").addEventListener("click", () => step(1));
   document.addEventListener("keydown", (e) => {
-    if (e.target.closest && e.target.closest("input, textarea")) return;
+    // Browser shortcuts keep their keys (Ctrl or Cmd with + and − zoom); the loupe's slider has no use for + − [ ].
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target.closest && e.target.closest("input:not([type=range]), textarea")) return;
     if (e.key === "+" || e.key === "=") step(1);
     else if (e.key === "-" || e.key === "_") step(-1);
-    else if (e.key === "[" || e.key === "]") setLoupe(Math.max(0, Math.min(100, loupeV + (e.key === "]" ? 10 : -10))));
+    else if (e.key === "[" || e.key === "]") {
+      setLoupe(Math.max(0, Math.min(100, loupeV + (e.key === "]" ? 10 : -10))));
+      status(t("ls.s.loupe", { k: loupeShown() }));
+    }
   });
   function status(s) { $("status").textContent = s; }
 
