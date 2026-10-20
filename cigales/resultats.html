@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="fr" translate="no" class="notranslate">
+<head>
+<meta charset="utf-8"><meta name="google" content="notranslate">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Les résultats · Enchivas</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../fonts/manrope.css?v=20261015a">
+<style>
+/* The scores of the contest, as one sheet. It is laid out in rem on a sheet of 120 rem by 84.86 rem, the proportions of an A3
+   landscape page (420 mm by 297 mm, 1 rem = 3.5 mm): on a screen the sheet fills the window, on paper it is the page. White and light,
+   so that it prints with little ink; the same data as the big screen (ecran.html), read from the same server. */
+:root{--ink:#14202b;--muted:#586878;--line:#d5dde5;--soft:#f3f6f9;--gold:#9a6b00;--c1:#c0149a;--c2:#17913a;--c3:#0b88a6}
+*{box-sizing:border-box}
+html{font-size:min(calc(100vw / 120), calc(100vh / 84.86))}
+html,body{margin:0}
+body{background:#e8edf2;color:var(--ink);font-family:Manrope,"Avenir Next","Segoe UI",sans-serif;font-size:1.5rem;line-height:1.25;
+ -webkit-print-color-adjust:exact;print-color-adjust:exact}
+#sheet{width:120rem;height:84.86rem;margin:0 auto;background:#fff;padding:3.2rem 3.6rem 2.6rem;display:grid;grid-template-rows:auto minmax(0,1fr) 9.6rem;gap:2rem;overflow:hidden}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:3rem;border-bottom:.35rem solid var(--ink);padding-bottom:1.3rem}
+.kicker{color:var(--gold);font-weight:800;letter-spacing:.2em;text-transform:uppercase;font-size:1.5rem}
+h1{margin:.3rem 0 0;font-size:5.4rem;line-height:1;font-weight:800;letter-spacing:.01em;white-space:nowrap}
+.sub{font-weight:700;color:var(--muted);font-size:1.8rem;margin-top:.7rem}
+.right{text-align:right}
+.prov{display:inline-block;white-space:nowrap;font-weight:800;font-size:2.5rem;text-transform:uppercase;letter-spacing:.08em;border:.3rem solid var(--ink);padding:.25rem 1.3rem;border-radius:1rem}
+.final .prov{background:var(--ink);color:#fff}
+.stamp{margin-top:.7rem;font-weight:700;font-size:1.6rem}
+.open{color:var(--muted);font-weight:700;font-size:1.5rem}
+main{display:grid;grid-template-columns:51rem 1fr;gap:2.6rem;min-height:0}
+h2{margin:0;font-size:2.4rem;font-weight:800;letter-spacing:.02em}
+.note{color:var(--muted);font-size:1.25rem;font-weight:600;margin:.3rem 0 1rem;line-height:1.3}
+/* the teams */
+#teams{min-height:0}
+.trow{display:grid;grid-template-columns:2.6rem 3.8rem minmax(0,1fr) 5rem 4.6rem 3.6rem 3.6rem 2.6rem 2.6rem 2.6rem;align-items:center;column-gap:.5rem;
+ height:3.4rem;border-bottom:.1rem solid var(--line)}
+.trow.head{height:2.6rem;border-bottom:.25rem solid var(--ink);color:var(--muted);font-size:1.2rem;font-weight:800;text-align:right;letter-spacing:.02em}
+.trow.head span:nth-child(-n+4){text-align:left}
+.trow .rk{font-weight:800;font-size:1.9rem;color:var(--muted)}
+.trow.top3 .rk{color:var(--ink)}
+.trow .bd{height:3.4rem;display:flex;align-items:center}.trow .bd svg{display:block;width:3.5rem;height:3.5rem}
+.trow .nm{font-weight:800;font-size:1.7rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trow .ph{font-size:1.25rem;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
+.trow .v{text-align:right;font-weight:700;font-size:1.55rem;font-variant-numeric:tabular-nums}
+.trow .v.big{font-weight:800;font-size:2.1rem}
+.trow .v.small{color:var(--muted);font-size:1.4rem}
+.trow.lead{background:var(--soft)}
+.trow .none{color:#aab5c0;font-weight:700}
+/* the six boards */
+#right{display:grid;grid-template-rows:1fr auto;gap:1.8rem;min-height:0}
+#boards{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;gap:1.6rem;min-height:0}
+.box{border:.25rem solid var(--c);border-radius:1.4rem;padding:1.1rem 1.4rem;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.box.big{border-style:dashed}
+.box h3{margin:0 0 .5rem;font-size:1.65rem;font-weight:800;color:var(--c);line-height:1.15}
+.box h3 small{display:block;font-size:1.15rem;color:var(--muted);font-weight:700;margin-top:.15rem}
+.box ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.box li{display:flex;align-items:center;gap:.8rem;height:2.6rem;border-bottom:.1rem solid var(--line);font-weight:700;font-size:1.5rem}
+.box li:first-child{background:var(--soft);border-radius:.6rem}
+.box li .p{width:1.7rem;color:var(--muted);font-weight:800;text-align:center}
+.box li .t{flex:none;width:2.1rem;height:2.1rem}.box li .t svg{display:block;width:100%;height:100%}
+.box li .n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.box li .a{font-weight:800;font-size:1.85rem;font-variant-numeric:tabular-nums}
+.box .empty{color:#97a3af;font-weight:700;font-size:1.35rem;padding-top:.6rem}
+/* the public of the CIRM */
+#pub{border-top:.25rem solid var(--ink);padding-top:1.1rem}
+#pub h2{font-size:1.9rem}
+#pubgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:1.6rem;margin-top:.5rem}
+#pubgrid .col{min-width:0}
+#pubgrid .col b{display:block;font-size:1.15rem;color:var(--c);font-weight:800;margin-bottom:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pubgrid .row{display:flex;gap:.7rem;font-weight:700;font-size:1.35rem;line-height:1.55}
+#pubgrid .row .p{width:1.4rem;color:var(--muted)}
+#pubgrid .row .n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pubgrid .row .a{font-weight:800}
+#pubgrid .none{color:#97a3af;font-weight:700;font-size:1.25rem}
+/* the foot */
+footer{display:flex;align-items:center;justify-content:space-between;gap:3rem;border-top:.35rem solid var(--ink);padding-top:1.2rem;overflow:hidden}
+.join{display:flex;align-items:center;gap:1.6rem;font-weight:800;font-size:1.6rem;line-height:1.25}
+.join svg{display:block;width:7.4rem;height:7.4rem;flex:none}
+.join .u{display:block;color:var(--c3);font-size:1.7rem}
+.how{flex:1;max-width:46rem;color:var(--muted);font-size:1.25rem;font-weight:600;line-height:1.35}
+.credit{flex:none;text-align:right;font-weight:700;font-size:1.35rem;color:var(--muted);white-space:nowrap}
+.credit .me{display:block;color:var(--ink);font-weight:800;font-size:2rem}
+.credit .web{display:block;color:var(--c3);font-weight:800;font-size:1.6rem;margin-top:.2rem}
+/* the page on paper: A3, landscape, the sheet is the page */
+@page{size:420mm 297mm;margin:0}
+@media print{
+  html{font-size:3.5mm}
+  html,body{width:420mm;height:297mm;background:#fff}
+  #sheet{margin:0;width:420mm;height:297mm}
+}
+/* the page on a phone: the same pieces, one under the other */
+@media (max-width:900px){
+  html{font-size:15px}
+  #sheet{width:auto;height:auto;padding:1.6rem 1.2rem;overflow:visible}
+  #sheet{grid-template-rows:auto}
+  header{flex-direction:column;align-items:flex-start;gap:1rem}.right{text-align:left}
+  h1{font-size:3.2rem;white-space:normal}
+  .prov{font-size:1.7rem;white-space:normal}
+  main{grid-template-columns:1fr}
+  .trow{grid-template-columns:2rem 3rem minmax(0,1fr) 3.8rem 3rem 3rem;height:3.4rem}
+  .trow > :nth-child(4),.trow > :nth-child(n+8){display:none}
+  .trow .pre{display:none}
+  .trow .nm{font-size:1.9rem}
+  .trow .v.big{font-size:1.8rem}
+  #boards{grid-template-columns:1fr}
+  .box{padding:1rem 1.2rem}
+  .trow.head{font-size:1.05rem}.trow.head span{white-space:nowrap}
+  .join{flex-wrap:wrap}.join .u{font-size:1.35rem;overflow-wrap:anywhere}
+  footer{height:auto}
+  #boards{grid-template-rows:none}
+  #right{grid-template-rows:none}
+  #pubgrid{grid-template-columns:1fr !important}
+  footer{flex-direction:column;align-items:flex-start;height:auto}.credit{text-align:left}
+}
+@media print and (max-width:900px){html{font-size:3.5mm}}
+</style>
+</head>
+<body>
+<div id="sheet">
+  <header>
+    <div><div class="kicker" id="kicker">Les Cigales × La Performative · CIRM</div><h1>Le concours des clôtures</h1><div class="sub">Fence Challenge · Enchivas</div></div>
+    <div class="right"><div class="prov" id="prov">Résultats provisoires</div><div class="stamp" id="stamp">&nbsp;</div><div class="open" id="open">Ouvert jusqu’au jeudi 22 octobre, 19 h 30</div></div>
+  </header>
+  <main>
+    <section id="teams"></section>
+    <div id="right">
+      <section id="boards"></section>
+      <section id="pub"></section>
+    </div>
+  </main>
+  <footer>
+    <div class="join"><div id="qr"></div><div>Scanne pour jouer, choisis ton pentomino<span class="u" id="short"></span></div></div>
+    <div class="how">Une clôture est faite de pièces posées côte à côte ; son aire est le nombre de cases qu’elle entoure. Seule la meilleure clôture de chaque téléphone compte ; à égalité, le premier arrivé passe devant.</div>
+    <div class="credit"><span class="me">Dr. Erika Roldán Roa</span>avec Begoña Cuquejo<br>La Performative, Genève<span class="web">erikaroldan.net</span></div>
+  </footer>
+</div>
+<script src="../vendor/qrcode-generator/qrcode.js"></script>
+<script src="teams.js?v=20261020a"></script>
+<script>
+const C = window.CIGALES;
+// The boards, as on the big screen: the hub's three missions, then the big printed boards read by the camera. Darker inks than the screen: this is paper.
+const BOARDS = [['sq', 'Mission I', 'carrés', '#c0149a', 'Mission I'], ['hex', 'Mission II', 'hexagones', '#17913a', 'Mission II'], ['tri', 'Mission III', 'triangles', '#0b88a6', 'Mission III'],
+  ['sq20', 'Grand damier', 'carrés 20 × 20 · pentominos', '#c0149a', 'Damier 20 × 20'], ['hex6', 'Grande grille', 'hexagones · tétrahexes', '#17913a', 'Grille hexagones'], ['tri10', 'Grande grille', 'triangles · hexiamants', '#0b88a6', 'Grille triangles']];
+const BIG = ['sq20', 'hex6', 'tri10'], SMALL = ['sq', 'hex', 'tri'];
+const esc = x => String(x).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+const first = (a, b) => b.area - a.area || String(a.at).localeCompare(String(b.at));       // the higher area; at a tie, whoever got there first
+const topN = (rows, board, n) => rows.filter(r => r.board === board).sort(first).slice(0, n);
+const bestBy = rows => { const m = {}; for (const r of rows) if (!m[r.board] || first(r, m[r.board]) < 0) m[r.board] = r; return m; };
+const API = C.api;
+async function get(q) { const r = await fetch(API + '?' + q, { cache: 'no-store' }); return r.json(); }
+
+function teamsHtml(fences, counts) {
+  const rows = C.teams.map(([id, name, color, cells]) => {
+    const mine = fences.filter(r => r.team === id), best = bestBy(mine), n = counts[id] || 0;
+    return { id, name, color, cells, best, n, score: best.sq20 ? best.sq20.area : 0, at: best.sq20 ? best.sq20.at : '' };
+  }).sort((a, b) => b.score - a.score || (a.score ? String(a.at).localeCompare(String(b.at)) : a.name.localeCompare(b.name)));
+  const cell = (r, b, cls) => `<span class="v ${cls}">${r.best[b] ? r.best[b].area : '<span class="none">·</span>'}</span>`;
+  const head = `<div class="trow head"><span></span><span></span><span>Équipe</span><span>Tél.</span><span>20 × 20</span><span>hex.</span><span>tri.</span><span>I</span><span>II</span><span>III</span></div>`;
+  const body = rows.map((r, i) => `<div class="trow${i === 0 && r.score ? ' lead' : ''}${i < 3 && r.score ? ' top3' : ''}"><span class="rk">${r.score ? i + 1 : '–'}</span><span class="bd">${C.bird(r.color, r.cells)}</span>`
+    + `<span class="nm">${esc(r.name).replace(/^Pentomino /, '<span class="pre">Pentomino </span>')}</span><span class="ph">${'●'.repeat(Math.min(r.n, C.max))}${'○'.repeat(Math.max(0, C.max - r.n))}</span>`
+    + cell(r, 'sq20', 'big') + cell(r, 'hex6', '') + cell(r, 'tri10', '') + cell(r, 'sq', 'small') + cell(r, 'hex', 'small') + cell(r, 'tri', 'small') + `</div>`).join('');
+  return `<h2>Les équipes</h2><p class="note">Classement provisoire : la meilleure aire des téléphones d’une équipe sur le grand damier 20 × 20. Les autres colonnes : sa meilleure clôture sur les deux autres grands plateaux et sur les missions I, II, III.</p>${head}${body}`;
+}
+function boardsHtml(fences) {
+  return BOARDS.map(([b, t, sub, c], i) => {
+    const list = topN(fences, b, 5);
+    const li = list.map((r, k) => { const tm = C.teams.find(x => x[0] === r.team);
+      return `<li><span class="p">${k + 1}</span><span class="t">${tm ? C.bird(tm[2], tm[3]) : ''}</span><span class="n">${esc(r.name || '·')}</span><span class="a">${r.area}</span></li>`; }).join('');
+    return `<div class="box${i > 2 ? ' big' : ''}" style="--c:${c}"><h3>${t}<small>${sub}</small></h3><ol>${li || ''}</ol>${li ? '' : '<div class="empty">à toi de jouer</div>'}</div>`;
+  }).join('');
+}
+function pubHtml(rows) {
+  const col = ([b, t, sub, c, short]) => { const l = topN(rows, b, 3);
+    return `<div class="col" style="--c:${c}"><b>${short}</b>${l.length ? l.map((r, k) => `<div class="row"><span class="p">${k + 1}</span><span class="n">${esc(r.name || '·')}</span><span class="a">${r.area}</span></div>`).join('') : '<div class="none">à toi de jouer</div>'}</div>`; };
+  const shown = BOARDS.filter(([b]) => BIG.includes(b) || rows.some(r => r.board === b));
+  return `<h2>Le public du CIRM</h2><div id="pubgrid" style="grid-template-columns:repeat(${shown.length},1fr)">${shown.map(col).join('')}</div>`;
+}
+function stamp(now) {
+  const d = now ? new Date(now) : new Date();
+  const f = new Intl.DateTimeFormat('fr-CH', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Zurich' }).format(d);
+  const h = new Intl.DateTimeFormat('fr-CH', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Zurich', hourCycle: 'h23' }).format(d).replace(':', ' h ');
+  return `mis à jour le ${f}, ${h}`;
+}
+let drawn = '';
+async function refresh() {
+  let f1, t1, f2;
+  try { [f1, t1, f2] = await Promise.all([get('action=getFences&workshop=cigales-2026'), get('action=getTeams&workshop=cigales-2026'), get('action=getFences&workshop=cirm-2026')]); }
+  catch (e) { document.getElementById('stamp').textContent = 'données momentanément indisponibles'; return; }
+  const fences = (f1 && f1.fences) || [], counts = (t1 && t1.teams) || {}, pub = (f2 && f2.fences) || [];
+  const html = [teamsHtml(fences, counts), boardsHtml(fences), pubHtml(pub)];
+  if (html.join('\u0000') !== drawn) {
+    drawn = html.join('\u0000');
+    document.getElementById('teams').innerHTML = html[0];
+    document.getElementById('boards').innerHTML = html[1];
+    document.getElementById('pub').innerHTML = html[2];
+  }
+  document.getElementById('stamp').textContent = stamp(f1 && f1.now);
+  const over = C.over();
+  document.getElementById('sheet').classList.toggle('final', over);
+  document.getElementById('prov').textContent = over ? 'Résultats finaux' : 'Résultats provisoires';
+  document.getElementById('open').textContent = over ? 'Le concours est terminé' : 'Ouvert jusqu’au jeudi 22 octobre, 19 h 30';
+  document.body.dataset.ready = '1';
+}
+// the way in: the contest page (the short address is the one the big screen shows)
+(function () {
+  const join = new URL('./', location.href).href;
+  try { const q = qrcode(0, 'M'); q.addData(join); q.make(); document.getElementById('qr').innerHTML = q.createSvgTag({ cellSize: 4, margin: 12, scalable: true }); } catch (e) {}
+  document.getElementById('short').textContent = 'erikaroldanroa.github.io/c';
+})();
+refresh(); setInterval(refresh, 20000);
+</script>
+</body>
+</html>

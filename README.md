@@ -152,6 +152,8 @@ root, with the server running on port 8000 where a base address is asked:
   `python3 test/labs_layout.py http://localhost:8000/`
 - the contest on a phone (the party, the trophy, the end; its network is faked):
   `python3 test/contest_check.py http://localhost:8000/ OUTDIR`
+- the results sheet of the contest (the ranking, the A3 page, the PDF; its network is faked):
+  `python3 test/results_check.py http://localhost:8000/ OUTDIR`
 - before a release, with `git fetch origin` done: `python3 test/cache_tags.py` (every asset changed since the live
   branch carries a new `?v=` tag in the pages that load it)
 
