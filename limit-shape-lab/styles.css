@@ -87,6 +87,9 @@ body {
 }
 .langSel button:hover { color: #fff; }
 .langSel button[aria-pressed="true"] { color: #07060a; }
+/* With a card open the switch stays above the scrim but shares the card's layer, which comes later:
+ * a card tall enough to reach the top right keeps its close button in front of the switch. */
+body:has(.math-pop:not([hidden])) .lab > .langSel { z-index: 10002; }
 
 /* ---------- the size of the pieces and the gap ---------- */
 .measure { cursor: default; }
