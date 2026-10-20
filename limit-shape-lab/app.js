@@ -159,7 +159,7 @@
     syncChips();
     syncSource();
     if (openChip) window.mathChip.refresh();
-    status(k === GIANT ? t("ls.s.giant") : t("ls.s.n", { n: k, count: fmtNum(pieceCount(), 0), g: fmtPct(maxGap()) }));
+    status(k === GIANT ? t("ls.s.giant") : t(fence ? "ls.s.fence" : "ls.s.n", { n: k, count: fmtNum(pieceCount(), 0), g: fmtPct(maxGap()) }));
     // The pill and the gap change width with n: centre them again.
     centreReadout();
   }
@@ -698,6 +698,7 @@
   pc.addEventListener("keydown", (e) => {
     if (fence && n !== GIANT) {
       const K = chain.vecs.length;
+      if (window.labTip && (e.key.startsWith("Arrow") || e.key === "Escape")) window.labTip.hide();
       if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); pickKind(selKind < 0 ? 0 : (selKind + 1) % K); }
       else if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); pickKind(selKind < 0 ? K - 1 : (selKind - 1 + K) % K); }
       else if (e.key === "Escape" && selKind >= 0) pickKind(selKind);
@@ -732,7 +733,8 @@
       c.innerHTML = DICE + `<span>${fmtNum(giantSamples, 0)}</span><span class="visually-hidden">${t("ls.samples", { s: fmtNum(giantSamples, 0) })}</span>`;
     } else if (fence && selKind >= 0) {
       // The chosen arrow and the number of pieces that share it.
-      c.textContent = kindText(chain.vecs[selKind]);
+      const k = chain.vecs[selKind];
+      c.textContent = t("ls.pair", { x: fmtHalf(k[0]), y: fmtHalf(k[1]) }) + " · " + t("ls.count", { count: fmtNum(k[2], 0) });
     } else c.textContent = t("ls.count", { count: fmtNum(pieceCount(), 0) });
     if (n === GIANT) c.setAttribute("data-lab-tip", t(REDUCED ? "ls.tipSamplesStill" : "ls.tipSamples")); else c.removeAttribute("data-lab-tip");
     $("gap-value").textContent = fmtPct(maxGap());
@@ -833,8 +835,8 @@
   }
   function live(id) {
     const tag = (s, k) => `<span class="live">${s} · ${t(k || "ls.live.computed")}</span>`;
-    const N0 = (x) => fmtNum(Math.round(x), 0);
-    if (id === "count" && n !== GIANT) return tag(`<i>n</i> = ${n}: ${N0(pieceCount())}`, fence ? "ls.live.paper" : null);
+    const N0 = (x) => fmtNum(Math.round(x), 0), colon = lang() === "fr" ? "\u202f: " : ": ";
+    if (id === "count" && n !== GIANT) return tag(`<i>n</i> = ${n}${colon}${N0(pieceCount())}`, fence ? "ls.live.paper" : null);
     if (id === "polygon" && fence) {
       // A = A_ref + the corrections (Lemma on the area decomposition): the polygon's area is computed
       // here from its arrows, the greedy fence and the bounds are the paper's, the corrections follow.
@@ -862,10 +864,10 @@
     if (id === "gap" && fence) {
       // The whole polygon, and the sector of the paper's deviation figure (the south to the south-east).
       const r = G.range(fence, 0, 45);
-      return `<span class="live"><span class="f"><i>n</i> = ${n}: ${fmtPct(maxGap(), 2)}</span> · ${t("ls.live.whole")} · ${t("ls.live.computed")}` +
+      return `<span class="live"><span class="f"><i>n</i> = ${n}${colon}${fmtPct(maxGap(), 2)}</span> · ${t("ls.live.whole")} · ${t("ls.live.computed")}` +
         `<br><span class="f">${fmtPct(r.min, 2)} … ${fmtPct(r.max, 2)}</span> · ${t("ls.live.sector")} · ${t("ls.live.computed")}</span>`;
     }
-    if (id === "gap") return tag(`<i>n</i> = ${n}: ${fmtPct(maxGap())}`, n === GIANT ? "ls.live.paper" : null);
+    if (id === "gap") return tag(`<i>n</i> = ${n}${colon}${fmtPct(maxGap())}`, n === GIANT ? "ls.live.paper" : null);
     if (id === "sample") return tag(t("ls.samples", { s: N0(giantSamples) }));
     if (id === "giant") return tag(`≈ ${fmtSci(AREA500_LOG10)}`, "ls.live.paper");
     return "";
@@ -886,7 +888,7 @@
   // ---------- language and size ----------
   document.querySelectorAll("[data-lang-btn]").forEach((b) => b.addEventListener("click", () => window.i18n.setLang(b.dataset.langBtn)));
   document.addEventListener("fc-langchange", () => {
-    syncControls(); caption(); syncChips(); syncSource(); syncLoupe(); syncPieceAccess();
+    syncControls(); caption(); syncChips(); syncSource(); syncLoupe(); syncPieceAccess(); drawPieces();
     centreReadout();
   });
   new ResizeObserver(() => { drawLoop(true); drawPieces(); centreReadout(); fitTag(); }).observe(loopCanvas);

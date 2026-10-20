@@ -67,7 +67,7 @@ for (const n of [9, 11, 13, 15]) {
   const mine = P.sectorCorners(poly[n]), paper = DATA.fences[n].corners;
   ok(mine.length === paper.length, `n = ${n}: ${mine.length} true corners in the sector (paper: ${paper.length})`);
   mine.forEach((c, i) => {
-    near(c[0], paper[i][0], 6e-5, `n = ${n}: corner ${i} angle`);
+    near(c[0], paper[i][0], 5.01e-5, `n = ${n}: corner ${i} angle`);
     near(c[1], paper[i][1], 2e-8, `n = ${n}: corner ${i} gap`);
   });
   // the whole printed curve, which the paper evaluates on rays through the vertices and on equal rays
@@ -224,7 +224,7 @@ for (const n of NS) {
   p.edges.forEach((e, i) => ok(sm.some((q) => Math.abs(q[0] - e.t0 % 360) < 1e-9), `n = ${n}: corner ${i} is a sample`));
 }
 
-// Inside a side the arrows keep the order of the vertex file, which regen_greedy_data.py checks vertex by vertex:
+// Inside a side the arrows keep the order of the vertex file, which the data's generator checks vertex by vertex:
 // pinned on n = 7's east side and n = 9's bottom and left sides, and on where n = 9's (6, 0) arrows lie.
 {
   const side = (n, f) => poly[n].edges.find((e) => f(e.groups[0]) && e.groups.length > 1);

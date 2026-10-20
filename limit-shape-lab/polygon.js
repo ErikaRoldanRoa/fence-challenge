@@ -149,7 +149,8 @@
       if (!map[k]) { map[k] = [x, y, 0, (a[0] % 2 !== 0 || a[1] % 2 !== 0)]; out.push(map[k]); }
       map[k][2] += a[2];
     });
-    return out.sort(function (a, b) { return a[1] * b[0] - b[1] * a[0]; });
+    // by direction, and along one direction by length: the arrow keys then walk along the floor, not back and forth
+    return out.sort(function (a, b) { return a[1] * b[0] - b[1] * a[0] || a[0] - b[0]; });
   }
 
   // Where the arrows of one folded kind lie on the polygon: segments [[x1, y1], [x2, y2]] in its coordinates.
