@@ -89,6 +89,32 @@ def pub_col(pg, title):
       return c ? [...c.querySelectorAll('.row')].map(r => [r.querySelector('.n').textContent, r.querySelector('.a').textContent]) : null; }""", title)
 
 
+SPILL_JS = """() => {
+      const out = [], sheet = document.getElementById('sheet').getBoundingClientRect();
+      const inside = (el, box, what) => { const r = el.getBoundingClientRect(), b = box.getBoundingClientRect();
+        if (r.bottom > b.bottom + 0.6 || r.right > b.right + 0.6 || r.left < b.left - 0.6 || r.top < b.top - 0.6) out.push(what + ' ' + (el.textContent || '').trim().slice(0, 28)); };
+      for (const el of document.querySelectorAll('header, #prizes, main, footer, #teams, #boards, #pub')) inside(el, document.getElementById('sheet'), 'section');
+      for (const r of document.querySelectorAll('#teams .trow')) inside(r, document.getElementById('teams'), 'team row');
+      for (const l of document.querySelectorAll('.box li, .box .empty')) inside(l, l.closest('.box'), 'board line');
+      for (const c of document.querySelectorAll('#pubgrid .col')) inside(c, document.getElementById('pub'), 'public column');
+      for (const c of document.querySelectorAll('.prize')) inside(c, document.getElementById('prizes'), 'prize');
+      const foot = document.querySelector('footer').getBoundingClientRect();
+      for (const e of document.querySelectorAll('footer *')) {
+        if (!e.getClientRects().length) continue;                                  // hidden (the way in, once the contest is over)
+        if (e.tagName.toLowerCase() === 'svg') inside(e, document.querySelector('footer'), 'footer picture');
+        for (const n of e.childNodes) if (n.nodeType === 3 && n.textContent.trim()) {                 // the glyphs themselves, not the line boxes around them
+          const r = document.createRange(); r.selectNodeContents(n); const b = r.getBoundingClientRect();
+          if (b.bottom > foot.bottom + 0.6 || b.top < foot.top - 0.6 || b.right > foot.right + 0.6 || b.left < foot.left - 0.6) out.push('footer text ' + n.textContent.trim().slice(0, 24));
+        }
+      }
+      for (const e of document.querySelectorAll('.prize *')) inside(e, e.closest('.prize'), 'prize part');
+      for (const e of document.querySelectorAll('#sheet *')) if (e.scrollWidth > e.clientWidth + 1 && getComputedStyle(e).overflow === 'visible' && e.children.length === 0 && e.clientWidth > 0 && !e.matches('svg *')) out.push('text wider than its box: ' + e.textContent.trim().slice(0, 28));
+      return out;
+    }"""
+CUT_JS = """() => [...document.querySelectorAll('#prizes .who, #prizes .rule, #prizes .how2, #teams .nm, #pubgrid .col b'), ...[...document.querySelectorAll('#prizes .prize')].filter(c => c.querySelector('.bd')).map(c => c.querySelector('.wn'))]
+      .filter(e => e.scrollWidth > e.clientWidth + 1).map(e => e.textContent.trim().slice(0, 30))"""
+
+
 with sync_playwright() as p:
     browser = p.chromium.launch()
 
@@ -154,22 +180,9 @@ with sync_playwright() as p:
     open_sheet(pg)
     pg.emulate_media(media="print")
     pg.wait_for_timeout(200)
-    spill = pg.evaluate("""() => {
-      const out = [], sheet = document.getElementById('sheet').getBoundingClientRect();
-      const inside = (el, box, what) => { const r = el.getBoundingClientRect(), b = box.getBoundingClientRect();
-        if (r.bottom > b.bottom + 0.6 || r.right > b.right + 0.6 || r.left < b.left - 0.6 || r.top < b.top - 0.6) out.push(what + ' ' + (el.textContent || '').trim().slice(0, 28)); };
-      for (const el of document.querySelectorAll('header, #prizes, main, footer, #teams, #boards, #pub')) inside(el, document.getElementById('sheet'), 'section');
-      for (const r of document.querySelectorAll('#teams .trow')) inside(r, document.getElementById('teams'), 'team row');
-      for (const l of document.querySelectorAll('.box li, .box .empty')) inside(l, l.closest('.box'), 'board line');
-      for (const c of document.querySelectorAll('#pubgrid .col')) inside(c, document.getElementById('pub'), 'public column');
-      for (const c of document.querySelectorAll('.prize')) inside(c, document.getElementById('prizes'), 'prize');
-      for (const e of document.querySelectorAll('.prize *')) inside(e, e.closest('.prize'), 'prize part');
-      for (const e of document.querySelectorAll('#sheet *')) if (e.scrollWidth > e.clientWidth + 1 && getComputedStyle(e).overflow === 'visible' && e.children.length === 0 && e.clientWidth > 0 && !e.matches('svg *')) out.push('text wider than its box: ' + e.textContent.trim().slice(0, 28));
-      return out;
-    }""")
+    spill = pg.evaluate(SPILL_JS)
     check(spill == [], f"on the A3 page nothing spills out of its box: {spill[:6]}")
-    cut = pg.evaluate("""() => [...document.querySelectorAll('#prizes .who, #prizes .rule, #prizes .how2, #teams .nm, #pubgrid .col b'), ...[...document.querySelectorAll('#prizes .prize')].filter(c => c.querySelector('.bd')).map(c => c.querySelector('.wn'))]
-      .filter(e => e.scrollWidth > e.clientWidth + 1).map(e => e.textContent.trim().slice(0, 30))""")
+    cut = pg.evaluate(CUT_JS)
     check(cut == [], f"and no title, rule or team name is cut short with an ellipsis: {cut[:6]}")
     check(abs(pg.evaluate("document.getElementById('sheet').getBoundingClientRect().width") - 1587.4) < 3, "the sheet is the width of an A3 landscape page")
     pdf = f"{OUT}/results.pdf"
@@ -190,6 +203,12 @@ with sync_playwright() as p:
     check(pg.locator("#sheet.final").count() == 1 and "finaux" in pg.inner_text("#prov").lower() and "terminé" in pg.inner_text("#open"), f"after Thursday 19:30 the sheet says final: {pg.inner_text('#prov')!r} · {pg.inner_text('#open')!r}")
     check(pg.inner_text("#teams .note").startswith("Classement final") and pg.eval_on_selector("#prizes .cup", "e => getComputedStyle(e).opacity") == "1", "the ranking is final and the cups are full")
     check(cards(pg)[1][2:] == ["Pentomino W", "208"], "and the prizes stand as they were")
+    check(pg.locator("#fbqr").count() == 1 and not pg.locator("footer .join:not(.fb)").is_visible(), "the foot offers the questionnaire instead of the way in, once the contest is over")
+    pg.emulate_media(media="print")
+    pg.wait_for_timeout(200)
+    spill = pg.evaluate(SPILL_JS)
+    cut = pg.evaluate(CUT_JS)
+    check(spill == [] and cut == [], f"and on the A3 page, in that state, nothing spills or is cut: {spill[:4]} {cut[:4]}")
     ctx.close()
 
     # ---- a public group that played a mission shows it ----

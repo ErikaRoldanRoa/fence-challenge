@@ -94,8 +94,9 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:3rem;bo
 .join{display:flex;align-items:center;gap:1.5rem;font-weight:800;font-size:1.5rem;line-height:1.25}
 .join svg{display:block;width:6.6rem;height:6.6rem;flex:none}
 .join .u{display:block;color:var(--c3);font-size:1.6rem}
-.how{flex:1;max-width:46rem;color:var(--muted);font-size:1.2rem;font-weight:600;line-height:1.35}
-.credit{flex:none;text-align:right;font-weight:700;font-size:1.3rem;color:var(--muted);white-space:nowrap}
+.join.fb .u{color:var(--gold)}
+.how{flex:1;min-width:0;max-width:46rem;color:var(--muted);font-size:1.2rem;font-weight:600;line-height:1.35}
+.credit{flex:none;text-align:right;font-weight:700;font-size:1.3rem;line-height:1.15;color:var(--muted);white-space:nowrap}
 .credit .me{display:block;color:var(--ink);font-weight:800;font-size:1.9rem}
 .credit .web{display:block;color:var(--c3);font-weight:800;font-size:1.5rem;margin-top:.1rem}
 /* the page on paper: A3, landscape, the sheet is the page */
@@ -158,7 +159,7 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:3rem;bo
   </footer>
 </div>
 <script src="../vendor/qrcode-generator/qrcode.js"></script>
-<script src="teams.js?v=20261020a"></script>
+<script src="teams.js?v=20261021a"></script>
 <script>
 const C = window.CIGALES;
 // The boards: the three big printed boards read by the camera (dashed), then the hub's three missions. Darker inks than the screen: this is paper.
@@ -265,7 +266,16 @@ async function refresh() {
   document.getElementById('sheet').classList.toggle('final', over);
   document.getElementById('prov').textContent = over ? 'Résultats finaux' : 'Résultats provisoires';
   document.getElementById('open').textContent = over ? 'Le concours est terminé' : 'Ouvert jusqu’au jeudi 22 octobre, 19 h 30';
+  feedbackQr();
   document.body.dataset.ready = '1';
+}
+// once the contest is over, the way in (to play) is of no use: the foot offers the questionnaire's QR code instead, from the moment teams.js offers it
+function feedbackQr() {
+  if (!C.over() || !C.feedbackOpen() || document.getElementById('fbqr')) return;
+  const j = document.querySelector('footer .join');
+  j.style.display = 'none';
+  j.insertAdjacentHTML('afterend', '<div class="join fb"><div id="fbqr"></div><div>Ton avis sur le concours<span class="u">5 questions, 1 minute, anonyme</span></div></div>');
+  try { const q = qrcode(0, 'M'); q.addData(C.feedbackUrl()); q.make(); document.getElementById('fbqr').innerHTML = q.createSvgTag({ cellSize: 4, margin: 12, scalable: true }); } catch (e) {}
 }
 // the way in: the contest page (the short address is the one the big screen shows)
 (function () {

@@ -8,6 +8,11 @@ window.CIGALES = {
   max: 5,                       // a pentomino has five squares: five phones a team, one square each
   ends: Date.parse('2026-10-22T19:30:00+02:00'),   // the contest ends on Thursday at 19:30, Zurich time (Erika, 20.10); the server refuses records from then on
   over() { return Date.now() >= this.ends; },
+  // The questionnaire of the contest (retours/, the adapted LES): its event id, and the moment from which these pages offer it: the workshop day, Thursday morning.
+  // Set `from` earlier or later here; nothing else changes. The public group (cirm) is never offered it.
+  feedback: { event: '2026-10-22-cirm-cigales-enchivas', from: Date.parse('2026-10-22T08:00:00+02:00') },
+  feedbackOpen() { return this.group !== 'cirm' && Date.now() >= this.feedback.from; },
+  feedbackUrl() { return new URL('../retours/?e=' + this.feedback.event, location.href).href; },
   // The team's pentomino; LIT squares (one per phone, in order) are filled and smile, the others wait as an outline.
   // LIT left out: every square lit (the phone's own pentomino, the download).
   bird(color, cells, lit) {

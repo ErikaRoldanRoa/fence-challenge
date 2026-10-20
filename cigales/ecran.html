@@ -34,6 +34,8 @@ h1{margin:0;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:
 footer{display:flex;align-items:center;justify-content:space-between;gap:2vw}
 .join{display:flex;align-items:center;gap:1.6vw;font-size:min(1.8vw,3.2vh);font-weight:700}
 .qr{background:#fff;padding:.8vw;border-radius:1vw;box-shadow:0 0 30px -6px var(--gold)}
+.join.fb span{color:var(--cyan);font-size:min(1.5vw,2.8vh);line-height:1.25}
+.credit{flex:none}
 .credit{color:var(--muted);font-size:1.2vw;text-align:right}
 .credit b{color:var(--text)}
 .credit .me{color:var(--text);font-weight:800;font-size:min(2.4vw,4.2vh);letter-spacing:.02em}
@@ -88,12 +90,21 @@ body.cirm header h1{font-size:min(3.6vw,6.4vh);letter-spacing:.08em;white-space:
 <section id="rank"></section>
 <footer><div class="join"><div class="qr" id="qr"></div><span>Scanne, choisis ton pentomino,<br>change quand tu veux</span></div>
 <div class="credit"><div class="me">Dr. Erika Roldán Roa</div><div>avec <b>Begoña Cuquejo</b> · La Performative, Genève</div><div class="web">erikaroldan.net</div></div></footer>
-<script src="teams.js?v=20261020a"></script>
+<script src="teams.js?v=20261021a"></script>
 <script>
 const C = window.CIGALES, board = document.getElementById('board');
 // Thursday 19:30: the contest is over; the screen keeps the final rankings and says so.
 function closing() { if (C.over()) { document.getElementById('opens').textContent = '🏁 le concours est terminé · résultats finaux'; document.body.classList.add('ranking', 'over'); } }
 closing(); setInterval(closing, 15000);
+// From the moment the contest offers its questionnaire (teams.js): its QR code beside the way in. The public group's screen never shows it.
+function feedback() {
+  if (!C.feedbackOpen() || document.getElementById('fbqr')) return;
+  if (C.over()) document.querySelector('footer .join').style.display = 'none';   // nobody plays any more: the way in is of no use
+  document.querySelector('footer .join').insertAdjacentHTML('afterend', '<div class="join fb"><div class="qr" id="fbqr"></div><span>Ton avis<br>sur le concours<br>1 minute</span></div>');
+  const s = Math.round(Math.min(innerWidth * 0.09, innerHeight * 0.17));
+  try { new QRCode(document.getElementById('fbqr'), { text: C.feedbackUrl(), width: s, height: s, colorDark: '#0d1117' }); } catch (e) {}
+}
+setTimeout(feedback, 0); setInterval(feedback, 15000);
 board.innerHTML = C.teams.map(([id, name, b, w, k]) => `<div class="t" id="t-${id}" style="--c:${b}"><div class="pic">${C.bird(b, w, 0)}</div><div class="name">${name}</div><div class="n">0 / ${C.max}</div></div>`).join('');
 const join = new URL('./' + C.query, location.href).href;
 document.querySelectorAll('.k2, header .k').forEach(e => { e.textContent = C.kicker; });
