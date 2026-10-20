@@ -167,6 +167,26 @@ with sync_playwright() as p:
         avc.scroll_into_view_if_needed(); pg.wait_for_timeout(300); bb = avc.bounding_box()
         pg.mouse.move(bb["x"] + bb["width"] / 2, bb["y"] + bb["height"] / 2); pg.wait_for_timeout(500)
         check(bubble() == pg.evaluate("'Erika Roldan' + i18n.t('mh.bio.ER')"), f"{eng}: an author's circle shows the name and the bio")
+        # The authors' colours: one colour a person, the same in every strip and every list; ten authors, ten colours; in the technical
+        # paper's own order they run once round the rainbow; the initials stay readable on their colour.
+        cols = pg.evaluate("""() => {
+          const rgb = (s) => s.match(/[\\d.]+/g).slice(0, 3).map(Number);
+          const lin = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+          const lum = (c) => 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2]);
+          const hue = (c) => { const [r, g, b] = c.map((x) => x / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+            if (!d) return 0; const h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return (h * 60 + 360) % 360; };
+          const out = [...document.querySelectorAll('.av')].map((e) => { const s = getComputedStyle(e), b = rgb(s.backgroundColor), t = rgb(s.color);
+            return { name: e.getAttribute('data-lab-tip-head'), bg: b.join(','), cr: (Math.max(lum(b), lum(t)) + 0.05) / (Math.min(lum(b), lum(t)) + 0.05) }; });
+          const order = [...document.querySelectorAll('#mP2 .faces .av')].slice(0, 10).map((e) => hue(rgb(getComputedStyle(e).backgroundColor)));
+          return { out, order };
+        }""")
+        by_name = {}
+        for a in cols["out"]: by_name.setdefault(a["name"], set()).add(a["bg"])
+        check(len(cols["out"]) >= 30 and len(by_name) == 10 and all(len(v) == 1 for v in by_name.values()), f"{eng}: a person has one colour in every strip and list ({len(cols['out'])} circles, {len(by_name)} people)")
+        check(len({next(iter(v)) for v in by_name.values()}) == 10, f"{eng}: ten authors, ten different colours")
+        check(min(a["cr"] for a in cols["out"]) >= 4.5, f"{eng}: the initials are readable on every colour (least contrast {min(a['cr'] for a in cols['out']):.2f})")
+        sh = [(h + 20) % 360 for h in cols["order"]]
+        check(len(sh) == 10 and all(x < y for x, y in zip(sh, sh[1:])) and sh[-1] - sh[0] > 250, f"{eng}: the technical paper's ten authors, in its order, run once round the rainbow {[round(h) for h in cols['order']]}")
         pg.mouse.move(2, 2); pg.evaluate("scrollTo(0, 0)"); pg.wait_for_timeout(300)
         # While one piece is lifted, every other piece still takes the pointer.
         missed = []

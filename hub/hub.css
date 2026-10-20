@@ -311,7 +311,7 @@ cite { font-style: italic; }
 .strip .stitle { font-family: Georgia, "Times New Roman", serif; font-weight: 700; color: #1b1a17; text-align: center; overflow-wrap: normal; hyphens: manual; }
 .strip .stitle .note { font-family: var(--mono); color: #6b6455; }
 .strip .rt-ico { color: #1b1a17; border-color: #1b1a17; }
-.strip .av { border-color: #f1ebdf; }
+.strip .av { border-color: #2a2923; }
 @media (hover: hover) { button.strip:hover, .strip.sheet2:hover { transform: translateY(-3px) rotate(-0.6deg); box-shadow: 0 16px 30px rgba(0, 0, 0, 0.55); } }
 .strip:active { transform: scale(0.99); }
 .strip:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -323,15 +323,17 @@ cite { font-style: italic; }
 .chev { flex: 0 0 auto; width: 18px; height: 18px; color: var(--muted2); }
 .faces { display: inline-flex; flex-wrap: wrap; padding-left: 6px; row-gap: 3px; }
 .strip .faces { max-width: 150px; }
+/* A person has one colour, the same in every strip and every list (a bijection). The ten authors of the technical paper,
+   in its order, run once round the rainbow, from red to magenta; the initials are ink on the colour. */
 .av {
-  --c: var(--pink);
+  --c: #c8ec3a;
   display: inline-grid; place-items: center; width: 30px; height: 30px; margin-left: -6px;
   border-radius: 999px; border: 2px solid #0d1117;
-  background: color-mix(in srgb, var(--c) 30%, #12141c); color: var(--c);
+  background: var(--c); color: #12141c;
   font: 800 10.5px/1 var(--mono); letter-spacing: 0.02em; cursor: default;
 }
-.av.a-pink { --c: var(--pink); } .av.a-lime { --c: var(--lime); } .av.a-cyan { --c: var(--cyan); }
-.av.a-purple { --c: var(--purple); } .av.a-amber { --c: var(--amber); }
+.av.a-al { --c: #ff5d62; } .av.a-mm { --c: #ff9f3f; } .av.a-hp { --c: #ffd24a; } .av.a-er { --c: #c8ec3a; } .av.a-gr { --c: #1fcf5b; }
+.av.a-mb { --c: #12c4b0; } .av.a-mn { --c: #38d9ff; } .av.a-mp { --c: #6fa8ff; } .av.a-dy { --c: #a778fb; } .av.a-ml { --c: #f742dd; }
 
 /* The row labels on the board are doors to their paper. */
 .rowdoor {
