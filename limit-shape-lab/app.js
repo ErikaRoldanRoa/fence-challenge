@@ -45,6 +45,7 @@
   // The random 500-ominoes behind the paper's loop.
   const PAPER500 = 13.5e6;
   const LOUPE_GAP = 0.6;   // the loupe never stretches the largest gap past this
+  const LOOP_FILL = 0.42;  // the loop's farthest point from the stage's centre, in parts of its shorter side
 
   let n = 4, pieces = [], chain = null, loupeV = 0, loupe = 1, sel = -1;
   let fence = null, selKind = -1, kindSpots = [];   // n = 7..15: the greedy polygon, the chosen kind of arrow, its dots
@@ -279,7 +280,7 @@
     let peak = 0;
     for (let i = 0; i < 720; i++) peak = Math.max(peak, loupe * shown[i]);
     if (fence) peak = Math.max(peak, loupe * fence.gap.max);   // the corners are sharper than 720 directions
-    const R = (Math.min(box.w, box.h) * 0.42) / (1 + Math.max(0, peak));
+    const R = (Math.min(box.w, box.h) * LOOP_FILL) / (1 + Math.max(0, peak));
     const at = (th, d) => {
       const r = R * (1 + loupe * d), a = th * Math.PI / 180;
       return [cx + r * Math.sin(a), cy + r * Math.cos(a)];
@@ -688,11 +689,31 @@
     $("gap-label").dataset.i18n = poly ? "ls.gapPoly" : "ls.gapLabel";
     $("gap-label").textContent = t(poly ? "ls.gapPoly" : "ls.gapLabel");
   }
-  // At 500 cells, the paper's sample behind the loop, in the corner of the stage.
+  // At 500 cells, the paper's sample behind the loop, in the corner of the stage; from 7 to 15, the greedy fence.
   function syncSource() {
     $("src-tag").hidden = n !== GIANT;
+    $("fence-tag").hidden = !fence || n === GIANT;
     $("src-tag").title = t(REDUCED ? "ls.srcStill" : "ls.src");
     $("src-count").textContent = t("ls.srcCount", { m: fmtNum(PAPER500 / 1e6, 1) });
+    fitTag();
+  }
+  // The fence's tag keeps its words where the polygon leaves them room; on a small stage, where the
+  // polygon would run under them, only its icon shows, and its name stays in the bubble and the
+  // accessible name. The test takes the roundest polygon (n = 15) at ×1 (the loupe only pulls a
+  // polygon away from the corner), so that the tag keeps one form from 7 to 15.
+  let roundest = null;
+  function fitTag() {
+    const tag = $("fence-tag");
+    tag.classList.remove("short");
+    if (tag.hidden) return;
+    if (!roundest) { const P = G.build(GREEDY[LAST_FENCE]); roundest = { max: P.gap.max, pts: G.samples(P, 0.5) }; }
+    const st = loopCanvas.getBoundingClientRect(), r = tag.getBoundingClientRect(), m = 4;
+    const cx = st.left + st.width / 2, cy = st.top + st.height / 2;
+    const R = Math.min(st.width, st.height) * LOOP_FILL / (1 + roundest.max);
+    tag.classList.toggle("short", roundest.pts.some(([th, g]) => {
+      const a = th * Math.PI / 180, x = cx + R * (1 + g) * Math.sin(a), y = cy + R * (1 + g) * Math.cos(a);
+      return x > r.left - m && x < r.right + m && y > r.top - m && y < r.bottom + m;
+    }));
   }
   function syncControls() {
     const i = STEPS.indexOf(n);
@@ -814,7 +835,7 @@
     syncControls(); caption(); syncChips(); syncSource(); syncLoupe(); syncPieceAccess();
     centreReadout();
   });
-  new ResizeObserver(() => { drawLoop(true); drawPieces(); centreReadout(); }).observe(loopCanvas);
+  new ResizeObserver(() => { drawLoop(true); drawPieces(); centreReadout(); fitTag(); }).observe(loopCanvas);
   new ResizeObserver(() => drawPieces()).observe(pc);
   window.addEventListener("resize", centreReadout);
 

@@ -118,6 +118,14 @@ body {
 .tok.srcTag[hidden] { display: none; }
 .srcTag strong { color: var(--text); }
 .srcIcon { width: 17px; height: 17px; flex: 0 0 auto; }
+/* From 7 to 15 cells the same corner names the greedy fence; on a small stage the polygon leaves
+ * the corner no room for words, and the icon stands alone (app.js, fitTag). */
+.tok.srcTag.short { aspect-ratio: 1; padding: 0; justify-content: center; }
+.srcTag.short strong { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* Phones: both tags a little smaller and nearer the corner, where the loop leaves more room. */
+@media (max-width: 860px), (max-height: 520px) and (orientation: landscape) {
+  .tok.srcTag { top: 8px; left: 8px; height: 28px; padding: 0 9px; gap: 5px; font-size: 12.5px; }
+}
 
 /* ---------- the pieces ---------- */
 .pieceBox {
