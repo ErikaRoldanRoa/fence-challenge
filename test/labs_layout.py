@@ -3,7 +3,9 @@
 For each lab, viewport and state: no horizontal scroll, every visible control
 is hit at its centre, no two controls overlap, an open math card stays inside
 the viewport and its own controls are reachable (the card is modal: the
-backdrop covers everything else on purpose).
+backdrop covers everything else on purpose). The limit-shape lab is also
+checked at its tightest sizes (EXTRA): a 320 px phone, a phone held sideways,
+and laptop widths where its top row is narrow.
 
 Usage: python3 test/labs_layout.py <base-url> [outdir] [--webkit] [--lab=NAME] [--quick]
 """
@@ -33,6 +35,11 @@ STATES = {
                         ("n500", "limitLab.setN(500)", 4500)],
     "pentomino-dp-lab": [("idle", "", 0),
                          ("worst", "document.getElementById('dp-worst').click()", 14000)],
+}
+# Extra viewports for one lab, in some of its states: (views, state names).
+EXTRA = {
+    "limit-shape-lab": ([(320, 640, True), (667, 375, True), (960, 600, False), (1100, 700, False), (1366, 768, False)],
+                        ("idle", "n11-card", "n500")),
 }
 
 CHECK = r"""
@@ -93,9 +100,12 @@ def main():
         eng = p.webkit if WEBKIT else p.chromium
         b = eng.launch(args=[] if WEBKIT else ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"])
         views = [(390, 664, True)] if WEBKIT else VIEWS
-        for lab, states in STATES.items():
+        for lab, all_states in STATES.items():
             if ONLY and lab not in ONLY: continue
-            for (w, h, touch) in views:
+            runs = [(v, all_states) for v in views]
+            if lab in EXTRA:
+                runs += [(v, [s for s in all_states if s[0] in EXTRA[lab][1]]) for v in EXTRA[lab][0]]
+            for (w, h, touch), states in runs:
                 for lang in (["en"] if QUICK else LANGS):
                     ctx = b.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch and not WEBKIT,
                                         device_scale_factor=2 if touch else 1)

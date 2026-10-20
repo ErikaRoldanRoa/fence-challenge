@@ -3,8 +3,9 @@
 Usage: python3 limit-shape-lab/test/ui_check.py <base-url> <outdir>
 (base-url serves the repository root, e.g. http://127.0.0.1:8811/)
 Desktop and phone, FR / DE / EN: no console errors, the size steps (4..15, then 500),
-the greedy polygons of Section 6.2 for n = 7..15, the loupe, the chips per state, the
-cards, the bubbles, the disabled home.
+the greedy polygons of Section 6.2 for n = 7..15 and their tag, the loupe and its keys
+(browser shortcuts left alone), the chips per state, the cards, the bubbles, slides and
+long presses on the arrows' dots, a one-line caption, the disabled home.
 """
 import os
 import re
@@ -49,6 +50,19 @@ with sync_playwright() as p:
             check(sorted(st["chips"]) == ["arrow", "count", "gap", "loop"], f"{tag}: chips at n = 4: {st['chips']}")
             check(st["tiles"], f"{tag}: the tetrominoes sit on tiles")
             check(not st["source"] and not pg.is_visible("#src-tag"), f"{tag}: no paper tag below 500")
+            check(not pg.is_visible("#fence-tag"), f"{tag}: no greedy-fence tag at n = 4")
+            # Browser shortcuts keep their keys: Ctrl or Cmd with = (zoom) does not step n.
+            pg.keyboard.press("Control+Equal")
+            pg.keyboard.press("Meta+Equal")
+            check(pg.evaluate("limitLab.state().n") == 4, f"{tag}: Ctrl/Cmd + = leaves n alone")
+            # [ and ] work, and are announced, while the loupe's slider has focus.
+            pg.focus("#loupe")
+            pg.keyboard.press("]")
+            check(pg.evaluate("limitLab.state().loupeV") == 10 and pg.inner_text("#status") == pg.evaluate("i18n.t('ls.s.loupe', {k: document.getElementById('loupe-x').textContent.slice(1)})"),
+                  f"{tag}: ] on the focused slider moves the loupe and says so: {pg.inner_text('#status')!r}")
+            pg.keyboard.press("[")
+            check(pg.evaluate("limitLab.state().loupeV") == 0, f"{tag}: [ brings the loupe back")
+            pg.evaluate("document.activeElement.blur()")
             nav = pg.eval_on_selector_all(".lab-nav > *", "els => els.map(e => e.getAttribute('href'))")
             check(nav == ["../hub/", "../cube-lab/", "../hexomino-lab/", "../pentomino-dp-lab/"], f"{tag}: nav order {nav}")
             check(st["maxLoupe"] * abs(st["gap"]) <= 0.6 + 1e-9, f"{tag}: loupe capped at n = 4 (×{st['maxLoupe']:.2f})")
@@ -70,6 +84,13 @@ with sync_playwright() as p:
             st = pg.evaluate("limitLab.state()")
             check(st["pieces"] == 3426576, f"{tag}: 3426576 pieces at n = 15")
             check(pg.get_attribute("#more", "class").find("skip") >= 0, f"{tag}: + becomes the jump at n = 15")
+            # The caption stays on one line, with the count and with the arrow most pieces share.
+            one_line = "(() => { const c = document.getElementById('caption'); return c.getBoundingClientRect().height < 22 && c.scrollWidth <= c.clientWidth + 1; })()"
+            check(pg.evaluate(one_line), f"{tag}: the caption {pg.inner_text('#caption')!r} on one line")
+            big = pg.evaluate("(() => { let b = 0; for (let i = 0; i < limitLab.state().kinds; i++) if (limitLab.kindAt(i)[2] > limitLab.kindAt(b)[2]) b = i; return b; })()")
+            pg.evaluate(f"limitLab.pickKind({big})")
+            check(pg.evaluate(one_line), f"{tag}: the caption {pg.inner_text('#caption')!r} on one line")
+            pg.evaluate(f"limitLab.pickKind({big})")
             pg.click("#more")
             pg.wait_for_function("limitLab.state().n === 500")
             pg.wait_for_function("limitLab.state().samples >= 2 && !limitLab.busy()", timeout=20000)
@@ -77,6 +98,7 @@ with sync_playwright() as p:
             check(sorted(st["chips"]) == ["gap", "giant", "sample"], f"{tag}: chips at 500: {st['chips']}")
             check(abs(st["loupe"] - 1) < 1e-9, f"{tag}: arriving at 500 the loupe is at ×1 ({st['loupe']:.1f})")
             check(st["source"] and pg.is_visible("#src-tag"), f"{tag}: at 500 the stage names the paper's sample")
+            check(not pg.is_visible("#fence-tag"), f"{tag}: no greedy-fence tag at 500")
             check(pg.get_attribute("#more", "aria-disabled") == "true", f"{tag}: no step above 500")
             check(abs(st["gap"] - 0.004176685) < 1e-8, f"{tag}: gap at 500 is the paper's 0.42 %")
             pg.screenshot(path=f"{OUT}/{view}-{lang}-n500.png")
@@ -147,6 +169,32 @@ with sync_playwright() as p:
             check(pg.evaluate("limitLab.state().selKind") == 0, f"{tag}: ArrowRight on the dock chooses the first arrow")
             pg.keyboard.press("Escape")
             check(pg.evaluate("limitLab.state().selKind") == -1, f"{tag}: Escape lets go")
+            check(pg.inner_text("#status") == pg.evaluate("i18n.t('ls.s.noKind')"), f"{tag}: letting go is announced")
+            # A slide from one dot to another: the choice follows the finger (or the held mouse) and stays.
+            a, b = pg.evaluate("limitLab.spot(3)"), pg.evaluate("limitLab.spot(12)")
+            if mobile:
+                cdp = ctx.new_cdp_session(pg)
+                touch = lambda kind, pt=None: cdp.send("Input.dispatchTouchEvent", {"type": kind, "touchPoints": [{"x": pt[0], "y": pt[1], "id": 7}] if pt else []})
+                touch("touchStart", a)
+                for s in range(1, 9):
+                    touch("touchMove", (a[0] + (b[0] - a[0]) * s / 8, a[1] + (b[1] - a[1]) * s / 8))
+                held = pg.evaluate("limitLab.state().selKind")
+                touch("touchEnd")
+            else:
+                pg.mouse.move(a[0], a[1]); pg.mouse.down(); pg.mouse.move(b[0], b[1], steps=8)
+                held = pg.evaluate("limitLab.state().selKind")
+                pg.mouse.up()
+            check(held == 12 and pg.evaluate("limitLab.state().selKind") == 12, f"{tag}: a slide over the dots chooses the one under it, and release keeps it")
+            pg.evaluate("limitLab.pickKind(12)")
+            if mobile:
+                # A long press on a dot chooses it: the dock's bubble does not open and swallow it.
+                touch("touchStart", a)
+                pg.wait_for_timeout(800)
+                bubble = pg.is_visible("#lab-tip.on")
+                touch("touchEnd")
+                pg.wait_for_timeout(100)
+                check(not bubble and pg.evaluate("limitLab.state().selKind") == 3, f"{tag}: a long press on a dot chooses it, no bubble")
+                pg.evaluate("limitLab.pickKind(3)")
             # A chosen arrow stays through a change of language (the pair written as the language writes it) and goes with a new size.
             pg.evaluate("limitLab.pickKind(5)")
             cap = pg.inner_text("#caption")
@@ -157,6 +205,8 @@ with sync_playwright() as p:
             pg.evaluate("limitLab.setN(11)")
             pg.wait_for_function("limitLab.state().n === 11 && !limitLab.busy()")
             check(pg.evaluate("limitLab.state().selKind") == -1, f"{tag}: a new size lets go of the chosen arrow")
+            name = pg.evaluate("document.getElementById('fence-tag').getAttribute('aria-labelledby').split(' ').map((i) => document.getElementById(i).textContent).join(' ')")
+            check(pg.is_visible("#fence-tag") and pg.evaluate("i18n.t('ls.fenceName')") in name, f"{tag}: at n = 11 the stage names the greedy fence: {name!r}")
             pg.evaluate("limitLab.setN(9)")
             pg.wait_for_function("limitLab.state().n === 9 && !limitLab.busy()")
             # The loop's accessible name says polygon at 9 and loop at 4; the canvas is not blank; the full loupe stretches the gap to 0.6.
