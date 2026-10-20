@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F5F023">
+  <meta name="robots" content="noindex">
+  <title>Enchivas · ton avis</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23F5F023'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23F04625'/%3E%3C/svg%3E">
+  <style>
+    :root{
+      --y:#F5F023; --r:#F04625; --ink:#161616; --muted:#555; --soft:#FBFAE0; --line:#161616;
+      --sans:"Avenir Next","Helvetica Neue","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:#fff;color:var(--ink);font-family:var(--sans);line-height:1.45;-webkit-text-size-adjust:100%}
+    .panel{background:var(--y);border-radius:22px;margin:max(10px,env(safe-area-inset-top)) 12px 0;padding:18px 16px 14px;text-align:center}
+    .panel .wm{display:block;width:min(80%,340px);height:auto;margin:0 auto}
+    .panel .tag{margin:8px 0 0;font-style:italic;font-weight:600;color:var(--r);font-size:15px}
+    main{max-width:560px;margin:0 auto;padding:14px 16px calc(28px + env(safe-area-inset-bottom))}
+    .dots{display:flex;gap:7px;justify-content:center;margin:10px 0 4px;min-height:16px}
+    .dots i{width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--ink)}
+    .dots i.on{background:var(--r)}
+    .pos{text-align:center;color:var(--muted);font-size:13px;min-height:18px;margin:0 0 6px}
+    h1{font-size:28px;line-height:1.15;margin:8px 0 8px;font-weight:800;letter-spacing:-0.01em}
+    h2{font-size:21px;line-height:1.3;margin:6px 0 6px;font-weight:700}
+    h1[tabindex="-1"]:focus,h2[tabindex="-1"]:focus{outline:none}
+    p.sub{color:var(--muted);margin:0 0 16px;font-size:16px}
+    .stack{display:grid;gap:10px}
+    .chips{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    @media (min-width:420px){.chips{grid-template-columns:repeat(3,1fr)}}
+    button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .opt{width:100%;text-align:left;background:#fff;border:2.5px solid var(--ink);border-radius:16px;padding:12px 14px;min-height:50px;font-weight:700;font-size:16px;position:relative;transition:background .12s,transform .08s}
+    .opt:active{transform:scale(.985)}
+    .opt .d{display:block;font-weight:500;color:var(--muted);font-size:14px;margin-top:3px}
+    .opt[aria-pressed="true"]{background:var(--y);padding-right:44px;box-shadow:0 0 0 2px var(--ink) inset}
+    .opt[aria-pressed="true"]::after{content:"";position:absolute;right:14px;top:50%;width:18px;height:18px;margin-top:-9px;border-radius:50%;background:var(--r);border:2px solid var(--ink)}
+    .chip{text-align:center;padding-left:8px;padding-right:8px}
+    .chip[aria-pressed="true"]{padding-right:8px}
+    .chip[aria-pressed="true"]::after{display:none}
+    .scale{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    @media (min-width:520px){.scale{grid-template-columns:repeat(4,1fr)}}
+    .scale .opt{text-align:center;font-size:14px;padding:10px 6px;min-height:46px}
+    .scale .opt[aria-pressed="true"]{padding-right:6px}
+    .scale .opt[aria-pressed="true"]::after{display:none}
+    .sub2{color:var(--muted);margin:0 0 14px;font-size:15px}
+    .stmt{border:2.5px solid var(--ink);border-radius:18px;padding:12px;margin-bottom:12px;background:var(--soft)}
+    .stmt p{margin:0 0 10px;font-weight:700;font-size:16px}
+    .nav{display:flex;gap:10px;align-items:center;margin-top:22px}
+    .go{flex:1;border:0;border-radius:999px;padding:15px 20px;font-weight:800;font-size:17px;color:var(--y);background:var(--ink)}
+    .go.alt{background:var(--r);color:var(--ink)}
+    .back{border:2.5px solid var(--ink);background:#fff;border-radius:999px;padding:12px 16px;font-weight:800}
+    .skip{display:block;margin:12px auto 0;background:none;border:0;color:var(--muted);text-decoration:underline;font-size:15px}
+    .go:focus-visible,.opt:focus-visible,.back:focus-visible,.skip:focus-visible,input:focus-visible{outline:3px solid var(--r);outline-offset:2px}
+    .note{color:var(--muted);font-size:13px;margin-top:16px;text-align:center}
+    .code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:34px;letter-spacing:.18em;text-align:center;border:2.5px solid var(--ink);border-radius:16px;padding:10px 12px;background:var(--y);margin:14px 0 6px;font-weight:800}
+    input.txt{width:100%;border:2.5px solid var(--ink);border-radius:14px;padding:13px 14px;font:inherit;font-size:22px;letter-spacing:.14em;text-transform:uppercase;text-align:center}
+    .pending{display:none;color:#8a2a00;font-size:14px;margin-top:10px;text-align:center}
+    .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+    .big{font-size:56px;line-height:1;text-align:center}
+    .center{text-align:center}
+    @media (prefers-reduced-motion:reduce){.opt{transition:none}}
+  </style>
+</head>
+<body>
+<div class="panel">
+  <svg class="wm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340.157 59.203" role="img" aria-label="ENCHIVAS" preserveAspectRatio="xMidYMid meet"><g transform="translate(0.000000,59.202981) scale(0.008655,-0.008655)" fill="#F04625" stroke="none"><path d="M1375 6473 c-71 -19 -248 -119 -314 -176 -291 -256 -322 -539 -131
+-1197 10 -36 24 -96 30 -134 6 -37 17 -100 26 -140 47 -224 44 -850 -5 -1142
+-11 -65 -24 -151 -30 -189 -6 -39 -29 -140 -52 -225 -22 -85 -49 -189 -59
+-230 -10 -41 -35 -120 -55 -175 -20 -55 -50 -140 -66 -190 -16 -49 -76 -184
+-133 -300 -57 -115 -107 -221 -111 -234 -4 -13 -25 -62 -46 -108 -66 -145 -69
+-160 -69 -424 0 -146 4 -249 11 -266 6 -15 21 -66 34 -113 14 -54 41 -116 73
+-170 28 -47 66 -111 83 -143 36 -65 212 -250 299 -315 74 -54 271 -157 343
+-177 33 -9 78 -25 102 -36 103 -46 454 -42 612 6 229 70 298 103 451 219 377
+285 632 290 917 16 120 -115 224 -192 321 -236 79 -37 79 -37 259 -42 291 -7
+374 20 582 190 171 139 286 375 286 588 0 326 -181 604 -490 753 -88 42 -88
+42 -273 41 -133 -1 -199 -5 -235 -16 -377 -114 -560 -133 -686 -71 -189 93
+-442 470 -614 913 -18 48 -44 109 -58 136 -30 60 -143 394 -152 449 -4 22 -15
+67 -25 100 -11 33 -38 188 -60 345 -42 285 -42 285 -38 740 5 502 9 529 77
+630 83 122 367 232 646 251 462 30 609 21 900 -56 251 -66 401 -57 552 34 273
+163 365 477 225 760 -112 225 -304 340 -547 328 -105 -5 -122 -9 -380 -106
+-231 -86 -334 -111 -525 -124 -294 -20 -661 -5 -762 32 -29 11 -82 27 -118 35
+-36 8 -119 33 -185 56 -327 110 -331 111 -465 115 -69 2 -134 1 -145 -2z"/>
+<path d="M5705 6463 c-256 -59 -473 -218 -570 -418 -115 -235 -100 -446 53
+-730 171 -315 197 -381 217 -538 22 -171 5 -294 -66 -482 -118 -310 -146 -481
+-104 -635 96 -354 114 -476 122 -823 8 -347 -26 -621 -101 -822 -19 -49 -55
+-148 -81 -220 -25 -71 -64 -179 -86 -240 -194 -537 -46 -938 424 -1149 125
+-56 386 -62 542 -12 209 66 371 212 485 439 115 229 92 432 -107 917 -30 74
+-63 162 -73 195 -10 33 -27 87 -38 120 -86 258 -109 734 -50 1040 66 340 80
+428 89 560 6 77 7 168 4 201 -12 118 25 179 75 122 24 -29 112 -169 180 -289
+30 -52 74 -125 99 -164 178 -277 424 -815 475 -1040 8 -33 23 -96 35 -140 35
+-136 79 -355 91 -454 17 -145 92 -474 161 -702 87 -291 373 -627 620 -729 267
+-111 304 -120 519 -120 246 0 361 27 585 136 465 225 714 609 715 1099 0 244
+-37 381 -182 670 -235 470 -252 520 -252 750 0 180 0 180 73 385 192 542 190
+477 32 915 -34 94 -70 190 -80 215 -51 121 -86 300 -84 425 2 130 53 406 91
+496 11 24 27 76 36 114 9 39 23 95 31 125 29 108 14 364 -28 461 -8 19 -54 75
+-101 126 -124 131 -280 206 -400 190 -210 -28 -210 -27 -296 -74 -91 -50 -196
+-146 -230 -213 -70 -136 -56 -415 32 -670 67 -194 108 -330 133 -447 13 -62
+29 -130 34 -150 24 -84 -17 -318 -94 -543 -105 -308 -134 -493 -118 -756 9
+-155 -1 -210 -47 -256 -54 -54 -92 -52 -192 10 -368 226 -926 869 -1275 1467
+-185 316 -330 612 -404 820 -159 451 -247 595 -445 725 -102 67 -344 117 -449
+93z"/>
+<path d="M11990 6464 c-186 -36 -242 -51 -330 -90 -283 -122 -539 -360 -647
+-599 -93 -206 -110 -354 -94 -830 22 -662 -15 -775 -389 -1171 -214 -227 -249
+-271 -296 -371 -57 -122 -59 -326 -4 -437 44 -90 194 -274 291 -358 235 -203
+363 -394 416 -617 35 -151 33 -267 -7 -531 -24 -157 -13 -423 21 -525 81 -238
+317 -464 569 -546 213 -69 370 -42 675 116 206 106 282 139 361 155 31 7 72
+19 92 27 98 41 294 -12 517 -138 70 -39 168 -88 218 -109 51 -21 115 -49 142
+-61 205 -96 546 67 650 309 93 215 38 487 -134 663 -61 62 -85 80 -121 89 -25
+6 -70 21 -100 34 -124 53 -290 43 -455 -29 -180 -79 -418 -108 -536 -66 -200
+72 -274 117 -494 310 -153 134 -211 175 -499 350 -353 215 -557 721 -451 1124
+102 390 514 735 947 792 127 16 272 74 432 171 122 74 141 85 355 202 237 131
+349 162 586 164 182 2 290 -23 507 -118 359 -156 582 -140 777 55 100 100 110
+117 152 274 l33 118 -28 127 c-47 211 -136 331 -307 412 l-93 44 -431 1 c-373
+1 -435 3 -472 17 -71 28 -226 106 -259 130 -132 97 -211 168 -326 296 -368
+408 -516 510 -848 588 -102 24 -353 41 -420 28z"/>
+<path d="M22152 6441 c-90 -16 -185 -39 -212 -50 -27 -12 -56 -21 -64 -21 -41
+0 -315 -162 -390 -231 -447 -408 -537 -1107 -209 -1616 75 -116 176 -232 249
+-287 94 -71 328 -204 374 -212 19 -4 67 -18 105 -32 152 -53 523 -49 686 7
+426 147 717 444 845 861 50 162 63 487 25 603 -12 34 -27 87 -35 117 -8 30
+-46 121 -85 201 -71 147 -71 147 -214 291 -140 143 -152 152 -322 244 -130 71
+-365 136 -535 149 -34 3 -117 -7 -218 -24z"/>
+<path d="M36417 6460 c-57 -10 -261 -107 -298 -142 -66 -62 -199 -283 -242
+-400 -20 -56 -42 -94 -152 -265 -33 -51 -192 -192 -325 -288 -96 -69 -230
+-201 -266 -261 -70 -118 -93 -337 -47 -450 39 -99 183 -253 329 -353 313 -213
+468 -405 519 -641 4 -19 16 -55 27 -80 11 -25 28 -77 38 -115 69 -269 239
+-431 500 -475 69 -11 175 -29 235 -40 560 -96 901 -697 650 -1145 -109 -195
+-311 -283 -623 -271 -171 7 -149 10 -482 -50 -237 -42 -372 -15 -718 148 -385
+180 -638 135 -838 -150 -88 -126 -98 -153 -102 -287 -7 -261 121 -457 363
+-556 92 -38 371 -52 599 -30 118 11 381 -6 456 -30 19 -7 127 -57 240 -112
+205 -100 205 -100 316 -105 177 -7 249 22 494 196 299 213 430 245 776 187
+411 -69 615 -4 806 257 160 218 188 405 99 646 -30 81 -43 104 -165 282 -33
+47 -72 104 -88 127 -113 164 -169 424 -155 720 8 164 -22 376 -66 476 -64 142
+-245 265 -432 292 -27 3 -82 15 -121 26 -39 11 -108 26 -154 34 -193 34 -336
+110 -490 260 -115 112 -184 169 -315 260 -208 146 -375 303 -440 413 -120 205
+-18 491 242 684 54 40 232 101 270 93 238 -50 333 -98 693 -351 273 -192 340
+-220 554 -234 199 -12 360 30 500 131 26 19 66 48 89 64 56 41 154 200 201
+325 94 254 74 448 -74 706 -86 150 -125 185 -320 292 -156 85 -477 94 -790 22
+-76 -18 -137 -23 -305 -27 -243 -6 -299 6 -525 112 -187 88 -349 125 -463 105z"/>
+<path d="M16185 6450 c-16 -4 -48 -8 -70 -9 -141 -5 -355 -131 -461 -271 -137
+-180 -177 -300 -172 -513 4 -159 5 -162 78 -407 92 -306 122 -535 87 -655 -66
+-219 -90 -286 -130 -365 -82 -159 -113 -385 -72 -522 8 -27 19 -77 25 -111 6
+-34 35 -127 65 -207 93 -250 171 -577 185 -773 6 -73 17 -204 25 -292 19 -207
+19 -527 0 -670 -9 -60 -20 -153 -25 -205 -5 -52 -22 -144 -37 -205 -47 -187
+-40 -444 16 -580 44 -106 47 -110 158 -185 286 -191 718 -99 845 179 38 82 78
+231 78 291 0 98 -69 392 -146 620 -151 444 -174 568 -181 960 -6 394 7 675 33
+721 30 50 102 94 181 110 154 30 807 14 1053 -26 80 -13 190 -29 245 -35 55
+-6 136 -20 180 -32 44 -11 112 -26 150 -33 39 -7 108 -22 155 -34 227 -57 280
+-111 280 -280 -1 -232 -59 -387 -297 -798 -239 -414 -190 -873 142 -1317 97
+-130 291 -287 423 -344 648 -278 1407 -3 1719 623 20 39 62 186 89 310 61 275
+-52 700 -263 994 -41 58 -100 147 -131 196 -189 308 -202 380 -178 945 16 385
+2 425 -297 864 -57 83 -101 177 -113 241 -8 43 46 230 87 304 17 31 76 131
+131 223 139 231 189 419 158 592 -38 214 -55 260 -142 382 -80 113 -262 252
+-355 272 -223 48 -243 49 -437 22 -301 -41 -606 -319 -657 -598 -24 -125 -8
+-369 29 -446 40 -86 118 -215 179 -297 236 -321 250 -581 35 -663 -37 -15
+-104 -33 -147 -41 -44 -9 -100 -22 -125 -30 -25 -8 -99 -22 -165 -30 -66 -9
+-165 -24 -220 -35 -373 -72 -1384 -52 -1545 30 -164 84 -88 371 200 750 242
+319 291 490 215 761 -44 158 -76 218 -182 341 -112 130 -259 223 -389 247 -32
+6 -84 18 -114 26 -58 16 -145 18 -195 5z"/>
+<path d="M24415 6436 c-217 -59 -368 -186 -501 -423 -32 -56 -36 -74 -51 -208
+-29 -256 32 -416 275 -728 183 -235 309 -481 337 -658 3 -24 17 -87 30 -139
+14 -52 31 -129 39 -170 43 -210 104 -347 278 -618 317 -493 366 -706 320
+-1377 -42 -611 -19 -869 91 -1053 19 -31 53 -88 75 -127 135 -235 394 -427
+726 -541 174 -59 559 -49 740 21 327 125 409 186 617 460 203 268 221 350 211
+975 -6 389 0 440 69 645 56 167 84 216 186 325 38 41 90 102 115 135 25 33 56
+69 68 80 78 70 220 291 220 345 0 8 12 60 26 115 25 94 27 120 34 450 8 329
+18 461 38 516 5 13 12 47 16 74 12 84 87 346 122 428 19 42 49 112 68 155 18
+42 71 147 116 232 264 492 272 726 35 935 -241 211 -537 218 -779 19 -89 -74
+-205 -273 -230 -399 -9 -44 -30 -141 -47 -215 -16 -74 -36 -171 -45 -215 -22
+-113 -150 -498 -188 -570 -117 -218 -223 -368 -411 -580 -73 -83 -172 -210
+-218 -280 -14 -22 -38 -78 -52 -125 -70 -232 -97 -330 -106 -380 -5 -30 -21
+-82 -35 -115 -14 -33 -33 -78 -42 -99 -23 -54 -163 -166 -208 -166 -146 0
+-403 389 -554 840 -39 116 -143 356 -243 561 -218 444 -237 514 -237 884 0
+426 -21 519 -159 705 -180 245 -480 360 -746 286z"/>
+<path d="M31500 6435 c-193 -45 -400 -163 -604 -343 -69 -60 -205 -242 -242
+-321 -126 -272 -147 -528 -92 -1101 28 -300 24 -392 -37 -755 -41 -238 -91
+-425 -218 -800 -74 -220 -304 -672 -467 -916 -96 -145 -237 -329 -251 -329
+-12 0 -243 -280 -304 -369 -108 -156 -129 -225 -127 -419 2 -177 22 -257 87
+-352 13 -19 46 -66 72 -105 118 -172 407 -299 609 -267 220 35 235 39 321 97
+84 58 229 200 328 325 75 94 254 273 336 335 35 27 91 72 124 100 147 123 630
+401 808 465 29 10 95 35 147 55 464 175 586 185 790 65 154 -90 277 -268 336
+-486 15 -55 33 -121 40 -148 7 -26 16 -89 20 -140 4 -54 18 -129 35 -185 16
+-51 29 -99 29 -105 0 -70 98 -190 228 -279 217 -148 507 -110 711 94 130 130
+156 192 155 369 -1 173 -37 259 -168 411 -17 20 -88 101 -159 181 -326 371
+-412 611 -361 1001 48 363 -19 534 -361 919 -251 283 -283 333 -361 553 -42
+120 -47 360 -11 520 14 61 28 130 32 155 4 25 18 86 31 135 17 65 27 137 35
+261 19 329 -24 551 -151 776 -117 205 -388 445 -598 527 -29 12 -72 31 -95 42
+-104 53 -499 73 -667 34z m395 -2925 c28 -26 83 -160 115 -280 26 -98 24 -204
+-4 -258 -24 -46 -145 -177 -220 -237 -34 -27 -129 -104 -210 -170 -415 -336
+-633 -459 -644 -362 -26 221 513 1103 798 1307 55 39 124 39 165 0z"/>
+<path d="M3095 4473 c-368 -53 -664 -353 -695 -704 -31 -360 121 -625 470
+-817 153 -84 398 -99 570 -34 203 77 388 250 495 461 46 92 60 260 36 438 -22
+171 -33 194 -149 339 -193 239 -459 355 -727 317z"/>
+<path d="M22144 3802 c-390 -146 -512 -436 -349 -830 96 -232 145 -417 145
+-550 0 -68 -52 -322 -79 -385 -12 -27 -21 -54 -21 -60 0 -7 -50 -111 -111
+-231 -162 -320 -193 -417 -193 -611 0 -150 0 -150 38 -249 91 -235 237 -383
+463 -473 122 -49 166 -55 336 -51 171 5 206 15 360 105 258 152 459 507 414
+733 -17 86 -95 292 -137 361 -147 242 -242 439 -287 598 -53 188 -30 462 54
+625 23 44 80 230 104 339 22 104 11 257 -26 327 -108 210 -202 297 -380 355
+-143 47 -197 46 -331 -3z"/>
+<path d="M14320 2476 c-222 -69 -335 -172 -418 -384 -66 -169 -54 -288 44
+-468 88 -160 128 -196 313 -278 94 -42 243 -36 381 14 163 60 320 241 356 411
+22 102 14 288 -14 352 -77 174 -248 311 -447 357 -106 25 -121 24 -215 -4z"/></g></svg>
+  <p class="tag">Conférence performative de foot et maths</p>
+</div>
+<main>
+  <div class="dots" id="dots" aria-hidden="true"></div>
+  <p class="pos" id="pos" aria-live="polite"></p>
+  <section id="screen"></section>
+  <noscript><p class="sub">Cette page demande JavaScript. Tu peux aussi répondre sur la feuille papier.</p></noscript>
+  <label class="hp" aria-hidden="true">Ne pas remplir <input id="hp" tabindex="-1" autocomplete="off"></label>
+  <p class="note">Enchivas · La Performative</p>
+</main>
+<script>
+(function () {
+  'use strict';
+  var ENDPOINT = 'https://script.google.com/macros/s/AKfycbxR84v8EDB4bV5icuTFLuRPZn5g0fwYmQd9fm0vPKkOGERLzldZwkV0JTup3UxFX5g/exec';
+  var I = {"id": "les-performance-v1", "title": "Enchivas · ton avis", "lang": "fr", "event_default": "2026-10-22-cirm-cigales-enchivas", "scale4": [{"v": 1, "label": "Pas du tout d’accord"}, {"v": 2, "label": "Pas d’accord"}, {"v": 3, "label": "D’accord"}, {"v": 4, "label": "Très en accord"}], "before_after_items": [{"key": "math_for_me", "type": "likert4", "text": "Les maths, c’est pour moi."}, {"key": "football_for_me", "type": "likert4", "text": "Le football, c’est pour moi."}, {"key": "rope_same_place", "type": "choice", "text": "Deux cordes de même longueur entourent-elles toujours la même place ?", "options": [{"v": "always", "label": "Oui, toujours la même place"}, {"v": "not_always", "label": "Non, pas toujours"}, {"v": "dont_know", "label": "Je ne sais pas"}], "paper_followup": "Explique."}, {"key": "figure_eight_regions", "type": "choice", "text": "Un huit dessiné sur le sol : en combien de morceaux partage-t-il le sol ?", "options": [{"v": "1", "label": "1"}, {"v": "2", "label": "2"}, {"v": "3", "label": "3"}, {"v": "4", "label": "4"}, {"v": "dont_know", "label": "Je ne sais pas"}], "paper_followup": "Dessine-le et explique."}], "les": {"adjectives_prompt": "Comment s’est passée cette séance (l’atelier et la représentation) ? Choisis les mots qui décrivent ton expérience, autant que tu veux.", "adjectives": [{"v": "amusant", "label": "Amusant"}, {"v": "captivant", "label": "Captivant"}, {"v": "stressant", "label": "Stressant"}, {"v": "rien-de-special", "label": "Rien de spécial"}, {"v": "terne", "label": "Morne"}, {"v": "acceptable", "label": "Acceptable"}, {"v": "agreable", "label": "Agréable"}, {"v": "fascinant", "label": "Fascinant"}, {"v": "stimulant", "label": "Stimulant"}, {"v": "extraordinaire", "label": "Extraordinaire"}, {"v": "drole", "label": "Drôle"}, {"v": "interessant", "label": "Intéressant"}, {"v": "haletant", "label": "Haletant"}, {"v": "ennuyeux", "label": "Ennuyeux"}, {"v": "correct", "label": "Correct"}, {"v": "surprenant", "label": "Surprenant"}], "understood_prompt": "Comment évalues-tu ton apprentissage ? Est-ce que tu estimes avoir bien compris le sujet ?", "understood": [{"v": "no", "label": "Je n’ai pas compris"}, {"v": "partly", "label": "J’ai compris en partie"}, {"v": "yes", "label": "J’ai compris"}], "feeling_prompt": "Quel mot décrit le mieux ton ressenti pendant la séance ? Un seul choix.", "feeling": [{"v": "very_bored", "label": "Très ennuyé·e", "desc": "Je me suis ennuyé·e et j’aurais souhaité faire autre chose à la place."}, {"v": "not_interested", "label": "Pas intéressé·e", "desc": "J’ai suivi l’activité mais cela ne m’intéressait pas d’en savoir plus."}, {"v": "interested", "label": "Intéressé·e", "desc": "J’étais assez intéressé·e par ce que nous avons fait et la séance était agréable."}, {"v": "very_interested", "label": "Très intéressé·e", "desc": "J’étais très intéressé·e et la séance était bien amusante et/ou captivante."}], "likert_prompt": "Pour chaque phrase, choisis la réponse qui décrit le mieux à quel point tu es d’accord.", "likert": [{"key": "time_flew", "text": "Le temps a filé."}, {"key": "relevant", "text": "Le contenu de cette séance était pertinent par rapport à ma vie quotidienne."}, {"key": "like_class", "text": "Cette séance ressemblait à ce qu’on fait tous les jours en classe."}, {"key": "more", "text": "J’aimerais faire ou voir plus d’activités comme celle-ci."}, {"key": "demanding", "text": "Le contenu de cette séance était exigeant pour moi."}], "age_prompt": "Pour finir : tu as…", "age": [{"v": "6-9", "label": "6 à 9 ans"}, {"v": "10-14", "label": "10 à 14 ans"}, {"v": "15-18", "label": "15 à 18 ans"}, {"v": "adult", "label": "Plus de 18 ans"}]}, "texts": {"before_title": "Avant la représentation", "before_sub": "Quatre petites questions, une minute. C’est anonyme : ni nom, ni adresse. Tu peux sauter une question.", "after_title": "Après la représentation", "after_sub": "Les mêmes quatre questions, puis quelques-unes sur la séance. C’est anonyme, et tu peux sauter une question.", "info": "Les réponses ne sont lues que regroupées et servent à améliorer l’atelier et la représentation.", "code_keep": "Garde ce code : il relie tes réponses d’avant et d’après, sans ton nom.", "thanks_before": "Reviens sur cette page après la représentation : sur ce téléphone, ton code sera retrouvé tout seul.", "thanks_after": "Ta réponse est enregistrée. Elle nous aide à améliorer les prochaines séances.", "no_network": "Pas de réseau pour l’instant : ta réponse partira toute seule dès que la connexion revient."}};
+  var INSTRUMENT = I.id;
+  var QUEUE_KEY = 'ecSurveyQueue', PAIR_KEY = 'ecPair', BEFORE_KEY = 'ecBeforeDone';
+  var params = new URLSearchParams(location.search);
+  var EVENT = (params.get('e') || I.event_default).toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 80) || I.event_default;
+  var PHASE_PARAM = params.get('p') === 'apres' || params.get('p') === 'after' ? 'after' : (params.get('p') === 'avant' || params.get('p') === 'before' ? 'before' : '');
+  var SCALE = I.scale4.map(function (s) { return [s.v, s.label]; });
+  var ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+
+  function store(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
+  function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function newCode() {
+    var out = '', i, r;
+    var buf = (window.crypto && crypto.getRandomValues) ? crypto.getRandomValues(new Uint8Array(5)) : null;
+    for (i = 0; i < 5; i++) { r = buf ? buf[i] : Math.floor(Math.random() * 256); out += ALPHABET.charAt(r % ALPHABET.length); }
+    return out;
+  }
+  function uuid() { return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2); }
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag), k;
+    for (k in (attrs || {})) { if (k === 'text') n.textContent = attrs[k]; else if (k === 'class') n.className = attrs[k]; else n.setAttribute(k, attrs[k]); }
+    (kids || []).forEach(function (c) { n.appendChild(c); });
+    return n;
+  }
+
+  var state, steps, step;
+  function fresh(phase) {
+    state = { phase: phase, pair: '', answers: {}, adjectives: [], understood: '', feeling: '', likert: {}, age: '', client_id: uuid(), sent: false };
+  }
+  function buildSteps(phase) {
+    var s = [{ t: 'intro' }];
+    I.before_after_items.forEach(function (it) { s.push({ t: 'item', item: it }); });
+    if (phase === 'after') s.push({ t: 'adjectives' }, { t: 'understood' }, { t: 'feeling' }, { t: 'likert' }, { t: 'age' });
+    s.push({ t: 'done' });
+    return s;
+  }
+
+  var screen = document.getElementById('screen'), dots = document.getElementById('dots'), pos = document.getElementById('pos');
+  function focusTitle() { var h = screen.querySelector('h1, h2'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); } window.scrollTo(0, 0); }
+  function drawDots() {
+    dots.innerHTML = '';
+    if (!steps) { pos.textContent = ''; return; }
+    var q = steps.length - 2;                     // the questions, without intro and done
+    for (var i = 0; i < q; i++) dots.appendChild(el('i', { class: step > i ? 'on' : '' }));
+    pos.textContent = (step >= 1 && step <= q) ? step + ' / ' + q : '';
+  }
+
+  function optionButton(label, desc, pressed, onClick, cls) {
+    var b = el('button', { type: 'button', class: 'opt ' + (cls || ''), 'aria-pressed': pressed ? 'true' : 'false' });
+    b.appendChild(el('span', { text: label }));
+    if (desc) b.appendChild(el('span', { class: 'd', text: desc }));
+    b.addEventListener('click', onClick);
+    return b;
+  }
+  function navRow(prev, nextLabel, onNext, alt) {
+    var row = el('div', { class: 'nav' });
+    if (prev) { var b = el('button', { type: 'button', class: 'back', 'aria-label': 'Question précédente', text: '←' }); b.addEventListener('click', function () { go(step - 1); }); row.appendChild(b); }
+    var n = el('button', { type: 'button', class: 'go' + (alt ? ' alt' : ''), text: nextLabel }); n.addEventListener('click', onNext); row.appendChild(n);
+    return row;
+  }
+  function skipButton(onSkip) { var b = el('button', { type: 'button', class: 'skip', text: 'Passer cette question' }); b.addEventListener('click', onSkip); return b; }
+
+  function go(n) { step = n; render(); }
+  function heading(prompt) {
+    var i = prompt.indexOf('? '), t = i > 0 ? prompt.slice(0, i + 1) : prompt, r = i > 0 ? prompt.slice(i + 2) : '';
+    screen.appendChild(el('h2', { text: t })); if (r) screen.appendChild(el('p', { class: 'sub2', text: r }));
+  }
+
+  function renderLanding() {
+    steps = null; screen.innerHTML = ''; drawDots();
+    var saved = load(PAIR_KEY), beforeDone = load(BEFORE_KEY);
+    screen.appendChild(el('h1', { text: 'Ton avis compte' }));
+    screen.appendChild(el('p', { class: 'sub', text: 'Réponds avant la représentation, puis après. C’est anonyme : ni nom, ni adresse.' }));
+    var st = el('div', { class: 'stack' });
+    var bAvant = optionButton(I.texts.before_title, 'Quatre petites questions, une minute', false, function () { start('before'); });
+    var bApres = optionButton(I.texts.after_title, beforeDone ? 'Tu as déjà répondu avant sur ce téléphone : ton code sera retrouvé.' : 'Les mêmes quatre questions, puis quelques-unes sur la séance', false, function () { start('after'); });
+    st.appendChild(beforeDone ? bApres : bAvant); st.appendChild(beforeDone ? bAvant : bApres);
+    screen.appendChild(st);
+    screen.appendChild(el('p', { class: 'note', text: I.texts.info }));
+    focusTitle();
+  }
+  function start(phase) {
+    fresh(phase); steps = buildSteps(phase); step = 0;
+    if (phase === 'before') { state.pair = newCode(); store(PAIR_KEY, state.pair); store(BEFORE_KEY, null); }
+    else { state.pair = load(PAIR_KEY) || ''; }
+    render();
+  }
+
+  function render() {
+    var s = steps[step]; screen.innerHTML = ''; drawDots();
+    var after = state.phase === 'after';
+    if (s.t === 'intro') {
+      screen.appendChild(el('h1', { text: after ? I.texts.after_title : I.texts.before_title }));
+      screen.appendChild(el('p', { class: 'sub', text: after ? I.texts.after_sub : I.texts.before_sub }));
+      if (after) {
+        screen.appendChild(el('p', { class: 'sub', text: 'Ton code (si tu as répondu avant, sur ce téléphone, sur un autre ou sur papier) :' }));
+        var inp = el('input', { class: 'txt', id: 'pair', type: 'text', maxlength: '8', autocomplete: 'off', autocapitalize: 'characters', 'aria-label': 'Ton code', placeholder: 'CODE' });
+        inp.value = state.pair; screen.appendChild(inp);
+        screen.appendChild(el('p', { class: 'note', text: 'Pas de code ? Laisse vide : ça marche aussi.' }));
+      }
+      screen.appendChild(navRow(false, 'Commencer', function () {
+        if (after) { var v = (document.getElementById('pair').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8); state.pair = v.length >= 4 ? v : ''; }
+        go(1);
+      }));
+      screen.appendChild(el('p', { class: 'note', text: I.texts.info }));
+    } else if (s.t === 'item') {
+      var it = s.item, cur = state.answers[it.key];
+      screen.appendChild(el('h2', { text: it.text }));
+      var wrap, onPick = function (v) { state.answers[it.key] = v; render(); };
+      if (it.type === 'likert4') {
+        screen.appendChild(el('p', { class: 'sub', text: 'Choisis la réponse qui te ressemble le plus.' }));
+        wrap = el('div', { class: 'scale' });
+        SCALE.forEach(function (o) { wrap.appendChild(optionButton(o[1], '', cur === o[0], function () { onPick(o[0]); })); });
+      } else {
+        wrap = el('div', { class: 'stack' });
+        it.options.forEach(function (o) { wrap.appendChild(optionButton(o.label, '', cur === o.v, function () { onPick(o.v); })); });
+      }
+      screen.appendChild(wrap);
+      var last = (steps[step + 1].t === 'done');
+      screen.appendChild(navRow(true, cur === undefined ? 'Suivant' : (last ? 'Envoyer' : 'Suivant'), function () { if (last) submit(); else go(step + 1); }));
+      if (cur === undefined) screen.appendChild(skipButton(function () { if (last) submit(); else go(step + 1); }));
+    } else if (s.t === 'adjectives') {
+      heading(I.les.adjectives_prompt);
+      var chips = el('div', { class: 'chips' });
+      I.les.adjectives.forEach(function (a) {
+        var on = state.adjectives.indexOf(a.v) >= 0;
+        chips.appendChild(optionButton(a.label, '', on, function () {
+          var i = state.adjectives.indexOf(a.v); if (i >= 0) state.adjectives.splice(i, 1); else state.adjectives.push(a.v); render();
+        }, 'chip'));
+      });
+      screen.appendChild(chips);
+      screen.appendChild(el('p', { class: 'note', text: state.adjectives.length ? state.adjectives.length + ' choisi' + (state.adjectives.length > 1 ? 's' : '') : 'Aucun choisi pour l’instant' }));
+      screen.appendChild(navRow(true, 'Suivant', function () { go(step + 1); }));
+    } else if (s.t === 'understood' || s.t === 'feeling' || s.t === 'age') {
+      var list = s.t === 'understood' ? I.les.understood : (s.t === 'feeling' ? I.les.feeling : I.les.age);
+      var prompt = s.t === 'understood' ? I.les.understood_prompt : (s.t === 'feeling' ? I.les.feeling_prompt : I.les.age_prompt);
+      var key = s.t, cur2 = state[key];
+      heading(prompt);
+      var st2 = el('div', { class: 'stack' });
+      list.forEach(function (o) { st2.appendChild(optionButton(o.label, o.desc || '', cur2 === o.v, function () { state[key] = o.v; render(); })); });
+      screen.appendChild(st2);
+      var lastQ = (steps[step + 1].t === 'done');
+      screen.appendChild(navRow(true, lastQ ? 'Envoyer' : 'Suivant', function () { if (lastQ) submit(); else go(step + 1); }, lastQ));
+      if (!cur2) screen.appendChild(skipButton(function () { if (lastQ) submit(); else go(step + 1); }));
+    } else if (s.t === 'likert') {
+      screen.appendChild(el('h2', { text: 'Es-tu d’accord ?' }));
+      screen.appendChild(el('p', { class: 'sub', text: I.les.likert_prompt }));
+      I.les.likert.forEach(function (q) {
+        var box = el('div', { class: 'stmt' });
+        box.appendChild(el('p', { text: q.text }));
+        var sc = el('div', { class: 'scale' });
+        SCALE.forEach(function (o) { sc.appendChild(optionButton(o[1], '', state.likert[q.key] === o[0], function () { state.likert[q.key] = o[0]; var y = window.pageYOffset; render(); window.scrollTo(0, y); })); });
+        box.appendChild(sc); screen.appendChild(box);
+      });
+      screen.appendChild(navRow(true, 'Suivant', function () { go(step + 1); }));
+    } else if (s.t === 'done') {
+      renderDone();
+    }
+    if (s.t !== 'done') focusTitle();
+  }
+
+  function payload() {
+    var a = {}, k;
+    I.before_after_items.forEach(function (it) { if (state.answers[it.key] !== undefined) a[it.key] = state.answers[it.key]; });
+    if (state.phase === 'after') {
+      if (state.adjectives.length) a.adjectives = state.adjectives.slice();
+      if (state.understood) a.understood = state.understood;
+      if (state.feeling) a.feeling = state.feeling;
+      var lk = {}, any = false; for (k in state.likert) { lk[k] = state.likert[k]; any = true; }
+      if (any) a.likert = lk;
+      if (state.age) a.age = state.age;
+    }
+    return { action: 'submitSurvey', instrument: INSTRUMENT, event: EVENT, mode: 'online', lang: 'fr', phase: state.phase, pair_id: state.pair || '',
+             origin: location.origin, client_id: state.client_id, hp: document.getElementById('hp').value, answers: a };
+  }
+  function answered(p) { var a = p.answers; return Object.keys(a).length > 0; }
+
+  function submit() {
+    var p = payload();
+    if (answered(p)) { var q = readQueue(); q.push(p); writeQueue(q); flush(); }
+    if (state.phase === 'before') store(BEFORE_KEY, String(Date.now()));
+    state.sent = true; step = steps.length - 1; render();
+  }
+  function renderDone() {
+    screen.innerHTML = ''; dots.innerHTML = ''; pos.textContent = '';
+    screen.appendChild(el('div', { class: 'big', 'aria-hidden': 'true', text: '⚽' }));
+    screen.appendChild(el('h1', { class: 'center', text: 'Merci !' }));
+    if (state.phase === 'before') {
+      screen.appendChild(el('p', { class: 'sub center', text: I.texts.thanks_before }));
+      screen.appendChild(el('div', { class: 'code', text: state.pair }));
+      screen.appendChild(el('p', { class: 'note', text: I.texts.code_keep }));
+    } else {
+      screen.appendChild(el('p', { class: 'sub center', text: I.texts.thanks_after }));
+    }
+    var pend = el('p', { class: 'pending', id: 'pending', text: I.texts.no_network }); screen.appendChild(pend);
+    if (readQueue().length) pend.style.display = 'block';
+    var again = el('button', { type: 'button', class: 'go', text: state.phase === 'after' ? 'Nouvelle réponse' : 'Terminé' });
+    again.addEventListener('click', function () {
+      if (state.phase === 'after') { store(PAIR_KEY, null); store(BEFORE_KEY, null); }
+      renderLanding();
+    });
+    var row = el('div', { class: 'nav' }); row.appendChild(again); screen.appendChild(row);
+    focusTitle();
+  }
+
+  // Sending, with a queue for a room without network
+  function readQueue() { try { return JSON.parse(load(QUEUE_KEY) || '[]'); } catch (e) { return []; } }
+  function writeQueue(q) { store(QUEUE_KEY, JSON.stringify(q)); }
+  var flushing = false;
+  function flush() {
+    if (flushing) return; var q = readQueue(); if (!q.length) { setPending(false); return; }
+    flushing = true;
+    var next = q[0], ac = window.AbortController ? new AbortController() : null, timer = ac ? setTimeout(function () { ac.abort(); }, 12000) : null;
+    fetch(ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(next), redirect: 'follow', signal: ac ? ac.signal : undefined })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (timer) clearTimeout(timer); flushing = false;
+        if (j && j.status === 'ok') { var rest = readQueue().filter(function (x) { return x.client_id !== next.client_id; }); writeQueue(rest); if (rest.length) flush(); else setPending(false); }
+        else setPending(true); })
+      .catch(function () { if (timer) clearTimeout(timer); flushing = false; setPending(true); });
+  }
+  function setPending(on) { var p = document.getElementById('pending'); if (p) p.style.display = on ? 'block' : 'none'; }
+  window.addEventListener('online', flush);
+  setInterval(flush, 20000);
+  flush();
+
+  if (PHASE_PARAM) start(PHASE_PARAM); else renderLanding();
+})();
+</script>
+</body>
+</html>
