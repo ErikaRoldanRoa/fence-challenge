@@ -1,17 +1,18 @@
 /* Fence Challenge · limit-shape lab.
- * The pieces of n cells, each with its longest arrow between boundary-edge
- * midpoints, against a circle, with a loupe that magnifies the gap. For
- * n = 4..6 every piece is computed here: the arrows are folded into 0..45
- * degrees, sorted by direction, chained, and copied eight times into a loop,
- * the loop against the circle of radius R = X + Y. For n = 7..15 the shape is
- * the paper's greedy fence (Section 6.2): its reference polygon, each piece
- * once, drawn exactly from the distinct arrows of data/greedy.js, against the
- * circle of its bounding box. At 500 cells the loop is the paper's curve, from
- * its 13.5 million random 500-ominoes, shown at ×1 on arrival, and the lab's
- * own chain keeps drawing 500-ominoes in the pieces box. */
+ * The reference polygon of a fence of n-ominoes against a circle, with a loupe
+ * that magnifies the gap. For n = 4..6 it is the polygon of the paper's optimal
+ * fence (data/optimal.js): each piece once, in the place the fence gives it,
+ * with the arrow between its two attachment edges; the pieces are the tiles on
+ * the left and each side of the polygon wears its piece's colour. For
+ * n = 7..15 it is the paper's greedy fence (Section 6.2): each piece once,
+ * drawn exactly from the distinct arrows of data/greedy.js, the left box
+ * showing the kinds of arrows. Both against the circle of the polygon's
+ * bounding box. At 500 cells the loop is the paper's curve, from its 13.5
+ * million random 500-ominoes, shown at ×1 on arrival, and the lab's own chain
+ * keeps drawing 500-ominoes in the pieces box. */
 (function () {
   "use strict";
-  const S = window.LimitSampler, G = window.LimitPolygon, DATA = window.LIMIT_DATA, CHIPS = window.LIMIT_CHIPS, GREEDY = window.LIMIT_GREEDY;
+  const S = window.LimitSampler, G = window.LimitPolygon, DATA = window.LIMIT_DATA, CHIPS = window.LIMIT_CHIPS, GREEDY = window.LIMIT_GREEDY, OPT = window.LIMIT_OPTIMAL;
   const $ = (id) => document.getElementById(id);
   const t = (k, v) => window.i18n.t(k, v);
   const lang = () => window.i18n.get();
@@ -30,12 +31,11 @@
   ];
   const STEPS = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 500];
   const GIANT = 500;
+  const LAST_OPT = 6;                      // the optimal fences, n = 4..6
   const FIRST_FENCE = 7, LAST_FENCE = 15;   // the greedy fences of Section 6.2
-  // The paper's fences for n = 5..8: the optimum where it is proved, otherwise
-  // the best fence found and the upper bound (dynamic programming). From 9 on,
-  // the greedy fence and the upper bound of Table 4 come with the polygon.
+  // The paper's fences for n = 7, 8: the best fence found and the upper bound (dynamic programming). From 9 on,
+  // the greedy fence and the upper bound of Table 4 come with the polygon; up to 6 the optimum comes with the fence.
   const FENCES = {
-    5: { opt: 128 }, 6: { opt: 1597 },
     7: { best: 19733, bound: 19830 }, 8: { best: 279134, bound: 280389 },
   };
   const SIDE_STEP = 0.1;    // degrees between two points drawn on a side of the polygon
@@ -49,32 +49,18 @@
   const LOOP_FILL = 0.42;  // the loop's farthest point from the stage's centre, in parts of its shorter side
 
   let n = 4, pieces = [], chain = null, loupeV = 0, loupe = 1, sel = -1;
-  let fence = null, selKind = -1, kindSpots = [];   // n = 7..15: the greedy polygon, the chosen kind of arrow, its dots
+  let fence = null, selKind = -1, kindSpots = [];   // n = 4..15: the fence's polygon, the chosen kind of arrow, its dots
   let giant = null, giantSamples = 0, giantDrawn = 0, openChip = null;
-  let shown = null, anim = null, requestId = 0, tiles = false;
+  let shown = null, anim = null, tiles = false;
+  // An optimal fence (n = 4..6): its pieces are the tiles of the left box when each fits, else that box shows the kinds.
+  const optimal = () => !!fence && n !== GIANT && n <= LAST_OPT;
 
-  // ---------- the work: a worker when possible, the page otherwise ----------
+  // ---------- the 500-omino chain: a worker when possible, the page otherwise ----------
   let worker = null;
-  try { worker = new Worker("worker.js?v=20261020a"); } catch (e) { worker = null; }
-  const waiting = new Map();
+  try { worker = new Worker("worker.js?v=20261020b"); } catch (e) { worker = null; }
   if (worker) {
-    worker.onmessage = (e) => {
-      const m = e.data;
-      if (m.type === "pieces" && waiting.has(m.id)) { waiting.get(m.id)(m.pieces); waiting.delete(m.id); }
-      else if (m.type === "giant") onGiant(m);
-    };
+    worker.onmessage = (e) => { if (e.data.type === "giant") onGiant(e.data); };
     worker.onerror = () => { worker = null; };
-  }
-  function computePieces(k) {
-    return new Promise((resolve) => {
-      if (worker) {
-        const id = ++requestId;
-        waiting.set(id, resolve);
-        worker.postMessage({ cmd: "pieces", n: k, id });
-      } else {
-        resolve(S.enumerateFree(k).map((cells) => ({ cells, pairs: S.diameters(cells).pairs, vecs: S.sampleVectors(cells) })));
-      }
-    });
   }
   let localChain = null, localTimer = 0, localLeft = 0;
   function runGiant(on) {
@@ -117,7 +103,7 @@
   }
 
   // ---------- choosing n ----------
-  async function setN(k) {
+  function setN(k) {
     if (!STEPS.includes(k)) return;
     const from = n;
     n = k;
@@ -133,54 +119,44 @@
       // Arriving at 500 cells: the loupe back at ×1, where the loop lies on its circle.
       if (from !== GIANT) loupeV = 0;
       runGiant(true);
-    } else if (k >= FIRST_FENCE) {
-      // The paper's greedy fence: one exact polygon, each piece once; no piece to compute here.
-      runGiant(false);
-      pieces = [];
-      fence = G.build(GREEDY[k]);
-      chain = { R: fence.R, pts: null, edges: null, vecs: G.folded(fence) };
     } else {
+      // A fence of the paper: one exact polygon, each piece once; nothing to compute here.
       runGiant(false);
-      const want = k;
-      const raw = await computePieces(k);
-      if (n !== want) return;
-      fence = null;
-      pieces = orderPieces(k, raw);
-      chain = chainOf(pieces);
+      if (k >= FIRST_FENCE) {
+        pieces = [];
+        fence = G.build(GREEDY[k]);
+      } else {
+        fence = G.build(G.fromPieces(OPT[k]));
+        pieces = tilesOf(OPT[k]);
+      }
+      chain = { R: fence.R, pts: null, edges: null, vecs: G.folded(fence) };
     }
-    // The loop's canvas says what it shows: a loop of sorted arrows, or the greedy fence's polygon.
-    loopCanvas.dataset.i18nAriaLabel = fence && k !== GIANT ? "ls.fence" : "ls.loop";
+    // The stage's canvas says what it shows: a loop of sorted arrows, or a fence's polygon.
+    loopCanvas.dataset.i18nAriaLabel = k === GIANT ? "ls.loop" : optimal() ? "ls.fenceOpt" : "ls.fence";
     loopCanvas.setAttribute("aria-label", t(loopCanvas.dataset.i18nAriaLabel));
     syncControls();
     syncLoupe();
+    drawPieces();      // before the stage: whether the left box shows tiles decides the colour of the polygon's sides
     morphTo(loopPolar());
-    drawPieces();
     caption();
     syncChips();
     syncSource();
     if (openChip) window.mathChip.refresh();
-    status(k === GIANT ? t("ls.s.giant") : t(fence ? "ls.s.fence" : "ls.s.n", { n: k, count: fmtNum(pieceCount(), 0), g: fmtPct(maxGap()) }));
+    status(k === GIANT ? t("ls.s.giant") : t(optimal() ? "ls.s.opt" : "ls.s.fence", { n: k, count: fmtNum(pieceCount(), 0), g: fmtPct(maxGap()), a: fmtNum(fence.L, 0) }));
     // The pill and the gap change width with n: centre them again.
     centreReadout();
   }
-  function orderPieces(k, raw) {
-    if (k !== 4) return raw.map((p, i) => Object.assign({}, p, { color: COLORS[i % COLORS.length] }));
-    // The hub's five tetrominoes, in its order and colours.
-    const byKey = new Map(raw.map((p) => [S.canonical(p.cells).key, p]));
-    return TETRO.map((h) => {
-      const p = byKey.get(S.canonical(h.cells).key);
-      const cells = h.cells.map((c) => c.slice());
-      return { cells, pairs: S.diameters(cells).pairs, vecs: p.vecs, color: h.color };
-    });
-  }
-
-  // Sorted, weighted vectors chained from (0, 0); each edge remembers its piece.
-  function chainOf(list) {
-    const v = [];
-    list.forEach((p, pi) => p.vecs.forEach((w) => v.push([w[0], w[1], w[2], pi])));
-    v.sort((a, b) => a[1] * b[0] - b[1] * a[0]);
-    const ch = S.chainDeviation(v);
-    return { R: ch.R, X: ch.X, Y: ch.Y, pts: ch.pts, edges: v.map((w) => w[3]), vecs: v };
+  // The tiles of an optimal fence: its pieces in the order of the polygon, each as the fence places it, with the arrow
+  // between its two attachment edges (and those edges), in the doubled coordinates from the centre of a cell that
+  // drawShape wants. The tetrominoes keep the hub's colours; the others cycle through the palette round the polygon.
+  const TETRO_COLOR = new Map(TETRO.map((h) => [S.canonical(h.cells).key, h.color]));
+  function tilesOf(e) {
+    return e.pieces.map((p, i) => ({
+      cells: p.c,
+      pairs: [[[p.i[0] - 1, p.i[1] - 1], [p.o[0] - 1, p.o[1] - 1]]],
+      color: e.n === 4 ? TETRO_COLOR.get(S.canonical(p.c).key) : COLORS[i % COLORS.length],
+      corner: G.isCorner(fence.arrows[i]),
+    }));
   }
   function maxGap() {
     if (fence) return fence.gap.signed;
@@ -271,12 +247,9 @@
   }
   // The whole stage holds the loop; the math card is a modal over the lab.
   function loopBox(w, h) { return { x: 0, y: 0, w, h }; }
-  function drawLoop(exact) {
-    const { w, h, dpr } = fitCanvas(loopCanvas);
-    const ctx = lctx;
-    ctx.clearRect(0, 0, w, h);
-    if (!shown) return;
-    const box = loopBox(w, h, dpr);
+  // Where a direction and a gap fall on the stage: its centre, the circle's radius, and the map (theta, gap) -> point.
+  function stageMap(w, h) {
+    const box = loopBox(w, h);
     const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
     let peak = 0;
     for (let i = 0; i < 720; i++) peak = Math.max(peak, loupe * shown[i]);
@@ -286,6 +259,14 @@
       const r = R * (1 + loupe * d), a = th * Math.PI / 180;
       return [cx + r * Math.sin(a), cy + r * Math.cos(a)];
     };
+    return { cx, cy, R, at };
+  }
+  function drawLoop(exact) {
+    const { w, h, dpr } = fitCanvas(loopCanvas);
+    const ctx = lctx;
+    ctx.clearRect(0, 0, w, h);
+    if (!shown) return;
+    const { cx, cy, R, at } = stageMap(w, h);
     // The circle, and, for a loop, its four points on the axes, where the gap is 0 by construction.
     ctx.save();
     ctx.setLineDash([6 * dpr, 6 * dpr]);
@@ -308,7 +289,6 @@
     ctx.fillStyle = "rgba(47, 243, 255, 0.07)";
     ctx.fill();
     if (exact && fence) drawFence(ctx, at, dpr);
-    else if (exact && chain && chain.edges) drawEdges(ctx, at, dpr);
     else {
       ctx.save();
       ctx.shadowColor = "rgba(47, 243, 255, 0.7)"; ctx.shadowBlur = 10 * dpr;
@@ -317,55 +297,11 @@
       ctx.restore();
     }
   }
-  // The edges of the loop: in the colour of their piece while each stays
-  // readable, cyan otherwise; the chosen piece lit in white.
-  function drawEdges(ctx, at, dpr) {
-    const pts = chain.pts, edges = chain.edges, coloured = pieces.length <= 35;
-    const seg = (k, i) => {
-      const a = pts[i], b = pts[i + 1];
-      if (k % 2 === 0) return [at(k * 45 + a[0], a[1]), at(k * 45 + b[0], b[1])];
-      return [at(k * 45 + 45 - a[0], a[1]), at(k * 45 + 45 - b[0], b[1])];
-    };
-    ctx.save();
-    ctx.lineCap = "round";
-    if (!coloured) {
-      ctx.globalAlpha = sel >= 0 ? 0.5 : 1;
-      ctx.shadowColor = "rgba(47, 243, 255, 0.7)"; ctx.shadowBlur = 10 * dpr;
-      ctx.strokeStyle = "#2ff3ff"; ctx.lineWidth = 2.4 * dpr; ctx.lineJoin = "round";
-      ctx.beginPath();
-      for (let i = 0; i < 720; i++) { const p = at(i / 2, shown[i]); if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }
-      ctx.closePath(); ctx.stroke();
-      ctx.shadowBlur = 0;
-    } else {
-      ctx.lineWidth = 3 * dpr;
-      for (let k = 0; k < 8; k++) {
-        for (let i = 0; i < edges.length; i++) {
-          const [p, q] = seg(k, i);
-          ctx.strokeStyle = pieces[edges[i]].color;
-          ctx.globalAlpha = sel >= 0 && edges[i] !== sel ? 0.5 : 1;
-          ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
-        }
-      }
-    }
-    if (sel >= 0) {
-      ctx.globalAlpha = 1;
-      ctx.shadowColor = "rgba(255, 255, 255, 0.9)"; ctx.shadowBlur = 12 * dpr;
-      ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 4.5 * dpr;
-      for (let k = 0; k < 8; k++) {
-        for (let i = 0; i < edges.length; i++) {
-          if (edges[i] !== sel) continue;
-          const [p, q] = seg(k, i);
-          ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
-        }
-      }
-    }
-    ctx.restore();
-  }
-
-  // The greedy fence, exactly: each side is traced from the polygon's own corners, point by point in the
+  // A fence of the paper, exactly: each side is traced from the polygon's own corners, point by point in the
   // plane, so that the corners stay sharp under the loupe and a straight side bends only as the loupe says.
-  // The places of the chosen arrow are lit in white; the true corners are dots, the four corner pieces
-  // wear a ring.
+  // The true corners are dots, the four corner pieces wear a ring. With the pieces as tiles (an optimal fence)
+  // each arrow of the polygon is drawn in the colour of its piece and the chosen piece is lit in white; with the
+  // kinds of arrows (the greedy fences) the polygon is one line and the places of the chosen arrow are lit.
   function sideTrace(a, b, at, out, skipFirst) {
     const pa = G.polar(fence, a[0], a[1]), pb = G.polar(fence, b[0], b[1]);
     let dt = pb[0] - pa[0];
@@ -376,21 +312,37 @@
       out.push(at(q[0], q[1]));
     }
   }
+  function strokeSide(ctx, a, b, at) {
+    const pts = [];
+    sideTrace(a, b, at, pts, false);
+    ctx.beginPath();
+    pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
+    ctx.stroke();
+  }
   function drawFence(ctx, at, dpr) {
     const C = fence.corners, N = C.length;
     ctx.save();
     ctx.lineJoin = "round"; ctx.lineCap = "round";
-    ctx.shadowColor = "rgba(47, 243, 255, 0.7)"; ctx.shadowBlur = 10 * dpr;
-    ctx.strokeStyle = "#2ff3ff"; ctx.lineWidth = 2.4 * dpr;
-    ctx.globalAlpha = selKind >= 0 ? 0.5 : 1;
-    ctx.beginPath();
-    for (let j = 0; j < N; j++) {
-      const pts = [];
-      sideTrace(C[j], C[(j + 1) % N], at, pts, j > 0);
-      pts.forEach((p, i) => (j === 0 && i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])));
+    if (tiles) {
+      ctx.lineWidth = 3 * dpr;
+      fence.seg.forEach((sg, i) => {
+        ctx.strokeStyle = pieces[i].color;
+        ctx.globalAlpha = sel >= 0 && i !== sel ? 0.5 : 1;
+        strokeSide(ctx, sg[0], sg[1], at);
+      });
+    } else {
+      ctx.shadowColor = "rgba(47, 243, 255, 0.7)"; ctx.shadowBlur = 10 * dpr;
+      ctx.strokeStyle = "#2ff3ff"; ctx.lineWidth = 2.4 * dpr;
+      ctx.globalAlpha = selKind >= 0 ? 0.5 : 1;
+      ctx.beginPath();
+      for (let j = 0; j < N; j++) {
+        const pts = [];
+        sideTrace(C[j], C[(j + 1) % N], at, pts, j > 0);
+        pts.forEach((p, i) => (j === 0 && i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])));
+      }
+      ctx.closePath();
+      ctx.stroke();
     }
-    ctx.closePath();
-    ctx.stroke();
     ctx.restore();
     // The true corners as dots, thinned where they crowd: the loupe pulls them apart.
     ctx.save();
@@ -403,94 +355,62 @@
       ctx.beginPath(); ctx.arc(p[0], p[1], 1.6 * dpr, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
-    const kc = chain.vecs.find((v) => v[3]);
-    if (kc) {
-      ctx.save();
-      ctx.strokeStyle = "#ff5fb3"; ctx.lineWidth = 1.6 * dpr;
-      for (const [a, b] of G.placesOf(fence, kc[0], kc[1])) {
-        const q = G.polar(fence, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2), p = at(q[0], q[1]);
-        ctx.beginPath(); ctx.arc(p[0], p[1], 6 * dpr, 0, Math.PI * 2); ctx.stroke();
-      }
-      ctx.restore();
-    }
-    if (selKind >= 0) {
-      const k = chain.vecs[selKind];
+    // The corner pieces: a ring at each place of a half-integral arrow.
+    const ring = (a, b) => {
+      const q = G.polar(fence, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2), p = at(q[0], q[1]);
+      ctx.beginPath(); ctx.arc(p[0], p[1], 6 * dpr, 0, Math.PI * 2); ctx.stroke();
+    };
+    ctx.save();
+    ctx.strokeStyle = "#ff5fb3"; ctx.lineWidth = 1.6 * dpr;
+    if (tiles) fence.seg.forEach((sg, i) => { if (pieces[i].corner) ring(sg[0], sg[1]); });
+    else for (const kc of chain.vecs) if (kc[3]) for (const [a, b] of G.placesOf(fence, kc[0], kc[1])) ring(a, b);
+    ctx.restore();
+    // The chosen piece, or the places of the chosen kind of arrow, in white.
+    const lit = tiles ? (sel >= 0 ? [fence.seg[sel]] : []) : (selKind >= 0 ? G.placesOf(fence, chain.vecs[selKind][0], chain.vecs[selKind][1]) : []);
+    if (lit.length) {
       ctx.save();
       ctx.lineCap = "round";
       ctx.shadowColor = "rgba(255, 255, 255, 0.9)"; ctx.shadowBlur = 12 * dpr;
       ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 4.5 * dpr;
-      for (const [a, b] of G.placesOf(fence, k[0], k[1])) {
-        const pts = [];
-        sideTrace(a, b, at, pts, false);
-        ctx.beginPath();
-        pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
-        ctx.stroke();
-      }
+      for (const [a, b] of lit) strokeSide(ctx, a, b, at);
       ctx.restore();
     }
   }
 
-  // ---------- the pieces: tiles, or the fan of all arrows ----------
+  // ---------- the left box: the 500-omino, the pieces of an optimal fence, or the kinds of arrows ----------
   const pc = $("pieces"), pctx = pc.getContext("2d");
   let slots = [];
   function pieceCount() { return fence ? fence.count : pieces.length; }
-  function drawPieces() {
-    const { w, h, dpr } = fitCanvas(pc);
-    pctx.clearRect(0, 0, w, h);
-    slots = []; kindSpots = [];
-    tiles = false;
-    if (n === GIANT) {
-      if (giant) drawShape(giant.cells, giant.pairs, "#7f83ff", 0, 0, w, h, 0.94, dpr, false, false);
-      syncPieceAccess();
-      return;
-    }
-    if (fence) {
-      drawKinds(w, h, dpr);
-      syncPieceAccess();
-      return;
-    }
+  // The grid of square slots, as large as the box allows, for the pieces of an optimal fence; none when a slot
+  // would be smaller than a finger: then the box shows the kinds of arrows, as it does for the greedy fences.
+  function tileGrid(w, h, dpr) {
     const N = pieces.length;
-    if (!N) return;
-    // The grid whose square slots are largest.
     let cols = 1, s = 0;
     for (let c = 1; c <= N; c++) {
       const size = Math.min(w / c, h / Math.ceil(N / c));
       if (size > s) { s = size; cols = c; }
     }
-    if (s >= 24 * dpr) {
-      tiles = true;
-      const rows = Math.ceil(N / cols);
-      const ox = (w - cols * s) / 2, oy = (h - rows * s) / 2;
-      pieces.forEach((p, i) => {
-        const x = ox + (i % cols) * s, y = oy + Math.floor(i / cols) * s;
-        slots.push([x, y, s]);
-        drawShape(p.cells, p.pairs, p.color, x, y, s, s, 0.66, dpr, i === sel, true);
-      });
-    } else drawFan(w, h, dpr);
-    syncPieceAccess();
+    return optimal() && s >= 24 * dpr ? { cols, s } : null;
   }
-  // Every folded arrow from one corner, in its piece's colour, as faint as its
-  // share: exactly what the loop is built from.
-  function drawFan(w, h, dpr) {
-    const ctx = pctx, pad = 14 * dpr;
-    let L = 0;
-    for (const v of chain.vecs) L = Math.max(L, Math.hypot(v[0], v[1]));
-    const size = Math.min(w - 2 * pad, (h - 2 * pad) / Math.sin(Math.PI / 4) * 0.98);
-    const u = size / L, ox = pad + (w - 2 * pad - size) / 2, oy = h - pad - (h - 2 * pad - size * Math.sin(Math.PI / 4)) / 2;
-    ctx.save();
-    ctx.setLineDash([4 * dpr, 4 * dpr]);
-    ctx.strokeStyle = "rgba(216, 246, 255, 0.28)"; ctx.lineWidth = 1 * dpr;
-    ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox + size, oy);
-    ctx.moveTo(ox, oy); ctx.lineTo(ox + size * Math.SQRT1_2, oy - size * Math.SQRT1_2); ctx.stroke();
-    ctx.setLineDash([]);
-    const a = Math.min(0.9, Math.max(0.14, 160 / chain.vecs.length));
-    ctx.lineWidth = Math.max(1, 1.2 * dpr);
-    for (const v of chain.vecs) {
-      ctx.globalAlpha = a * Math.max(0.35, v[2]);
-      ctx.strokeStyle = pieces[v[3]].color;
-      ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox + v[0] * u, oy - v[1] * u); ctx.stroke();
-    }
-    ctx.restore();
+  function drawPieces() {
+    const { w, h, dpr } = fitCanvas(pc);
+    pctx.clearRect(0, 0, w, h);
+    slots = []; kindSpots = [];
+    const grid = n === GIANT ? null : tileGrid(w, h, dpr);
+    if (!!grid !== tiles) { sel = -1; selKind = -1; }   // the box changed the way it shows the pieces: nothing is chosen
+    tiles = !!grid;
+    if (n === GIANT) {
+      if (giant) drawShape(giant.cells, giant.pairs, "#7f83ff", 0, 0, w, h, 0.94, dpr, false, false, false);
+    } else if (grid) {
+      const N = pieces.length, rows = Math.ceil(N / grid.cols), s = grid.s;
+      const ox = (w - grid.cols * s) / 2, oy = (h - rows * s) / 2;
+      pieces.forEach((p, i) => {
+        const x = ox + (i % grid.cols) * s, y = oy + Math.floor(i / grid.cols) * s;
+        slots.push([x, y, s]);
+        drawShape(p.cells, p.pairs, p.color, x, y, s, s, 0.66, dpr, i === sel, true, true);
+      });
+    } else drawKinds(w, h, dpr);
+    syncPieceAccess();
   }
   // The kinds of arrows of a fence, folded to 0..45 degrees and drawn from one point: a dot at each tip,
   // bigger and brighter the more pieces share the arrow, the corner pieces' arrow apart. The polygon is
@@ -575,18 +495,20 @@
     status(t(k[3] ? "ls.s.cornerArrow" : "ls.s.kind", { pair: t("ls.pair", { x: fmtHalf(k[0]), y: fmtHalf(k[1]) }), m: fmtNum(k[2], 0), k: G.placesOf(fence, k[0], k[1]).length }));
   }
   function syncPieceAccess() {
-    const kinds = !!fence && n !== GIANT;
+    const kinds = !!fence && n !== GIANT && !tiles;
     pc.classList.toggle("scrub", kinds);
     pc.style.cursor = tiles || kinds ? "pointer" : "default";
     if (tiles || kinds) pc.setAttribute("tabindex", "0"); else pc.removeAttribute("tabindex");
     const label = n === GIANT ? t("ls.giantAria") : kinds ? t("ls.kinds", { kinds: fmtNum(chain.vecs.length, 0), count: fmtNum(fence.count, 0), n })
-      : tiles ? t("ls.pieces", { count: fmtNum(pieces.length, 0), n }) : t("ls.fan", { count: fmtNum(pieces.length, 0), n });
+      : t("ls.pieces", { count: fmtNum(pieces.length, 0), n });
     pc.setAttribute("aria-label", label);
     // The canvas explains itself through its box (the bubbles skip canvases).
-    pc.parentElement.setAttribute("data-lab-tip", n === GIANT ? t(REDUCED ? "ls.tipGiantStill" : "ls.tipGiant") : kinds ? t("ls.tipKinds") : tiles ? t("ls.tipTiles") : t("ls.tipFan"));
+    pc.parentElement.setAttribute("data-lab-tip", n === GIANT ? t(REDUCED ? "ls.tipGiantStill" : "ls.tipGiant") : kinds ? t("ls.tipKinds") : t("ls.tipTiles"));
   }
-  // One piece, fitted into a box, with its longest arrows.
-  function drawShape(cells, pairs, color, x, y, bw, bh, fill, dpr, chosen, tile) {
+  // One piece, fitted into a box, with its arrows (the 500-omino's longest ones; an optimal fence's piece has its
+  // one arrow, and `marks` draws the two unit edges whose midpoints the arrow joins: where the piece touches its
+  // neighbours).
+  function drawShape(cells, pairs, color, x, y, bw, bh, fill, dpr, chosen, tile, marks) {
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     for (const [cx, cy] of cells) { minX = Math.min(minX, cx); maxX = Math.max(maxX, cx + 1); minY = Math.min(minY, cy); maxY = Math.max(maxY, cy + 1); }
     const u = Math.min(bw / (maxX - minX), bh / (maxY - minY)) * fill;
@@ -628,7 +550,18 @@
     ctx.lineCap = "round";
     ctx.strokeStyle = "rgba(4, 10, 20, 0.88)";
     ctx.stroke();
-    // The longest arrows, from midpoint to midpoint (doubled coordinates).
+    if (marks) {
+      // An arrow's end is the midpoint of a unit edge; an odd doubled x says the edge is vertical.
+      ctx.strokeStyle = "#ff5b7f"; ctx.lineWidth = Math.max(1.8 * dpr, Math.min(3.4 * dpr, u * 0.16));
+      for (const pq of pairs) for (const m of pq) {
+        const gx = m[0] / 2 + 0.5, gy = m[1] / 2 + 0.5, v = Math.abs(m[0]) % 2 === 1;
+        ctx.beginPath();
+        if (v) { ctx.moveTo(sx(gx), sy(gy - 0.5)); ctx.lineTo(sx(gx), sy(gy + 0.5)); }
+        else { ctx.moveTo(sx(gx - 0.5), sy(gy)); ctx.lineTo(sx(gx + 0.5), sy(gy)); }
+        ctx.stroke();
+      }
+    }
+    // The arrows, from midpoint to midpoint (doubled coordinates).
     const lw = Math.max(1.2 * dpr, Math.min(2.6 * dpr, u * 0.1));
     ctx.shadowColor = "rgba(47, 243, 255, 0.85)"; ctx.shadowBlur = Math.min(6 * dpr, lw * 2.5);
     ctx.strokeStyle = "#2ff3ff"; ctx.fillStyle = "#2ff3ff";
@@ -652,10 +585,17 @@
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
   function pick(i) {
+    if (!tiles || i < 0 || i >= pieces.length) return;
     sel = sel === i ? -1 : i;
     drawPieces();
     drawLoop(true);
-    status(sel >= 0 ? t("ls.s.pick", { i: sel + 1 }) : t("ls.s.noPiece"));
+    caption();
+    status(sel >= 0 ? t("ls.s.pick", { i: sel + 1, count: fmtNum(pieces.length, 0), pair: pieceArrow(sel) }) : t("ls.s.noPiece"));
+  }
+  // A piece's arrow folded by the grid's symmetries to x >= y >= 0, written as the kinds are.
+  function pieceArrow(i) {
+    const a = fence.arrows[i], u = Math.abs(a[0]) / 2, v = Math.abs(a[1]) / 2;
+    return t("ls.pair", { x: fmtHalf(Math.max(u, v)), y: fmtHalf(Math.min(u, v)) });
   }
   // The arrows of a fence answer the pointer itself: down chooses the dot nearest to it, a finger
   // sliding over the dots chooses the one under it (it shows while the finger is down, so a miss is
@@ -666,7 +606,7 @@
     return [(e.clientX - r.left) * dpr, (e.clientY - r.top) * dpr, dpr];
   }
   pc.addEventListener("pointerdown", (e) => {
-    if (!fence || n === GIANT || e.button !== 0) return;
+    if (!fence || n === GIANT || tiles || e.button !== 0) return;
     // The dock's bubble stays for the mouse's hover: here a long press is a slide, not a question.
     if (window.labTip) window.labTip.hide();
     const [x, y, dpr] = canvasXY(e), i = nearestKind(x, y, PICK_RADIUS * dpr);
@@ -696,7 +636,7 @@
     if (i >= 0) pick(i);
   });
   pc.addEventListener("keydown", (e) => {
-    if (fence && n !== GIANT) {
+    if (fence && n !== GIANT && !tiles) {
       const K = chain.vecs.length;
       if (window.labTip && (e.key.startsWith("Arrow") || e.key === "Escape")) window.labTip.hide();
       if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); pickKind(selKind < 0 ? 0 : (selKind + 1) % K); }
@@ -727,6 +667,8 @@
     return `${fmtNum(m, 1)}·10<sup>${e}</sup>`;
   }
   const DICE = '<svg class="dice" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="9" r="1.4" fill="currentColor"/><circle cx="15" cy="15" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></svg>';
+  // « 1 piece », « 12 pieces »
+  const countText = (c) => c === 1 ? t("ls.count1") : t("ls.count", { count: fmtNum(c, 0) });
   function caption() {
     const c = $("caption");
     if (n === GIANT) {
@@ -734,8 +676,9 @@
     } else if (fence && selKind >= 0) {
       // The chosen arrow and the number of pieces that share it.
       const k = chain.vecs[selKind];
-      c.textContent = t("ls.pair", { x: fmtHalf(k[0]), y: fmtHalf(k[1]) }) + " · " + t("ls.count", { count: fmtNum(k[2], 0) });
-    } else c.textContent = t("ls.count", { count: fmtNum(pieceCount(), 0) });
+      c.textContent = t("ls.pair", { x: fmtHalf(k[0]), y: fmtHalf(k[1]) }) + " · " + countText(k[2]);
+    } else if (tiles && sel >= 0) c.textContent = pieceArrow(sel);
+    else c.textContent = countText(pieceCount());
     if (n === GIANT) c.setAttribute("data-lab-tip", t(REDUCED ? "ls.tipSamplesStill" : "ls.tipSamples")); else c.removeAttribute("data-lab-tip");
     $("gap-value").textContent = fmtPct(maxGap());
     // « loop » only where there is a loop
@@ -745,30 +688,42 @@
     $("gap-label").dataset.i18n = poly ? "ls.gapPoly" : "ls.gapLabel";
     $("gap-label").textContent = t(poly ? "ls.gapPoly" : "ls.gapLabel");
   }
-  // At 500 cells, the paper's sample behind the loop, in the corner of the stage; from 7 to 15, the greedy fence.
+  // At 500 cells, the paper's sample behind the loop, in the corner of the stage; from 4 to 6, the optimal fence,
+  // from 7 to 15, the greedy fence.
   function syncSource() {
     $("src-tag").hidden = n !== GIANT;
     $("fence-tag").hidden = !fence || n === GIANT;
+    const nameKey = optimal() ? "ls.optName" : "ls.fenceName", tipKey = optimal() ? "ls.optTip" : "ls.fenceTip";
+    $("fence-name").dataset.i18n = nameKey; $("fence-name").textContent = t(nameKey);
+    $("fence-tag").dataset.i18nTitle = tipKey; $("fence-tag").title = t(tipKey, { a: fence ? fmtNum(fence.L, 0) : "" });
     $("src-tag").title = t(REDUCED ? "ls.srcStill" : "ls.src");
     $("src-count").textContent = t("ls.srcCount", { m: fmtNum(PAPER500 / 1e6, 1) });
     fitTag();
   }
-  // The fence's tag keeps its words where the polygon leaves them room; on a small stage, where the
-  // polygon would run under them, only its icon shows, and its name stays in the bubble and the
-  // accessible name. The test takes the roundest polygon (n = 15) at ×1 (the loupe only pulls a
-  // polygon away from the corner), so that the tag keeps one form from 7 to 15.
-  let roundest = null;
+  // The fence's tag keeps its words where the polygon leaves them room; on a small stage, where a polygon
+  // would run under them, only its icon shows, and its name stays in the bubble and the accessible name.
+  // The test takes every fence's polygon at ×1 (the loupe only pulls a polygon away from the corner), so that
+  // the tag keeps one form from 4 to 15.
+  let fencePts = null;
   function fitTag() {
     const tag = $("fence-tag");
     tag.classList.remove("short");
     if (tag.hidden) return;
-    if (!roundest) { const P = G.build(GREEDY[LAST_FENCE]); roundest = { max: P.gap.max, pts: G.samples(P, 0.5) }; }
+    if (!fencePts) {
+      fencePts = [];
+      for (let k = 4; k <= LAST_FENCE; k++) {
+        const P = G.build(k >= FIRST_FENCE ? GREEDY[k] : G.fromPieces(OPT[k]));
+        fencePts.push({ max: P.gap.max, pts: G.samples(P, 0.5) });
+      }
+    }
     const st = loopCanvas.getBoundingClientRect(), r = tag.getBoundingClientRect(), m = 4;
     const cx = st.left + st.width / 2, cy = st.top + st.height / 2;
-    const R = Math.min(st.width, st.height) * LOOP_FILL / (1 + roundest.max);
-    tag.classList.toggle("short", roundest.pts.some(([th, g]) => {
-      const a = th * Math.PI / 180, x = cx + R * (1 + g) * Math.sin(a), y = cy + R * (1 + g) * Math.cos(a);
-      return x > r.left - m && x < r.right + m && y > r.top - m && y < r.bottom + m;
+    tag.classList.toggle("short", fencePts.some((f) => {
+      const R = Math.min(st.width, st.height) * LOOP_FILL / (1 + f.max);
+      return f.pts.some(([th, g]) => {
+        const a = th * Math.PI / 180, x = cx + R * (1 + g) * Math.sin(a), y = cy + R * (1 + g) * Math.cos(a);
+        return x > r.left - m && x < r.right + m && y > r.top - m && y < r.bottom + m;
+      });
     }));
   }
   function syncControls() {
@@ -826,8 +781,7 @@
   function syncChips() {
     const want = new Set(["gap"]);
     if (n === GIANT) { want.add("sample"); want.add("giant"); }
-    else if (fence) { want.add("count"); want.add("arrow"); want.add("polygon"); }
-    else { want.add("count"); want.add("arrow"); want.add("loop"); }
+    else { want.add("count"); want.add("arrow"); want.add("polygon"); }
     document.querySelectorAll(".math-chip").forEach((b) => {
       b.hidden = !want.has(b.dataset.chip);
     });
@@ -843,29 +797,35 @@
       // Only « = value » stays on one line: the label wraps on a narrow card.
       const f1 = (x) => fmtNum(x, x % 1 ? 1 : 0), fz = FENCES[n];
       let s = `${t("ls.live.ref")} <span class="f">= ${f1(fence.area)}</span> · ${t("ls.live.computed")}`;
+      if (optimal()) {
+        // The cells the pieces enclose are counted here, on the pieces; the optimum is the paper's.
+        const cells = G.regionArea(OPT[n].pieces);
+        s += `<br>${t("ls.live.enclosed")} <span class="f">= ${N0(cells)}</span> · ${t("ls.live.counted")}`;
+        s += `<br>${t("ls.live.corr")} <span class="f">= ${MINUS}${f1(fence.area - cells)}</span> · ${t("ls.live.computed")}`;
+        s += `<br>${t("ls.live.fence", { f: t("ls.live.opt", { o: N0(fence.L) }) })}`;
+        return `<span class="live">${s}</span>`;
+      }
       s += `<br>${t("ls.live.greedy")} <span class="f">= ${N0(fence.L)}</span> · ${t("ls.live.paper")}`;
       s += `<br>${t("ls.live.corr")} <span class="f">= ${MINUS}${f1(fence.area - fence.L)}</span> · ${t("ls.live.computed")}`;
       if (fz && fz.best) s += `<br>${t("ls.live.fence", { f: t("ls.live.best", { b: N0(fz.best), u: N0(fz.bound) }) })}`;
       else s += `<br>${t("ls.live.upper", { u: N0(fence.U), g: fmtNum(100 * (fence.U - fence.L) / fence.L, 3) })}`;
       return `<span class="live">${s}</span>`;
     }
-    if (id === "loop" && chain && n !== GIANT) {
-      // Exact area of the loop of this n, shrunk by 8 (a factor 64 in area).
-      let s = 0;
-      const p = chain.pts;
-      for (let i = 0; i + 1 < p.length; i++) s += 0.5 * (1 + p[i][1]) * (1 + p[i + 1][1]) * Math.sin((p[i + 1][0] - p[i][0]) * Math.PI / 180);
-      const est = (8 * s * chain.R * chain.R) / 64;
-      const fz = FENCES[n];
-      let paper = "";
-      if (fz && fz.opt) paper = `<br>${t("ls.live.fence", { f: t("ls.live.opt", { o: N0(fz.opt) }) })}`;
-      else if (fz) paper = `<br>${t("ls.live.fence", { f: t("ls.live.best", { b: N0(fz.best), u: N0(fz.bound) }) })}`;
-      return `<span class="live"><span class="f">${t("ls.live.loop")} ≈ ${N0(est)}</span> · ${t("ls.live.computed")}${paper}</span>`;
+    if (id === "arrow" && optimal()) {
+      // How many pieces of this fence take their longest arrow (the longest between the midpoints of two boundary edges).
+      let k = 0;
+      OPT[n].pieces.forEach((p) => {
+        const dx = p.o[0] - p.i[0], dy = p.o[1] - p.i[1];
+        if (dx * dx + dy * dy === S.diameters(p.c).d2) k++;
+      });
+      return `<span class="live">${t("ls.live.longest")} <span class="f">= ${k} / ${fence.count}</span> · ${t("ls.live.computed")}</span>`;
     }
     if (id === "gap" && fence) {
-      // The whole polygon, and the sector of the paper's deviation figure (the south to the south-east).
+      // The whole polygon, and for the greedy fences the sector of the paper's deviation figure (the south to the south-east).
+      const whole = `<span class="live"><span class="f"><i>n</i> = ${n}${colon}${fmtPct(maxGap(), 2)}</span> · ${t("ls.live.whole")} · ${t("ls.live.computed")}`;
+      if (optimal()) return whole + "</span>";
       const r = G.range(fence, 0, 45);
-      return `<span class="live"><span class="f"><i>n</i> = ${n}${colon}${fmtPct(maxGap(), 2)}</span> · ${t("ls.live.whole")} · ${t("ls.live.computed")}` +
-        `<br><span class="f">${fmtPct(r.min, 2)} … ${fmtPct(r.max, 2)}</span> · ${t("ls.live.sector")} · ${t("ls.live.computed")}</span>`;
+      return whole + `<br><span class="f">${fmtPct(r.min, 2)} … ${fmtPct(r.max, 2)}</span> · ${t("ls.live.sector")} · ${t("ls.live.computed")}</span>`;
     }
     if (id === "gap") return tag(`<i>n</i> = ${n}${colon}${fmtPct(maxGap())}`, n === GIANT ? "ls.live.paper" : null);
     if (id === "sample") return tag(t("ls.samples", { s: N0(giantSamples) }));
@@ -875,7 +835,9 @@
   // The card itself is the shared math-chip card; this lab provides its texts.
   window.mathChip = window.mathChip || {};
   window.mathChip.provide = (chip) => {
-    const id = chip.dataset.chip, c = CHIPS[fence && n !== GIANT && (id === "gap" || id === "arrow") ? id + "Fence" : id];
+    const id = chip.dataset.chip;
+    const fenceCard = !!fence && n !== GIANT && (id === "gap" || id === "arrow" || id === "polygon");
+    const c = CHIPS[fenceCard ? id + (optimal() ? "Opt" : "Fence") : id];
     if (!c) return null;
     const l = lang();
     return { title: t("ls.chip." + id), lead: c.lead[l], body: c.detail[l] + live(id), src: c.section[l],
@@ -891,8 +853,8 @@
     syncControls(); caption(); syncChips(); syncSource(); syncLoupe(); syncPieceAccess(); drawPieces();
     centreReadout();
   });
-  new ResizeObserver(() => { drawLoop(true); drawPieces(); centreReadout(); fitTag(); }).observe(loopCanvas);
-  new ResizeObserver(() => drawPieces()).observe(pc);
+  new ResizeObserver(() => { drawPieces(); drawLoop(true); centreReadout(); fitTag(); }).observe(loopCanvas);
+  new ResizeObserver(() => { const was = tiles; drawPieces(); if (tiles !== was) drawLoop(true); }).observe(pc);
   window.addEventListener("resize", centreReadout);
 
   syncLoupe();
@@ -905,12 +867,21 @@
   // For tests and figure export.
   window.limitLab = {
     state: () => ({ n, pieces: pieceCount(), loupe, loupeV, maxLoupe: maxLoupe(), sel, tiles, gap: maxGap(), R: chain && chain.R, X: chain && chain.X, Y: chain && chain.Y, samples: giantSamples, source: !$("src-tag").hidden, chips: [...document.querySelectorAll(".math-chip")].filter((b) => !b.hidden).map((b) => b.dataset.chip),
-      fence: !!fence && n !== GIANT, kinds: fence && n !== GIANT ? chain.vecs.length : 0, corners: fence && n !== GIANT ? fence.corners.length : 0, selKind, area: fence && n !== GIANT ? fence.area : 0 }),
+      fence: !!fence && n !== GIANT, optimal: optimal(), kinds: fence && n !== GIANT ? chain.vecs.length : 0, corners: fence && n !== GIANT ? fence.corners.length : 0, selKind, area: fence && n !== GIANT ? fence.area : 0 }),
     setN, setLoupe, pick, pickKind,
     kindAt: (i) => chain && chain.vecs ? chain.vecs[i] : null,
     // where a kind's dot sits on the screen, for the browser tests
     spot: (i) => { const r = pc.getBoundingClientRect(), d = pc.width / r.width, s = kindSpots.find((q) => q[2] === i); return s ? [r.left + s[0] / d, r.top + s[1] / d] : null; },
-    vectors: () => pieces.map((p) => p.vecs),
+    // for the browser tests: a tile's centre on the screen, and its piece
+    tileSpot: (i) => { const r = pc.getBoundingClientRect(), d = pc.width / r.width, q = slots[i]; return q ? [r.left + (q[0] + q[2] / 2) / d, r.top + (q[1] + q[2] / 2) / d] : null; },
+    // for the browser tests: where the middle of piece i's side of the polygon lies on the screen
+    sideSpot: (i) => {
+      if (!fence || !shown || !fence.seg[i]) return null;
+      const sg = fence.seg[i], r = loopCanvas.getBoundingClientRect(), d = loopCanvas.width / r.width;
+      const q = G.polar(fence, (sg[0][0] + sg[1][0]) / 2, (sg[0][1] + sg[1][1]) / 2), p = stageMap(loopCanvas.width, loopCanvas.height).at(q[0], q[1]);
+      return [r.left + p[0] / d, r.top + p[1] / d];
+    },
+    pieceAt: (i) => pieces[i] ? { cells: pieces[i].cells, pair: pieces[i].pairs[0], color: pieces[i].color, corner: pieces[i].corner } : null,
     busy: () => anim !== null,
     areaRatio500: () => areaRatio(DATA.dev500),
   };

@@ -1,18 +1,10 @@
 /* Fence Challenge · limit-shape lab: the heavy work, off the page's thread.
- * "pieces": every free n-omino with its longest arrows.
  * "giant": a running chain of 500-ominoes, one sample every 8 n proposals,
  * started from a 500-omino that already went through a burn-in. */
-importScripts("sampler.js?v=20261020a", "data/start500.js?v=20261020a");
+importScripts("sampler.js?v=20261020b", "data/start500.js?v=20261020b");
 
 var S = self.LimitSampler;
 var chain = null, running = false, samples = 0, left = 0;
-
-function piecesFor(n) {
-  return S.enumerateFree(n).map(function (cells) {
-    var dm = S.diameters(cells);
-    return { cells: cells, pairs: dm.pairs, vecs: S.sampleVectors(cells) };
-  });
-}
 
 function giantSlice() {
   if (!running) return;
@@ -29,9 +21,7 @@ function giantSlice() {
 
 self.onmessage = function (e) {
   var m = e.data || {};
-  if (m.cmd === "pieces") {
-    self.postMessage({ type: "pieces", n: m.n, id: m.id, pieces: piecesFor(m.n) });
-  } else if (m.cmd === "giant") {
+  if (m.cmd === "giant") {
     if (m.run && !running) {
       if (!chain) {
         chain = new S.Chain(1, m.seed || 1);

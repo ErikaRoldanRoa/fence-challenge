@@ -3,9 +3,11 @@
 Usage: python3 limit-shape-lab/test/ui_check.py <base-url> <outdir>
 (base-url serves the repository root, e.g. http://127.0.0.1:8811/)
 Desktop and phone, FR / DE / EN: no console errors, the size steps (4..15, then 500),
-the greedy polygons of Section 6.2 for n = 7..15 and their tag, the loupe and its keys
-(browser shortcuts left alone), the chips per state, the cards, the bubbles, slides and
-long presses on the arrows' dots, a one-line caption, the disabled home.
+the optimal fences for n = 4..6 (their pieces on tiles, the chosen piece lit on the polygon,
+the cards with the numbers the lab counts) and the greedy polygons of Section 6.2 for
+n = 7..15, their tags, the loupe and its keys (browser shortcuts left alone), the chips per
+state, the cards, the bubbles, slides and long presses on the arrows' dots, a one-line
+caption, the disabled home.
 """
 import os
 import re
@@ -47,10 +49,11 @@ with sync_playwright() as p:
             st = pg.evaluate("limitLab.state()")
             check(st["n"] == 4 and st["pieces"] == 5, f"{tag}: opens on the 5 tetrominoes")
             check(TITLES[lang] in pg.title(), f"{tag}: title in the language")
-            check(sorted(st["chips"]) == ["arrow", "count", "gap", "loop"], f"{tag}: chips at n = 4: {st['chips']}")
-            check(st["tiles"], f"{tag}: the tetrominoes sit on tiles")
+            check(sorted(st["chips"]) == ["arrow", "count", "gap", "polygon"], f"{tag}: chips at n = 4: {st['chips']}")
+            check(st["tiles"] and st["fence"] and st["optimal"], f"{tag}: the tetrominoes sit on tiles, round the optimal fence's polygon")
             check(not st["source"] and not pg.is_visible("#src-tag"), f"{tag}: no paper tag below 500")
-            check(not pg.is_visible("#fence-tag"), f"{tag}: no greedy-fence tag at n = 4")
+            name = pg.evaluate("document.getElementById('fence-tag').getAttribute('aria-labelledby').split(' ').map((i) => document.getElementById(i).textContent).join(' ')")
+            check(pg.is_visible("#fence-tag") and pg.evaluate("i18n.t('ls.optName')") in name, f"{tag}: at n = 4 the stage names the optimal fence: {name!r}")
             # Browser shortcuts keep their keys: Ctrl or Cmd with = (zoom) does not step n.
             pg.keyboard.press("Control+Equal")
             pg.keyboard.press("Meta+Equal")
@@ -67,7 +70,7 @@ with sync_playwright() as p:
             check(nav == ["../hub/", "../cube-lab/", "../hexomino-lab/", "../pentomino-dp-lab/"], f"{tag}: nav order {nav}")
             check(st["maxLoupe"] * abs(st["gap"]) <= 0.6 + 1e-9, f"{tag}: loupe capped at n = 4 (×{st['maxLoupe']:.2f})")
             check(pg.get_attribute("#fewer", "aria-disabled") == "true", f"{tag}: no step below 4")
-            check(abs(st["gap"] - 0.17851) < 1e-4, f"{tag}: gap at n = 4 is 17.9 %")
+            check(abs(st["gap"] + 0.271131) < 1e-6 and abs(st["area"] - 11.5) < 1e-9, f"{tag}: n = 4: the largest gap is the polygon's dip of 27.1 %, its area 11.5")
             pg.screenshot(path=f"{OUT}/{view}-{lang}-n4.png")
 
             # Steps up to 15 (the greedy fences from 7), then the jump to 500, then back.
@@ -77,8 +80,12 @@ with sync_playwright() as p:
                 pg.click("#more")
                 pg.wait_for_function(f"limitLab.state().n === {k} && limitLab.state().pieces === {c} && !limitLab.busy()", timeout=15000)
                 st = pg.evaluate("limitLab.state()")
+                if k <= 6:
+                    check(st["fence"] and st["optimal"] and st["tiles"], f"{tag}: n = {k} is the optimal fence: its polygon, its pieces on tiles")
+                    check(sorted(st["chips"]) == ["arrow", "count", "gap", "polygon"], f"{tag}: chips at n = {k}: {st['chips']}")
+                    check(st["kinds"] == {5: 7, 6: 9}[k], f"{tag}: n = {k}: {st['kinds']} kinds of arrows")
                 if k >= 7:
-                    check(st["fence"] and not st["tiles"], f"{tag}: n = {k} is the greedy polygon, drawn from its arrows")
+                    check(st["fence"] and not st["optimal"] and not st["tiles"], f"{tag}: n = {k} is the greedy polygon, drawn from its arrows")
                     check(sorted(st["chips"]) == ["arrow", "count", "gap", "polygon"], f"{tag}: chips at n = {k}: {st['chips']}")
                     check(st["kinds"] == KINDS[k], f"{tag}: n = {k}: {st['kinds']} kinds of arrows")
             st = pg.evaluate("limitLab.state()")
@@ -133,13 +140,25 @@ with sync_playwright() as p:
             pg.evaluate("limitLab.setN(4)")
             pg.wait_for_function("limitLab.state().n === 4 && limitLab.state().pieces === 5")
 
-            # The loop card at n = 6 sets the estimate beside the paper's optimum.
-            pg.evaluate("limitLab.setN(6)")
-            pg.wait_for_function("limitLab.state().n === 6 && limitLab.state().pieces === 35 && !limitLab.busy()")
-            pg.click(".math-chip[data-chip='loop']")
-            live = pg.inner_text(".math-pop .live")
-            check(re.search(r"1.?597", live), f"{tag}: n = 6 estimate next to the optimum: {live!r}")
-            pg.click(".math-pop .math-close")
+            # The polygon card of an optimal fence: the polygon's area from its arrows, the cells the lab counts on the pieces, the
+            # corrections between them, the paper's optimum; the arrow card counts the pieces that take their longest arrow.
+            norm = lambda t: re.sub(r"[\u202f\u00a0]", " ", t)
+            fmtn = lambda x: norm(pg.evaluate("(x) => x.toLocaleString({en: 'en-US', fr: 'fr-FR', de: 'de-DE'}[i18n.get()], {minimumFractionDigits: x % 1 ? 1 : 0, maximumFractionDigits: x % 1 ? 1 : 0})", x))
+            for k, ref, cells, corr, longest in ((4, 11.5, 9, 2.5, "0 / 5"), (5, 141.5, 128, 13.5, "7 / 12"), (6, 1663, 1597, 66, "30 / 35")):
+                pg.evaluate(f"limitLab.setN({k})")
+                pg.wait_for_function(f"limitLab.state().n === {k} && limitLab.state().optimal && !limitLab.busy()")
+                pg.click(".math-chip[data-chip='polygon']")
+                live = norm(pg.inner_text(".math-pop .live"))
+                check(f"= {fmtn(ref)} " in live and f"= {fmtn(cells)} " in live and f"= −{fmtn(corr)} " in live,
+                      f"{tag}: n = {k}: polygon {ref}, enclosed {cells}, corrections −{corr}: {live!r}")
+                check(re.search(r"(?i)(optimum|Optimum) " + re.escape(fmtn(cells)), live), f"{tag}: n = {k}: the paper's optimum {cells}: {live!r}")
+                pg.click(".math-pop .math-close")
+                pg.click(".math-chip[data-chip='arrow']")
+                live = norm(pg.inner_text(".math-pop .live"))
+                check(f"= {longest}" in live, f"{tag}: n = {k}: pieces with their longest arrow {longest}: {live!r}")
+                pg.click(".math-pop .math-close")
+            pg.evaluate("limitLab.setN(4)")
+            pg.wait_for_function("limitLab.state().n === 4 && limitLab.state().pieces === 5 && !limitLab.busy()")
 
             # The polygon card at n = 9: the polygon's area from its arrows, the paper's fence, the corrections.
             pg.evaluate("limitLab.setN(9)")
@@ -220,8 +239,8 @@ with sync_playwright() as p:
             pg.evaluate("limitLab.setLoupe(0)")
             pg.evaluate("limitLab.setN(4)")
             pg.wait_for_function("limitLab.state().n === 4 && limitLab.state().pieces === 5 && !limitLab.busy()")
-            check(pg.get_attribute("#loop", "aria-label") == pg.evaluate("i18n.t('ls.loop')"), f"{tag}: the loop's name at n = 4 names the loop")
-            check(pg.get_attribute("#gap-tok", "data-lab-tip") == pg.evaluate("i18n.t('ls.gap')"), f"{tag}: the gap says loop at n = 4")
+            check(pg.get_attribute("#loop", "aria-label") == pg.evaluate("i18n.t('ls.fenceOpt')"), f"{tag}: the loop's name at n = 4 names the optimal fence's polygon")
+            check(pg.get_attribute("#gap-tok", "data-lab-tip") == pg.evaluate("i18n.t('ls.gapPoly')"), f"{tag}: the gap says polygon at n = 4")
             # the API refuses a size the lab does not have
             pg.evaluate("limitLab.setN(16)")
             check(pg.evaluate("limitLab.state().n") == 4, f"{tag}: an unknown size changes nothing")
@@ -230,7 +249,61 @@ with sync_playwright() as p:
             pg.evaluate("limitLab.setN(4)")
             pg.wait_for_function("limitLab.state().n === 4 && limitLab.state().pieces === 5 && !limitLab.busy()")
 
-            # Choosing a piece lights its edges.
+            # Choosing a piece lights its own side of the polygon, in white, and only that one.
+            pg.evaluate("limitLab.setN(5)")
+            pg.wait_for_function("limitLab.state().n === 5 && limitLab.state().tiles && !limitLab.busy()")
+            pg.evaluate("limitLab.setLoupe(0)")
+            white = """(([x, y]) => { const c = document.getElementById('loop'), r = c.getBoundingClientRect(), d = c.width / r.width;
+              const px = Math.round((x - r.left) * d), py = Math.round((y - r.top) * d), R = Math.round(6 * d);
+              const img = c.getContext('2d').getImageData(Math.max(0, px - R), Math.max(0, py - R), 2 * R, 2 * R).data; let k = 0;
+              for (let i = 0; i < img.length; i += 4) if (img[i] > 235 && img[i + 1] > 235 && img[i + 2] > 235 && img[i + 3] > 200) k++; return k; })"""
+            pg.evaluate("limitLab.pick(4)")
+            lit = [pg.evaluate(white, pg.evaluate(f"limitLab.sideSpot({i})")) for i in range(12)]
+            check(lit[4] > 8 and sum(1 for i, v in enumerate(lit) if i != 4 and v > 8) == 0, f"{tag}: piece 5 of 12 lights its own side of the polygon and no other: {lit}")
+            check(pg.evaluate("limitLab.state().sel") == 4 and "5" in pg.inner_text("#status") and "12" in pg.inner_text("#status") and "2.5" in pg.inner_text("#status").replace(",", ".").replace(" ", ""),
+                  f"{tag}: the choice is announced with its arrow: {pg.inner_text('#status')!r}")
+            cap = pg.inner_text("#caption")
+            check((";" in cap) if lang in ("fr", "de") else ("," in cap and ";" not in cap), f"{tag}: the chosen piece's arrow in the caption, as the language writes it: {cap!r}")
+            for i in (0, 11, 7):
+                pg.evaluate(f"limitLab.pick({i})")
+                lit = [pg.evaluate(white, pg.evaluate(f"limitLab.sideSpot({j})")) for j in range(12)]
+                check(lit[i] > 8 and sum(1 for j, v in enumerate(lit) if j != i and v > 8) == 0, f"{tag}: piece {i + 1} lights its own side: {lit}")
+            pg.evaluate("limitLab.pick(7)")
+            # the pieces on the tiles are where the fence puts them: each arrow is the polygon's own
+            pcs = pg.evaluate("[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((i) => limitLab.pieceAt(i))")
+            check(sum(1 for q in pcs if q["corner"]) == 4, f"{tag}: four of the twelve pieces are corner pieces")
+            check(len({q["color"] for q in pcs}) == 12, f"{tag}: twelve colours round the polygon")
+            # Tapping a tile, the keys, a second tap, and Escape.
+            pg.evaluate("limitLab.pick(7)")
+            x, y = pg.evaluate("limitLab.tileSpot(2)")
+            pg.mouse.click(x, y) if not mobile else pg.touchscreen.tap(x, y)
+            check(pg.evaluate("limitLab.state().sel") == 2, f"{tag}: a tap on a tile chooses its piece")
+            pg.mouse.click(x, y) if not mobile else pg.touchscreen.tap(x, y)
+            check(pg.evaluate("limitLab.state().sel") == -1 and pg.inner_text("#status") == pg.evaluate("i18n.t('ls.s.noPiece')"), f"{tag}: a second tap lets go, and says so")
+            pg.focus("#pieces")
+            pg.keyboard.press("ArrowRight")
+            check(pg.evaluate("limitLab.state().sel") == 0, f"{tag}: ArrowRight on the dock chooses the first piece")
+            pg.keyboard.press("ArrowLeft")
+            check(pg.evaluate("limitLab.state().sel") == 11, f"{tag}: ArrowLeft goes round to the last piece")
+            pg.keyboard.press("Escape")
+            check(pg.evaluate("limitLab.state().sel") == -1, f"{tag}: Escape lets go")
+            # A chosen piece stays through a change of language, and goes with a new size.
+            pg.evaluate("limitLab.pick(3)")
+            pg.click("[data-lang-btn='" + ("de" if lang != "de" else "fr") + "']")
+            check(pg.evaluate("limitLab.state().sel") == 3 and ";" in pg.inner_text("#caption"), f"{tag}: the chosen piece stays through a change of language: {pg.inner_text('#caption')!r}")
+            pg.click("[data-lang-btn='" + lang + "']")
+            pg.evaluate("limitLab.setN(6)")
+            pg.wait_for_function("limitLab.state().n === 6 && !limitLab.busy()")
+            check(pg.evaluate("limitLab.state().sel") == -1, f"{tag}: a new size lets go of the chosen piece")
+            # n = 6 has 35 tiles: every one of them lights its own side.
+            bad = []
+            for i in range(35):
+                pg.evaluate(f"limitLab.pick({i})")
+                lit = [pg.evaluate(white, pg.evaluate(f"limitLab.sideSpot({j})")) for j in range(35)]
+                if not (lit[i] > 4 and sum(1 for j, v in enumerate(lit) if j != i and v > 4 and abs(j - i) > 1) == 0): bad.append(i)
+            check(not bad, f"{tag}: at n = 6 each of the 35 pieces lights its own side ({bad})")
+            pg.evaluate("limitLab.setN(4)")
+            pg.wait_for_function("limitLab.state().n === 4 && limitLab.state().pieces === 5 && !limitLab.busy()")
             box = pg.query_selector("#pieces").bounding_box()
             pg.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2) if not mobile else pg.tap("#pieces", position={"x": box["width"] / 2, "y": box["height"] / 2})
             check(pg.evaluate("limitLab.state().sel") >= 0, f"{tag}: a tap on a piece chooses it")
@@ -273,6 +346,10 @@ with sync_playwright() as p:
             pg2.wait_for_function("window.limitLab && !limitLab.busy()")
             st2 = pg2.evaluate("limitLab.state()")
             check(st2["n"] == 11 and st2["fence"] and st2["pieces"] == 17073, f"{tag}: ?n=11 opens on the 11-omino fence")
+            pg2.goto(BASE + "?n=5", wait_until="networkidle")
+            pg2.wait_for_function("window.limitLab && !limitLab.busy()")
+            st2 = pg2.evaluate("limitLab.state()")
+            check(st2["n"] == 5 and st2["optimal"] and st2["tiles"] and st2["pieces"] == 12, f"{tag}: ?n=5 opens on the optimal pentomino fence")
             pg2.goto(BASE + "?n=12345", wait_until="networkidle")
             pg2.wait_for_function("window.limitLab && !limitLab.busy()")
             check(pg2.evaluate("limitLab.state().n") == 4, f"{tag}: an unknown size opens on 4")

@@ -30,6 +30,8 @@ STATES = {
                      ("reveal", "document.getElementById('reveal').click()", 9000),
                      ("arrows", "document.getElementById('mode-arrows').click()", 800)],
     "limit-shape-lab": [("idle", "", 0),
+                        ("n6", "limitLab.setN(6); setTimeout(()=>limitLab.pick(3), 300)", 1500),
+                        ("n6-card", "limitLab.setN(6); setTimeout(()=>document.querySelector(\".math-chip[data-chip='polygon']\").click(), 500)", 2200),
                         ("n9", "limitLab.setN(9)", 1500),
                         ("n11-card", "limitLab.setN(11); setTimeout(()=>document.querySelector(\".math-chip[data-chip='polygon']\").click(), 500)", 2200),
                         ("n500", "limitLab.setN(500)", 4500)],
@@ -39,7 +41,7 @@ STATES = {
 # Extra viewports for one lab, in some of its states: (views, state names).
 EXTRA = {
     "limit-shape-lab": ([(320, 640, True), (667, 375, True), (960, 600, False), (1100, 700, False), (1366, 768, False)],
-                        ("idle", "n11-card", "n500")),
+                        ("idle", "n6", "n6-card", "n11-card", "n500")),
 }
 
 CHECK = r"""

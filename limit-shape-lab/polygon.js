@@ -1,10 +1,11 @@
-/* Fence Challenge · limit-shape lab: the greedy fences of Section 6.2 as exact polygons.
+/* Fence Challenge · limit-shape lab: the reference polygons of the paper's fences as exact polygons.
  *
- * data/greedy.js lists, for each n = 7..15, the distinct arrows of the reference polygon with their
- * multiplicities, in doubled coordinates (four corner arrows are half-integral). The polygon is those
- * arrows laid end to end in the order given (sorted by direction, from the south, counterclockwise):
- * its corners are where the direction changes, its sides are runs of parallel arrows. All coordinates
- * here are in cell units and multiples of 1/2, so every sum below is exact in a double.
+ * data/greedy.js lists, for each n = 7..15, the distinct arrows of the greedy fence's reference polygon with their
+ * multiplicities, in doubled coordinates (four corner arrows are half-integral); data/optimal.js lists, for n = 4, 5, 6,
+ * the pieces of an optimal fence, each with the midpoints of its two attachment edges, which fromPieces() turns into
+ * the same arrows, one per piece. The polygon is those arrows laid end to end in the order given (sorted by direction,
+ * from the south, counterclockwise): its corners are where the direction changes, its sides are runs of parallel
+ * arrows. All coordinates here are in cell units and multiples of 1/2, so every sum below is exact in a double.
  *
  * The circle is the paper's (Figure of the deviation): centre K = the middle of the bounding box,
  * radius R = half its height; the gap at a direction is rho / R - 1, where rho is the distance from K
@@ -21,8 +22,9 @@
   }
 
   // Arrows [dx2, dy2, m] -> polygon. `arrows` must be sorted by direction, as in data/greedy.js.
+  // seg[k] is where the k-th arrow (a run of m equal arrows) lies on the polygon: [[x0, y0], [x1, y1]].
   function build(g) {
-    var A = g.arrows, corners = [], edges = [], x = 0, y = 0, prev = null, e = null, i, j;
+    var A = g.arrows, corners = [], edges = [], seg = [], x = 0, y = 0, prev = null, e = null, i, j;
     for (i = 0; i < A.length; i++) {
       var a = A[i];
       if (!prev || prev[0] * a[1] - prev[1] * a[0] !== 0 || prev[0] * a[0] + prev[1] * a[1] < 0) {
@@ -32,7 +34,9 @@
       }
       e.groups.push(a);
       e.count += a[2];
+      var x0 = x, y0 = y;
       x += a[0] / 2 * a[2]; y += a[1] / 2 * a[2];
+      seg.push([[x0, y0], [x, y]]);
       prev = a;
     }
     var N = corners.length, minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, s2 = 0, per = 0;
@@ -47,7 +51,7 @@
       closed: x === 0 && y === 0,
       kx: (minX + maxX) / 2, ky: (minY + maxY) / 2,
       R: (maxY - minY) / 2, halfWidth: (maxX - minX) / 2,
-      perimeter: per, arrows: A,
+      perimeter: per, arrows: A, seg: seg,
     };
     for (i = 0; i < N; i++) {
       var p = corners[i], q = corners[(i + 1) % N];
@@ -140,13 +144,16 @@
     return out.sort(function (a, b) { return a[0] - b[0]; });
   }
 
+  // A corner piece's arrow is half-integral: its two attachment edges are one horizontal and one vertical.
+  function isCorner(a) { return a[0] % 2 !== 0 || a[1] % 2 !== 0; }
+
   // The distinct arrows folded by the grid's symmetries to x >= y >= 0: [x, y, pieces, isCorner],
   // sorted by direction. The four half-integral arrows are the corner pieces.
   function folded(P) {
     var map = Object.create(null), out = [];
     P.arrows.forEach(function (a) {
       var u = Math.abs(a[0]) / 2, v = Math.abs(a[1]) / 2, x = Math.max(u, v), y = Math.min(u, v), k = x + "," + y;
-      if (!map[k]) { map[k] = [x, y, 0, (a[0] % 2 !== 0 || a[1] % 2 !== 0)]; out.push(map[k]); }
+      if (!map[k]) { map[k] = [x, y, 0, isCorner(a)]; out.push(map[k]); }
       map[k][2] += a[2];
     });
     // by direction, and along one direction by length: the arrow keys then walk along the floor, not back and forth
@@ -173,9 +180,56 @@
     return [theta(vx, vy), Math.hypot(vx, vy) / P.R - 1];
   }
 
+  // ---- the optimal fences (data/optimal.js): n = 4, 5, 6 ----
+
+  // The data of one optimal fence -> what build() takes. A piece's arrow joins the midpoints of its two attachment
+  // edges (doubled grid coordinates, rows counted downwards), so the arrow of the polygon, whose y points up, is
+  // (o - i) with its y turned over. One piece per arrow, in the order of the data (sorted by direction).
+  function fromPieces(e) {
+    return {
+      n: e.n, count: e.pieces.length, L: e.area, U: e.area,
+      arrows: e.pieces.map(function (p) { return [p.o[0] - p.i[0], p.i[1] - p.o[1], 1]; }),
+    };
+  }
+
+  // The area of the largest region that the pieces enclose, as in the paper's definition of a fence: free cells
+  // count as connected when they touch at a corner (8 neighbours), the outside is the free component that reaches
+  // the border, and the regions are the 8-connected components of the free cells that are not outside.
+  function regionArea(pieces) {
+    var occ = new Set(), minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, i, j;
+    pieces.forEach(function (p) {
+      p.c.forEach(function (c) {
+        occ.add(c[0] + "," + c[1]);
+        minX = Math.min(minX, c[0]); maxX = Math.max(maxX, c[0]); minY = Math.min(minY, c[1]); maxY = Math.max(maxY, c[1]);
+      });
+    });
+    var x0 = minX - 1, x1 = maxX + 1, y0 = minY - 1, y1 = maxY + 1, W = x1 - x0 + 1, H = y1 - y0 + 1;
+    var seen = new Uint8Array(W * H);          // 0 free, not reached; 1 piece or reached
+    var at = function (x, y) { return (y - y0) * W + (x - x0); };
+    occ.forEach(function (k) { var s = k.split(","); seen[at(+s[0], +s[1])] = 1; });
+    function flood(sx, sy) {
+      var stack = [[sx, sy]], n = 0;
+      seen[at(sx, sy)] = 1;
+      while (stack.length) {
+        var c = stack.pop(); n++;
+        for (var dx = -1; dx <= 1; dx++) for (var dy = -1; dy <= 1; dy++) {
+          var x = c[0] + dx, y = c[1] + dy;
+          if (x < x0 || x > x1 || y < y0 || y > y1 || seen[at(x, y)]) continue;
+          seen[at(x, y)] = 1; stack.push([x, y]);
+        }
+      }
+      return n;
+    }
+    flood(x0, y0);                              // the outside
+    var best = 0;
+    for (j = y0; j <= y1; j++) for (i = x0; i <= x1; i++) if (!seen[at(i, j)]) best = Math.max(best, flood(i, j));
+    return best;
+  }
+
   var API = {
     build: build, gapAt: gapAt, sideAt: sideAt, samples: samples, range: range, sectorCorners: sectorCorners,
-    folded: folded, placesOf: placesOf, polar: polar, theta: theta,
+    folded: folded, placesOf: placesOf, polar: polar, theta: theta, isCorner: isCorner,
+    fromPieces: fromPieces, regionArea: regionArea,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.LimitPolygon = API;
