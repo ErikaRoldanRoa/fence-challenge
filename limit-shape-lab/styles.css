@@ -159,8 +159,17 @@ body {
 .slider input {
   writing-mode: vertical-lr; direction: rtl;
   width: 28px; flex: 1 1 auto; min-height: 0; margin: 0;
-  accent-color: var(--loop); cursor: pointer;
+  cursor: pointer;
 }
+/* The slider drawn by the lab, so that every browser shows the same track and thumb, standing or
+ * lying: block-size is the track's thickness and margin-block-start centres the thumb on it, in
+ * either writing mode. */
+.slider input { -webkit-appearance: none; appearance: none; background: transparent; }
+.slider input::-webkit-slider-runnable-track { block-size: 6px; border-radius: 3px; background: rgba(216, 246, 255, 0.18); }
+.slider input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; margin-block-start: -8px; border-radius: 50%; border: 0; background: var(--loop); box-shadow: 0 0 10px var(--loop); }
+.slider input::-moz-range-track { block-size: 6px; border-radius: 3px; background: rgba(216, 246, 255, 0.18); }
+.slider input::-moz-range-progress { block-size: 6px; border-radius: 3px; background: var(--loop); }
+.slider input::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--loop); }
 .loupeX { font: 700 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 .f { white-space: nowrap; }
@@ -190,14 +199,7 @@ body {
   .topnav { justify-content: flex-end; }
   .strip { flex-direction: row; }
   .slider { flex-direction: row; width: 100%; height: 44px; padding: 0 12px; }
-  .slider input { writing-mode: horizontal-tb; direction: ltr; width: 100%; height: 24px; flex: 1 1 auto; }
-  /* Horizontal sliders drawn by the lab, so Safari shows the same colours as Chromium. */
-  .slider input { -webkit-appearance: none; appearance: none; background: transparent; height: 28px; }
-  .slider input::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: rgba(216, 246, 255, 0.18); }
-  .slider input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: 50%; border: 0; background: var(--loop); box-shadow: 0 0 10px var(--loop); }
-  .slider input::-moz-range-track { height: 6px; border-radius: 3px; background: rgba(216, 246, 255, 0.18); }
-  .slider input::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--loop); }
-  .slider input::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--loop); }
+  .slider input { writing-mode: horizontal-tb; direction: ltr; width: 100%; height: 28px; flex: 1 1 auto; }
   .side-brand { font-size: 0.66rem; padding: 0 6px; }
 }
 /* Phones held sideways: the loop on the left at full height, the rest on the right. */
@@ -230,14 +232,7 @@ body {
   .lab-nav { gap: 6px; }
   .strip { flex-direction: row; }
   .slider { flex-direction: row; width: 100%; height: 40px; padding: 0 12px; }
-  .slider input { writing-mode: horizontal-tb; direction: ltr; width: 100%; height: 24px; flex: 1 1 auto; }
-  /* Horizontal sliders drawn by the lab, so Safari shows the same colours as Chromium. */
-  .slider input { -webkit-appearance: none; appearance: none; background: transparent; height: 28px; }
-  .slider input::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: rgba(216, 246, 255, 0.18); }
-  .slider input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: 50%; border: 0; background: var(--loop); box-shadow: 0 0 10px var(--loop); }
-  .slider input::-moz-range-track { height: 6px; border-radius: 3px; background: rgba(216, 246, 255, 0.18); }
-  .slider input::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--loop); }
-  .slider input::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--loop); }
+  .slider input { writing-mode: horizontal-tb; direction: ltr; width: 100%; height: 28px; flex: 1 1 auto; }
   .side-brand { font-size: 0.66rem; }
 }
 /* Narrow phones, and phones held sideways whose right column is narrow: the steps and the language
