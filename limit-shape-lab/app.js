@@ -757,10 +757,11 @@
     if (id === "polygon" && fence) {
       // A = A_ref + the corrections (Lemma on the area decomposition): the polygon's area is computed
       // here from its arrows, the greedy fence and the bounds are the paper's, the corrections follow.
+      // Only « = value » stays on one line: the label wraps on a narrow card.
       const f1 = (x) => fmtNum(x, x % 1 ? 1 : 0), fz = FENCES[n];
-      let s = `<span class="f">${t("ls.live.ref")} = ${f1(fence.area)}</span> · ${t("ls.live.computed")}`;
-      s += `<br><span class="f">${t("ls.live.greedy")} = ${N0(fence.L)}</span> · ${t("ls.live.paper")}`;
-      s += `<br><span class="f">${t("ls.live.corr")} = ${MINUS}${f1(fence.area - fence.L)}</span> · ${t("ls.live.computed")}`;
+      let s = `${t("ls.live.ref")} <span class="f">= ${f1(fence.area)}</span> · ${t("ls.live.computed")}`;
+      s += `<br>${t("ls.live.greedy")} <span class="f">= ${N0(fence.L)}</span> · ${t("ls.live.paper")}`;
+      s += `<br>${t("ls.live.corr")} <span class="f">= ${MINUS}${f1(fence.area - fence.L)}</span> · ${t("ls.live.computed")}`;
       if (fz && fz.best) s += `<br>${t("ls.live.fence", { f: t("ls.live.best", { b: N0(fz.best), u: N0(fz.bound) }) })}`;
       else s += `<br>${t("ls.live.upper", { u: N0(fence.U), g: fmtNum(100 * (fence.U - fence.L) / fence.L, 3) })}`;
       return `<span class="live">${s}</span>`;
