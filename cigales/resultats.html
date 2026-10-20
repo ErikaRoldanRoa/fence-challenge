@@ -16,70 +16,88 @@ html{font-size:min(calc(100vw / 120), calc(100vh / 84.86))}
 html,body{margin:0}
 body{background:#e8edf2;color:var(--ink);font-family:Manrope,"Avenir Next","Segoe UI",sans-serif;font-size:1.5rem;line-height:1.25;
  -webkit-print-color-adjust:exact;print-color-adjust:exact}
-#sheet{width:120rem;height:84.86rem;margin:0 auto;background:#fff;padding:3.2rem 3.6rem 2.6rem;display:grid;grid-template-rows:auto minmax(0,1fr) 9.6rem;gap:2rem;overflow:hidden}
-header{display:flex;justify-content:space-between;align-items:flex-end;gap:3rem;border-bottom:.35rem solid var(--ink);padding-bottom:1.3rem}
-.kicker{color:var(--gold);font-weight:800;letter-spacing:.2em;text-transform:uppercase;font-size:1.5rem}
-h1{margin:.3rem 0 0;font-size:5.4rem;line-height:1;font-weight:800;letter-spacing:.01em;white-space:nowrap}
-.sub{font-weight:700;color:var(--muted);font-size:1.8rem;margin-top:.7rem}
+#sheet{width:120rem;height:84.86rem;margin:0 auto;background:#fff;padding:2.6rem 3.6rem 2.2rem;display:grid;grid-template-rows:auto auto minmax(0,1fr) 8.6rem;gap:1.6rem;overflow:hidden}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:3rem;border-bottom:.35rem solid var(--ink);padding-bottom:1rem}
+.kicker{color:var(--gold);font-weight:800;letter-spacing:.2em;text-transform:uppercase;font-size:1.4rem}
+h1{margin:.2rem 0 0;font-size:4.6rem;line-height:1;font-weight:800;letter-spacing:.01em;white-space:nowrap}
+.sub{font-weight:700;color:var(--muted);font-size:1.6rem;margin-top:.5rem}
 .right{text-align:right}
-.prov{display:inline-block;white-space:nowrap;font-weight:800;font-size:2.5rem;text-transform:uppercase;letter-spacing:.08em;border:.3rem solid var(--ink);padding:.25rem 1.3rem;border-radius:1rem}
+.prov{display:inline-block;white-space:nowrap;font-weight:800;font-size:2.3rem;text-transform:uppercase;letter-spacing:.08em;border:.3rem solid var(--ink);padding:.2rem 1.2rem;border-radius:1rem}
 .final .prov{background:var(--ink);color:#fff}
-.stamp{margin-top:.7rem;font-weight:700;font-size:1.6rem}
-.open{color:var(--muted);font-weight:700;font-size:1.5rem}
-main{display:grid;grid-template-columns:51rem 1fr;gap:2.6rem;min-height:0}
-h2{margin:0;font-size:2.4rem;font-weight:800;letter-spacing:.02em}
-.note{color:var(--muted);font-size:1.25rem;font-weight:600;margin:.3rem 0 1rem;line-height:1.3}
+.stamp{margin-top:.5rem;font-weight:700;font-size:1.5rem}
+.open{color:var(--muted);font-weight:700;font-size:1.4rem}
+/* the four prizes: the Cigales (teams) and everyone else at the CIRM, each for the grand 20 x 20 board and for the total of the three grand boards */
+#prizes{display:grid;grid-template-columns:repeat(4,1fr);gap:1.6rem}
+.prize{position:relative;border:.28rem solid var(--c);border-radius:1.4rem;padding:.8rem 1.4rem;min-width:0;height:10.2rem;display:flex;flex-direction:column}
+.prize .who{font-size:1.15rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);white-space:nowrap;padding-right:3.6rem}
+.prize .cup{position:absolute;top:.7rem;right:1.2rem;width:3rem;height:3rem;color:var(--gold);opacity:.5}
+.final .prize .cup{opacity:1}
+.prize .rule{font-size:1.55rem;font-weight:800;color:var(--c);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prize .how2{font-size:1.1rem;font-weight:600;color:var(--muted);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prize .bottom{margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;min-width:0}
+.prize .win{display:flex;align-items:center;gap:.6rem;min-width:0;padding-bottom:.2rem}
+.prize .win .bd{flex:none;display:block;height:2.8rem}.prize .win .bd svg{display:block;width:2.8rem;height:2.8rem}
+.prize .win .wn{font-weight:800;font-size:1.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prize .sc{flex:none;font-weight:800;font-size:3.4rem;line-height:1;font-variant-numeric:tabular-nums;text-align:right}
+.prize.none .wn{color:#97a3af;font-weight:700;font-size:1.6rem}
+.prize.none .sc{color:#c3ccd5}
+.final .prize{background:#fff8e1}
+main{display:grid;grid-template-columns:54rem 1fr;gap:2.4rem;min-height:0}
+h2{margin:0;font-size:2.3rem;font-weight:800;letter-spacing:.02em}
+.note{color:var(--muted);font-size:1.2rem;font-weight:600;margin:.2rem 0 .7rem;line-height:1.3}
 /* the teams */
 #teams{min-height:0}
-.trow{display:grid;grid-template-columns:2.6rem 3.8rem minmax(0,1fr) 5rem 4.6rem 3.6rem 3.6rem 2.6rem 2.6rem 2.6rem;align-items:center;column-gap:.5rem;
- height:3.4rem;border-bottom:.1rem solid var(--line)}
-.trow.head{height:2.6rem;border-bottom:.25rem solid var(--ink);color:var(--muted);font-size:1.2rem;font-weight:800;text-align:right;letter-spacing:.02em}
+.trow{display:grid;grid-template-columns:2.4rem 3.2rem minmax(0,1fr) 4.6rem 5.6rem 4.6rem 3.2rem 3.2rem 2.2rem 2.2rem 2.2rem;align-items:center;column-gap:.5rem;
+ height:3.05rem;border-bottom:.1rem solid var(--line)}
+.trow.head{height:2.4rem;border-bottom:.25rem solid var(--ink);color:var(--muted);font-size:1.2rem;font-weight:800;text-align:right;letter-spacing:.02em}
 .trow.head span:nth-child(-n+4){text-align:left}
-.trow .rk{font-weight:800;font-size:1.9rem;color:var(--muted)}
+.trow .rk{font-weight:800;font-size:1.8rem;color:var(--muted)}
 .trow.top3 .rk{color:var(--ink)}
-.trow .bd{height:3.4rem;display:flex;align-items:center}.trow .bd svg{display:block;width:3.5rem;height:3.5rem}
+.trow .bd{height:3.05rem;display:flex;align-items:center}.trow .bd svg{display:block;width:2.8rem;height:2.8rem}
 .trow .nm{font-weight:800;font-size:1.7rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.trow .ph{font-size:1.25rem;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
-.trow .v{text-align:right;font-weight:700;font-size:1.55rem;font-variant-numeric:tabular-nums}
-.trow .v.big{font-weight:800;font-size:2.1rem}
-.trow .v.small{color:var(--muted);font-size:1.4rem}
+.trow .ph{font-size:1.2rem;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
+.trow .v{text-align:right;font-weight:700;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.trow .v.big{font-weight:800;font-size:2.2rem}
+.trow .v.mid{font-size:1.7rem}
+.trow .v.small{color:var(--muted);font-size:1.35rem}
+.trow .v.win{background:#fff1c2;border-radius:.6rem;padding:.1rem .45rem}
 .trow.lead{background:var(--soft)}
 .trow .none{color:#aab5c0;font-weight:700}
-/* the six boards */
-#right{display:grid;grid-template-rows:1fr auto;gap:1.8rem;min-height:0}
-#boards{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;gap:1.6rem;min-height:0}
-.box{border:.25rem solid var(--c);border-radius:1.4rem;padding:1.1rem 1.4rem;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+/* the boards */
+#right{display:grid;grid-template-rows:1fr auto;gap:1.6rem;min-height:0}
+#boards{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:auto 1fr;gap:1.4rem;min-height:0}
+.box{border:.25rem solid var(--c);border-radius:1.4rem;padding:.9rem 1.3rem;min-height:0;overflow:hidden;display:flex;flex-direction:column}
 .box.big{border-style:dashed}
-.box h3{margin:0 0 .5rem;font-size:1.65rem;font-weight:800;color:var(--c);line-height:1.15}
-.box h3 small{display:block;font-size:1.15rem;color:var(--muted);font-weight:700;margin-top:.15rem}
+.box h3{margin:0 0 .4rem;font-size:1.6rem;font-weight:800;color:var(--c);line-height:1.15}
+.box h3 small{display:block;font-size:1.1rem;color:var(--muted);font-weight:700;margin-top:.1rem}
 .box ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.box li{display:flex;align-items:center;gap:.8rem;height:2.6rem;border-bottom:.1rem solid var(--line);font-weight:700;font-size:1.5rem}
+.box li{display:flex;align-items:center;gap:.8rem;height:2.25rem;border-bottom:.1rem solid var(--line);font-weight:700;font-size:1.4rem}
 .box li:first-child{background:var(--soft);border-radius:.6rem}
 .box li .p{width:1.7rem;color:var(--muted);font-weight:800;text-align:center}
-.box li .t{flex:none;width:2.1rem;height:2.1rem}.box li .t svg{display:block;width:100%;height:100%}
+.box li .t{flex:none;width:1.9rem;height:1.9rem}.box li .t svg{display:block;width:100%;height:100%}
 .box li .n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.box li .a{font-weight:800;font-size:1.85rem;font-variant-numeric:tabular-nums}
-.box .empty{color:#97a3af;font-weight:700;font-size:1.35rem;padding-top:.6rem}
+.box li .a{font-weight:800;font-size:1.7rem;font-variant-numeric:tabular-nums}
+.box .empty{color:#97a3af;font-weight:700;font-size:1.3rem;padding-top:.5rem}
 /* the public of the CIRM */
-#pub{border-top:.25rem solid var(--ink);padding-top:1.1rem}
+#pub{border-top:.25rem solid var(--ink);padding-top:.9rem}
 #pub h2{font-size:1.9rem}
-#pubgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:1.6rem;margin-top:.5rem}
+#pubgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:1.4rem;margin-top:.4rem}
 #pubgrid .col{min-width:0}
-#pubgrid .col b{display:block;font-size:1.15rem;color:var(--c);font-weight:800;margin-bottom:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#pubgrid .row{display:flex;gap:.7rem;font-weight:700;font-size:1.35rem;line-height:1.55}
-#pubgrid .row .p{width:1.4rem;color:var(--muted)}
+#pubgrid .col b{display:block;font-size:1.15rem;color:var(--c);font-weight:800;margin-bottom:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pubgrid .row{display:flex;gap:.5rem;font-weight:700;font-size:1.3rem;line-height:1.55}
+#pubgrid .row .p{width:1.1rem;color:var(--muted)}
 #pubgrid .row .n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #pubgrid .row .a{font-weight:800}
 #pubgrid .none{color:#97a3af;font-weight:700;font-size:1.25rem}
 /* the foot */
-footer{display:flex;align-items:center;justify-content:space-between;gap:3rem;border-top:.35rem solid var(--ink);padding-top:1.2rem;overflow:hidden}
-.join{display:flex;align-items:center;gap:1.6rem;font-weight:800;font-size:1.6rem;line-height:1.25}
-.join svg{display:block;width:7.4rem;height:7.4rem;flex:none}
-.join .u{display:block;color:var(--c3);font-size:1.7rem}
-.how{flex:1;max-width:46rem;color:var(--muted);font-size:1.25rem;font-weight:600;line-height:1.35}
-.credit{flex:none;text-align:right;font-weight:700;font-size:1.35rem;color:var(--muted);white-space:nowrap}
-.credit .me{display:block;color:var(--ink);font-weight:800;font-size:2rem}
-.credit .web{display:block;color:var(--c3);font-weight:800;font-size:1.6rem;margin-top:.2rem}
+footer{display:flex;align-items:center;justify-content:space-between;gap:3rem;border-top:.35rem solid var(--ink);padding-top:1rem;overflow:hidden}
+.join{display:flex;align-items:center;gap:1.5rem;font-weight:800;font-size:1.5rem;line-height:1.25}
+.join svg{display:block;width:6.6rem;height:6.6rem;flex:none}
+.join .u{display:block;color:var(--c3);font-size:1.6rem}
+.how{flex:1;max-width:46rem;color:var(--muted);font-size:1.2rem;font-weight:600;line-height:1.35}
+.credit{flex:none;text-align:right;font-weight:700;font-size:1.3rem;color:var(--muted);white-space:nowrap}
+.credit .me{display:block;color:var(--ink);font-weight:800;font-size:1.9rem}
+.credit .web{display:block;color:var(--c3);font-weight:800;font-size:1.5rem;margin-top:.1rem}
 /* the page on paper: A3, landscape, the sheet is the page */
 @page{size:420mm 297mm;margin:0}
 @media print{
@@ -95,12 +113,17 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:3rem;bo
   header{flex-direction:column;align-items:flex-start;gap:1rem}.right{text-align:left}
   h1{font-size:3.2rem;white-space:normal}
   .prov{font-size:1.7rem;white-space:normal}
+  #prizes{grid-template-columns:1fr}
+  .prize{height:auto;padding:.9rem 1.2rem}
+  .prize .win{margin-top:.4rem}
+  .prize .win .wn{font-size:1.5rem}.prize .sc{font-size:3rem}
   main{grid-template-columns:1fr}
-  .trow{grid-template-columns:2rem 3rem minmax(0,1fr) 3.8rem 3rem 3rem;height:3.4rem}
-  .trow > :nth-child(4),.trow > :nth-child(n+8){display:none}
+  .trow{grid-template-columns:2rem 3rem minmax(0,1fr) 4.4rem 4rem;height:3.4rem}
+  .trow > :nth-child(4),.trow > :nth-child(n+7){display:none}
   .trow .pre{display:none}
   .trow .nm{font-size:1.9rem}
-  .trow .v.big{font-size:1.8rem}
+  .trow .v.big{font-size:1.9rem}
+  .trow .bd{height:3.4rem}.trow .bd svg{width:3.2rem;height:3.2rem}
   #boards{grid-template-columns:1fr}
   .box{padding:1rem 1.2rem}
   .trow.head{font-size:1.05rem}.trow.head span{white-space:nowrap}
@@ -120,6 +143,7 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:3rem;bo
     <div><div class="kicker" id="kicker">Les Cigales × La Performative · CIRM</div><h1>Le concours des clôtures</h1><div class="sub">Fence Challenge · Enchivas</div></div>
     <div class="right"><div class="prov" id="prov">Résultats provisoires</div><div class="stamp" id="stamp">&nbsp;</div><div class="open" id="open">Ouvert jusqu’au jeudi 22 octobre, 19 h 30</div></div>
   </header>
+  <section id="prizes"></section>
   <main>
     <section id="teams"></section>
     <div id="right">
@@ -137,42 +161,87 @@ footer{display:flex;align-items:center;justify-content:space-between;gap:3rem;bo
 <script src="teams.js?v=20261020a"></script>
 <script>
 const C = window.CIGALES;
-// The boards, as on the big screen: the hub's three missions, then the big printed boards read by the camera. Darker inks than the screen: this is paper.
-const BOARDS = [['sq', 'Mission I', 'carrés', '#c0149a', 'Mission I'], ['hex', 'Mission II', 'hexagones', '#17913a', 'Mission II'], ['tri', 'Mission III', 'triangles', '#0b88a6', 'Mission III'],
-  ['sq20', 'Grand damier', 'carrés 20 × 20 · pentominos', '#c0149a', 'Damier 20 × 20'], ['hex6', 'Grande grille', 'hexagones · tétrahexes', '#17913a', 'Grille hexagones'], ['tri10', 'Grande grille', 'triangles · hexiamants', '#0b88a6', 'Grille triangles']];
-const BIG = ['sq20', 'hex6', 'tri10'], SMALL = ['sq', 'hex', 'tri'];
+// The boards: the three big printed boards read by the camera (dashed), then the hub's three missions. Darker inks than the screen: this is paper.
+const BOARDS = [['sq20', 'Grand damier', 'carrés 20 × 20 · pentominos', '#c0149a', 'Damier 20 × 20'], ['hex6', 'Grande grille', 'hexagones · tétrahexes', '#17913a', 'Grille hexagones'], ['tri10', 'Grande grille', 'triangles · hexiamants', '#0b88a6', 'Grille triangles'],
+  ['sq', 'Mission I', 'carrés', '#c0149a', 'Mission I'], ['hex', 'Mission II', 'hexagones', '#17913a', 'Mission II'], ['tri', 'Mission III', 'triangles', '#0b88a6', 'Mission III']];
+const BIG = ['sq20', 'hex6', 'tri10'];
+const GOLD = '#9a6b00';
 const esc = x => String(x).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
-const first = (a, b) => b.area - a.area || String(a.at).localeCompare(String(b.at));       // the higher area; at a tie, whoever got there first
+const cmpAt = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+const first = (a, b) => b.area - a.area || cmpAt(String(a.at), String(b.at));       // the higher area; at a tie, whoever got there first
 const topN = (rows, board, n) => rows.filter(r => r.board === board).sort(first).slice(0, n);
 const bestBy = rows => { const m = {}; for (const r of rows) if (!m[r.board] || first(r, m[r.board]) < 0) m[r.board] = r; return m; };
+// The total of a team or a player: the best fence on each of the three big boards, added up (a board not played adds nothing).
+// It was reached when the last of those fences was made, and at the same total the one that reached it first goes in front.
+const totalOf = best => { let total = 0, at = ''; for (const b of BIG) if (best[b]) { total += best[b].area; if (String(best[b].at) > at) at = String(best[b].at); } return { total, at }; };
+const byTotal = (a, b) => b.total - a.total || cmpAt(a.at, b.at);
 const API = C.api;
 async function get(q) { const r = await fetch(API + '?' + q, { cache: 'no-store' }); return r.json(); }
 
-function teamsHtml(fences, counts) {
-  const rows = C.teams.map(([id, name, color, cells]) => {
-    const mine = fences.filter(r => r.team === id), best = bestBy(mine), n = counts[id] || 0;
-    return { id, name, color, cells, best, n, score: best.sq20 ? best.sq20.area : 0, at: best.sq20 ? best.sq20.at : '' };
-  }).sort((a, b) => b.score - a.score || (a.score ? String(a.at).localeCompare(String(b.at)) : a.name.localeCompare(b.name)));
-  const cell = (r, b, cls) => `<span class="v ${cls}">${r.best[b] ? r.best[b].area : '<span class="none">·</span>'}</span>`;
-  const head = `<div class="trow head"><span></span><span></span><span>Équipe</span><span>Tél.</span><span>20 × 20</span><span>hex.</span><span>tri.</span><span>I</span><span>II</span><span>III</span></div>`;
-  const body = rows.map((r, i) => `<div class="trow${i === 0 && r.score ? ' lead' : ''}${i < 3 && r.score ? ' top3' : ''}"><span class="rk">${r.score ? i + 1 : '–'}</span><span class="bd">${C.bird(r.color, r.cells)}</span>`
+// the teams, in order of their total
+function standings(fences, counts) {
+  return C.teams.map(([id, name, color, cells]) => {
+    const best = bestBy(fences.filter(r => r.team === id));
+    return Object.assign({ id, name, color, cells, best, n: counts[id] || 0 }, totalOf(best));
+  }).sort((a, b) => byTotal(a, b) || (a.total ? 0 : a.name.localeCompare(b.name)));
+}
+// the players of the public group: one player is one pseudonym (a record with no pseudonym stands alone)
+function players(rows) {
+  const m = new Map();
+  rows.forEach((r, i) => { const key = String(r.name || '').trim() || '\u0000' + i; if (!m.has(key)) m.set(key, { name: r.name, rows: [] }); m.get(key).rows.push(r); });
+  return [...m.values()].map(p => { const best = bestBy(p.rows); return Object.assign({ name: p.name, best }, totalOf(best)); });
+}
+// the leaders: the best team (and the best player) on the grand 20 x 20 board, and by total
+function leaders(teams, pubRows, who) {
+  const a = teams.filter(r => r.best.sq20).sort((x, y) => first(x.best.sq20, y.best.sq20))[0] || null;
+  const b = teams[0] && teams[0].total ? teams[0] : null;
+  const pa = topN(pubRows, 'sq20', 1)[0] || null;
+  const pb = who.filter(p => p.total).sort(byTotal)[0] || null;
+  return { a, b, pa, pb };
+}
+
+const CUP = '<svg class="cup" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10v5.2a5 5 0 0 1-10 0V3.5z" fill="currentColor"/><path d="M7 5.2H4.2v1.2a3.2 3.2 0 0 0 3.4 3.2M17 5.2h2.8v1.2a3.2 3.2 0 0 1-3.4 3.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 13.7v3.3M8.6 20.5h6.8M9.6 20.5c0-1.9.9-3.5 2.4-3.5s2.4 1.6 2.4 3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function prizesHtml(L) {
+  const card = (who, rule, how, color, winner, score) => {
+    const label = `Prix : ${who}, ${rule}` + (winner ? `, ${winner.name}, ${score}` : ', pas encore gagné');
+    return `<div class="prize${winner ? '' : ' none'}" style="--c:${color}" role="group" aria-label="${esc(label)}">`
+      + `<div class="who">${who}</div>${CUP}<div class="rule">${rule}</div><div class="how2">${how}</div>`
+      + `<div class="bottom"><div class="win">${winner && winner.bird ? `<span class="bd">${winner.bird}</span>` : ''}<span class="wn">${winner ? esc(winner.name || '·') : 'à gagner'}</span></div>`
+      + `<div class="sc">${winner ? score : '–'}</div></div></div>`;
+  };
+  const team = r => (r ? { name: r.name, bird: C.bird(r.color, r.cells) } : null);
+  const man = r => (r ? { name: r.name } : null);
+  return card('Cigales · équipes', 'Grand damier 20 × 20', 'la plus grande aire', '#c0149a', team(L.a), L.a ? L.a.best.sq20.area : 0)
+    + card('Cigales · équipes', 'Total des trois plateaux', 'damier + hexagones + triangles', GOLD, team(L.b), L.b ? L.b.total : 0)
+    + card('Public du CIRM', 'Grand damier 20 × 20', 'la plus grande aire', '#c0149a', man(L.pa), L.pa ? L.pa.area : 0)
+    + card('Public du CIRM', 'Total des trois plateaux', 'damier + hexagones + triangles', GOLD, man(L.pb), L.pb ? L.pb.total : 0);
+}
+function teamsHtml(rows, L, over) {
+  const none = '<span class="none">·</span>';
+  const cell = (r, b, cls) => `<span class="v ${cls}${b === 'sq20' && r === L.a ? ' win' : ''}">${r.best[b] ? r.best[b].area : none}</span>`;
+  const head = `<div class="trow head"><span></span><span></span><span>Équipe</span><span>Tél.</span><span>Total</span><span>20 × 20</span><span>hex.</span><span>tri.</span><span>I</span><span>II</span><span>III</span></div>`;
+  const body = rows.map((r, i) => `<div class="trow${i === 0 && r.total ? ' lead' : ''}${i < 3 && r.total ? ' top3' : ''}"><span class="rk">${r.total ? i + 1 : '–'}</span><span class="bd">${C.bird(r.color, r.cells)}</span>`
     + `<span class="nm">${esc(r.name).replace(/^Pentomino /, '<span class="pre">Pentomino </span>')}</span><span class="ph">${'●'.repeat(Math.min(r.n, C.max))}${'○'.repeat(Math.max(0, C.max - r.n))}</span>`
-    + cell(r, 'sq20', 'big') + cell(r, 'hex6', '') + cell(r, 'tri10', '') + cell(r, 'sq', 'small') + cell(r, 'hex', 'small') + cell(r, 'tri', 'small') + `</div>`).join('');
-  return `<h2>Les équipes</h2><p class="note">Classement provisoire : la meilleure aire des téléphones d’une équipe sur le grand damier 20 × 20. Les autres colonnes : sa meilleure clôture sur les deux autres grands plateaux et sur les missions I, II, III.</p>${head}${body}`;
+    + `<span class="v big${r === L.b ? ' win' : ''}">${r.total ? r.total : none}</span>` + cell(r, 'sq20', 'mid') + cell(r, 'hex6', '') + cell(r, 'tri10', '')
+    + cell(r, 'sq', 'small') + cell(r, 'hex', 'small') + cell(r, 'tri', 'small') + `</div>`).join('');
+  return `<h2>Les équipes</h2><p class="note">${over ? 'Classement final' : 'Classement provisoire'} : le total additionne la meilleure aire des téléphones d’une équipe sur chacun des trois grands plateaux. À égalité, la première équipe arrivée passe devant.</p>${head}${body}`;
 }
 function boardsHtml(fences) {
-  return BOARDS.map(([b, t, sub, c], i) => {
-    const list = topN(fences, b, 5);
+  return BOARDS.map(([b, t, sub, c]) => {
+    const big = BIG.includes(b), list = topN(fences, b, big ? 5 : 3);
     const li = list.map((r, k) => { const tm = C.teams.find(x => x[0] === r.team);
       return `<li><span class="p">${k + 1}</span><span class="t">${tm ? C.bird(tm[2], tm[3]) : ''}</span><span class="n">${esc(r.name || '·')}</span><span class="a">${r.area}</span></li>`; }).join('');
-    return `<div class="box${i > 2 ? ' big' : ''}" style="--c:${c}"><h3>${t}<small>${sub}</small></h3><ol>${li || ''}</ol>${li ? '' : '<div class="empty">à toi de jouer</div>'}</div>`;
+    return `<div class="box${big ? ' big' : ''}" style="--c:${c}"><h3>${t}<small>${sub}</small></h3><ol>${li || ''}</ol>${li ? '' : '<div class="empty">à toi de jouer</div>'}</div>`;
   }).join('');
 }
-function pubHtml(rows) {
-  const col = ([b, t, sub, c, short]) => { const l = topN(rows, b, 3);
-    return `<div class="col" style="--c:${c}"><b>${short}</b>${l.length ? l.map((r, k) => `<div class="row"><span class="p">${k + 1}</span><span class="n">${esc(r.name || '·')}</span><span class="a">${r.area}</span></div>`).join('') : '<div class="none">à toi de jouer</div>'}</div>`; };
-  const shown = BOARDS.filter(([b]) => BIG.includes(b) || rows.some(r => r.board === b));
-  return `<h2>Le public du CIRM</h2><div id="pubgrid" style="grid-template-columns:repeat(${shown.length},1fr)">${shown.map(col).join('')}</div>`;
+function pubHtml(rows, who) {
+  const cols = [];
+  const board = ([b, , , c, short]) => [short, c, topN(rows, b, 3).map(r => [r.name, r.area])];
+  for (const d of BOARDS) if (BIG.includes(d[0])) cols.push(board(d));
+  cols.push(['Total des trois', GOLD, who.filter(p => p.total).sort(byTotal).slice(0, 3).map(p => [p.name, p.total])]);
+  for (const d of BOARDS) if (!BIG.includes(d[0]) && rows.some(r => r.board === d[0])) cols.push(board(d));
+  const col = ([short, c, list]) => `<div class="col" style="--c:${c}"><b>${short}</b>${list.length ? list.map(([n, a], k) => `<div class="row"><span class="p">${k + 1}</span><span class="n">${esc(n || '·')}</span><span class="a">${a}</span></div>`).join('') : '<div class="none">à toi de jouer</div>'}</div>`;
+  return `<h2>Le public du CIRM</h2><div id="pubgrid" style="grid-template-columns:repeat(${cols.length},1fr)">${cols.map(col).join('')}</div>`;
 }
 function stamp(now) {
   const d = now ? new Date(now) : new Date();
@@ -186,15 +255,13 @@ async function refresh() {
   try { [f1, t1, f2] = await Promise.all([get('action=getFences&workshop=cigales-2026'), get('action=getTeams&workshop=cigales-2026'), get('action=getFences&workshop=cirm-2026')]); }
   catch (e) { document.getElementById('stamp').textContent = 'données momentanément indisponibles'; return; }
   const fences = (f1 && f1.fences) || [], counts = (t1 && t1.teams) || {}, pub = (f2 && f2.fences) || [];
-  const html = [teamsHtml(fences, counts), boardsHtml(fences), pubHtml(pub)];
+  const over = C.over(), teams = standings(fences, counts), who = players(pub), L = leaders(teams, pub, who);
+  const html = [prizesHtml(L), teamsHtml(teams, L, over), boardsHtml(fences), pubHtml(pub, who)];
   if (html.join('\u0000') !== drawn) {
     drawn = html.join('\u0000');
-    document.getElementById('teams').innerHTML = html[0];
-    document.getElementById('boards').innerHTML = html[1];
-    document.getElementById('pub').innerHTML = html[2];
+    ['prizes', 'teams', 'boards', 'pub'].forEach((id, i) => { document.getElementById(id).innerHTML = html[i]; });
   }
   document.getElementById('stamp').textContent = stamp(f1 && f1.now);
-  const over = C.over();
   document.getElementById('sheet').classList.toggle('final', over);
   document.getElementById('prov').textContent = over ? 'Résultats finaux' : 'Résultats provisoires';
   document.getElementById('open').textContent = over ? 'Le concours est terminé' : 'Ouvert jusqu’au jeudi 22 octobre, 19 h 30';
