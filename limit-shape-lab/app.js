@@ -396,7 +396,7 @@
     let last = null;
     for (let j = 0; j < N; j++) {
       const q = G.polar(fence, C[j][0], C[j][1]), p = at(q[0], q[1]);
-      if (last && Math.hypot(p[0] - last[0], p[1] - last[1]) < 4 * dpr) continue;
+      if (last && Math.hypot(p[0] - last[0], p[1] - last[1]) < 7 * dpr) continue;
       last = p;
       ctx.beginPath(); ctx.arc(p[0], p[1], 1.6 * dpr, 0, Math.PI * 2); ctx.fill();
     }
@@ -514,11 +514,12 @@
     K.forEach((v, i) => {
       const x = ox + v[0] * u, y = oy - v[1] * u, r = (1.8 + 3.6 * Math.sqrt(v[2] / top)) * dpr;
       kindSpots.push([x, y, i]);
-      ctx.globalAlpha = i === selKind ? 1 : 0.35 + 0.65 * lit(v[2]);
+      // The corner pieces' arrow at full strength, in the pink ring the polygon gives those pieces.
+      ctx.globalAlpha = i === selKind || v[3] ? 1 : 0.35 + 0.65 * lit(v[2]);
       ctx.fillStyle = i === selKind ? "#ffffff" : v[3] ? "#ff5fb3" : "#2de2d5";
       ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-      if (i === selKind) {
-        ctx.globalAlpha = 1; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.5 * dpr;
+      if (i === selKind || v[3]) {
+        ctx.strokeStyle = i === selKind ? "#ffffff" : "#ff5fb3"; ctx.lineWidth = (i === selKind ? 1.5 : 1.6) * dpr;
         ctx.beginPath(); ctx.arc(x, y, r + 4 * dpr, 0, Math.PI * 2); ctx.stroke();
       }
     });
