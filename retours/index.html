@@ -70,13 +70,13 @@
 
   <section class="step show" data-step="0">
     <h1>Ton avis <span class="grad">compte</span></h1>
-    <p class="sub">Cinq petites questions sur l'atelier du Fence Challenge. Une minute, et c'est anonyme : ni nom, ni adresse.</p>
+    <p class="sub" id="w-sub0">Cinq petites questions sur l'atelier du Fence Challenge. Une minute, et c'est anonyme : ni nom, ni adresse.</p>
     <div class="nav"><button class="go" data-next>Commencer</button></div>
-    <p class="note">Les réponses servent à améliorer les prochains ateliers.</p>
+    <p class="note" id="w-note0">Les réponses servent à améliorer les prochains ateliers.</p>
   </section>
 
   <section class="step" data-step="1">
-    <h2>Comment s'est passé cet atelier ?</h2>
+    <h2 id="w-q1">Comment s'est passé cet atelier ?</h2>
     <p class="sub">Choisis les adjectifs qui décrivent ton expérience, autant que tu veux.</p>
     <div class="chips" id="adj"></div>
     <p class="count" id="adjCount">0 choisi</p>
@@ -95,13 +95,13 @@
   </section>
 
   <section class="step" data-step="3">
-    <h2>Quel mot décrit le mieux ton ressenti pendant l'atelier ?</h2>
+    <h2 id="w-q3">Quel mot décrit le mieux ton ressenti pendant l'atelier ?</h2>
     <p class="sub">Un seul choix.</p>
     <div class="stack" data-one="feeling">
       <button class="opt" data-v="very_bored"><span class="t">Très ennuyé·e</span><span class="d">Je me suis ennuyé·e et j'aurais souhaité faire autre chose à la place.</span></button>
       <button class="opt" data-v="not_interested"><span class="t">Pas intéressé·e</span><span class="d">J'ai suivi l'activité mais cela ne m'intéressait pas d'en savoir plus.</span></button>
-      <button class="opt" data-v="interested"><span class="t">Intéressé·e</span><span class="d">J'étais assez intéressé·e par ce que nous avons fait et l'atelier était agréable.</span></button>
-      <button class="opt" data-v="very_interested"><span class="t">Très intéressé·e</span><span class="d">J'étais très intéressé·e et l'atelier était bien amusant et/ou captivant.</span></button>
+      <button class="opt" data-v="interested"><span class="t">Intéressé·e</span><span class="d" id="w-feel-interested">J'étais assez intéressé·e par ce que nous avons fait et l'atelier était agréable.</span></button>
+      <button class="opt" data-v="very_interested"><span class="t">Très intéressé·e</span><span class="d" id="w-feel-very">J'étais très intéressé·e et l'atelier était bien amusant et/ou captivant.</span></button>
     </div>
     <div class="nav"><button class="back" data-prev aria-label="Question précédente">←</button><button class="go" data-next>Suivant</button></div>
   </section>
@@ -129,7 +129,7 @@
   <section class="step done" data-step="6">
     <div class="big" aria-hidden="true">✨</div>
     <h1>Merci&nbsp;!</h1>
-    <p class="sub">Ta réponse est enregistrée. Elle nous aide à améliorer les prochains ateliers.</p>
+    <p class="sub" id="w-done">Ta réponse est enregistrée. Elle nous aide à améliorer les prochains ateliers.</p>
     <p class="pending" id="pending">Pas de réseau pour l'instant : ta réponse partira toute seule dès que la connexion revient.</p>
     <div class="nav"><button class="go" id="again">Nouvelle réponse</button></div>
     <p class="note"><a href="../">Retour au Fence Challenge</a></p>
@@ -147,11 +147,28 @@
              ['terne', 'Terne'], ['acceptable', 'Acceptable'], ['agreable', 'Agréable'], ['fascinant', 'Fascinant'],
              ['stimulant', 'Stimulant'], ['extraordinaire', 'Extraordinaire'], ['drole', 'Drôle'], ['interessant', 'Intéressant'],
              ['haletant', 'Haletant'], ['ennuyeux', 'Ennuyeux'], ['correct', 'Correct'], ['surprenant', 'Surprenant']];
+  // What the visit is called. The questions are the same instrument everywhere (the answers of an event are told apart by its id); a contest says « concours »
+  // where a workshop says « atelier ». Any event can ask for it with &w=concours; the Cigales' event does so by itself.
+  var CONTEST_EVENTS = ['2026-10-22-cirm-cigales-enchivas'];
+  var CONTEST = params.get('w') === 'concours' || CONTEST_EVENTS.indexOf(EVENT) >= 0;
+  var WORDS = !CONTEST ? {} : {
+    'w-sub0': "Cinq petites questions sur le concours du Fence Challenge. Une minute, et c'est anonyme : ni nom, ni adresse.",
+    'w-note0': 'Les réponses servent à améliorer les prochains concours.',
+    'w-q1': "Comment s'est passé ce concours ?",
+    'w-q3': 'Quel mot décrit le mieux ton ressenti pendant le concours ?',
+    'w-feel-interested': "J'étais assez intéressé·e par ce que nous avons fait et le concours était agréable.",
+    'w-feel-very': "J'étais très intéressé·e et le concours était bien amusant et/ou captivant.",
+    'w-done': 'Ta réponse est enregistrée. Elle nous aide à améliorer les prochains concours.',
+    relevant: 'Le contenu de ce concours était pertinent par rapport à ma vie quotidienne.',
+    like_class: "L'activité de ce concours ressemble à ce qu'on fait tous les jours en classe.",
+    demanding: 'Le contenu de ce concours était exigeant pour moi.'
+  };
+  Object.keys(WORDS).forEach(function (k) { var el = document.getElementById(k); if (el) el.textContent = WORDS[k]; });
   var STMTS = [['time_flew', 'Le temps a filé.'],
-               ['relevant', 'Le contenu de cet atelier était pertinent par rapport à ma vie quotidienne.'],
-               ['like_class', "L'activité d'aujourd'hui ressemble à ce qu'on fait tous les jours en classe."],
+               ['relevant', WORDS.relevant || 'Le contenu de cet atelier était pertinent par rapport à ma vie quotidienne.'],
+               ['like_class', WORDS.like_class || "L'activité d'aujourd'hui ressemble à ce qu'on fait tous les jours en classe."],
                ['more', "J'aimerais réaliser plus d'activités comme celle-ci."],
-               ['demanding', 'Le contenu de cet atelier était exigeant pour moi.']];
+               ['demanding', WORDS.demanding || 'Le contenu de cet atelier était exigeant pour moi.']];
   var SCALE = [[1, "Pas du tout d'accord"], [2, "Pas d'accord"], [3, "D'accord"], [4, 'Très en accord']];
 
   var state, step = 0;
