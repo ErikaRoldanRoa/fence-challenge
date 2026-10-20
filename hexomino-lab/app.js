@@ -756,8 +756,10 @@
     const id = chip.dataset.chip, c = CHIPS[id];
     if (!c) return null;
     const l = lang();
-    return { title: c.q[l], lead: c.lead[l], body: c.detail[l] + live(id), src: c.section[l],
-      data: { label: c.label, lines: c.lines, chip: id } };
+    // What the card says about the paper is a pill on the result it names; its footer names where it comes from.
+    const X = (str) => window.PaperRef.expand(str, "html");
+    return { title: c.q[l], lead: X(c.lead[l]), body: X(c.detail[l]) + live(id), src: c.section[l],
+      srcHtml: window.PaperRef.footer(c.label.split(/[\s,]+/)), data: { label: c.label, lines: c.lines, chip: id } };
   };
   function closeCard() { if (window.mathChip.close) window.mathChip.close(false); }
   document.addEventListener("math-chip-open", (e) => { openChip = e.detail.dataset.chip || null; });

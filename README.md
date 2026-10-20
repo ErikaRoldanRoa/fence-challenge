@@ -56,7 +56,10 @@ The labs, one per result:
   close and count its area.
 
 Every element of a lab has a small "∑" chip that opens the mathematics
-behind it, with the section of the paper it comes from.
+behind it. What a card says about the paper names the result it comes from
+(Table 4, Fig. 28, § 6.3): that name is a small link that opens the result in
+place, with its page and, for the tables and figures the lab holds, the data
+itself; once the paper is public it also links to its page.
 
 ## The follow-up in the Mitteilungen der DMV
 
@@ -138,7 +141,8 @@ root, with the server running on port 8000 where a base address is asked:
   `node limit-shape-lab/test/limit-math.test.js`,
   `node limit-shape-lab/test/polygon.test.js`,
   `node limit-shape-lab/test/optimal.test.js`,
-  `node pentomino-dp-lab/test/dp.test.js`
+  `node pentomino-dp-lab/test/dp.test.js`,
+  `node test/paper-refs.test.js`
 - the labs in a browser: `python3 cube-lab/test/browser.py OUTDIR`,
   `python3 hexomino-lab/test/ui_check.py http://localhost:8000/ OUTDIR`,
   `python3 limit-shape-lab/test/ui_check.py http://localhost:8000/ OUTDIR`,
@@ -146,6 +150,10 @@ root, with the server running on port 8000 where a base address is asked:
 - the hub and the layout of every lab:
   `python3 test/hub_check.py http://localhost:8000/ OUTDIR`,
   `python3 test/labs_layout.py http://localhost:8000/`
+- the contest on a phone (the party, the trophy, the end; its network is faked):
+  `python3 test/contest_check.py http://localhost:8000/ OUTDIR`
+- before a release, with `git fetch origin` done: `python3 test/cache_tags.py` (every asset changed since the live
+  branch carries a new `?v=` tag in the pages that load it)
 
 ## Citation
 

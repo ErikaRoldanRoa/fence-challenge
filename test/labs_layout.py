@@ -7,7 +7,7 @@ backdrop covers everything else on purpose). The limit-shape lab is also
 checked at its tightest sizes (EXTRA): a 320 px phone, a phone held sideways,
 and laptop widths where its top row is narrow.
 
-Usage: python3 test/labs_layout.py <base-url> [outdir] [--webkit] [--lab=NAME] [--quick]
+Usage: python3 test/labs_layout.py <base-url> [outdir] [--webkit] [--lab=NAME] [--quick] [--run=N ...]
 """
 import json, os, sys
 from playwright.sync_api import sync_playwright
@@ -17,6 +17,7 @@ OUT = sys.argv[2] if len(sys.argv) > 2 and not sys.argv[2].startswith("--") else
 WEBKIT = "--webkit" in sys.argv
 ONLY = [a.split("=",1)[1] for a in sys.argv if a.startswith("--lab=")]
 QUICK = "--quick" in sys.argv
+RUN = [int(a.split("=",1)[1]) for a in sys.argv if a.startswith("--run=")]   # only these runs (viewport + states) of each lab: to share a long check between processes
 VIEWS = [(390, 664, True), (390, 844, True), (820, 1180, True), (1400, 900, False)]
 LANGS = ["fr", "de", "en"]
 
@@ -63,34 +64,53 @@ CHECK = r"""
   if (pop) {
     const r = pop.getBoundingClientRect();
     if (r.left < 0 || r.top < 0 || r.right > vw + 0.5 || r.bottom > vh + 0.5) issues.push('card outside viewport');
+    if (pop.scrollWidth > pop.clientWidth + 1) issues.push('card scrolls sideways by ' + (pop.scrollWidth - pop.clientWidth) + 'px');
     ctrls = ctrls.filter((el) => pop.contains(el));
   }
-  // A control scrolled out of its own scroll box (a tray) is not covered.
-  const clipped = (el) => {
-    const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  // A control scrolled out of its own scroll box (a tray) is not covered; neither is the line of a wrapped pill that has gone out of it.
+  const clippedAt = (el, cx, cy) => {
     for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
       const s = getComputedStyle(a);
       if (/(auto|scroll)/.test(s.overflowX + s.overflowY)) {
-        const q = a.getBoundingClientRect();
-        if (cx < q.left || cx > q.right || cy < q.top || cy > q.bottom) return true;
+        // what the box shows is inside its border
+        const q = a.getBoundingClientRect(), l = q.left + a.clientLeft, t = q.top + a.clientTop;
+        if (cx < l || cx > l + a.clientWidth || cy < t || cy > t + a.clientHeight) return true;
       }
     }
     return false;
   };
-  ctrls = ctrls.filter((el) => !clipped(el));
+  const clipped = (el) => { const r = el.getBoundingClientRect(); return clippedAt(el, r.left + r.width / 2, r.top + r.height / 2); };
+  // A page's bar stays while the page scrolls under it: what has gone under it is scrolled out of view, not covered.
+  const bar = pop && pop.querySelector('.math-top.with-back');
+  const underBar = (el) => { if (!bar || bar.contains(el)) return false; const r = el.getBoundingClientRect(); return r.top + r.height / 2 < bar.getBoundingClientRect().bottom; };
+  ctrls = ctrls.filter((el) => !clipped(el) && !underBar(el));
+  // A control that runs over two lines (a pill in a sentence) has one box per line: each is hit-tested on its own.
+  const boxes = (el) => { const q = [...el.getClientRects()].filter((r) => r.width > 1 && r.height > 1); return q.length ? q : [el.getBoundingClientRect()]; };
   for (const el of ctrls) {
-    const r = el.getBoundingClientRect();
-    const x = Math.min(vw - 1, Math.max(0, r.left + r.width / 2)), y = Math.min(vh - 1, Math.max(0, r.top + r.height / 2));
-    const hit = document.elementFromPoint(x, y);
-    if (!hit || !(hit === el || el.contains(hit))) issues.push('covered ' + name(el) + ' by ' + (hit ? name(hit) : 'null'));
-    if (r.right > vw + 0.5 || r.left < -0.5) issues.push('outside ' + name(el));
+    for (const r of boxes(el)) {
+      if (clippedAt(el, r.left + r.width / 2, r.top + r.height / 2)) continue;
+      if (bar && !bar.contains(el) && r.top + r.height / 2 < bar.getBoundingClientRect().bottom) continue;   // this line has gone under the page's bar
+      const x = Math.min(vw - 1, Math.max(0, r.left + r.width / 2)), y = Math.min(vh - 1, Math.max(0, r.top + r.height / 2));
+      const hit = document.elementFromPoint(x, y);
+      if (!hit || !(hit === el || el.contains(hit))) issues.push('covered ' + name(el) + ' by ' + (hit ? name(hit) : 'null'));
+      // a pill is a rectangle of text: its corners belong to it too, so that a tap near its edge never opens its neighbour
+      if (el.classList.contains('paper-ref')) for (const [px, py] of [[r.left + 2, r.top + 2], [r.right - 2, r.top + 2], [r.left + 2, r.bottom - 2], [r.right - 2, r.bottom - 2]]) {
+        if (px < 0 || py < 0 || px > vw - 1 || py > vh - 1) continue;
+        const h2 = document.elementFromPoint(px, py);
+        if (h2 && !(h2 === el || el.contains(h2)) && h2.closest('.paper-ref')) issues.push('edge of ' + name(el) + ' belongs to ' + name(h2.closest('.paper-ref')));
+      }
+      if (r.right > vw + 0.5 || r.left < -0.5) issues.push('outside ' + name(el));
+    }
   }
   const surface = (el) => el.tagName === 'CANVAS' || el.getAttribute('role') === 'img';
   for (let i = 0; i < ctrls.length; i++) for (let j = i + 1; j < ctrls.length; j++) {
     if (surface(ctrls[i]) || surface(ctrls[j])) continue;
-    const a = ctrls[i].getBoundingClientRect(), b = ctrls[j].getBoundingClientRect();
-    const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-    if (ox > 1 && oy > 1) issues.push('overlap ' + name(ctrls[i]) + ' / ' + name(ctrls[j]));
+    let hit = false;
+    for (const a of boxes(ctrls[i])) for (const b of boxes(ctrls[j])) {
+      const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      if (ox > 1 && oy > 1) hit = true;
+    }
+    if (hit) issues.push('overlap ' + name(ctrls[i]) + ' / ' + name(ctrls[j]));
   }
   return issues;
 }
@@ -107,7 +127,8 @@ def main():
             runs = [(v, all_states) for v in views]
             if lab in EXTRA:
                 runs += [(v, [s for s in all_states if s[0] in EXTRA[lab][1]]) for v in EXTRA[lab][0]]
-            for (w, h, touch), states in runs:
+            for ri, ((w, h, touch), states) in enumerate(runs):
+                if RUN and ri not in RUN: continue
                 for lang in (["en"] if QUICK else LANGS):
                     ctx = b.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch and not WEBKIT,
                                         device_scale_factor=2 if touch else 1)
@@ -131,6 +152,29 @@ def main():
                             pg.wait_for_timeout(250)
                             for i in pg.evaluate(CHECK): fails.append(tag + " card%d: " % k + i)
                             if OUT and lang == "en" and k == 0: pg.screenshot(path=os.path.join(OUT, "%s_%d_%s_card.png" % (lab, w * 10000 + h, st)))
+                            # Each pill of the card opens a page of the paper's reference in the same card: the same checks, then Back.
+                            # the card is modal for the keyboard: Tab and Shift+Tab go round it and the language switch, never into the lab behind
+                            for key in ["Tab"] * 8 + ["Shift+Tab"] * 8:
+                                pg.keyboard.press(key)
+                                where = pg.evaluate("() => { const a = document.activeElement; return !a ? 'none' : a === document.querySelector('.math-pop') ? 'pop' : a.closest('.math-pop') ? 'card' : a.closest('.langSel') ? 'lang' : 'OUT:' + a.tagName + (a.id ? '#' + a.id : ''); }")
+                                if where.startswith("OUT"):
+                                    fails.append(tag + " card%d: %s left the card for %s" % (k, key, where))
+                                    break
+                            keys = pg.evaluate("[...document.querySelectorAll('.math-pop .paper-ref')].slice(0, 6).map(e => e.dataset.ref)")
+                            for q, key in enumerate(keys):
+                                # a real click on the pill, hit-tested like a visitor's finger; the page it opens is the pill's own
+                                try:
+                                    pg.locator(".math-pop .paper-ref").nth(q).click(timeout=10000)   # (a loaded machine is slow to settle the card's slide-in)
+                                except Exception:
+                                    fails.append(tag + " card%d ref%d: a click on the pill %s does not reach it" % (k, q, key))
+                                    pg.evaluate("(q)=>{const e=document.querySelectorAll('.math-pop .paper-ref')[q]; if (e) e.click();}", q)
+                                pg.wait_for_timeout(200)
+                                got = pg.evaluate("document.querySelector('.math-pop') && document.querySelector('.math-pop').dataset.refKey")
+                                if got != key: fails.append(tag + " card%d ref%d: the pill %s opened %s" % (k, q, key, got))
+                                for i in pg.evaluate(CHECK): fails.append(tag + " card%d ref%d: " % (k, q) + i)
+                                if OUT and lang == "en" and k == 0 and q == 0: pg.screenshot(path=os.path.join(OUT, "%s_%d_%s_ref.png" % (lab, w * 10000 + h, st)))
+                                pg.evaluate("()=>{const b=document.querySelector('.math-pop .math-back'); if (b) b.click();}")
+                                pg.wait_for_timeout(120)
                             pg.keyboard.press("Escape"); pg.wait_for_timeout(150)
                         pg.close()
                     ctx.close()

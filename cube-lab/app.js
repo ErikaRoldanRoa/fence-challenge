@@ -1131,10 +1131,15 @@
       "m.cover": !tetra && !wrap && pentaWall && paperRule,
       "m.roominfo": wrap && !!b.room
     };
+    // Where in the paper each card comes from (the paper's labels, pills in the card's footer). The faces-only variants of
+    // the cards are the lab's own: the paper's rule is (26, 6).
+    var FROM = { "m.room": "sec:3d-def sec:def-area", "m.turn": "sec:3d-def", "m.wall": "sec:3d-bound", "m.cast": "sec:3d", "m.roominfo": "sec:3d-bound",
+      "m.bound": "sec:3d-bound sec:pentacubes", "m.cover": "sec:pentacubes eq:cell-cover tab:exact-cover-matrix", "m.wallinfo": "sec:3d" };
     document.querySelectorAll(".math-chip[data-math]").forEach(function (chip) {
       var k = chip.getAttribute("data-math");
       chip.hidden = !show[k];
       ["title", "body", "src", "vars"].forEach(function (a) { chip.removeAttribute("data-math-" + a); });
+      chip.setAttribute("data-paper-label", !paperRule && (k === "m.room" || k === "m.wall" || k === "m.roominfo") ? "" : FROM[k] || "");
     });
     var chip = function (k) { return document.querySelector('.math-chip[data-math="' + k + '"]'); };
     if (!paperRule) {
@@ -1148,7 +1153,8 @@
       var ub = { 6: 1633, 7: 37446 }[opened.n], best = opened.id === "penta_v52" && paperRule;
       c.setAttribute("data-math-vars", JSON.stringify({ k: WALLS.indexOf(opened) + 1, p: opened.pieces.length, n: opened.n, c: cubesN, v: G.enclosed([].concat.apply([], opened.pieces), CONN).volume, ub: ub }));
       c.setAttribute("data-math-body", best ? "m.wallinfo.best.body" : ub && paperRule ? "m.wallinfo.found.body" : "m.wallinfo.paper.body");
-      if (best) chip("m.cast").setAttribute("data-math-body", "m.cast52.body");
+      c.setAttribute("data-paper-label", best ? "sec:pentacubes fig:52" : ub && paperRule ? "sec:hexacubes" : "sec:3d");
+      if (best) { chip("m.cast").setAttribute("data-math-body", "m.cast52.body"); chip("m.cast").setAttribute("data-paper-label", "sec:pentacubes"); }
     }
     if (b.room) {
       var r = b.room.def, rc = chip("m.roominfo");

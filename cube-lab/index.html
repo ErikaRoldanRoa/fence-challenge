@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="preload" as="script" href="../i18n.js?v=20261019a" />
+    <link rel="preload" as="script" href="../i18n.js?v=20261020c" />
     <link rel="preload" as="script" href="i18n.js?v=20261019a" />
     <meta
       http-equiv="Content-Security-Policy"
@@ -14,10 +14,11 @@
     <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="../fonts/manrope.css?v=20261019a" />
     <link rel="stylesheet" href="../play-ui.css?v=20261019a" />
-    <link rel="stylesheet" href="math-chip.css?v=20261019a" />
+    <link rel="stylesheet" href="math-chip.css?v=20261020c" />
+    <link rel="stylesheet" href="../paper-ref.css?v=20261020c" />
     <link rel="stylesheet" href="styles.css?v=20261019a" />
     <link rel="stylesheet" href="../lab-tip.css?v=20261020c" />
-    <script src="../i18n.js?v=20261019a"></script>
+    <script src="../i18n.js?v=20261020c"></script>
     <script src="i18n.js?v=20261019a"></script>
     <script src="math-strings.js?v=20261019a"></script>
   </head>
@@ -36,7 +37,7 @@
           <span class="seg" role="group" data-i18n-aria-label="cu.step.aria" aria-label="Pieces">
             <button id="mode-tetra" class="ctl mode" type="button" aria-pressed="true" data-i18n-aria-label="cu.mode.tetraTip" aria-label="Build with the 8 tetracubes" data-i18n-title="cu.mode.tetraTip" title="Build with the 8 tetracubes"><span class="modeIcon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4.2 19 8v8l-7 3.8L5 16V8z M5 8l7 3.8L19 8 M12 11.8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><b>4</b></span></button>
             <button id="mode-penta" class="ctl mode" type="button" aria-pressed="false" data-i18n-aria-label="cu.mode.pentaTip" aria-label="Build with the 29 pentacubes" data-i18n-title="cu.mode.pentaTip" title="Build with the 29 pentacubes"><span class="modeIcon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4.2 19 8v8l-7 3.8L5 16V8z M5 8l7 3.8L19 8 M12 11.8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><b>5</b></span></button>
-            <button class="math-chip" type="button" data-math="m.tetra" data-paper-label="sec:3d" aria-expanded="false" aria-haspopup="dialog" data-i18n-aria-label="m.tetra.aria" aria-label="The math" hidden>≤</button>
+            <button class="math-chip" type="button" data-math="m.tetra" aria-expanded="false" aria-haspopup="dialog" data-i18n-aria-label="m.tetra.aria" aria-label="The math" hidden>≤</button>
           </span>
           <span class="seg" role="group" data-i18n-aria-label="cu.play.aria" aria-label="How to play">
             <button id="play-explore" class="ctl mode" type="button" aria-pressed="true" data-i18n-aria-label="cu.play.explore" aria-label="Explore: shut in as much as you can" data-i18n-title="cu.play.explore" title="Explore: shut in as much as you can"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 9.6 8 8l3 1.6v3.2L8 14.4 5 12.8z M13 5.6 16 4l3 1.6v3.2L16 10.4 13 8.8z M12.5 15.6l3-1.6 3 1.6v3.2l-3 1.6-3-1.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 19.5l2.5-2.5M20 13.5l-1.6.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="1.4 1.6"/></svg></button>
@@ -45,7 +46,7 @@
         </div>
         <span class="volWrap">
           <button id="volume" class="measure" type="button" data-i18n-title="cu.volume" title="Volume" aria-live="polite"><span class="area-word" data-i18n="cu.volume">Volume</span><strong class="area-num" id="volume-value">0</strong></button>
-          <button class="math-chip" type="button" data-math="m.room" data-paper-label="sec:3d sec:def-area" aria-expanded="false" aria-haspopup="dialog" data-i18n-aria-label="m.room.aria" aria-label="The math">∑</button>
+          <button class="math-chip" type="button" data-math="m.room" data-paper-label="sec:3d-def sec:def-area" aria-expanded="false" aria-haspopup="dialog" data-i18n-aria-label="m.room.aria" aria-label="The math">∑</button>
         </span>
         <span class="lab-nav">
           <a class="ctl nav" href="../hub/" data-i18n-title="lab.home" data-i18n-aria-label="lab.home" title="All the labs" aria-label="All the labs"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 11.4 12 4.6l8 6.8M6.4 9.6v9.9h4.2v-5.4h2.8v5.4h4.2V9.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
@@ -74,7 +75,7 @@
         <div class="acts">
           <button id="turn" class="ctl act" type="button" aria-keyshortcuts="R" data-i18n-aria-label="cu.turnTip" aria-label="Turn (R)" data-i18n-title="cu.turnTip" title="Turn (R)"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><ellipse cx="12" cy="13" rx="8" ry="3.4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3.5v7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="1.6 2"/><path d="M15.6 14.4l3.2 1.6-1.4 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <button id="tip" class="ctl act" type="button" aria-keyshortcuts="T" data-i18n-aria-label="cu.tipTip" aria-label="Tip (T)" data-i18n-title="cu.tipTip" title="Tip (T)"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><ellipse cx="12" cy="12" rx="3.4" ry="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 12h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="1.6 2"/><path d="M13.4 4.4l1.6 3.2-3 1.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-          <button class="math-chip" type="button" data-math="m.turn" data-paper-label="sec:3d" aria-expanded="false" aria-haspopup="dialog" data-i18n-aria-label="m.turn.aria" aria-label="The math" hidden>↻</button>
+          <button class="math-chip" type="button" data-math="m.turn" data-paper-label="sec:3d-def" aria-expanded="false" aria-haspopup="dialog" data-i18n-aria-label="m.turn.aria" aria-label="The math" hidden>↻</button>
           <button id="delete" class="ctl act" type="button" aria-disabled="true" aria-keyshortcuts="Delete" data-i18n-aria-label="cu.deleteTip" aria-label="Put the chosen piece back (Delete)" data-i18n-title="cu.deleteTip" title="Put the chosen piece back (Delete)"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 14.5v4.5h16v-4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3.5v10M8 9.8l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <a id="print" class="ctl act" href="print/tetracubes.zip" download data-i18n-aria-label="cu.print" aria-label="Download the pieces to print in 3D" data-i18n-title="cu.printTip" title="Download the pieces to print in 3D"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 8.6V3.8h10v4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6.9 17.2H4V9h16v8.2h-2.9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.5 14.5 12 12.6l3.5 1.9v3.8L12 20.2l-3.5-1.9z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></a>
           <button id="undo" class="ctl act" type="button" aria-disabled="true" aria-keyshortcuts="Control+Z" data-i18n-aria-label="cu.undoTip" aria-label="Undo (Ctrl+Z)" data-i18n-title="cu.undoTip" title="Undo (Ctrl+Z)"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8.5 6.5 4.5 10.5l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.8 10.5h9.2a5 5 0 0 1 0 10h-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
@@ -87,8 +88,8 @@
           <div id="walls" class="walls" role="group" data-i18n-aria-label="cu.walls.aria" aria-label="Walls found by the research team"></div>
           <span class="wallChips">
             <button class="math-chip" id="chip-wallinfo" type="button" data-math="m.wallinfo" data-paper-label="sec:3d fig:52" aria-expanded="false" aria-haspopup="dialog" data-i18n-aria-label="m.wallinfo.aria" aria-label="The math" hidden>i</button>
-            <button class="math-chip" type="button" data-math="m.bound" data-paper-label="sec:3d" aria-expanded="false" aria-haspopup="dialog" data-i18n-aria-label="m.bound.aria" aria-label="The math" hidden>≤</button>
-            <button class="math-chip" type="button" data-math="m.cover" data-paper-label="eq:cell-cover tab:exact-cover-matrix" aria-expanded="false" aria-haspopup="dialog" data-i18n-aria-label="m.cover.aria" aria-label="The math" hidden>⊞</button>
+            <button class="math-chip" type="button" data-math="m.bound" data-paper-label="sec:3d-bound sec:pentacubes" aria-expanded="false" aria-haspopup="dialog" data-i18n-aria-label="m.bound.aria" aria-label="The math" hidden>≤</button>
+            <button class="math-chip" type="button" data-math="m.cover" data-paper-label="sec:pentacubes eq:cell-cover tab:exact-cover-matrix" aria-expanded="false" aria-haspopup="dialog" data-i18n-aria-label="m.cover.aria" aria-label="The math" hidden>⊞</button>
           </span>
         </div>
       </aside>
@@ -101,7 +102,7 @@
       <div class="strip" role="group" data-i18n-aria-label="cu.view.aria" aria-label="View">
         <span class="castCol">
           <button id="cast" class="ctl castBtn" type="button" aria-pressed="false" data-disabled-click data-i18n-aria-label="cu.cast" aria-label="Lift the wall away: the room alone" data-i18n-title="cu.castTip" title="Lift the wall away: the room alone"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 11 17 13.6v5.2L12 21.4l-5-2.6v-5.2z" fill="#ffd36e" stroke="#ffd36e" stroke-width="1" stroke-linejoin="round"/><path d="M5 9.6V6.4L12 2.8l7 3.6v3.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="2 1.4"/><path d="M12 6.2v2.6M9.6 7.4 12 5l2.4 2.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-          <button class="math-chip" type="button" data-math="m.wall" data-paper-label="sec:3d" aria-expanded="false" aria-haspopup="dialog" data-i18n-aria-label="m.wall.aria" aria-label="The math" hidden>∂</button>
+          <button class="math-chip" type="button" data-math="m.wall" data-paper-label="sec:3d-bound" aria-expanded="false" aria-haspopup="dialog" data-i18n-aria-label="m.wall.aria" aria-label="The math" hidden>∂</button>
           <button class="math-chip" type="button" data-math="m.cast" data-paper-label="sec:3d" aria-expanded="false" aria-haspopup="dialog" data-i18n-aria-label="m.cast.aria" aria-label="The math" hidden>∅</button>
         </span>
         <label class="slider" data-i18n-title="cu.cutTip" title="Hide the upper layers to look inside">
@@ -128,8 +129,10 @@
     <script defer src="walls.js?v=20261019a"></script>
     <script defer src="rooms.js?v=20261019a"></script>
     <script defer src="../play-ui.js?v=20261019a"></script>
-    <script defer src="math-chip.js?v=20261019a"></script>
+    <script defer src="../paper-refs.js?v=20261020c"></script>
+    <script defer src="../paper-ref.js?v=20261020c"></script>
+    <script defer src="math-chip.js?v=20261020c"></script>
     <script defer src="../lab-tip.js?v=20261020c"></script>
-    <script defer src="app.js?v=20261019a"></script>
+    <script defer src="app.js?v=20261020c"></script>
   </body>
 </html>

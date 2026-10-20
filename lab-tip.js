@@ -178,9 +178,12 @@
   document.addEventListener("focusout", function () { hide(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") hide(); });
 
-  // Clicks: none after a long press, none on a control marked disabled.
+  // Clicks: none after a long press, none on a control marked disabled. The first is caught on the window, before any
+  // handler of the page (a pill, a chip, a token opens its card on the document's capture), so that the long press only explains.
+  window.addEventListener("click", function (e) {
+    if (swallowClick) { swallowClick = false; e.preventDefault(); e.stopPropagation(); }
+  }, true);
   document.addEventListener("click", function (e) {
-    if (swallowClick) { swallowClick = false; e.preventDefault(); e.stopPropagation(); return; }
     var off = e.target && e.target.closest ? e.target.closest("[aria-disabled='true']:not([data-disabled-click])") : null;
     if (off) { e.preventDefault(); e.stopImmediatePropagation(); }
     hide();

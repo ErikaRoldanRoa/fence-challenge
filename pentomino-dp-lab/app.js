@@ -508,7 +508,7 @@
 
     chipOrders.hidden = n < 4;
     chipOrders.setAttribute("data-math", n === 12 ? "m.orders12" : "m.orders");
-    chipOrders.setAttribute("data-math-src", "m.orders.src");
+    chipOrders.setAttribute("data-paper-label", "sec:min-max");
     chipOrders.setAttribute("data-math-vars", JSON.stringify({ n: n, count: orderCount(n).toLocaleString(locale()), all: (19958400).toLocaleString(locale()) }));
 
     var phase = r ? r.phase : "idle";
@@ -519,7 +519,7 @@
       chipLayer.setAttribute("data-math", key);
       chipLayer.setAttribute("aria-label", t(key + ".title"));
       chipLayer.setAttribute("data-lab-tip", t(key + ".title"));
-      chipLayer.setAttribute("data-math-src", "m.layer.src");
+      chipLayer.setAttribute("data-paper-label", "sec:dp-fixed");
       var i = Math.min(r.step, n), lay = r.res.layers[i], st = lay.size, co = corners(lay);
       chipLayer.setAttribute("data-math-vars", JSON.stringify({
         i: i, n: n, tried: r.res.tried[i].toLocaleString(locale()),
@@ -567,8 +567,12 @@
     $("dp-clear").addEventListener("click", function () { order = []; loaded = null; own = null; last = null; resetRun(); });
     $("dp-worst").addEventListener("click", function () { reveal("worst"); });
     $("dp-best").addEventListener("click", function () { reveal("best"); });
+    // The footer of a card names the places in the paper it comes from (pills, see ../paper-ref.js); the chips whose card
+    // changes with the state (the orders, the layer) say theirs when they sync.
+    var FROM = { "m.area": "sec:boundary", "m.worst": "sec:min-max", "m.best": "sec:dp-unrestricted" };
     document.querySelectorAll(".math-chip").forEach(function (c) {
-      if (!c.hasAttribute("data-math-src")) c.setAttribute("data-math-src", c.getAttribute("data-math") + ".src");
+      var from = FROM[c.getAttribute("data-math")];
+      if (from && !c.hasAttribute("data-paper-label")) c.setAttribute("data-paper-label", from);
     });
     document.querySelectorAll("[data-lang-btn]").forEach(function (b) {
       b.addEventListener("click", function () { if (window.i18n) window.i18n.setLang(b.getAttribute("data-lang-btn")); });

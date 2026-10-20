@@ -1,0 +1,106 @@
+/* Fence Challenge · paper-ref: the pill that names a result of the paper, and the reference page it opens
+ * in the shared math-chip card (math-chip.css has the card itself). See paper-ref.js. */
+
+/* The pill: a link in a sentence or a computed line. The dotted underline says "there is more behind this". It is plain
+ * inline text that happens to be a button, so that it wraps like the words around it (a long section title runs over
+ * two lines, a "(" stays with it) and its box never reaches into the line above or below. The number stays whole. */
+.paper-ref {
+  display: inline; margin: 0; padding: 0 0.1em;
+  border: 0; border-radius: 3px; background: none;
+  font: inherit; font-weight: 700; color: #ffd36e;
+  text-decoration: underline dotted rgba(255, 211, 110, 0.75); text-underline-offset: 0.2em;
+  overflow-wrap: break-word;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  cursor: pointer; scroll-margin-top: 48px;
+  -webkit-tap-highlight-color: transparent;
+}
+.paper-ref .nb { white-space: nowrap; }
+.paper-ref:hover { background: rgba(255, 211, 110, 0.16); text-decoration-style: solid; }
+.paper-ref:active { background: rgba(255, 211, 110, 0.28); }
+.paper-ref:focus-visible { outline: 2px solid #ffd36e; outline-offset: 1px; }
+.math-src .paper-ref-title { font-style: italic; }
+
+/* A reference page in the card. */
+.math-pop .math-kicker {
+  margin: 0 34px 1px 0;
+  font: 700 10.5px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: rgba(216, 246, 255, 0.55);
+}
+.math-pop .math-where { margin: -2px 0 8px; font-size: 12.5px; color: rgba(216, 246, 255, 0.7); }
+/* A reference page is a little wider than a card, and reads as a page: its sentence is not a headline. */
+.math-pop.ref { width: min(500px, calc(100vw - 24px)); }
+.math-pop.ref.sheet { width: auto; }
+.math-pop.ref .math-lead { font-weight: 500; color: #eefbff; }
+/* The data box: a table wider than the card scrolls sideways in a box of its own (.ref-scroll), with a shadow on the edge that
+   has more behind it; the hint and the captions around it stay where they are. */
+.math-pop .math-excerpt {
+  margin: 10px 0 8px; padding: 8px 0;
+  border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px;
+  background: #10151b;
+}
+.math-pop .ref-scroll {
+  overflow-x: auto;
+  background:
+    linear-gradient(to right, #10151b, rgba(16, 21, 27, 0)) 0 0 / 24px 100% no-repeat local,
+    linear-gradient(to left, #10151b, rgba(16, 21, 27, 0)) 100% 0 / 24px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(255, 211, 110, 0.28), rgba(255, 211, 110, 0)) 0 0 / 10px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(255, 211, 110, 0.28), rgba(255, 211, 110, 0)) 100% 0 / 10px 100% no-repeat scroll,
+    #10151b;
+}
+.math-pop .math-note { margin: 8px 0 0; font-size: 12px; color: rgba(216, 246, 255, 0.6); }
+.math-pop .math-open {
+  display: inline-block; margin-top: 8px; padding: 8px 14px;
+  border: 1px solid rgba(255, 211, 110, 0.7); border-radius: 999px;
+  color: #ffd36e; font-weight: 800; text-decoration: none;
+}
+.math-pop .math-open:hover { background: rgba(255, 211, 110, 0.16); }
+.math-pop .math-open:focus-visible { outline: 2px solid #ffd36e; outline-offset: 2px; }
+
+/* What a lab shows of a result: a table's rows, a curve, small polygons. */
+.math-pop .ref-table {
+  border-collapse: collapse; width: 100%;
+  font: 600 11.5px/1.35 "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  font-variant-numeric: tabular-nums; color: #d8f6ff;
+}
+.math-pop .ref-table th {
+  padding: 2px 8px 4px; text-align: right; white-space: nowrap;
+  font-weight: 700; color: rgba(216, 246, 255, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+.math-pop .ref-table td { padding: 2px 8px; text-align: right; white-space: nowrap; }
+/* The first column stays while the rest scrolls, and every other column comes to rest right beside it, whole. */
+.math-pop .ref-scroll { scroll-snap-type: x proximity; scroll-padding-left: 40px; }
+.math-pop .ref-table th, .math-pop .ref-table td { scroll-snap-align: start; }
+.math-pop .ref-table th:first-child, .math-pop .ref-table td:first-child {
+  box-sizing: border-box; width: 40px; min-width: 40px; padding-left: 10px; text-align: left;
+  position: sticky; left: 0; z-index: 1; background: #10151b; scroll-snap-align: none;
+  box-shadow: 5px 0 6px -3px rgba(0, 0, 0, 0.7);
+}
+/* A lab says in the data that it scrolls (.ref-swipe); the card shows it only when the data is wider than the card. */
+.math-pop .ref-swipe { display: none; margin: 0 10px 6px; font-size: 11.5px; font-weight: 700; color: #ffd36e; }
+.math-pop.scrolls .ref-swipe { display: block; }
+.math-pop .ref-table th:last-child, .math-pop .ref-table td:last-child { padding-right: 10px; }
+.math-pop .ref-table tr.on td { background-image: linear-gradient(rgba(255, 211, 110, 0.15), rgba(255, 211, 110, 0.15)); color: #fff; font-weight: 800; }
+.math-pop .ref-spark { display: block; width: calc(100% - 20px); height: auto; margin: 0 10px; }
+.math-pop .ref-spark text { font: 600 11px/1 "Manrope", "Avenir Next", "Segoe UI", sans-serif; fill: rgba(216, 246, 255, 0.7); }
+.math-pop .ref-cap { margin: 6px 10px 0; font-size: 11.5px; line-height: 1.4; color: rgba(216, 246, 255, 0.62); }
+
+/* The formula of an equation, a lemma or a definition, as the paper writes it. */
+.math-pop .math-formula {
+  margin: 8px 0; padding: 8px 10px; overflow-x: auto; text-align: center;
+  border-radius: 8px; background: rgba(255, 255, 255, 0.04);
+  font: 17px/1.7 "Times New Roman", serif; color: #eefbff;
+}
+.math-pop .math-formula i { font-size: 1em; }
+/* The polygons of Figure 24: one box with its inset, and the legend. */
+.math-pop .ref-polys { display: grid; grid-template-columns: 1.7fr 1fr; gap: 10px; align-items: center; margin: 0 10px; }
+.math-pop .ref-poly-main, .math-pop .ref-poly-inset { display: block; width: 100%; height: auto; }
+.math-pop .ref-poly-main polygon, .math-pop .ref-poly-inset polygon { stroke-width: 1.3; }
+.math-pop .ref-poly-main polygon.on, .math-pop .ref-poly-inset polygon.on { stroke-width: 2.6; }
+.math-pop .ref-poly-inset { border: 1px solid rgba(216, 246, 255, 0.45); border-radius: 4px; background: rgba(255, 255, 255, 0.03); }
+.math-pop .ref-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 10px 0; padding: 0; list-style: none; font-size: 11.5px; color: rgba(216, 246, 255, 0.8); }
+.math-pop .ref-legend li { display: inline-flex; align-items: center; gap: 5px; }
+.math-pop .ref-legend li.on { color: #fff; font-weight: 800; }
+.math-pop .ref-legend b { display: inline-block; width: 14px; height: 3px; border-radius: 2px; }

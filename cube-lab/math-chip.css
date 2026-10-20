@@ -6,8 +6,9 @@
  * so two chips side by side never look the same.
  * Place a chip as a sibling beside its control, with a gap, never on top of it.
  * The card is one shared modal <div class="math-pop" role="dialog"> over a light
- * scrim, built by the script: a close button, a title (h2), the text, an
- * optional computed line (.math-live) and a footer line (p.math-src). */
+ * scrim, built by the script: a bar with the close button (and Back, on a
+ * page), a title (h2), the text, an optional computed line (.math-live) and a
+ * footer line (p.math-src). */
 .math-chip {
   position: relative;
   display: inline-grid; place-items: center;
@@ -54,17 +55,40 @@ body:has(.math-pop:not([hidden])) .langSel { z-index: 10003; }
 }
 .math-pop[hidden] { display: none; }
 .math-pop:focus { outline: none; }
+/* The close button, and on a page Back, sit in a bar pinned to the top of the card: they stay in view while a long card scrolls
+   under them. The bar spans the card (the margins reach into its padding; a sticky box sticks at the padding's inner edge, hence
+   the offset), so they are placed from its corners. On a card it has no height: the close button floats beside the title. On a
+   page it is a row of its own, which hides what scrolls under it. */
+.math-top { position: sticky; top: -14px; z-index: 3; height: 0; margin: -14px -16px 14px; }
+.math-top.with-back {
+  box-sizing: border-box; height: 42px; margin-bottom: 0;
+  background: #0d1117; border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
 .math-close {
   position: absolute; top: 6px; right: 6px;
   width: 36px; height: 36px; padding: 0;
   display: grid; place-items: center;
-  border: 0; border-radius: 999px; background: transparent;
+  border: 0; border-radius: 999px; background-color: #0d1117;
   color: rgba(216, 246, 255, 0.7); cursor: pointer;
 }
 .math-close::after { content: ""; position: absolute; inset: -4px; }
 .math-close svg { width: 18px; height: 18px; }
-.math-close:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+.math-close:hover { color: #fff; background-image: linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)); }
 .math-close:focus-visible { outline: 2px solid #ffd36e; outline-offset: 1px; }
+.math-back {
+  position: absolute; top: 10px; left: 10px;
+  display: inline-flex; align-items: center; gap: 2px;
+  max-width: calc(100% - 64px); margin: 0; padding: 4px 10px 4px 2px;
+  border: 0; border-radius: 999px; background-color: #0d1117;
+  font-family: inherit; font-size: 12px; font-weight: 700; line-height: 1.2;
+  color: rgba(216, 246, 255, 0.75); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.math-back::after { content: ""; position: absolute; inset: -8px -4px; }
+.math-back svg { width: 18px; height: 18px; flex: none; }
+.math-back span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.math-back:hover { color: #fff; background-image: linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)); }
+.math-back:focus-visible { outline: 2px solid #ffd36e; outline-offset: 1px; }
 .math-pop h2 { margin: 0 34px 6px 0; font-size: 14px; font-weight: 800; color: #ffd36e; letter-spacing: 0.01em; }
 .math-pop p { margin: 0 0 8px; }
 .math-pop .math-lead { font-weight: 700; color: #eefbff; }

@@ -54,10 +54,8 @@
     "dp.s.few": "Il faut au moins deux pièces.",
     "m.area.title": "Comment l’aire est-elle comptée ?",
     "m.area.body": "L’aire d’un bord fermé est la moitié de la somme, sur ses arêtes, de x(s)·y(e) − x(e)·y(s) : la formule du lacet. Chaque arête ajoute un triangle signé vu du départ : le cyan ajoute, le magenta retranche.\nC’est une somme sur les arêtes : la part de bord d’une pièce compte dès qu’elle est posée, avant même que la barrière se ferme.\nJusqu’ici : {sum}.",
-    "m.area.src": "Optimal Polyomino Fences · Bord intérieur (Edge Boundary)",
     "m.layer.title": "Que sont les points ?",
     "m.layer.body": "Après i pièces dans l’ordre choisi, un point marque chaque coin où le bord ouvert peut finir. Le tableau Tᵢ garde, pour chaque fin et chaque direction de l’arête que la pièce suivante devra partager (jusqu’à 4 par coin), seulement la plus grande somme partielle : deux poses qui arrivent au même état fusionnent, la meilleure reste.\nÉtape {i} sur {n} : {tried} poses essayées, {states} {statesWord}, sur {corners} {cornersWord}.",
-    "m.layer.src": "Optimal Polyomino Fences · Programmation dynamique, ordre fixé",
     "m.close.title": "Pourquoi la barrière se ferme-t-elle ici ?",
     "m.close.body": "Le bord doit revenir à l’état de départ ψ₀ (même coin, même direction) : la meilleure barrière de cet ordre a pour aire ½·Tₙ(ψ₀), ici {best}.\nEn remontant les choix gardés, on retrouve une pose sans chevauchement, et les cases comptées sur la grille donnent la même aire : {flood}.",
     "m.bound.title": "Pourquoi seulement une borne ?",
@@ -70,13 +68,10 @@
     "m.orders.body": "Avec {n} pièces, il y a ({n} − 1)!/2 = {count} ordres différents autour de la barrière : on peut fixer la première pièce, et le sens de parcours ne compte pas. Chaque ordre a sa meilleure barrière.\nPar exemple, avec L, N, V, W : dans l’ordre L N V W, la meilleure barrière enferme 11 cases ; dans l’ordre L V N W, 13.\nPour les 12 pentominos : 11!/2 = {all} ordres.",
     "m.orders12.title": "Combien d’ordres ?",
     "m.orders12.body": "Avec les 12 pentominos, il y a 11!/2 = {all} ordres différents autour de la barrière : on peut fixer la première pièce, et le sens de parcours ne compte pas. Chaque ordre a sa meilleure barrière.",
-    "m.orders.src": "Optimal Polyomino Fences · Le problème min-max",
     "m.worst.title": "Pourquoi est-ce l’un des pires ordres ?",
     "m.worst.body": "Chaque ordre a sa propre meilleure barrière. Cet ordre est l’un des pires : même sa meilleure barrière n’enferme que 111 cases, et aucun ordre n’a une meilleure barrière plus petite. 313 des 19 958 400 ordres autour de la barrière n’atteignent que 111 ; voici l’un d’eux.",
-    "m.worst.src": "Optimal Polyomino Fences · Le problème min-max",
     "m.best.title": "Pourquoi est-ce l’un des meilleurs ordres ?",
-    "m.best.body": "Quand l’ordre est libre, la plus grande barrière des 12 pentominos enferme 128 cases : 5760 barrières optimales (à rotation et symétrie près), dans 1440 des 19 958 400 ordres.\nLe programme garde l’ensemble des pièces déjà posées au lieu de l’ordre : 2,5 minutes sur un seul cœur ; dérouler tous les ordres (pour le min-max) a pris environ deux jours, sur plusieurs cœurs.\nPlus grande barrière avec n’importe quelles 2, 3, …, 12 pièces, dans n’importe quel ordre : 1, 6, 13, 24, 34, 47, 62, 78, 94, 111, 128.\nCet ordre est l’un d’eux : il atteint 128.",
-    "m.best.src": "Optimal Polyomino Fences · Programmation dynamique, ordre libre"
+    "m.best.body": "Quand l’ordre est libre, la plus grande barrière des 12 pentominos enferme 128 cases : 5760 barrières optimales (à rotation et symétrie près), dans 1440 des 19 958 400 ordres.\nLe programme garde l’ensemble des pièces déjà posées au lieu de l’ordre : 2,5 minutes sur un seul cœur ; dérouler tous les ordres (pour le min-max) a pris environ deux jours, sur plusieurs cœurs.\nPlus grande barrière avec n’importe quelles 2, 3, …, 12 pièces, dans n’importe quel ordre : 1, 6, 13, 24, 34, 47, 62, 78, 94, 111, 128.\nCet ordre est l’un d’eux : il atteint 128."
   };
   var de = {
     "dp.docTitle": "12 Pentominos, eine Reihenfolge · Fence Challenge",
@@ -129,10 +124,8 @@
     "dp.s.few": "Es braucht mindestens zwei Teile.",
     "m.area.title": "Wie wird die Fläche gezählt?",
     "m.area.body": "Die Fläche eines geschlossenen Randes ist die halbe Summe über seine Kanten von x(s)·y(e) − x(e)·y(s): die Gaußsche Dreiecksformel. Jede Kante fügt ein vorzeichenbehaftetes Dreieck vom Start aus hinzu: Cyan addiert, Magenta zieht ab.\nWeil es eine Summe über Kanten ist, zählt das Randstück eines Pentominos, sobald es liegt, noch bevor sich der Zaun schließt.\nBis hier: {sum}.",
-    "m.area.src": "Optimal Polyomino Fences · Innerer Rand (Edge Boundary)",
     "m.layer.title": "Was sind die Punkte?",
     "m.layer.body": "Nach i Teilen in der gewählten Reihenfolge markiert ein Punkt jede Ecke, an der der offene Rand enden kann. Die Tabelle Tᵢ behält für jedes Ende und jede Richtung der Kante, die das nächste Teil teilen muss (bis zu 4 je Ecke), nur die größte Teilsumme: zwei Platzierungen, die denselben Zustand erreichen, verschmelzen, die bessere bleibt.\nSchritt {i} von {n}: {tried} Platzierungen probiert, {states} {statesWord}, an {corners} {cornersWord}.",
-    "m.layer.src": "Optimal Polyomino Fences · Dynamische Programmierung, feste Reihenfolge",
     "m.close.title": "Warum schließt sich der Zaun hier?",
     "m.close.body": "Der Rand muss zum Startzustand ψ₀ zurückkehren (dieselbe Ecke, dieselbe Richtung): Der beste Zaun dieser Reihenfolge hat die Fläche ½·Tₙ(ψ₀), hier {best}.\nVerfolgt man die behaltenen Wahlen zurück, findet man eine Platzierung ohne Überlappung, und die auf dem Gitter gezählten Felder ergeben dieselbe Fläche: {flood}.",
     "m.bound.title": "Warum nur eine Schranke?",
@@ -145,13 +138,10 @@
     "m.orders.body": "Mit {n} Teilen gibt es ({n} − 1)!/2 = {count} verschiedene Reihenfolgen um den Zaun: das erste Teil kann festgehalten werden, und die Umlaufrichtung zählt nicht. Jede Reihenfolge hat ihren besten Zaun.\nZum Beispiel mit L, N, V, W: In der Reihenfolge L N V W umschließt der beste Zaun 11 Felder, in der Reihenfolge L V N W 13.\nFür alle 12 Pentominos: 11!/2 = {all} Reihenfolgen.",
     "m.orders12.title": "Wie viele Reihenfolgen?",
     "m.orders12.body": "Mit den 12 Pentominos gibt es 11!/2 = {all} verschiedene Reihenfolgen um den Zaun: das erste Teil kann festgehalten werden, und die Umlaufrichtung zählt nicht. Jede Reihenfolge hat ihren besten Zaun.",
-    "m.orders.src": "Optimal Polyomino Fences · Das Min-Max-Problem",
     "m.worst.title": "Warum gehört diese zu den schlechtesten Reihenfolgen?",
     "m.worst.body": "Jede Reihenfolge hat ihren eigenen besten Zaun. Diese gehört zu den schlechtesten: Selbst ihr bester Zaun umschließt nur 111 Felder, und bei keiner Reihenfolge ist der beste Zaun kleiner. 313 der 19.958.400 Reihenfolgen um den Zaun kommen nur auf 111; dies ist eine davon.",
-    "m.worst.src": "Optimal Polyomino Fences · Das Min-Max-Problem",
     "m.best.title": "Warum gehört diese zu den besten Reihenfolgen?",
-    "m.best.body": "Ist die Reihenfolge frei, umschließt der größte Zaun der 12 Pentominos 128 Felder: 5760 optimale Zäune (bis auf Drehung und Spiegelung), in 1440 der 19.958.400 Reihenfolgen.\nDas Programm merkt sich statt der Reihenfolge die Menge der schon gelegten Teile: 2,5 Minuten auf einem Kern; alle Reihenfolgen durchzurechnen (für das Min-Max-Problem) dauerte etwa zwei Tage, auf mehreren Kernen.\nGrößter Zaun aus beliebigen 2, 3, …, 12 Teilen, in beliebiger Reihenfolge: 1, 6, 13, 24, 34, 47, 62, 78, 94, 111, 128.\nDiese Reihenfolge ist eine davon: Sie erreicht 128.",
-    "m.best.src": "Optimal Polyomino Fences · Dynamische Programmierung, freie Reihenfolge"
+    "m.best.body": "Ist die Reihenfolge frei, umschließt der größte Zaun der 12 Pentominos 128 Felder: 5760 optimale Zäune (bis auf Drehung und Spiegelung), in 1440 der 19.958.400 Reihenfolgen.\nDas Programm merkt sich statt der Reihenfolge die Menge der schon gelegten Teile: 2,5 Minuten auf einem Kern; alle Reihenfolgen durchzurechnen (für das Min-Max-Problem) dauerte etwa zwei Tage, auf mehreren Kernen.\nGrößter Zaun aus beliebigen 2, 3, …, 12 Teilen, in beliebiger Reihenfolge: 1, 6, 13, 24, 34, 47, 62, 78, 94, 111, 128.\nDiese Reihenfolge ist eine davon: Sie erreicht 128."
   };
   var en = {
     "dp.docTitle": "12 pentominoes, one order · Fence Challenge",
@@ -204,10 +194,8 @@
     "dp.s.few": "At least two pieces are needed.",
     "m.area.title": "How is the area counted?",
     "m.area.body": "The area of a closed boundary is half the sum, over its edges, of x(s)·y(e) − x(e)·y(s): the Shoelace formula. Each edge adds one signed triangle seen from the start: cyan adds, magenta subtracts.\nBecause it is a sum over edges, a piece's part of the boundary counts as soon as the piece is placed, before the fence closes.\nSo far: {sum}.",
-    "m.area.src": "Optimal Polyomino Fences · Edge Boundary",
     "m.layer.title": "What are the dots?",
     "m.layer.body": "After i pieces in the chosen order, a dot marks every corner where the open boundary can end. The table Tᵢ keeps, for each end and each direction of the edge the next piece must share (up to 4 per corner), only the largest partial sum: two placements that reach the same state merge, and the better one survives.\nStep {i} of {n}: {tried} placements tried, {states} {statesWord}, on {corners} {cornersWord}.",
-    "m.layer.src": "Optimal Polyomino Fences · Dynamic Programming with Fixed Order",
     "m.close.title": "Why does the fence close here?",
     "m.close.body": "The boundary must come back to the start state ψ₀ (same corner, same direction): the best fence of this order has area ½·Tₙ(ψ₀), here {best}.\nFollowing the kept choices back gives a placement with no overlap, and the cells counted on the grid give the same area: {flood}.",
     "m.bound.title": "Why only a bound?",
@@ -220,13 +208,10 @@
     "m.orders.body": "With {n} pieces there are ({n} − 1)!/2 = {count} different orders around the fence: the first piece can be fixed, and the direction does not matter. Each order has its own best fence.\nFor example, with L, N, V, W: in the order L N V W the best fence encloses 11 cells; in the order L V N W, 13.\nFor all 12 pentominoes: 11!/2 = {all} orders.",
     "m.orders12.title": "How many orders?",
     "m.orders12.body": "With the 12 pentominoes there are 11!/2 = {all} different orders around the fence: the first piece can be fixed, and the direction does not matter. Each order has its own best fence.",
-    "m.orders.src": "Optimal Polyomino Fences · Solving the Min-Max Problem",
     "m.worst.title": "Why is this one of the worst orders?",
     "m.worst.body": "Every order has its own best fence. This order is one of the worst: even its best fence encloses only 111 cells, and no order's best fence is smaller. 313 of the 19,958,400 orders around the fence reach only 111; this is one of them.",
-    "m.worst.src": "Optimal Polyomino Fences · Solving the Min-Max Problem",
     "m.best.title": "Why is this one of the best orders?",
-    "m.best.body": "With the order free, the largest fence of the 12 pentominoes encloses 128 cells: 5760 optimal fences (up to rotation and reflection), in 1440 of the 19,958,400 orders.\nThe program keeps the set of pieces already placed instead of their order: 2.5 minutes on one thread; running every order (needed for the min-max) took about two days, multi-threaded.\nLargest fence from any 2, 3, …, 12 of the pieces, in any order: 1, 6, 13, 24, 34, 47, 62, 78, 94, 111, 128.\nThis order is one of them: it reaches 128.",
-    "m.best.src": "Optimal Polyomino Fences · Dynamic Programming with Unrestricted Order"
+    "m.best.body": "With the order free, the largest fence of the 12 pentominoes encloses 128 cells: 5760 optimal fences (up to rotation and reflection), in 1440 of the 19,958,400 orders.\nThe program keeps the set of pieces already placed instead of their order: 2.5 minutes on one thread; running every order (needed for the min-max) took about two days, multi-threaded.\nLargest fence from any 2, 3, …, 12 of the pieces, in any order: 1, 6, 13, 24, 34, 47, 62, 78, 94, 111, 128.\nThis order is one of them: it reaches 128."
   };
   if (typeof DICT === "undefined") return;
   Object.assign(DICT.fr, fr);

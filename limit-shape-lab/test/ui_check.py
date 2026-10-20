@@ -9,6 +9,7 @@ n = 7..15, their tags, the loupe and its keys (browser shortcuts left alone), th
 state, the cards, the bubbles, slides and long presses on the arrows' dots, a one-line
 caption, the disabled home.
 """
+import json
 import math
 import os
 import re
@@ -17,6 +18,23 @@ import sys
 from playwright.sync_api import sync_playwright
 
 BASE = sys.argv[1].rstrip("/") + "/limit-shape-lab/"
+# The data of the paper's curves, read from the lab's own file, to see that the pages draw them the right way up and in the right colours.
+_paper = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "paper.js"), encoding="utf-8").read()
+def _data(name):
+    i = _paper.index('"%s":' % name) + len(name) + 3
+    return json.JSONDecoder().raw_decode(_paper[i:])[0]
+HIST, DEV = _data("hist500"), _data("dev500")
+def curve_points(d):
+    return [(float(a), float(b)) for a, b in re.findall(r"[ML]\s*(-?[\d.]+)\s+(-?[\d.]+)", d)]
+def drawn_like(vals, ys, thr):
+    """A bigger value is drawn higher on the screen (a smaller y), at every sampled pair that differs by more than thr."""
+    seen = bad = 0
+    for k in range(60):
+        i, j = (k * 37) % len(vals), (k * 91 + 13) % len(vals)
+        if i < len(ys) and j < len(ys) and abs(vals[i] - vals[j]) > thr:
+            seen += 1
+            if (vals[i] - vals[j]) * (ys[j] - ys[i]) <= 0: bad += 1
+    return seen >= 12 and bad == 0
 OUT = sys.argv[2] if len(sys.argv) > 2 else "/tmp/limit-shape-lab-check"
 os.makedirs(OUT, exist_ok=True)
 failures = []
@@ -387,7 +405,7 @@ with sync_playwright() as p:
                 return {"en": f"({x}, {y})", "fr": f"({x}\u202f; {y})", "de": f"({x}; {y})"}[lg]
             squeeze = lambda t: re.sub(r"[  ]", " ", t)
             tag4 = pg.get_attribute("#fence-tag", "data-lab-tip") or pg.get_attribute("#fence-tag", "title")
-            check(tag4 == pg.evaluate("i18n.t('ls.optTip')"), f"{tag}: n = 4: the tag's bubble describes the optimal fence")
+            check(tag4 == pg.evaluate("i18n.t('ls.optTip') + ' ' + PaperRef.tip('fig:fence-art')"), f"{tag}: n = 4: the tag's bubble describes the optimal fence and where the paper shows one")
             st4 = squeeze(pg.inner_text("#status"))
             check(re.search(r"\b9\b", st4) and not re.search(r"(?i)greedy|gloutonne|11[.,]5", st4), f"{tag}: n = 4: the status says optimal and 9 cells, not greedy: {st4!r}")
             pg.evaluate("limitLab.setN(5)")
@@ -562,8 +580,283 @@ with sync_playwright() as p:
             pg.evaluate("limitLab.setN(4)")
             pg.wait_for_function("limitLab.state().n === 4 && limitLab.state().tiles && !limitLab.busy()")
 
+            # ---- the paper by result: a pill names it (Table 4, Fig. 28, § 6.2) and opens it; nothing is « from the paper » any more ----
+            # Table 3 and Table 4 as the paper prints them (paper-tech.tex): n -> A'(n), U(n), L(n), the gap in %; n -> best, bound, difference in %.
+            T4 = {7: (108, 20385, 19718, "3.38"), 8: (369, 284170, 279105, "1.81"), 9: (1285, 4052974, 4003811, "1.23"), 10: (4655, 61484424, 60832848, "1.07"),
+                  11: (17073, 942469010, 934201230, "0.89"), 12: (63600, 14736083080, 14625233629, "0.76"), 13: (238591, 231340860898, 229830309620, "0.66"),
+                  14: (901971, 3657193899930, 3635789660265, "0.59"), 15: (3426576, 57965740117847, 57656581776211, "0.54")}
+            T3 = {7: (19733, 19830, "0.49"), 8: (279134, 280389, "0.45")}
+            digits = lambda x: int(re.sub(r"\D", "", x))
+            pct = lambda x: re.search(r"\d+[.,]\d+", x).group(0).replace(",", ".")
+            PAGEW = {"fr": "page", "de": "seite", "en": "page"}[lang]
+            P4 = pg.evaluate("PAPER_REFS.refs['tab:heur'].page")   # the page of Table 4 in the paper's build, as the registry has it
+            def open_card(chip):
+                pg.click(f".math-chip[data-chip='{chip}']")
+                pg.wait_for_selector(".math-pop:not([hidden])")
+            def pop_h2():
+                return pg.inner_text(".math-pop h2")
+            def esc_card():
+                pg.keyboard.press("Escape")
+                pg.wait_for_selector(".math-pop", state="hidden")
+            pg.evaluate("limitLab.setN(9)")
+            pg.wait_for_function("limitLab.state().n === 9 && limitLab.state().fence && !limitLab.busy()")
+            check("(§ 6.2)" in pg.inner_text("#status") or "§ 6.2" in pg.inner_text("#status"), f"{tag}: the status names the greedy fence by its section: {pg.inner_text('#status')!r}")
+            open_card("polygon")
+            card_title = pop_h2()
+            check([x for x in pg.eval_on_selector_all(".math-pop .paper-ref", "els => els.map(e => e.textContent)")] ==
+                  ["Lemma 3", "Table 4", "Table 4", "§ 6.2 Heuristic greedy solver", "Fig. 24", "Lemma 3"], f"{tag}: the polygon card names Lemma 3, Table 4 (twice), § 6.2, Fig. 24")
+            check(not re.search(r"d’après l’article|laut Artikel|from the paper", pg.inner_text(".math-pop .live")), f"{tag}: no value is « from the paper »")
+            if not mobile:
+                pg.hover(".math-pop .live .paper-ref >> nth=0")
+                pg.wait_for_timeout(450)
+                tip = pg.inner_text("#lab-tip")
+                check("Table 4" in tip and str(P4) in tip and pg.is_visible("#lab-tip.on"), f"{tag}: a pill's bubble says what and where: {tip!r}")
+                pg.mouse.move(5, 5)
+            pg.click(".math-pop .live .paper-ref >> nth=0")
+            check(pop_h2() == "Table 4", f"{tag}: the pill opens Table 4: {pop_h2()!r}")
+            kicker = pg.inner_text(".math-pop .math-kicker").lower().replace("\xa0", " ")
+            check("optimal polyomino fences" in kicker and f"{PAGEW} {P4}" in kicker, f"{tag}: the page names the paper and page {P4}: {kicker!r}")
+            check(pg.inner_text(".math-pop .math-where").strip().endswith("§ 6.2 Heuristic greedy solver"), f"{tag}: the page says which section the table is in")
+            rows = [[c.inner_text() for c in r.query_selector_all("td")] for r in pg.query_selector_all(".math-pop .ref-table tbody tr")]
+            want_rows = [[str(k)] for k in sorted(T4)]
+            check([r[0] for r in rows] == [x[0] for x in want_rows], f"{tag}: Table 4 has the rows 7 to 15")
+            check(lang != "fr" or (not any("\u202f" in c for r in rows for c in r[1:4]) and any("\u00a0" in c for r in rows for c in r[1:4])), f"{tag}: in French the groups of digits are separated by a no-break space, not by a hair of a space: {rows[-1]}")
+            bad = [r[0] for r in rows if (digits(r[1]), digits(r[2]), digits(r[3]), pct(r[4])) != T4[int(r[0])]]
+            check(not bad, f"{tag}: every number of Table 4 is as the paper prints it (wrong rows: {bad})")
+            check(pg.eval_on_selector(".math-pop .ref-table tr.on td", "e => e.textContent") == "9", f"{tag}: the row of n = 9 is lit")
+            check(pg.is_visible(".math-pop .math-note") and "arXiv" in pg.inner_text(".math-pop .math-note") and pg.locator(".math-pop .math-open").count() == 0,
+                  f"{tag}: until the paper is public, the page says so and links nowhere")
+            inview = lambda col: pg.evaluate("(c) => { const e = document.querySelector('.math-pop .math-excerpt'), h = e.querySelector('th[data-col=' + c + ']'), a = e.getBoundingClientRect(), b = h.getBoundingClientRect(); return b.left >= a.left - 1 && b.right <= a.right + 1; }", col)
+            check(inview("L"), f"{tag}: the greedy fence's pill opens Table 4 with its column, L(n), in view")
+            sw = pg.evaluate("(() => { const p = document.querySelector('.math-pop'), s = document.querySelector('.math-pop .ref-swipe'), sc = document.querySelector('.math-pop .ref-scroll'); return [sc.scrollWidth > sc.clientWidth + 2, p.classList.contains('scrolls'), getComputedStyle(s).display !== 'none']; })()")
+            check(sw[0] == sw[1] == sw[2] and (sw[0] if mobile else True), f"{tag}: the hint to swipe shows exactly when the table is wider than the card (and always on a phone): {sw}")
+            box = pg.evaluate("(() => { const r = document.querySelector('.math-pop').getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom, innerWidth, innerHeight]; })()")
+            check(box[0] >= 0 and box[1] >= 0 and box[2] <= box[4] + 0.5 and box[3] <= box[5] + 0.5, f"{tag}: the reference page stays in view {box}")
+            # Back goes to the card; a section pill goes on to the section, and Back comes back one page at a time.
+            check(pg.inner_text(".math-pop .math-back").strip() == card_title, f"{tag}: Back is named after the card it returns to")
+            pg.click(".math-pop .math-back")
+            check(pop_h2() == card_title and pg.locator(".math-pop .math-back").count() == 0, f"{tag}: Back returns to the card")
+            check(pg.evaluate("document.activeElement.dataset.ref") == "tab:heur" and pg.evaluate("document.activeElement.closest('.live') !== null"), f"{tag}: and puts the focus back on the pill that opened the page")
+            pg.click(".math-pop .live .paper-ref >> nth=1")
+            check(pop_h2() == "Table 4" and inview("U"), f"{tag}: the upper bound's pill opens Table 4 on U(n)")
+            pg.click(".math-pop .math-back")
+            pg.click(".math-pop .live .paper-ref >> nth=0")
+            pg.click(".math-pop .math-where .paper-ref")
+            check(pop_h2() == "Section 6.2 · Heuristic greedy solver" and pg.inner_text(".math-pop .math-back").strip() == "Table 4", f"{tag}: the section pill opens the section, Back names Table 4: {pop_h2()!r}")
+            inside = pg.eval_on_selector_all(".math-pop .math-body .paper-ref", "els => els.map(e => e.textContent)")
+            check(inside == ["Table 4", "Fig. 24"], f"{tag}: a section page lists the results it holds, in the paper's order: {inside}")
+            pg.click(".math-pop .math-where .paper-ref")
+            inside = pg.eval_on_selector_all(".math-pop .math-body .paper-ref", "els => els.map(e => e.textContent)")
+            check(pop_h2() == "Section 6 · Larger fences" and inside == ["Eq. (13)", "§ 6.2 Heuristic greedy solver", "§ 6.3 The limit shape"], f"{tag}: Section 6 lists its equation and its two subsections: {pop_h2()!r} {inside}")
+            pg.click(".math-pop .math-back")
+            pg.click(".math-pop .math-back")
+            check(pop_h2() == "Table 4" and pg.evaluate("document.activeElement.closest('.math-where') !== null"), f"{tag}: Back returns to Table 4, the focus on the section pill")
+            legend = pg.inner_text(".math-pop .math-excerpt .ref-cap")
+            check(all(w in legend for w in ("A′(n)", "U(n)", "L(n)", "Fmax", "Δmax")), f"{tag}: the table's legend says what its columns are: {legend!r}")
+            # a change of language rewrites the page where it stands
+            other = "de" if lang != "de" else "fr"
+            pg.click(f"[data-lang-btn='{other}']")
+            pg.wait_for_timeout(100)
+            k2 = pg.inner_text(".math-pop .math-kicker").lower().replace("\xa0", " ")
+            check(pop_h2() == "Table 4" and f"{ {'fr': 'page', 'de': 'seite', 'en': 'page'}[other] } {P4}" in k2 and pg.locator(".math-pop .ref-table").count() == 1,
+                  f"{tag}: a change of language keeps the page and rewrites it: {k2!r}")
+            pg.click(f"[data-lang-btn='{lang}']")
+            pg.wait_for_timeout(100)
+            esc_card()
+            check(pg.evaluate("document.activeElement && document.activeElement.dataset.chip") == "polygon", f"{tag}: Escape closes the whole stack and gives the focus back to the chip")
+            # The three other pages of this card, with the data of the paper behind them.
+            open_card("polygon")
+            pg.click(".math-pop .math-src .paper-ref >> nth=1")
+            legend = pg.eval_on_selector_all(".math-pop .ref-legend li", "els => els.map(e => [e.textContent.trim().split(' · ')[0], e.classList.contains('on')])")
+            polys = pg.evaluate("() => [document.querySelectorAll('.math-pop .ref-poly-main polygon').length, document.querySelectorAll('.math-pop .ref-poly-inset polygon').length, document.querySelectorAll('.math-pop .ref-poly-main polygon.on').length, document.querySelectorAll('.math-pop .ref-poly-main circle').length]")
+            check(pop_h2() == "Figure 24" and [f[0] for f in legend] == ["n = 9", "n = 11", "n = 13", "n = 15"] and [f[1] for f in legend] == [True, False, False, False],
+                  f"{tag}: Figure 24's legend names n = 9, 11, 13, 15, the one on show in bold: {legend}")
+            check(polys == [4, 4, 1, 1], f"{tag}: the four polygons are drawn on top of each other in one box with the dashed circle, and again in the inset; the one on show is outlined: {polys}")
+            esc_card()
+            pg.evaluate("limitLab.setN(7)")
+            pg.wait_for_function("limitLab.state().n === 7 && !limitLab.busy()")
+            open_card("polygon")
+            pg.click(".math-pop .live .paper-ref >> nth=1")
+            rows = [[c.inner_text() for c in r.query_selector_all("td")] for r in pg.query_selector_all(".math-pop .ref-table tbody tr")]
+            check(pop_h2() == "Table 3" and [(digits(r[1]), digits(r[2]), pct(r[3])) for r in rows] == [T3[7], T3[8]] and pg.eval_on_selector(".math-pop .ref-table tr.on td", "e => e.textContent") == "7",
+                  f"{tag}: Table 3 as printed, the row of n = 7 lit: {rows}")
+            esc_card()
+            # The stage's two tokens open the result they show, as a card of their own (no Back); the keys do too.
+            for k, want in ((4, "Figure 23"), (5, "Section 3.4 · Identification of all optimal pentomino fences"), (6, "Section 4.3 · Identification of all optimal solutions"), (9, "Section 6.2 · Heuristic greedy solver")):
+                pg.evaluate(f"limitLab.setN({k})")
+                pg.wait_for_function(f"limitLab.state().n === {k} && !limitLab.busy()")
+                pg.click("#fence-tag")
+                pg.wait_for_selector(".math-pop:not([hidden])")
+                check(pop_h2() == want and pg.locator(".math-pop .math-back").count() == 0, f"{tag}: n = {k}: the fence's token opens {want}: {pop_h2()!r}")
+                esc_card()
+            pg.evaluate("limitLab.setN(9)")
+            pg.wait_for_function("limitLab.state().n === 9 && !limitLab.busy()")
+            pg.focus("#fence-tag")
+            pg.keyboard.press("Enter")
+            pg.wait_for_selector(".math-pop:not([hidden])")
+            check(pop_h2().startswith("Section 6.2"), f"{tag}: Enter on the token opens it")
+            esc_card()
+            check(pg.evaluate("document.activeElement.id") == "fence-tag", f"{tag}: and Escape gives the focus back to the token")
+            pg.keyboard.press("Space")
+            pg.wait_for_selector(".math-pop:not([hidden])")
+            check(pop_h2().startswith("Section 6.2"), f"{tag}: Space on the token opens it")
+            esc_card()
+            # 500 cells: the gap is read off Figure 28, whose curve the page draws; the sample's footer leads to Figure 26; the token to Figure 27
+            pg.evaluate("limitLab.setN(500)")
+            pg.wait_for_function("limitLab.state().n === 500 && !limitLab.busy()")
+            open_card("gap")
+            check(not re.search(r"d’après l’article|laut Artikel|from the paper", pg.inner_text(".math-pop .live")) and pg.inner_text(".math-pop .live .paper-ref") == "Fig. 28",
+                  f"{tag}: n = 500: the gap is Fig. 28, not « from the paper »: {pg.inner_text('.math-pop .live')!r}")
+            pg.click(".math-pop .live .paper-ref")
+            marks = pg.eval_on_selector_all(".math-pop .ref-spark text", "els => els.map(e => e.textContent)")
+            check(pop_h2() == "Figure 28" and any(re.fullmatch(r"\+0[.,]42\W?%", m) for m in marks) and any(re.fullmatch(r"[−-]0[.,]10\W?%", m) for m in marks) and pg.locator(".math-pop .ref-spark circle").count() == 2,
+                  f"{tag}: Figure 28 draws the curve with its largest values, +0.42 % and −0.10 %: {marks}")
+            circ = pg.eval_on_selector_all(".math-pop .ref-spark circle", "els => els.map(e => [+e.getAttribute('cx'), +e.getAttribute('cy')])")
+            hi_, lo_ = max(DEV, key=lambda q: q[1]), min(DEV, key=lambda q: q[1])
+            check(len(circ) == 2 and circ[0][1] < circ[1][1] and abs((circ[0][0] - 6) / 288 - hi_[0] / 45) < 0.01 and abs((circ[1][0] - 6) / 288 - lo_[0] / 45) < 0.01,
+                  f"{tag}: Figure 28: the largest value sits at its own angle ({hi_[0]:.2f}°) above the smallest, at its own ({lo_[0]:.2f}°): {circ}")
+            said = pg.get_attribute(".math-pop .ref-spark", "aria-label") or ""
+            check(re.search(r"\+0[.,]42", said) and re.search(r"[−-]0[.,]10", said) and pg.get_attribute(".math-pop .ref-spark", "aria-hidden") is None, f"{tag}: Figure 28 tells its marked values to a screen reader: {said!r}")
+            ys28 = [pt[1] for pt in curve_points(pg.get_attribute(".math-pop .ref-spark path", "d"))]
+            step28 = max(1, len(DEV) // 400)
+            check(drawn_like([q[1] for q in DEV[::step28]], ys28, 0.0015), f"{tag}: Figure 28's curve is drawn the right way up")
+            if not mobile:
+                wpage = pg.evaluate("document.querySelector('.math-pop').getBoundingClientRect().width")
+                check(wpage >= 480, f"{tag}: a reference page is wider than a card: {wpage:.0f} px")
+            pg.click(".math-pop .math-where .paper-ref")
+            check(pop_h2() == "Section 6.3 · The limit shape", f"{tag}: Fig. 28 is in § 6.3")
+            esc_card()
+            open_card("sample")
+            pg.click(".math-pop .math-src .paper-ref >> nth=2")
+            check(pop_h2() == "Figure 26" and pg.locator(".math-pop .ref-spark path").count() == 2, f"{tag}: Figure 26: the histogram's two curves: {pop_h2()!r}")
+            curves = {c: curve_points(d) for c, d in pg.eval_on_selector_all(".math-pop .ref-spark path", "els => els.map(e => [e.getAttribute('stroke'), e.getAttribute('d')])")}
+            top26 = max(q[1] for q in HIST)
+            check(drawn_like([q[2] for q in HIST], [pt[1] for pt in curves.get("#7fe7b8", [])], 0.15) and drawn_like([q[1] / top26 for q in HIST], [pt[1] for pt in curves.get("#5ea8ff", [])], 0.01),
+                  f"{tag}: Figure 26: the green curve is how often each direction occurs, the blue one the mean length, as the caption says, both the right way up")
+            esc_card()
+            pg.click("#src-tag")
+            pg.wait_for_selector(".math-pop:not([hidden])")
+            check(pop_h2() == "Figure 27" and pg.locator(".math-pop .math-back").count() == 0, f"{tag}: the 13.5 M token opens Figure 27")
+            esc_card()
+            open_card("giant")
+            check(pg.inner_text(".math-pop .live .paper-ref") == "§ 6.3" and "Eq. (13)" in pg.eval_on_selector_all(".math-pop .paper-ref", "els => els.map(e => e.textContent)"), f"{tag}: the estimate is § 6.3, and the count of 500-ominoes is Eq. (13)")
+            pg.click(".math-pop .math-lead .paper-ref")
+            formula = re.sub(r"\s+", "", pg.inner_text(".math-pop .math-formula"))
+            check(pop_h2() == "Equation (13)" and formula == "A′(n)≈(1/8)·c·λn/n", f"{tag}: Equation (13) is shown as the paper writes it: {formula!r}")
+            pg.click(".math-pop .math-back")
+            esc_card()
+            # Once the paper is public the page links to its page of the paper (one line in paper-refs.js); not before.
+            pg.evaluate("PAPER_REFS.paper.url = 'https://example.org/paper.pdf'")
+            open_card("giant")
+            pg.click(".math-pop .live .paper-ref")
+            href = pg.get_attribute(".math-pop .math-open", "href")
+            check(href == f"https://example.org/paper.pdf#page={P4}" and pg.get_attribute(".math-pop .math-open", "target") == "_blank" and "noopener" in pg.get_attribute(".math-pop .math-open", "rel")
+                  and pg.locator(".math-pop .math-note").count() == 0, f"{tag}: with the paper public the page links to its page: {href!r}")
+            esc_card()
+            pg.evaluate("PAPER_REFS.paper.url = null")
+            pg.evaluate("limitLab.setN(4)")
+            pg.wait_for_function("limitLab.state().n === 4 && limitLab.state().tiles && !limitLab.busy()")
+
+            # ---- the card is modal, steady and exact ----
+            # Tab goes round the card and the language switch, never into the lab behind; a pill, clicked for real, opens its own page and
+            # never runs out of the card; Close and Back stay in view while a long page scrolls; the card of n = 500 keeps its focus while
+            # its line changes; a page follows its control and the language; a long press explains a pill without opening it.
+            WHERE = "(() => { const a = document.activeElement; return a === document.querySelector('.math-pop') ? 'pop' : a.closest('.math-pop') ? 'card' : a.closest('.langSel') ? 'lang' : 'OUT:' + a.tagName + '#' + a.id; })()"
+            pg.evaluate("limitLab.setN(5)")
+            pg.wait_for_function("limitLab.state().n === 5 && !limitLab.busy()")
+            open_card("polygon")
+            seen, out = set(), None
+            for key_ in ["Tab"] * 40 + ["Shift+Tab"] * 40:
+                pg.keyboard.press(key_)
+                w = pg.evaluate(WHERE)
+                seen.add(w)
+                if w.startswith("OUT"): out = (key_, w); break
+            check(out is None and {"card", "lang"} <= seen, f"{tag}: Tab and Shift+Tab go round the card and the language switch, never into the lab behind: {seen} {out}")
+            keys = pg.evaluate("[...document.querySelectorAll('.math-pop .paper-ref')].map(e => e.dataset.ref)")
+            wrong = []
+            for q, key_ in enumerate(keys):
+                pg.locator(".math-pop .paper-ref").nth(q).click(timeout=4000)
+                got = pg.evaluate("document.querySelector('.math-pop').dataset.refKey")
+                over = pg.evaluate("(() => { const p = document.querySelector('.math-pop'); return p.scrollWidth - p.clientWidth; })()")
+                if got != key_ or over > 1: wrong.append((q, key_, got, over))
+                pg.click(".math-pop .math-back")
+            check(len(keys) >= 4 and not wrong, f"{tag}: n = 5: each of the card's {len(keys)} pills, clicked for real, opens its own page, which stays inside the card: {wrong}")
+            esc_card()
+            # Close and Back stay in view while a page scrolls
+            pg.evaluate("limitLab.setN(9)")
+            pg.wait_for_function("limitLab.state().n === 9 && !limitLab.busy()")
+            open_card("polygon")
+            pg.click(".math-pop .live .paper-ref >> nth=0")
+            pg.evaluate("document.querySelector('.math-pop').scrollTop = 9999")
+            bar = pg.evaluate("""(() => { const p = document.querySelector('.math-pop').getBoundingClientRect(), x = document.querySelector('.math-pop .math-close').getBoundingClientRect(), b = document.querySelector('.math-pop .math-back').getBoundingClientRect();
+              return [x.top >= p.top - 1 && x.bottom <= p.top + 60, b.top >= p.top - 1 && b.bottom <= p.top + 60]; })()""")
+            check(bar == [True, True], f"{tag}: Close and Back stay at the top of the card while its page is scrolled to the bottom: {bar}")
+            # a page follows the language: Back names the card in the new language
+            other = "de" if lang != "de" else "fr"
+            pg.click(f"[data-lang-btn='{other}']")
+            pg.wait_for_timeout(150)
+            check(pg.inner_text(".math-pop .math-back").strip() == pg.evaluate("i18n.t('ls.chip.polygon')"), f"{tag}: after a change of language Back names the card in the new language: {pg.inner_text('.math-pop .math-back')!r}")
+            pg.click(f"[data-lang-btn='{lang}']")
+            pg.wait_for_timeout(150)
+            esc_card()
+            # the card opened from the stage's token follows the size
+            pg.evaluate("limitLab.setN(5)")
+            pg.wait_for_function("limitLab.state().n === 5 && !limitLab.busy()")
+            pg.click("#fence-tag")
+            pg.wait_for_selector(".math-pop:not([hidden])")
+            first = pop_h2()
+            pg.keyboard.press("+")
+            pg.wait_for_function("limitLab.state().n === 6 && !limitLab.busy()")
+            check(first.startswith("Section 3.4") and pop_h2().startswith("Section 4.3"), f"{tag}: the page opened from the token follows the size: {first!r} then {pop_h2()!r}")
+            esc_card()
+            # at 500 cells the sample's line changes about twice a second: the card keeps its pills, its focus and its page
+            pg.evaluate("limitLab.setN(500)")
+            pg.wait_for_function("limitLab.state().n === 500 && !limitLab.busy()")
+            open_card("sample")
+            pg.evaluate("(() => { const p = document.querySelector('.math-pop .math-src .paper-ref'); p.__mark = 1; p.focus(); })()")
+            for _ in range(6): pg.evaluate("window.mathChip.refresh()")
+            pg.wait_for_timeout(1300)
+            check(pg.evaluate("(() => { const a = document.activeElement; return !!(a && a.__mark) && !!a.closest('.math-pop'); })()"), f"{tag}: n = 500: while the line changes the card's pill is the same node and keeps the focus")
+            pg.click(".math-pop .math-src .paper-ref >> nth=2")
+            pg.evaluate("(() => { const b = document.querySelector('.math-pop .math-back'); b.__mark = 1; b.focus(); })()")
+            for _ in range(6): pg.evaluate("window.mathChip.refresh()")
+            pg.wait_for_timeout(1300)
+            check(pg.evaluate("(() => { const a = document.activeElement; return !!(a && a.__mark) && a.classList.contains('math-back'); })()") and pop_h2() == "Figure 26", f"{tag}: and the page opened from it keeps its Back button and the focus on it")
+            esc_card()
+            # a long press on a pill explains it and opens nothing
+            if mobile:
+                pg.evaluate("limitLab.setN(9)")
+                pg.wait_for_function("limitLab.state().n === 9 && !limitLab.busy()")
+                open_card("polygon")
+                card_t = pop_h2()
+                cdp_ = ctx.new_cdp_session(pg)
+                pg.locator(".math-pop .live .paper-ref").first.scroll_into_view_if_needed()
+                pg.wait_for_timeout(150)
+                spot = pg.evaluate("(() => { const r = document.querySelector('.math-pop .live .paper-ref').getClientRects()[0]; return [r.left + r.width / 2, r.top + r.height / 2]; })()")
+                cdp_.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": spot[0], "y": spot[1]}]})
+                pg.wait_for_timeout(800)
+                shown = pg.is_visible("#lab-tip.on")
+                cdp_.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+                pg.wait_for_timeout(300)
+                check(shown and pop_h2() == card_t and pg.locator(".math-pop .math-back").count() == 0, f"{tag}: a long press on a pill shows its bubble and opens nothing: {pop_h2()!r}")
+                esc_card()
+            # back to the size the rest of the checks start from
+            pg.evaluate("limitLab.setN(4)")
+            pg.wait_for_function("limitLab.state().n === 4 && limitLab.state().tiles && !limitLab.busy()")
             # Bubbles (hover only where there is a mouse).
             if not mobile:
+                # a bubble measured where the last one stood would shrink beside the right edge: the first one after a far-away one is as wide as ever, and stands over its control
+                pg.mouse.move(5, 5)
+                pg.wait_for_timeout(300)
+                pg.hover("#more")
+                pg.wait_for_timeout(450)
+                clean = pg.evaluate("document.querySelector('#lab-tip').getBoundingClientRect().width")
+                pg.hover(".math-chip[data-chip='polygon']")
+                pg.wait_for_timeout(450)
+                pg.hover("#more")
+                pg.wait_for_timeout(450)
+                again = pg.evaluate("(() => { const r = document.querySelector('#lab-tip').getBoundingClientRect(), c = document.querySelector('#more').getBoundingClientRect(); return [r.width, (r.left + r.width / 2) - (c.left + c.width / 2)]; })()")
+                check(abs(again[0] - clean) < 1.5 and abs(again[1]) < 40, f"{tag}: the bubble that follows a far-away one is as wide as ever and stands over its control: {clean:.0f} then {again[0]:.0f} px, {again[1]:.0f} px off")
                 pg.hover("#more")
                 pg.wait_for_timeout(450)
                 tip = pg.inner_text("#lab-tip") if pg.query_selector("#lab-tip") else ""
@@ -634,6 +927,17 @@ with sync_playwright() as p:
         if k in (4, 5, 6):
             pg.evaluate("limitLab.pick(2)")
             check(pg.evaluate("limitLab.state().sel") == 2, f"policy on: a piece chosen at n = {k}")
+    # the references under the policy: a pill opens its page (data drawn as SVG), Back and Escape work, the paper's link is allowed to navigate
+    for n_, chip_, nth_, h2_ in ((9, "polygon", 0, "Table 4"), (500, "gap", 0, "Figure 28"), (9, "polygon", 4, "Figure 24")):
+        pg.evaluate(f"limitLab.setN({n_})")
+        settled()
+        pg.click(f".math-chip[data-chip='{chip_}']")
+        pg.click((".math-pop .live .paper-ref" if nth_ == 0 else ".math-pop .math-src .paper-ref") + (" >> nth=0" if nth_ == 0 else " >> nth=1"))
+        check(pg.inner_text(".math-pop h2") == h2_ and pg.locator(".math-pop .math-excerpt").count() == 1, f"policy on: {h2_} opens with its data")
+        pg.click(".math-pop .math-back")
+        pg.keyboard.press("Escape")
+    pg.click("#fence-tag") if pg.evaluate("limitLab.state().fence && limitLab.state().n !== 500") else None
+    pg.keyboard.press("Escape")
     check(not errs, f"policy on: no console error or warning {errs[:2]}")
     ctx.close()
     browser.close()

@@ -259,3 +259,10 @@ body:has(.math-pop:not([hidden])) .lab > .langSel { z-index: 10002; }
 }
 .caption { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 16ch; }
 .caption .dice { width: 16px; height: 16px; flex: 0 0 auto; }
+
+/* The two tokens of the stage open the result of the paper they show (paper-ref.js). */
+.tok.srcTag[data-ref] { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color 0.15s ease, background 0.15s ease; }
+.tok.srcTag[data-ref]:hover { border-color: rgba(255, 211, 110, 0.7); background: rgba(255, 211, 110, 0.1); }
+.tok.srcTag[data-ref]:focus-visible { outline: 2px solid #ffd36e; outline-offset: 2px; }
+/* A finger needs 44 px: the token's touch box reaches beyond its edge (nothing else sits there). */
+.tok.srcTag[data-ref]::after { content: ""; position: absolute; inset: -8px; }

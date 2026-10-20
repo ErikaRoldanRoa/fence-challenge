@@ -9,6 +9,12 @@ var DICT = {
   "common.more": "Plus d’outils",
   "common.clearConfirm": "Touche encore pour effacer",
   "common.home": "Retour à l’accueil du Fence Challenge",
+  "pr.tip": "{what}, page {page} de l’article\u202f: touche pour en savoir plus",
+  "pr.page": "page {p}",
+  "pr.in": "dans",
+  "pr.soon": "L’article n’est pas encore public\u202f; il sera bientôt sur arXiv.",
+  "pr.open": "Ouvrir l’article à la page {p}",
+  "pr.inside": "De cette section\u202f:",
   "hub.citeChip": "♦ LRMR25 · DMVM 2025",
   "hub.citeTip": "Langlois-Rémillard, Müßig, Roldán. Maximale Zäune mit Polyformen. DMVM Mitteilungen 33(3), 187–199, 2025.",
   "hub.sqTitle": "Mission I · Le damier",
@@ -84,6 +90,12 @@ var DICT = {
   "common.more": "Weitere Werkzeuge",
   "common.clearConfirm": "Noch einmal tippen zum Löschen",
   "common.home": "Zurück zur Startseite der Fence Challenge",
+  "pr.tip": "{what}, Seite {page} des Artikels: tippe für mehr",
+  "pr.page": "Seite {p}",
+  "pr.in": "in",
+  "pr.soon": "Der Artikel ist noch nicht öffentlich; er erscheint bald auf arXiv.",
+  "pr.open": "Den Artikel auf Seite {p} öffnen",
+  "pr.inside": "Aus diesem Abschnitt:",
   "hub.citeChip": "♦ LRMR25 · DMVM 2025",
   "hub.citeTip": "Langlois-Rémillard, Müßig, Roldán. Maximale Zäune mit Polyformen. DMVM Mitteilungen 33(3), 187–199, 2025.",
   "hub.sqTitle": "Mission I · Das Schachbrett",
@@ -159,6 +171,12 @@ var DICT = {
   "common.more": "More tools",
   "common.clearConfirm": "Tap again to clear",
   "common.home": "Back to the Fence Challenge home page",
+  "pr.tip": "{what}, page {page} of the paper: tap to read more",
+  "pr.page": "page {p}",
+  "pr.in": "in",
+  "pr.soon": "The paper is not public yet; it will be on arXiv soon.",
+  "pr.open": "Open the paper at page {p}",
+  "pr.inside": "From this section:",
   "hub.citeChip": "♦ LRMR25 · DMVM 2025",
   "hub.citeTip": "Langlois-Rémillard, Müßig, Roldán. Maximale Zäune mit Polyformen. DMVM Mitteilungen 33(3), 187–199, 2025.",
   "hub.sqTitle": "Mission I · The chessboard",
@@ -238,12 +256,18 @@ var DICT = {
     return SUPPORTED.indexOf(n) >= 0 ? n : "en";
   }
   var lang = detect();
-  function t(key, vars) {
+  // The string of a key, its {placeholders} filled. raw() leaves any [[key]] (a result of the paper, see
+  // paper-ref.js) as it is, for a lab that writes HTML and turns it into a pill; t() makes it its label, "Table 4".
+  function raw(key, vars) {
     var s = (DICT[lang] && DICT[lang][key]);
     if (s == null) s = (DICT.en && DICT.en[key]);
     if (s == null) s = key;
     if (vars) s = s.replace(/\{(\w+)\}/g, function (m, k) { return (k in vars) ? vars[k] : m; });
     return s;
+  }
+  function t(key, vars) {
+    var s = raw(key, vars);
+    return s.indexOf("[[") >= 0 && window.PaperRef ? window.PaperRef.expand(s, "text") : s;
   }
   function applyAttr(root, attr) {
     var els = root.querySelectorAll("[data-i18n-" + attr + "]");
@@ -265,7 +289,7 @@ var DICT = {
     apply(document);
     document.dispatchEvent(new CustomEvent("fc-langchange", { detail: { lang: l } }));
   }
-  window.i18n = { t: t, apply: apply, setLang: setLang, get: function () { return lang; }, SUPPORTED: SUPPORTED };
+  window.i18n = { t: t, raw: raw, apply: apply, setLang: setLang, get: function () { return lang; }, SUPPORTED: SUPPORTED };
   if (document.readyState !== "loading") apply(document);
   else document.addEventListener("DOMContentLoaded", function () { apply(document); });
 })();

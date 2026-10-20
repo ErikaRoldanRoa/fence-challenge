@@ -16,6 +16,9 @@
   const $ = (id) => document.getElementById(id);
   const t = (k, v) => window.i18n.t(k, v);
   const lang = () => window.i18n.get();
+  // A string of this lab as HTML: what it says about the paper, [[key]], becomes a pill (t() makes it a label).
+  const th = (k, v) => window.PaperRef.expand(window.i18n.raw(k, v), "html");
+  const pill = (key, col) => window.PaperRef.pill(key, col ? { col } : null);
   const MINUS = "−";
   const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -31,6 +34,10 @@
   ];
   const STEPS = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 500];
   const GIANT = 500;
+  // Where the paper treats the polygon on show: its optimal fences (an optimal tetromino fence is drawn in a figure; the pentomino and
+  // hexomino ones are in the sections that identify them all), its greedy fences from 7 on.
+  const FENCE_REF = { 4: "fig:fence-art", 5: "sec:all-5", 6: "sec:all-6" };
+  const fenceRef = () => FENCE_REF[n] || "sec:greedy";
   const LAST_OPT = 6;                      // the optimal fences, n = 4..6
   const FIRST_FENCE = 7, LAST_FENCE = 15;   // the greedy fences of Section 6.2
   // The paper's fences for n = 7, 8: the best fence found and the upper bound (dynamic programming). From 9 on,
@@ -151,7 +158,7 @@
     caption();
     syncChips();
     syncSource();
-    if (openChip) window.mathChip.refresh();
+    if (window.mathChip.isOpen()) window.mathChip.refresh();
     statusN();
     // The pill and the gap change width with n: centre them again.
     centreReadout();
@@ -765,7 +772,9 @@
   // ---------- readouts and controls ----------
   const locale = () => (lang() === "en" ? "en-US" : lang() === "fr" ? "fr-FR" : "de-DE");
   function fmtNum(x, digits) {
-    return x.toLocaleString(locale(), { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    const s = x.toLocaleString(locale(), { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    // French groups the digits by a narrow no-break space, a hair of a pixel at the size of a table: a no-break space shows the groups.
+    return lang() === "fr" ? s.replace(/\u202f/g, "\u00a0") : s;
   }
   // An arrow's coordinate: whole, or a half for the corner pieces' arrow.
   function fmtHalf(x) { return fmtNum(x, x % 1 ? 1 : 0); }
@@ -807,8 +816,13 @@
     $("fence-tag").hidden = !fence || n === GIANT;
     const nameKey = optimal() ? "ls.optName" : "ls.fenceName", tipKey = optimal() ? "ls.optTip" : "ls.fenceTip";
     $("fence-name").dataset.i18n = nameKey; $("fence-name").textContent = t(nameKey);
-    $("fence-tag").dataset.i18nTitle = tipKey; $("fence-tag").title = t(tipKey);
-    $("src-tag").title = t(REDUCED ? "ls.srcStill" : "ls.src");
+    // Each token opens the result of the paper it shows (data-ref): the bubble says which, and its page.
+    const PR = window.PaperRef, fref = fenceRef();
+    $("fence-tag").dataset.ref = fref;
+    $("fence-tag").title = t(tipKey) + " " + PR.tip(fref);
+    $("fence-label").textContent = t("ls.fenceLabel", { ref: PR.label(fref) });
+    $("src-tag").dataset.ref = "fig:chain";
+    $("src-tag").title = t(REDUCED ? "ls.srcStill" : "ls.src") + " " + PR.tip("fig:chain");
     $("src-count").textContent = t("ls.srcCount", { m: fmtNum(PAPER500 / 1e6, 1) });
     fitTag();
   }
@@ -909,9 +923,10 @@
     if (openChip && !want.has(openChip)) closeCard();
   }
   function live(id) {
-    const tag = (s, k) => `<span class="live">${s} · ${t(k || "ls.live.computed")}</span>`;
+    // « · computed here », or the result of the paper the value is from
+    const tag = (s, ref) => `<span class="live">${s} · ${ref ? (Array.isArray(ref) ? pill(ref[0], ref[1]) : pill(ref)) : t("ls.live.computed")}</span>`;
     const N0 = (x) => fmtNum(Math.round(x), 0), colon = lang() === "fr" ? "\u202f: " : ": ";
-    if (id === "count" && n !== GIANT) return tag(`<i>n</i> = ${n}${colon}${N0(pieceCount())}`, fence ? "ls.live.paper" : null);
+    if (id === "count" && n !== GIANT) return tag(`<i>n</i> = ${n}${colon}${N0(pieceCount())}`, n >= FIRST_FENCE ? ["tab:heur", "A"] : n >= 5 ? "sec:introduction" : null);
     if (id === "polygon" && fence) {
       // A = A_ref + the corrections (Lemma on the area decomposition): the polygon's area is computed
       // here from its arrows, the greedy fence and the bounds are the paper's, the corrections follow.
@@ -923,13 +938,14 @@
         const cells = G.regionArea(OPT[n].pieces);
         s += `<br>${t("ls.live.enclosed")} <span class="f">= ${N0(cells)}</span> · ${t("ls.live.counted")}`;
         s += `<br>${t("ls.live.corr")} <span class="f">= ${MINUS}${f1(fence.area - cells)}</span> · ${t("ls.live.computed")}`;
-        s += `<br>${t("ls.live.fence", { f: t("ls.live.opt", { o: N0(fence.L) }) })}`;
+        // The optimum of the pentominoes and of the hexominoes is the paper's; the tetromino one is the lab's own search.
+        s += `<br>${t("ls.live.fence", { f: t("ls.live.opt", { o: N0(fence.L) }) })}${n === 5 ? " · " + pill("sec:pentomino") : n === 6 ? " · " + pill("thm:1597") : ""}`;
         return `<span class="live">${s}</span>`;
       }
-      s += `<br>${t("ls.live.greedy")} <span class="f">= ${N0(fence.L)}</span> · ${t("ls.live.paper")}`;
+      s += `<br>${t("ls.live.greedy")} <span class="f">= ${N0(fence.L)}</span> · ${pill("tab:heur", "L")}`;
       s += `<br>${t("ls.live.corr")} <span class="f">= ${MINUS}${f1(fence.area - fence.L)}</span> · ${t("ls.live.computed")}`;
-      if (fz && fz.best) s += `<br>${t("ls.live.fence", { f: t("ls.live.best", { b: N0(fz.best), u: N0(fz.bound) }) })}`;
-      else s += `<br>${t("ls.live.upper", { u: N0(fence.U), g: fmtNum(100 * (fence.U - fence.L) / fence.L, 3) })}`;
+      if (fz && fz.best) s += `<br>${t("ls.live.fence", { f: t("ls.live.best", { b: N0(fz.best), u: N0(fz.bound) }) })} · ${pill("tab:hepto-octo")}`;
+      else s += `<br>${t("ls.live.upper", { u: N0(fence.U), g: fmtNum(100 * (fence.U - fence.L) / fence.L, 3) })} · ${pill("tab:heur", "U")}`;
       return `<span class="live">${s}</span>`;
     }
     if (id === "arrow" && optimal()) {
@@ -946,11 +962,11 @@
       const whole = `<span class="live"><span class="f"><i>n</i> = ${n}${colon}${fmtPct(maxGap(), 2)}</span> · ${t("ls.live.whole")} · ${t("ls.live.computed")}`;
       if (optimal()) return whole + "</span>";
       const r = G.range(fence, 0, 45);
-      return whole + `<br><span class="f">${fmtPct(r.min, 2)} … ${fmtPct(r.max, 2)}</span> · ${t("ls.live.sector")} · ${t("ls.live.computed")}</span>`;
+      return whole + `<br><span class="f">${fmtPct(r.min, 2)} … ${fmtPct(r.max, 2)}</span> · ${th("ls.live.sector")} · ${t("ls.live.computed")}</span>`;
     }
-    if (id === "gap") return tag(`<i>n</i> = ${n}${colon}${fmtPct(maxGap())}`, n === GIANT ? "ls.live.paper" : null);
+    if (id === "gap") return tag(`<i>n</i> = ${n}${colon}${fmtPct(maxGap())}`, n === GIANT ? "fig:deviation" : null);
     if (id === "sample") return tag(t("ls.samples", { s: N0(giantSamples) }));
-    if (id === "giant") return tag(`≈ ${fmtSci(AREA500_LOG10)}`, "ls.live.paper");
+    if (id === "giant") return tag(`≈ ${fmtSci(AREA500_LOG10)}`, "sec:limit");
     return "";
   }
   // The card itself is the shared math-chip card; this lab provides its texts.
@@ -962,8 +978,9 @@
     if (!c) return null;
     const l = lang();
     const note = (tiles ? c.tiles : c.kinds) ? " " + (tiles ? c.tiles : c.kinds)[l] : "";
-    return { title: t("ls.chip." + id), lead: c.lead[l], body: c.detail[l] + note + live(id), src: c.section[l],
-      data: { label: c.label, lines: c.lines, chip: id } };
+    const X = (str) => window.PaperRef.expand(str, "html");
+    return { title: t("ls.chip." + id), lead: X(c.lead[l]), body: X(c.detail[l] + note), live: live(id), src: c.section[l],
+      srcHtml: window.PaperRef.footer(c.refs), data: { label: c.label, lines: c.lines, chip: id } };
   };
   function closeCard() { if (window.mathChip.close) window.mathChip.close(false); }
   document.addEventListener("math-chip-open", (e) => { openChip = e.detail.dataset.chip || null; });
@@ -986,6 +1003,78 @@
   setN(STEPS.includes(asked) ? asked : 4);
   // The readout and the fence's tag are measured again once the fonts have come.
   if (document.fonts) document.fonts.ready.then(() => { centreReadout(); fitTag(); });
+
+  // ---------- the data of the paper's results, on their reference pages (paper-ref.js) ----------
+  // What the lab holds of a result is shown as the paper prints it, so that a reader sees the result itself:
+  // the rows of Tables 3 and 4 (the row of the size on show lit), the curve of Figure 28, the histogram of
+  // Figure 26, the polygons of Figure 24.
+  const plainPct = (frac) => fmtNum(frac * 100, 2) + (lang() === "fr" ? " " : lang() === "de" ? " " : "") + "%";
+  const cap = (k) => `<p class="ref-cap">${t(k)}</p>`;
+  // A curve or two as an SVG: series of [x, y]; x in degrees 0..45; the y range is given.
+  function spark(series, y0, y1, marks, ticks) {
+    const W = 300, H = 104, L = 6, Rr = 6, T = 16, B = 16, X = (x) => L + (W - L - Rr) * x / 45, Y = (y) => T + (H - T - B) * (y1 - y) / (y1 - y0);
+    // a curve with marked values tells them to a screen reader: its largest and smallest values, each at its angle
+    const said = (marks || []).map((m) => `${m.text} (${fmtNum(m.x, 1)}°)`).join(" · ");
+    let out = `<svg class="ref-spark" viewBox="0 0 ${W} ${H}" role="img"${said ? ` aria-label="${said}"` : ' aria-hidden="true"'}>`;
+    out += `<line x1="${L}" x2="${W - Rr}" y1="${Y(0).toFixed(1)}" y2="${Y(0).toFixed(1)}" stroke="rgba(216,246,255,0.35)" stroke-dasharray="3 3" stroke-width="1"/>`;
+    series.forEach((sr) => {
+      const step = Math.max(1, Math.floor(sr.pts.length / 400));
+      let d = "";
+      for (let i = 0; i < sr.pts.length; i += step) d += (i ? "L" : "M") + X(sr.pts[i][0]).toFixed(1) + " " + Y(sr.pts[i][1]).toFixed(1);
+      d += "L" + X(sr.pts[sr.pts.length - 1][0]).toFixed(1) + " " + Y(sr.pts[sr.pts.length - 1][1]).toFixed(1);
+      out += `<path d="${d}" fill="none" stroke="${sr.color}" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`;
+    });
+    (marks || []).forEach((m) => {
+      out += `<circle cx="${X(m.x).toFixed(1)}" cy="${Y(m.y).toFixed(1)}" r="2.6" fill="#ffd36e"/>`;
+      out += `<text x="${Math.min(W - Rr - 2, Math.max(L + 2, X(m.x))).toFixed(1)}" y="${(Y(m.y) + (m.up ? -6 : 12)).toFixed(1)}" text-anchor="${m.x > 30 ? "end" : "start"}">${m.text}</text>`;
+    });
+    const tk = ticks || ["0° (S)", "45° (" + (lang() === "de" ? "SO" : "SE") + ")"];
+    out += `<text x="${L}" y="${H - 3}">${tk[0]}</text><text x="${W - Rr}" y="${H - 3}" text-anchor="end">${tk[1]}</text></svg>`;
+    return out;
+  }
+  window.PaperRef.excerpt("tab:heur", () => {
+    const rows = [];
+    for (let k = FIRST_FENCE; k <= LAST_FENCE; k++) {
+      const g = GREEDY[k];
+      if (g) rows.push(`<tr${k === n ? ' class="on"' : ""}><td>${k}</td><td data-col="A">${fmtNum(g.count, 0)}</td><td data-col="U">${fmtNum(g.U, 0)}</td><td data-col="L">${fmtNum(g.L, 0)}</td><td data-col="G">${plainPct((g.U - g.L) / g.L)}</td></tr>`);
+    }
+    return `<p class="ref-swipe">↔ ${t("ls.ref.swipe")}</p><div class="ref-scroll"><table class="ref-table"><thead><tr><th><i>n</i></th><th data-col="A">A′(<i>n</i>)</th><th data-col="U">U(<i>n</i>)</th><th data-col="L">L(<i>n</i>)</th><th data-col="G">(U − L) / L</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>` + `<p class="ref-cap">${t("ls.ref.heurLegend")}</p>` + cap("ls.ref.heur");
+  });
+  window.PaperRef.excerpt("tab:hepto-octo", () => {
+    const rows = [7, 8].map((k) => {
+      const f = FENCES[k];
+      return `<tr${k === n ? ' class="on"' : ""}><td>${k}</td><td>${fmtNum(f.best, 0)}</td><td>${fmtNum(f.bound, 0)}</td><td>${plainPct((f.bound - f.best) / f.best)}</td></tr>`;
+    });
+    return `<div class="ref-scroll"><table class="ref-table"><thead><tr><th><i>n</i></th><th>${t("ls.ref.best")}</th><th>${t("ls.ref.bound")}</th><th>${t("ls.ref.diff")}</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
+  });
+  window.PaperRef.excerpt("fig:deviation", () => {
+    const pts = DATA.dev500;
+    let hi = pts[0], lo = pts[0];
+    pts.forEach((q) => { if (q[1] > hi[1]) hi = q; if (q[1] < lo[1]) lo = q; });
+    const pad = (hi[1] - lo[1]) * 0.12;
+    return spark([{ pts, color: "#2ff3ff" }], lo[1] - pad, hi[1] + pad,
+      [{ x: hi[0], y: hi[1], text: fmtPct(hi[1], 2), up: true }, { x: lo[0], y: lo[1], text: fmtPct(lo[1], 2), up: false }]) + cap("ls.ref.dev");
+  });
+  window.PaperRef.excerpt("fig:angle-225", () => {
+    const h = DATA.hist500, top = Math.max(...h.map((q) => q[1]));
+    return spark([{ pts: h.map((q) => [q[0], q[2]]), color: "#7fe7b8" }, { pts: h.map((q) => [q[0], q[1] / top]), color: "#5ea8ff" }], -0.04, 1.06, [], ["0° (α)", "45°"]) + cap("ls.ref.hist");
+  });
+  window.PaperRef.excerpt("fig:large-ref-polygons", () => {
+    // As the figure draws them: the four polygons scaled into the same box and drawn on top of each other, the circle dashed, and an
+    // inset on the north-east corner, where they part (the vertices of the two smallest as dots).
+    const KS = [9, 11, 13, 15], CL = { 9: "#6fa8ff", 11: "#ff5d62", 13: "#1fcf5b", 15: "#a778fb" };
+    const norm = (P) => P.corners.map((c) => [(c[0] - P.kx) / P.R, -(c[1] - P.ky) / P.R]);
+    const Q = KS.map((k) => norm(G.build(GREEDY[k])));
+    const pts = (a) => a.map((q) => q[0].toFixed(4) + "," + q[1].toFixed(4)).join(" ");
+    const W = { x: 0.56, y: -0.88, s: 0.32 };
+    const layers = Q.map((a, i) => `<polygon points="${pts(a)}" fill="none" stroke="${CL[KS[i]]}" stroke-linejoin="round" vector-effect="non-scaling-stroke"${KS[i] === n ? ' class="on"' : ""}/>`).join("");
+    const circle = '<circle r="1" fill="none" stroke="rgba(216,246,255,0.5)" stroke-width="1" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>';
+    const main = `<svg class="ref-poly-main" viewBox="-1.1 -1.1 2.2 2.2" role="img" aria-hidden="true">${circle}${layers}<rect x="${W.x}" y="${W.y}" width="${W.s}" height="${W.s}" fill="none" stroke="rgba(216,246,255,0.75)" stroke-width="1" vector-effect="non-scaling-stroke"/></svg>`;
+    const dots = Q.map((a, i) => KS[i] > 11 ? "" : a.filter((q) => q[0] >= W.x && q[0] <= W.x + W.s && q[1] >= W.y && q[1] <= W.y + W.s).map((q) => `<circle cx="${q[0].toFixed(4)}" cy="${q[1].toFixed(4)}" r="0.007" fill="${CL[KS[i]]}"/>`).join("")).join("");
+    const inset = `<svg class="ref-poly-inset" viewBox="${W.x} ${W.y} ${W.s} ${W.s}" role="img" aria-hidden="true">${circle}${layers}${dots}</svg>`;
+    const legend = KS.map((k) => `<li${k === n ? ' class="on"' : ""}><b style="background:${CL[k]}"></b><i>n</i> = ${k} · ${t("ls.count", { count: fmtNum(GREEDY[k].count, 0) })}</li>`).join("");
+    return `<div class="ref-polys">${main}${inset}</div><ul class="ref-legend">${legend}</ul>` + cap("ls.ref.polys");
+  });
 
   // For tests and figure export.
   window.limitLab = {
