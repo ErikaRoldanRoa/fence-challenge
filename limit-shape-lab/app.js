@@ -40,6 +40,7 @@
   };
   const SIDE_STEP = 0.1;    // degrees between two points drawn on a side of the polygon
   const PICK_RADIUS = 16;   // css pixels: how near a tap must be to an arrow's dot
+  const SCRUB_RADIUS = 28;  // css pixels: how near a sliding finger must come to a dot to choose it
   // The paper's area estimate for the 500-omino fence, each piece once, as printed (log10 of 2.0e603).
   const AREA500_LOG10 = 603 + Math.log10(2.0);
   // The random 500-ominoes behind the paper's loop.
@@ -493,18 +494,20 @@
   }
   // The kinds of arrows of a fence, folded to 0..45 degrees and drawn from one point: a dot at each tip,
   // bigger and brighter the more pieces share the arrow, the corner pieces' arrow apart. The polygon is
-  // exactly these arrows, end to end.
+  // exactly these arrows, end to end. The dots themselves set the scale (not the empty reach of the 45°
+  // guide), so that they stand as far apart as the box allows, on its floor next to the caption; the
+  // chosen arrow's pair and number of pieces are written beside its dot.
   function drawKinds(w, h, dpr) {
-    const ctx = pctx, pad = 14 * dpr, K = chain.vecs;
-    let L = 0, top = 1;
-    for (const v of K) { L = Math.max(L, Math.hypot(v[0], v[1])); top = Math.max(top, v[2]); }
-    const size = Math.min(w - 2 * pad, (h - 2 * pad) / Math.sin(Math.PI / 4) * 0.98);
-    const u = size / L, ox = pad + (w - 2 * pad - size) / 2, oy = h - pad - (h - 2 * pad - size * Math.sin(Math.PI / 4)) / 2;
+    const ctx = pctx, K = chain.vecs, pl = 10 * dpr, pr = 12 * dpr, pt = 12 * dpr, pb = 12 * dpr;
+    let X = 0, Y = 0, top = 1;
+    for (const v of K) { X = Math.max(X, v[0]); Y = Math.max(Y, v[1]); top = Math.max(top, v[2]); }
+    const u = Math.min((w - pl - pr) / X, (h - pt - pb) / Y), ox = pl + (w - pl - pr - X * u) / 2, oy = h - pb;
+    const rad = (v) => (1.8 + 3.6 * Math.sqrt(v[2] / top)) * dpr, g = Math.min(oy - 2 * dpr, (Y + 0.8) * u);
     ctx.save();
     ctx.setLineDash([4 * dpr, 4 * dpr]);
     ctx.strokeStyle = "rgba(216, 246, 255, 0.28)"; ctx.lineWidth = 1 * dpr;
-    ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox + size, oy);
-    ctx.moveTo(ox, oy); ctx.lineTo(ox + size * Math.SQRT1_2, oy - size * Math.SQRT1_2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(Math.min(w - 2 * dpr, ox + (X + 0.8) * u), oy);
+    ctx.moveTo(ox, oy); ctx.lineTo(ox + g, oy - g); ctx.stroke();
     ctx.setLineDash([]);
     const lit = (m) => Math.log(1 + m) / Math.log(1 + top);
     ctx.lineWidth = 1 * dpr;
@@ -513,7 +516,7 @@
       ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox + v[0] * u, oy - v[1] * u); ctx.stroke();
     });
     K.forEach((v, i) => {
-      const x = ox + v[0] * u, y = oy - v[1] * u, r = (1.8 + 3.6 * Math.sqrt(v[2] / top)) * dpr;
+      const x = ox + v[0] * u, y = oy - v[1] * u, r = rad(v);
       kindSpots.push([x, y, i]);
       // The corner pieces' arrow at full strength, in the pink ring the polygon gives those pieces.
       ctx.globalAlpha = i === selKind || v[3] ? 1 : 0.35 + 0.65 * lit(v[2]);
@@ -524,8 +527,28 @@
         ctx.beginPath(); ctx.arc(x, y, r + 4 * dpr, 0, Math.PI * 2); ctx.stroke();
       }
     });
+    if (selKind >= 0) {
+      // Above the chosen dot (a finger on it hides what lies below), else to its left, its right, below it.
+      const v = K[selKind], x = ox + v[0] * u, y = oy - v[1] * u, r = rad(v) + 7 * dpr, e = 2 * dpr, s = kindText(v);
+      ctx.globalAlpha = 1;
+      ctx.font = "700 " + 11.5 * dpr + "px ui-monospace, SFMono-Regular, Menlo, monospace";
+      const tw = ctx.measureText(s).width + 12 * dpr, th = 20 * dpr;
+      const fitX = (a) => Math.max(e, Math.min(w - tw - e, a)), fitY = (b) => Math.max(e, Math.min(h - th - e, b));
+      let lx, ly;
+      if (y - r - th >= e) { lx = fitX(x - tw / 2); ly = y - r - th; }
+      else if (x - r - tw >= e) { lx = x - r - tw; ly = fitY(y - th / 2); }
+      else if (x + r + tw <= w - e) { lx = x + r; ly = fitY(y - th / 2); }
+      else { lx = fitX(x - tw / 2); ly = fitY(y + r); }
+      roundRect(ctx, lx, ly, tw, th, 6 * dpr);
+      ctx.fillStyle = "rgba(10, 13, 19, 0.9)"; ctx.fill();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.35)"; ctx.lineWidth = 1 * dpr; ctx.stroke();
+      ctx.fillStyle = "#ffffff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(s, lx + tw / 2, ly + th / 2 + 0.5 * dpr);
+    }
     ctx.restore();
   }
+  // A kind of arrow as the caption and the label write it: its pair, then its number of pieces.
+  function kindText(k) { return t("ls.pair", { x: fmtHalf(k[0]), y: fmtHalf(k[1]) }) + " · " + fmtNum(k[2], 0); }
   function nearestKind(x, y, radius) {
     let best = -1, d = radius;
     for (const [sx, sy, i] of kindSpots) {
@@ -534,19 +557,26 @@
     }
     return best;
   }
+  // A tap or a key toggles a kind; a finger sliding over the dots chooses quietly, and is heard on release.
   function pickKind(i) {
     if (!fence || n === GIANT || !chain.vecs[i]) return;
-    selKind = selKind === i ? -1 : i;
+    setKind(selKind === i ? -1 : i);
+  }
+  function setKind(i, quiet) {
+    selKind = i;
     drawPieces();
     drawLoop(true);
     caption();
-    if (selKind >= 0) {
-      const k = chain.vecs[selKind];
-      status(t(k[3] ? "ls.s.cornerArrow" : "ls.s.kind", { pair: t("ls.pair", { x: fmtHalf(k[0]), y: fmtHalf(k[1]) }), m: fmtNum(k[2], 0), k: G.placesOf(fence, k[0], k[1]).length }));
-    } else status(t("ls.s.noKind"));
+    if (!quiet) sayKind();
+  }
+  function sayKind() {
+    if (selKind < 0) { status(t("ls.s.noKind")); return; }
+    const k = chain.vecs[selKind];
+    status(t(k[3] ? "ls.s.cornerArrow" : "ls.s.kind", { pair: t("ls.pair", { x: fmtHalf(k[0]), y: fmtHalf(k[1]) }), m: fmtNum(k[2], 0), k: G.placesOf(fence, k[0], k[1]).length }));
   }
   function syncPieceAccess() {
     const kinds = !!fence && n !== GIANT;
+    pc.classList.toggle("scrub", kinds);
     pc.style.cursor = tiles || kinds ? "pointer" : "default";
     if (tiles || kinds) pc.setAttribute("tabindex", "0"); else pc.removeAttribute("tabindex");
     const label = n === GIANT ? t("ls.giantAria") : kinds ? t("ls.kinds", { kinds: fmtNum(chain.vecs.length, 0), count: fmtNum(fence.count, 0), n })
@@ -559,7 +589,7 @@
   function drawShape(cells, pairs, color, x, y, bw, bh, fill, dpr, chosen, tile) {
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     for (const [cx, cy] of cells) { minX = Math.min(minX, cx); maxX = Math.max(maxX, cx + 1); minY = Math.min(minY, cy); maxY = Math.max(maxY, cy + 1); }
-    const u = Math.min(bw, bh) * fill / Math.max(maxX - minX, maxY - minY);
+    const u = Math.min(bw / (maxX - minX), bh / (maxY - minY)) * fill;
     const X0 = x + bw / 2 - ((minX + maxX) / 2) * u, Y0 = y + bh / 2 - ((minY + maxY) / 2) * u;
     // Rows grow downwards, as on the hub's boards.
     const sx = (gx) => X0 + gx * u, sy = (gy) => Y0 + gy * u;
@@ -627,16 +657,41 @@
     drawLoop(true);
     status(sel >= 0 ? t("ls.s.pick", { i: sel + 1 }) : t("ls.s.noPiece"));
   }
+  // The arrows of a fence answer the pointer itself: down chooses the dot nearest to it, a finger
+  // sliding over the dots chooses the one under it (it shows while the finger is down, so a miss is
+  // mended by sliding), release keeps it; a tap on the chosen dot, or away from every dot, lets go.
+  let scrub = null;
+  function canvasXY(e) {
+    const r = pc.getBoundingClientRect(), dpr = pc.width / r.width;
+    return [(e.clientX - r.left) * dpr, (e.clientY - r.top) * dpr, dpr];
+  }
+  pc.addEventListener("pointerdown", (e) => {
+    if (!fence || n === GIANT || e.button !== 0) return;
+    // The dock's bubble stays for the mouse's hover: here a long press is a slide, not a question.
+    if (window.labTip) window.labTip.hide();
+    const [x, y, dpr] = canvasXY(e), i = nearestKind(x, y, PICK_RADIUS * dpr);
+    scrub = { id: e.pointerId, was: selKind, first: i, moved: false };
+    try { pc.setPointerCapture(e.pointerId); } catch (err) { /* already released */ }
+    if (i >= 0 && i !== selKind) setKind(i, true);
+  });
+  pc.addEventListener("pointermove", (e) => {
+    if (!scrub || e.pointerId !== scrub.id) return;
+    const [x, y, dpr] = canvasXY(e), i = nearestKind(x, y, SCRUB_RADIUS * dpr);
+    if (i >= 0 && i !== selKind) { scrub.moved = true; setKind(i, true); }
+  });
+  function endScrub(e) {
+    if (!scrub || e.pointerId !== scrub.id) return;
+    const s = scrub;
+    scrub = null;
+    if (e.type === "pointerup" && !s.moved && s.was >= 0 && (s.first < 0 || s.first === s.was)) setKind(-1);
+    else if (selKind !== s.was || s.moved) sayKind();
+  }
+  pc.addEventListener("pointerup", endScrub);
+  pc.addEventListener("pointercancel", endScrub);
   pc.addEventListener("click", (e) => {
+    if (!tiles) return;
     const r = pc.getBoundingClientRect(), dpr = pc.width / r.width;
     const x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
-    if (fence && n !== GIANT) {
-      // A tap near a dot chooses that arrow; a tap elsewhere lets go of the chosen one.
-      const i = nearestKind(x, y, PICK_RADIUS * dpr);
-      if (i >= 0) pickKind(i); else if (selKind >= 0) pickKind(selKind);
-      return;
-    }
-    if (!tiles) return;
     const i = slots.findIndex(([sx, sy, s]) => x >= sx && x < sx + s && y >= sy && y < sy + s);
     if (i >= 0) pick(i);
   });
@@ -677,8 +732,7 @@
       c.innerHTML = DICE + `<span>${fmtNum(giantSamples, 0)}</span><span class="visually-hidden">${t("ls.samples", { s: fmtNum(giantSamples, 0) })}</span>`;
     } else if (fence && selKind >= 0) {
       // The chosen arrow and the number of pieces that share it.
-      const k = chain.vecs[selKind];
-      c.textContent = t("ls.pair", { x: fmtHalf(k[0]), y: fmtHalf(k[1]) }) + " · " + fmtNum(k[2], 0);
+      c.textContent = kindText(chain.vecs[selKind]);
     } else c.textContent = t("ls.count", { count: fmtNum(pieceCount(), 0) });
     if (n === GIANT) c.setAttribute("data-lab-tip", t(REDUCED ? "ls.tipSamplesStill" : "ls.tipSamples")); else c.removeAttribute("data-lab-tip");
     $("gap-value").textContent = fmtPct(maxGap());
