@@ -3,11 +3,13 @@
  * the phone and queued; cigales/sync.html (same origin, loaded hidden) sends the queue, so the hub
  * itself keeps connect-src 'none'. A new personal best is a party (confetti and a line, on the phone); when the server says
  * it is the best so far of that board among all players (cigales/sync.html passes it on), a trophy. The contest ends on
- * Thursday 22.10.2026 at 19:30, Zurich time: the server refuses records from then on, the badge says so. */
+ * Thursday 22.10.2026 at 19:30, Zurich time: the prizes are frozen from then on and the phone goes on as free play: each new closed
+ * fence is sent too, the server keeps it apart from the ranking and answers no rank, a personal best is still a party, and the badge
+ * says « jeu libre ». */
 (() => {
   "use strict";
   // Loaded by the hub (index.html) and by the three labs of the printed boards (data-board sq20, hex6, tri10).
-  const VERSION = "2026-10-20a"; // = cigales/version.txt, bumped with every contest release
+  const VERSION = "2026-10-21a"; // = cigales/version.txt, bumped with every contest release
   const me = document.currentScript;
   const ROOT = me ? new URL(".", me.src).href : "";
   const LAB = me && me.dataset.board;
@@ -20,11 +22,11 @@
   const REDUCED = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   const LANG = (() => { let l = ""; try { l = localStorage.getItem("fc-lang") || ""; } catch (e) {} l = (l || navigator.language || "fr").slice(0, 2).toLowerCase(); return l === "de" || l === "en" ? l : "fr"; })();
   const TXT = {
-    fr: { first: "Première clôture !", record: "Record battu !", was: "avant", trophy: "Meilleur du concours", tap: "touche pour continuer", over: "Concours terminé", record_: "record",
+    fr: { first: "Première clôture !", record: "Record battu !", was: "avant", trophy: "Meilleur du concours", tap: "touche pour continuer", over: "Concours terminé", free: "jeu libre", record_: "record",
       boards: { sq: "damier 9 × 9", hex: "nid d’abeilles", tri: "champ de triangles", sq20: "grand damier 20 × 20", hex6: "grand hexagone", tri10: "grand triangle" } },
-    en: { first: "First fence!", record: "New record!", was: "was", trophy: "Best of the contest", tap: "tap to continue", over: "Contest over", record_: "record",
+    en: { first: "First fence!", record: "New record!", was: "was", trophy: "Best of the contest", tap: "tap to continue", over: "Contest over", free: "free play", record_: "record",
       boards: { sq: "checkerboard 9 × 9", hex: "honeycomb", tri: "triangle field", sq20: "big board 20 × 20", hex6: "big hexagon", tri10: "big triangle" } },
-    de: { first: "Erster Zaun!", record: "Neuer Rekord!", was: "vorher", trophy: "Bestwert des Wettbewerbs", tap: "tippen zum Weitermachen", over: "Wettbewerb beendet", record_: "Rekord",
+    de: { first: "Erster Zaun!", record: "Neuer Rekord!", was: "vorher", trophy: "Bestwert des Wettbewerbs", tap: "tippen zum Weitermachen", over: "Wettbewerb beendet", free: "freies Spiel", record_: "Rekord",
       boards: { sq: "Schachbrett 9 × 9", hex: "Bienenwabe", tri: "Dreiecksfeld", sq20: "großes Brett 20 × 20", hex6: "großes Sechseck", tri10: "großes Dreieck" } },
   }[LANG];
   const held = {};   // the boards on which this phone holds the best record so far (the server's last word)
@@ -60,7 +62,7 @@
     if (badge.classList.contains("upd")) return;
     const n = board ? best[board] : Math.max(0, ...Object.values(best));
     const cup = (board ? held[board] : Object.values(held).some(Boolean)) ? " 🏆" : "";
-    badge.innerHTML = "🏁 " + ctx.name.replace(/[<>&]/g, "") + (over() ? " · " + TXT.over : n ? " · " + TXT.record_ + " <b>" + n + "</b>" + cup : " · concours");
+    badge.innerHTML = "🏁 " + ctx.name.replace(/[<>&]/g, "") + (over() ? " · " + TXT.free + (n ? " · " + TXT.record_ + " <b>" + n + "</b>" : "") : n ? " · " + TXT.record_ + " <b>" + n + "</b>" + cup : " · concours");
   };
   show(LAB);
 
@@ -216,19 +218,21 @@
     badge.onclick = (ev) => { ev.preventDefault(); location.reload(); };
   });
 
+  const lastFree = {};   // free play: the last area sent for each board, so that a verdict repeated for the same fence is sent once
   window.FenceContest = {
     placeOf,
     note(board, area) {
-      if (over() || !(area > (best[board] || 0))) return;
-      const was = best[board] || 0;
-      best[board] = area;
-      write(BEST, best);
+      const free = over();
+      if (free) { if (area === lastFree[board]) return; lastFree[board] = area; }   // after the end every new closed fence is sent (the server keeps it apart from the ranking)
+      else if (!(area > (best[board] || 0))) return;                                  // during the contest only a new personal best is
+      const was = best[board] || 0, personal = area > was;
+      if (personal) { best[board] = area; write(BEST, best); }
       const q = read(QUEUE, []).filter((r) => !(r.workshop === ctx.workshop && r.board === board));
       q.push({ workshop: ctx.workshop, board, area });
       write(QUEUE, q);
       show(board);
       badge.classList.remove("pop"); void badge.offsetWidth; badge.classList.add("pop");
-      party(board, area, was);
+      if (personal) party(board, area, was);
       try { frame.contentWindow.postMessage("fc-contest-sync", location.origin); } catch (e) {}
     },
   };

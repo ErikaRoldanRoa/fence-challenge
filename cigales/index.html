@@ -108,6 +108,11 @@ body.is-cirm main{max-width:560px;margin:0 auto;padding:0}
 .cirm-one .r{text-align:right}
 .cirm-one .cr{display:flex;justify-content:space-between;gap:10px;margin-top:12px;font-size:12px;line-height:1.55;color:var(--text);font-weight:600}
 .cirm-one .web{display:block;margin-top:8px;font-size:12px;font-weight:800;color:#7ff2ff;text-decoration:none}
+.cirm-one .fb{margin:10px 0 0;padding:10px 14px;font-size:15px}
+.cirm-one .fb small{font-size:12px}
+.cirm-one .overnote{margin:0 0 10px;font-size:13px;line-height:1.35;color:var(--muted)}
+.cirm-one .overnote b{color:var(--text)}
+@media (max-height:700px){.cirm-one .fb small{display:none}}
 </style>
 </head>
 <body>
@@ -139,7 +144,7 @@ body.is-cirm main{max-width:560px;margin:0 auto;padding:0}
  <div class="credit"><div class="me">Dr. Erika Roldán Roa</div>avec <b>Begoña Cuquejo</b> · La Performative, Genève
   <a class="web" href="https://erikaroldan.net">Découvrez mon travail : erikaroldan.net →</a></div>
 </main>
-<script src="teams.js?v=20261021a"></script>
+<script src="teams.js?v=20261021b"></script>
 <script>
 const C = window.CIGALES, KEY = C.group === 'cirm' ? 'cirm-team' : 'cigales-team', DEV = 'cigales-device';
 document.querySelector('.hcap .kicker').textContent = C.kicker;
@@ -247,18 +252,24 @@ if (C.group === 'cirm') {   // the CIRM special: one screen, no scrolling, no te
 if (C.group === 'cirm') {
   box.style.display = 'none'; me.style.display = 'none';
 }
-// From the moment the contest offers its questionnaire (teams.js), a link to it under the contest. The public group is never offered it.
-if (C.feedbackOpen()) document.getElementById('soon').insertAdjacentHTML('afterend', '<a class="fb" id="fb" href="' + C.feedbackUrl() + '">💬 Donne ton avis sur le concours<small>cinq questions, une minute, anonyme</small></a>');
-// Thursday 19:30: the contest is over, the server takes no more records; the page says so and plays no more.
+// From the moment the contest offers its questionnaire (teams.js), a link to it under the contest, for everyone who plays (the Cigales and the public group).
+// The public group's one-card page has no « soon » line: there the link goes under the form.
+if (C.feedbackOpen()) {
+  const link = '<a class="fb" id="fb" href="' + C.feedbackUrl() + '">💬 Donne ton avis sur le concours<small>cinq questions, une minute, anonyme</small></a>';
+  const soon = document.getElementById('soon');
+  if (soon) soon.insertAdjacentHTML('afterend', link); else who.insertAdjacentHTML('afterend', link);
+}
+// Thursday 19:30: the contest is over and the prizes are frozen (the server keeps the ranking as it was, the teams are closed), but the phone goes on playing:
+// free play, kept by the server apart from the ranking. The page says so, and says that the play is still recorded.
 if (C.over()) {
   const op = document.querySelector('.opens');
-  if (op) op.innerHTML = '🏁 <b>Le concours est terminé</b> : merci d’avoir joué ! Les résultats sont sur l’écran.';
-  who.querySelectorAll('button, input').forEach(b => { b.disabled = true; b.setAttribute('aria-disabled', 'true'); });
-  box.style.pointerEvents = 'none';
+  if (op) op.innerHTML = '🏁 <b>Le concours est terminé</b> : merci d’avoir joué ! Les résultats sont sur l’écran.<br>Tu peux continuer à jouer en jeu libre : ça ne compte plus pour les prix, mais ton pseudo et ce que tu joues sont encore enregistrés.';
+  else who.insertAdjacentHTML('beforebegin', '<p class="overnote">🏁 <b>Le concours est terminé</b>, merci d’avoir joué ! Tu peux continuer en jeu libre : ça ne compte plus pour les prix, mais ton pseudo et ce que tu joues sont encore enregistrés.</p>');
+  box.style.pointerEvents = 'none'; box.style.opacity = '.45';   // the teams are closed
+  if (!mine) me.style.display = 'none';                           // no team to show, and none to choose any more
 }
 who.addEventListener('submit', e => {
   e.preventDefault();
-  if (C.over()) return;
   const name = pseudo.value.replace(/[<>"'`\\]/g, '').replace(/\s+/g, ' ').trim().slice(0, 20);
   if (!name) { who.classList.remove('need'); void who.offsetWidth; who.classList.add('need'); pseudo.focus(); return; }
   try {

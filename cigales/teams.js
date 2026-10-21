@@ -6,12 +6,12 @@ window.CIGALES = {
   teams: [["f", "Pentomino F", "#ff4fd8", "[[1, 0], [2, 0], [0, 1], [1, 1], [1, 2]]", "F"], ["i", "Pentomino I", "#7ff2ff", "[[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]]", "I"], ["l", "Pentomino L", "#6dff7a", "[[0, 0], [0, 1], [0, 2], [0, 3], [1, 3]]", "L"], ["n", "Pentomino N", "#ffd24a", "[[1, 0], [1, 1], [1, 2], [0, 2], [0, 3]]", "N"], ["p", "Pentomino P", "#ff8a3d", "[[0, 0], [1, 0], [0, 1], [1, 1], [0, 2]]", "P"], ["t", "Pentomino T", "#a78bfa", "[[0, 0], [1, 0], [2, 0], [1, 1], [1, 2]]", "T"], ["u", "Pentomino U", "#3fb4ff", "[[0, 0], [2, 0], [0, 1], [1, 1], [2, 1]]", "U"], ["v", "Pentomino V", "#ff6b6b", "[[0, 0], [0, 1], [0, 2], [1, 2], [2, 2]]", "V"], ["w", "Pentomino W", "#2fd6c4", "[[0, 0], [0, 1], [1, 1], [1, 2], [2, 2]]", "W"], ["x", "Pentomino X", "#f472b6", "[[1, 0], [0, 1], [1, 1], [2, 1], [1, 2]]", "X"], ["y", "Pentomino Y", "#c3f53c", "[[1, 0], [0, 1], [1, 1], [1, 2], [1, 3]]", "Y"], ["z", "Pentomino Z", "#fb923c", "[[0, 0], [1, 0], [1, 1], [1, 2], [2, 2]]", "Z"]],
   facts: {},
   max: 5,                       // a pentomino has five squares: five phones a team, one square each
-  ends: Date.parse('2026-10-22T19:30:00+02:00'),   // the contest ends on Thursday at 19:30, Zurich time (Erika, 20.10); the server refuses records from then on
+  ends: Date.parse('2026-10-22T19:30:00+02:00'),   // the contest ends on Thursday at 19:30, Zurich time (Erika, 20.10); from then on the prizes are frozen and the phones go on as free play
   over() { return Date.now() >= this.ends; },
   // The questionnaire of the contest (retours/, the adapted LES): its event id, and the moment from which these pages offer it: the workshop day, Thursday morning.
-  // Set `from` earlier or later here; nothing else changes. The public group (cirm) is never offered it.
+  // Set `from` earlier or later here; nothing else changes. Everyone who plays is offered it, the Cigales and the public group.
   feedback: { event: '2026-10-22-cirm-cigales-enchivas', from: Date.parse('2026-10-22T08:00:00+02:00') },
-  feedbackOpen() { return this.group !== 'cirm' && Date.now() >= this.feedback.from; },
+  feedbackOpen() { return Date.now() >= this.feedback.from; },
   feedbackUrl() { return new URL('../retours/?e=' + this.feedback.event, location.href).href; },
   // The team's pentomino; LIT squares (one per phone, in order) are filled and smile, the others wait as an outline.
   // LIT left out: every square lit (the phone's own pentomino, the download).

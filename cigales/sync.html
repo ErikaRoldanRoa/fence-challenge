@@ -30,7 +30,8 @@
         }
         if (closed) { try { localStorage.setItem('fc-contest-queue', JSON.stringify(read('fc-contest-queue', []).filter(x => x.workshop !== r.workshop))); } catch (e) {} break; }
         if (ok) {
-          const q = read('fc-contest-queue', []).filter(x => !(x.workshop === r.workshop && x.board === r.board && x.area <= r.area));
+          // Only the entry just sent leaves the queue: during the contest a board's areas only grow, in free play (after 19:30) they go up and down and a lower fence queued meanwhile is still to be sent.
+          const q = read('fc-contest-queue', []).filter(x => !(x.workshop === r.workshop && x.board === r.board && x.area === r.area));
           try { localStorage.setItem('fc-contest-queue', JSON.stringify(q)); } catch (e) {}
         }
       }

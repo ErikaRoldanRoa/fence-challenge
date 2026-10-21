@@ -5,8 +5,9 @@ Usage: python3 test/contest_check.py <base-url> [outdir]      (the base address 
 The network is faked: the contest's API is answered by this script (what the server says about a record: where the phone stands on
 its board), so every state is reached on purpose. The phone is a context whose localStorage holds a contest ticket, as the contest
 page leaves it. Checked: the party (a first fence, a record, nothing for a lower one, nothing when the phone asks for less motion),
-the trophy (only for a record that leads; its tap, its badge), the end of the contest (the server's answer and the clock: nothing
-is sent, nothing is celebrated, the pages say so), the three languages, the hub and the big boards.
+the trophy (only for a record that leads; its tap, its badge), the end of the contest (the clock: from 19:30 the prizes are frozen and
+the phone goes on as free play: every new closed fence is sent, no trophy, the badge and the pages say so; an older server's « closed »
+is still understood), the three languages, the hub and the big boards.
 """
 import json, os, sys, time
 from playwright.sync_api import sync_playwright
@@ -124,7 +125,7 @@ with sync_playwright() as p:
     check(not errors, f"no console error {errors[:2]}")
     ctx.close()
 
-    # ---- the end: the server says closed, nothing more is sent ----
+    # ---- a server that says closed (the one before free play): nothing more is sent ----
     ctx, pg, posts, answer, errors = phone(browser, "fr")
     answer["fn"] = lambda b: {"status": "closed", "closes": "2026-10-22T19:30:00+02:00"}
     lab(pg)
@@ -138,15 +139,49 @@ with sync_playwright() as p:
     check(len(posts) == n + 1 or len(posts) == n, f"at most one more try, then nothing: {len(posts)} posts")
     ctx.close()
 
-    # ---- the end by the clock: the pages say so, nothing is celebrated ----
+    # ---- the end by the clock: the prizes are frozen, the phone goes on playing (free play) ----
     ctx, pg, posts, answer, errors = phone(browser, "fr", now="2026-10-22T19:31:00+02:00")
+    answer["fn"] = lambda b: {"status": "ok", "free": True, "board": b["board"], "best": b["area"], "record": False, "closes": "2026-10-22T19:30:00+02:00"}   # what the server answers after the end: no rank
     lab(pg)
     pg.evaluate("FenceContest.note('sq20', 70)")
+    pg.wait_for_timeout(1200)
+    check(len(posts) == 1 and (posts[0]["board"], posts[0]["area"], posts[0]["name"]) == ("sq20", 70, "Testeuse"), f"after 19:30 a closed fence is still sent, with the pseudonym: {posts}")
+    check(pg.locator(".fc-trophy").count() == 0, "the server says no rank: no trophy")
+    check("jeu libre" in pg.inner_text(".fc-contest") and "70" in pg.inner_text(".fc-contest") and "Concours terminé" not in pg.inner_text(".fc-contest"), f"the badge says free play and the personal best: {pg.inner_text('.fc-contest')!r}")
+    check(pg.locator(".fc-party[data-kind=first]").count() == 1, "a personal best is still a party")
+    gone(pg, ".fc-party", 4500)
+    pg.evaluate("FenceContest.note('sq20', 60)")
+    pg.wait_for_timeout(1200)
+    check(len(posts) == 2 and posts[1]["area"] == 60 and pg.locator(".fc-party").count() == 0, f"a lower fence is sent too, as play, and is no party: {[(b['board'], b['area']) for b in posts]}")
+    pg.evaluate("FenceContest.note('sq20', 60)")
     pg.wait_for_timeout(800)
-    check(pg.locator(".fc-party").count() == 0 and len(posts) == 0, "after 19:30 nothing is celebrated and nothing is sent")
-    check("Concours terminé" in pg.inner_text(".fc-contest"), f"the badge says the contest is over: {pg.inner_text('.fc-contest')!r}")
+    check(len(posts) == 2, "the same fence again is sent once")
+    pg.evaluate("FenceContest.note('sq20', 70)")
+    pg.wait_for_timeout(1200)
+    check(len(posts) == 3 and posts[2]["area"] == 70 and pg.locator(".fc-party").count() == 0, "a fence equal to the best is play, not a party")
+    check(pg.evaluate("JSON.parse(localStorage.getItem('fc-contest-queue') || '[]').length") == 0, "and nothing is left in the queue")
+    check(not errors, f"no console error {errors[:2]}")
+    for path, who in (("cigales/index.html", "the Cigales' contest page"), ("cigales/index.html?g=cirm", "the public group's contest page")):
+        pg.goto(BASE + path, wait_until="networkidle")
+        op = pg.inner_text(".overnote" if "cirm" in path else ".opens")
+        check("terminé" in op and "jeu libre" in op and "enregistrés" in op, f"{who} says the contest is over, that free play goes on and that it is recorded: {op!r}")
+        check(pg.locator("#who button:not([disabled])").count() >= (1 if "cirm" in path else 3) and not pg.is_disabled("#pseudo"), f"{who} lets the phone go on playing")
     pg.goto(BASE + "cigales/index.html", wait_until="networkidle")
-    check("terminé" in pg.inner_text(".opens") and pg.locator("#who button:not([disabled])").count() == 0 and pg.is_disabled("#pseudo"), f"the contest page says it is over and plays no more: {pg.inner_text('.opens')!r}")
+    check(pg.evaluate("getComputedStyle(document.getElementById('teams')).pointerEvents") == "none", "the teams stay closed")
+    # a phone that comes to the contest page for the first time after the end: its pseudonym opens the game as before (a fresh phone, so no ticket is put back on each page)
+    ctx2 = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, locale="fr-FR")
+    ctx2.route("https://script.google.com/**", lambda route: route.fulfill(status=200, headers={"access-control-allow-origin": "*", "content-type": "application/json"}, body=json.dumps({"status": "ok", "teams": {}})))
+    pg2 = ctx2.new_page()
+    pg2.clock.set_fixed_time("2026-10-22T19:31:00+02:00")
+    pg2.goto(BASE + "cigales/index.html", wait_until="networkidle")
+    pg2.fill("#pseudo", "Libre")
+    with pg2.expect_navigation():
+        pg2.locator("#who button:not([disabled])").first.click()
+    tk = pg2.evaluate("JSON.parse(localStorage.getItem('fc-contest') || 'null')")
+    check(tk and tk["name"] == "Libre" and tk["workshop"] == "cigales-2026" and "index.html" in pg2.url, f"a new pseudonym after the end opens the game as before: {pg2.url} {tk and tk['name']}")
+    pg2.wait_for_function("window.FenceContest && typeof FenceContest.note === 'function'")
+    check("jeu libre" in pg2.inner_text(".fc-contest"), f"and the game wears the free-play badge: {pg2.inner_text('.fc-contest')!r}")
+    ctx2.close()
     pg.goto(BASE + "cigales/ecran.html", wait_until="networkidle")
     pg.wait_for_timeout(500)
     check("terminé" in pg.inner_text("#opens") and pg.evaluate("document.body.classList.contains('over') && document.body.classList.contains('ranking')"), f"the screen keeps the final rankings: {pg.inner_text('#opens')!r}")

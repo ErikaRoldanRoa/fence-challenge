@@ -5,7 +5,8 @@ Usage: python3 test/feedback_check.py <base-url>      (the base address serves t
 The clock and the network are faked, so every moment is reached on purpose. The contest offers its questionnaire (teams.js, `feedback.from`) from Thursday 22.10.2026 at 08:00,
 Zurich time, and the contest ends the same day at 19:30. Checked: before 08:00 no page offers it; from 08:00 the phone page has a link and the big screen a QR code beside the way
 in; after 19:30 the way in is replaced by the questionnaire's QR code on the screen and on the results sheet (nobody plays any more); every QR code decodes to the address of the
-page with the contest's event id; the link leads to the questionnaire in the words of a contest; the public group (?g=cirm) is never offered it; a second call adds nothing."""
+page with the contest's event id; the link leads to the questionnaire in the words of a contest; everyone who plays is offered it, the Cigales and the public group
+(?g=cirm), at the same moments; a second call adds nothing."""
 import json, sys
 
 import cv2
@@ -69,8 +70,8 @@ with sync_playwright() as p:
     browser = p.chromium.launch()
 
     # ---- before Thursday 08:00: nobody is offered it ----
-    for path, sel in (("cigales/", "#fb"), ("cigales/ecran.html", "#fbqr"), ("cigales/resultats.html", "#fbqr")):
-        ctx, pg, errs = open_page(browser, path, BEFORE, size=(390, 844) if path == "cigales/" else (1588, 1123))
+    for path, sel in (("cigales/", "#fb"), ("cigales/?g=cirm", "#fb"), ("cigales/ecran.html", "#fbqr"), ("cigales/ecran.html?g=cirm", "#fbqr"), ("cigales/resultats.html", "#fbqr")):
+        ctx, pg, errs = open_page(browser, path, BEFORE, size=(390, 844) if path.startswith("cigales/") and "ecran" not in path and "resultats" not in path else (1588, 1123))
         check(pg.locator(sel).count() == 0, f"before Thursday morning {path}: nothing offered")
         check(not errs, f"no console error {errs[:2]}")
         ctx.close()
@@ -98,6 +99,21 @@ with sync_playwright() as p:
     check(not errs, f"no console error {errs[:2]}")
     ctx.close()
 
+    # the public group (everyone else at the CIRM) is offered it the same way: the link on its phone page, the QR code on its screen
+    ctx, pg, errs = open_page(browser, "cigales/?g=cirm", OPEN, size=(390, 844))
+    link = pg.locator("#fb")
+    check(link.count() == 1 and link.get_attribute("href") == URL and "Donne ton avis" in link.inner_text() and "concours" in link.inner_text(), f"the public group's phone page links to the questionnaire too: {link.get_attribute('href') if link.count() else None}")
+    check(pg.locator("#who button:not([disabled])").count() > 0, "and its contest still plays")
+    check(pg.evaluate("document.documentElement.scrollHeight <= innerHeight + 1"), "on one screen, without scrolling, as before")
+    pg.screenshot(path="/tmp/feedback-check-cirm-open.png")
+    check(not errs, f"no console error {errs[:2]}")
+    ctx.close()
+    ctx, pg, errs = open_page(browser, "cigales/ecran.html?g=cirm", OPEN, size=(1920, 1080))
+    check(pg.locator("#fbqr").count() == 1 and pg.locator("footer .join:not(.fb)").is_visible(), "the public group's screen: the questionnaire's QR code beside the way in, which stays")
+    check(decode(pg, "#fbqr") == URL, f"whose QR code decodes to the page: {decode(pg, '#fbqr')!r}")
+    check(not errs, f"no console error {errs[:2]}")
+    ctx.close()
+
     ctx, pg, errs = open_page(browser, "cigales/resultats.html", OPEN)
     check(pg.locator("#fbqr").count() == 0 and pg.locator("footer .join").first.is_visible(), "the results sheet, the contest not over: it keeps its way in, no questionnaire yet")
     ctx.close()
@@ -117,12 +133,17 @@ with sync_playwright() as p:
     check(not errs, f"no console error {errs[:2]}")
     ctx.close()
 
-    # ---- the public group is never offered it ----
-    for path, sel in (("cigales/?g=cirm", "#fb"), ("cigales/ecran.html?g=cirm", "#fbqr")):
-        ctx, pg, errs = open_page(browser, path, FINAL, size=(1920, 1080) if "ecran" in path else (390, 844))
-        check(pg.locator(sel).count() == 0, f"the public group, {path}: never offered, even after the end")
-        check(not errs, f"no console error {errs[:2]}")
-        ctx.close()
+    # ---- the public group, after the end: offered the same way ----
+    ctx, pg, errs = open_page(browser, "cigales/?g=cirm", FINAL, size=(390, 844))
+    check(pg.locator("#fb").count() == 1 and pg.locator("#fb").get_attribute("href") == URL and "terminé" in pg.inner_text(".overnote") and "jeu libre" in pg.inner_text(".overnote"), "the public group's phone page, after the end: the contest is over, free play goes on, and the link to the questionnaire is there")
+    check(pg.evaluate("document.documentElement.scrollHeight <= innerHeight + 1"), "still on one screen, without scrolling")
+    pg.screenshot(path="/tmp/feedback-check-cirm-final.png")
+    check(not errs, f"no console error {errs[:2]}")
+    ctx.close()
+    ctx, pg, errs = open_page(browser, "cigales/ecran.html?g=cirm", FINAL, size=(1920, 1080))
+    check(pg.locator("#fbqr").count() == 1 and decode(pg, "#fbqr") == URL, f"the public group's screen, after the end: the questionnaire's QR code decodes to the page: {decode(pg, '#fbqr')!r}")
+    check(not errs, f"no console error {errs[:2]}")
+    ctx.close()
     browser.close()
 
 print(f"\nresults: {count - len(failures)}/{count} passed")
