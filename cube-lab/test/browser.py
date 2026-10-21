@@ -113,6 +113,7 @@ def run(browser, name, w, h, touch):
     tray = pg.locator("#tray").bounding_box()
     check(tray is not None and box["y"] + box["height"] <= tray["y"] + 1, "and it sits above the pieces")
     check(pg.inner_text(".wallsRow").strip() == "4", "the only writing is the number")
+    check(pg.locator(".modes #mode-tetra, .modes #mode-penta, .modes #mode-hexa, .modes #mode-hepta").count() == 4 and pg.locator("#mode-hexa").is_visible() and pg.locator("#mode-hepta").is_visible(), "four steps: 4, 5, 6 and 7 cubes a piece")
     if not touch:
         pg.hover("#walls .ctl.wall >> nth=0")
         pg.wait_for_timeout(700)
@@ -252,17 +253,17 @@ def run(browser, name, w, h, touch):
     pg.click("#mode-penta")
     check(pg.get_attribute("#print", "href") == "print/pentacubes.zip", "print: one zip for the step")
     names = wall_labels()
-    check(names == ["See the wall of the 29 pentacubes, each once", "See the wall of the 166 hexacubes, each once", "See the wall of the 1023 heptacubes, each once"], f"the pentacube step shows the three walls of the paper: {names}")
-    check(pg.locator("#walls .wallN").all_inner_texts() == ["5", "6", "7"], "each with the cube and the number of cubes of its pieces")
+    check(names == ["See the wall of the 29 pentacubes, each once"], f"the pentacube step shows the wall built with its pieces, and no other: {names}")
+    check(pg.locator("#walls .wallN").all_inner_texts() == ["5"], "with the cube and the number of cubes of its pieces")
     check(not any(v in " ".join(names).replace(" ", "").replace("\u202f", "") for v in ("52", "1331", "25872")), "no volume is told before a wall is opened")
     pg.locator("#walls .ctl.wall").nth(0).click()
-    pg.locator("#walls .ctl.wall").nth(1).click()
+    pg.locator("#walls .ctl.wall").nth(0).click()
     check(st()["busy"] and "moment" in pg.inner_text("#status").lower() or "instant" in pg.inner_text("#status").lower(), "a tap while the wall goes up is answered")
     pg.wait_for_function("!document.body.hasAttribute('data-busy')", timeout=60000)
     s = st()
     check(s["volume"] == 52 and len(s["pieces"]) == 29, "wall 1 opens whole")
     check(pg.locator("#walls .ctl.wall").nth(0).get_attribute("aria-pressed") == "true", "the opened wall shows chosen")
-    check(pg.locator("#walls .ctl.wall").count() == 3, "three walls")
+    check(pg.locator("#walls .ctl.wall").count() == 1, "one wall in the pentacube step")
     pg.click('[data-math="m.wallinfo"]')
     check("146" in pg.inner_text(".math-pop"), "wall 1 chip: best possible")
     check(pg.eval_on_selector_all(".math-pop .math-src .paper-ref", "els => els.map(e => e.textContent)") == ["§ 7.3 Pentacubes", "Fig. 30"], "wall 1 chip: the footer names the pentacube section and the figure of the wall")
@@ -433,10 +434,37 @@ def tetra_wall(browser):
     pg.keyboard.press("Escape")
     check(not pg.locator(".math-pop").count() or not pg.locator(".math-pop").is_visible(), "the card closes")
     pg.click("#mode-penta")
-    check(pg.locator("#walls .ctl.wall").count() == 3 and pg.locator("#walls .ctl.wall[aria-pressed='true']").count() == 0, "in the pentacube step: the three walls of the paper, none chosen")
+    check(pg.locator("#walls .ctl.wall").count() == 1 and pg.locator("#walls .ctl.wall[aria-pressed='true']").count() == 0 and "29 pentacubes" in pg.get_attribute("#walls .ctl.wall", "aria-label"), "in the pentacube step: its own wall, not chosen")
+    for step, label, pieces, volume in (("hexa", "166 hexacubes", 166, 1331), ("hepta", "1023 heptacubes", 1023, 25872)):
+        pg.click(f"#mode-{step}")
+        pg.wait_for_timeout(300)
+        check(pg.locator("#walls .ctl.wall").count() == 1 and label in pg.get_attribute("#walls .ctl.wall", "aria-label"), f"the {step} step shows the wall of the {label}, and no other")
+        check(not pg.locator(".trayZone").is_visible() and pg.locator("#tray .chip").count() == 0, f"the {step} step has no pieces to build with: nothing of another step is mixed in")
+        check(not pg.locator("#print").is_visible(), f"and no pieces to print")
+        pg.click("#walls .ctl.wall >> nth=0")
+        for _ in range(400):
+            s_ = pg.evaluate("cubeLab.state()")
+            if not s_["busy"] and len(s_["pieces"]) == pieces:
+                break
+            pg.wait_for_timeout(200)
+        s_ = pg.evaluate("cubeLab.state()")
+        check(len(s_["pieces"]) == pieces and s_["volume"] == volume and s_["mode"] == step, f"the {step} wall opens whole: {len(s_['pieces'])} pieces, volume {s_['volume']}")
+        check(pg.locator('.math-chip[data-math="m.wallinfo"]').is_visible() and not pg.locator('.math-chip[data-math="m.turn"]').is_visible(), f"the {step} step: the card of the wall, no mirror card")
+    # the wrap step needs pieces to build with: chosen from the heptacube step (its wall open), it moves to a step that has them
+    pg.click("#play-wrap")
+    pg.wait_for_timeout(500)
+    s_ = pg.evaluate("cubeLab.state()")
+    check(s_["mode"] in ("tetra", "penta") and pg.locator(".trayZone").is_visible() and pg.locator("#tray .chip").count() > 0 and not pg.locator(".wallsRow").is_visible(), f"wrap chosen from the heptacube step goes to a step with pieces ({s_['mode']}), no wall on the screen")
+    pg.click("#play-explore")
+    pg.wait_for_timeout(500)
+    s_ = pg.evaluate("cubeLab.state()")
+    check(s_["play"] == "explore" and s_["mode"] in ("tetra", "penta") and pg.locator(".wallsRow").is_visible() and len(s_["pieces"]) == 0 and pg.locator("#walls .ctl.wall[aria-pressed='true']").count() == 0, f"back to exploring: on a step with pieces ({s_['mode']}), its own wall in the row and not open, no wall of another step on the board")
+    pg.click("#mode-penta")
+    pg.wait_for_timeout(300)
+    check(pg.locator(".trayZone").is_visible() and pg.locator("#tray .chip").count() == 29, "back in the pentacube step: its 29 pieces")
     pg.click("#play-wrap")
     pg.wait_for_timeout(300)
-    check(not pg.locator(".wallsRow").is_visible(), "in the wrap step the walls are not on the screen")
+    check(not pg.locator(".wallsRow").is_visible() and not pg.locator("#mode-hexa").is_visible() and not pg.locator("#mode-hepta").is_visible(), "in the wrap step the walls and the steps of the hexacubes and heptacubes are not on the screen")
     pg.click("#play-explore")
     pg.wait_for_timeout(300)
     check(pg.locator(".wallsRow").is_visible(), "back in the explore step they are")
@@ -449,7 +477,7 @@ def wall_links(browser):
     print("[wall links]")
     ctx = browser.new_context(viewport={"width": 1400, "height": 900}, bypass_csp=True)
     ctx.add_init_script("localStorage.setItem('fc-lang','en')")
-    for q, pieces, volume, step in (("?wall=1", 29, 52, "penta"), ("?wall=1331", 166, 1331, "penta"), ("?wall=hepta_greedy_25872", 1023, 25872, "penta"), ("?wall=3", 1023, 25872, "penta"), ("?wall=4", 8, 1, "tetra"), ("?wall=TETRA_V1", 8, 1, "tetra")):
+    for q, pieces, volume, step in (("?wall=1", 29, 52, "penta"), ("?wall=1331", 166, 1331, "hexa"), ("?wall=hepta_greedy_25872", 1023, 25872, "hepta"), ("?wall=3", 1023, 25872, "hepta"), ("?wall=4", 8, 1, "tetra"), ("?wall=TETRA_V1", 8, 1, "tetra")):
         pg = ctx.new_page()
         errs = []
         pg.on("pageerror", lambda e: errs.append(str(e)))
@@ -498,28 +526,6 @@ def faces_only(browser):
     ctx.close()
 
 
-
-
-def dimmed_tray(browser):
-    # A wall of other pieces dims the tray: its pieces stay hoverable and say why.
-    print("[dimmed tray]")
-    ctx = browser.new_context(viewport={"width": 1400, "height": 900}, bypass_csp=True)
-    pg = ctx.new_page()
-    pg.add_init_script("localStorage.setItem('fc-lang','en')")
-    pg.goto(URL)
-    pg.wait_for_function("window.cubeLab")
-    pg.click("#mode-penta")
-    pg.locator("#walls .ctl.wall").nth(2).click()
-    pg.wait_for_function("!document.body.hasAttribute('data-busy')", timeout=120000)
-    c = pg.locator("#tray .chip").nth(0)
-    check(c.get_attribute("aria-disabled") == "true" and "other pieces" in (c.get_attribute("data-lab-tip") or ""), "a dimmed piece says why")
-    box = c.bounding_box()
-    hit = pg.evaluate("([x, y]) => { const e = document.elementFromPoint(x, y); return !!(e && e.closest('.chip')); }", [box["x"] + box["width"] / 2, box["y"] + box["height"] / 2])
-    check(hit, "a dimmed piece can be hovered")
-    c.hover()
-    pg.wait_for_timeout(450)
-    check("other pieces" in (pg.evaluate("(document.querySelector('.lab-tip.on')||{}).textContent||''")), "its bubble shows the reason")
-    ctx.close()
 
 
 def tip_checks(browser, url, ready, items, home_sel, touch_sel, tag):
@@ -605,11 +611,10 @@ with sync_playwright() as p:
     run(b, "phone", 390, 844, True)
     faces_only(b)
     held_piece(b)
-    dimmed_tray(b)
     tetra_wall(b)
     wall_links(b)
     print("[tips]")
-    tip_checks(b, URL, "window.cubeLab", [("#mode-penta", "cu.mode.pentaTip"), ("#turn", "cu.turnTip"), ("#cast", "cu.castTip"), ("#play-wrap", "cu.play.wrap")],
+    tip_checks(b, URL, "window.cubeLab", [("#mode-penta", "cu.mode.pentaTip"), ("#mode-hexa", "cu.mode.hexaTip"), ("#turn", "cu.turnTip"), ("#cast", "cu.castTip"), ("#play-wrap", "cu.play.wrap")],
                ".lab-nav a[href='../hub/']", "#mode-penta", "cube")
     b.close()
 srv.shutdown()

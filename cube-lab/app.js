@@ -30,7 +30,9 @@
   var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   var CONN = /[?&]conn=6\b/.test(location.search) ? 6 : 26;
-  var MODES = { tetra: { n: 4, space: 9 }, penta: { n: 5, space: 12 } };
+  // The steps are the cubes of a piece. The first two are for building with the pieces of the tray; the others (hexacubes: 166 pieces, heptacubes: 1023) are for looking at their wall:
+  // there is no tray, so what is on the screen is always a wall built with the pieces that can be seen.
+  var MODES = { tetra: { n: 4, space: 9 }, penta: { n: 5, space: 12 }, hexa: { n: 6, space: 12, view: true }, hepta: { n: 7, space: 12, view: true } };
 
   // Piece hues skip the gold band, which belongs to the room.
   function hueOf(i, n) { return (80 + (i / n) * 315) % 360; }
@@ -40,7 +42,7 @@
   var boards = {}; // per step and way: { pieces: [{ shape, cells, hue }], hand, orient, sel, undo: [], space, room, opened }
   var shapes = {}; // per step: the n-cubes, each with its 24-orientation list
   Object.keys(MODES).forEach(function (m) {
-    var list = G.polycubes(MODES[m].n);
+    var list = MODES[m].view ? [] : G.polycubes(MODES[m].n);
     shapes[m] = list.map(function (cells, i) {
       return { index: i, cells: cells, canon: G.canon(cells), orients: G.orientations(cells), hue: hueOf(i, list.length) };
     });
@@ -516,7 +518,6 @@
     var b = board();
     opened = b.opened || null;
     document.body.toggleAttribute("data-opened", !!opened);
-    document.body.toggleAttribute("data-foreign", !!opened && opened.n !== MODES[mode].n);
   }
   function setSpace(s) {
     var b = board();
@@ -787,7 +788,7 @@
   function loadWall(w) {
     if (busy) { say("cu.s.busy"); return; }
     play = "explore";
-    mode = w.n === 4 ? "tetra" : "penta";
+    mode = Object.keys(MODES).filter(function (m) { return MODES[m].n === w.n; })[0];
     refresh(true);
     var b = board();
     remember();
@@ -911,7 +912,6 @@
     var d = document.body;
     if (d.hasAttribute("data-busy")) return "cu.dim.busy";
     if (d.hasAttribute("data-cast")) return "cu.dim.cast";
-    if (d.hasAttribute("data-foreign")) return "cu.dim.foreign";
     return null;
   }
   function syncTray() {
@@ -932,7 +932,7 @@
     }
   }
 
-  new MutationObserver(function () { syncTray(); }).observe(document.body, { attributes: true, attributeFilter: ["data-busy", "data-cast", "data-foreign"] });
+  new MutationObserver(function () { syncTray(); }).observe(document.body, { attributes: true, attributeFilter: ["data-busy", "data-cast"] });
 
   // Controls that need something chosen, or something to undo, wake up then.
   function syncControls() {
@@ -984,7 +984,7 @@
   }
 
   function renderWalls() {
-    var row = $("walls"), list = WALLS.filter(function (w) { return mode === "tetra" ? w.n === 4 : w.n >= 5; });
+    var row = $("walls"), list = WALLS.filter(function (w) { return w.n === MODES[mode].n; });
     // the same cube as on the buttons of the steps: the number is the cubes of a piece
     var cubeIcon = ($("mode-penta").querySelector("svg") || { outerHTML: "" }).outerHTML;
     row.parentNode.hidden = !list.length;
@@ -1008,6 +1008,7 @@
   // ---------- steps and ways ----------
   function setMode(m) {
     if (m === mode && cubes) return;
+    if (play === "wrap" && MODES[m].view) return;
     if (play === "wrap") {
       // In wrap, the step follows the room: back on a step, its board keeps
       // its room and pieces; the first visit starts on the step's first room.
@@ -1039,8 +1040,7 @@
     document.body.setAttribute("data-mode", mode);
     document.body.setAttribute("data-play", play);
     document.title = t("cu.docTitle." + mode);
-    $("mode-tetra").setAttribute("aria-pressed", mode === "tetra" ? "true" : "false");
-    $("mode-penta").setAttribute("aria-pressed", mode === "penta" ? "true" : "false");
+    Object.keys(MODES).forEach(function (m) { $("mode-" + m).setAttribute("aria-pressed", mode === m ? "true" : "false"); });
     $("play-explore").setAttribute("aria-pressed", play === "explore" ? "true" : "false");
     $("play-wrap").setAttribute("aria-pressed", play === "wrap" ? "true" : "false");
     var b = board();
@@ -1123,6 +1123,7 @@
   function syncPrint() {
     var a = $("print"), rooms = play === "wrap";
     var label = rooms ? "cu.printRooms" : "cu.print", tip = rooms ? "cu.printRoomsTip" : "cu.printTip";
+    a.hidden = !rooms && !!MODES[mode].view;
     a.setAttribute("href", rooms ? "print/rooms.zip" : mode === "tetra" ? "print/tetracubes.zip" : "print/pentacubes.zip");
     a.setAttribute("data-i18n-aria-label", label);
     a.setAttribute("data-i18n-title", tip);
@@ -1138,7 +1139,7 @@
     var show = {
       "m.room": true,
       "m.tetra": tetra && !wrap && foundTetra && paperRule,
-      "m.turn": !tetra && !wrap && !opened,
+      "m.turn": mode === "penta" && !wrap && !opened,
       "m.wall": !casting && (tetra || wrap),
       "m.cast": casting,
       "m.wallinfo": !wrap && !!opened,
@@ -1375,6 +1376,7 @@
     else if (k === "Escape") letGo();
     else if (k === "[" || k === "]") {
       var b = board(), n = shapes[mode].length, i = b.hand == null ? (k === "]" ? n - 1 : 0) : b.hand;
+      if (!n) return;
       for (var j = 0; j < n; j++) {
         i = (i + (k === "]" ? 1 : n - 1)) % n;
         if (!isPlaced(i)) { chooseHand(i); return; }
@@ -1386,6 +1388,8 @@
   function guard(fn) { return function () { if (busy) { say("cu.s.busy"); return; } fn.apply(null, arguments); }; }
   $("mode-tetra").addEventListener("click", guard(function () { setMode("tetra"); }));
   $("mode-penta").addEventListener("click", guard(function () { setMode("penta"); }));
+  $("mode-hexa").addEventListener("click", guard(function () { setMode("hexa"); }));
+  $("mode-hepta").addEventListener("click", guard(function () { setMode("hepta"); }));
   $("play-explore").addEventListener("click", guard(function () { setPlay("explore"); }));
   $("play-wrap").addEventListener("click", guard(function () { setPlay("wrap"); }));
   $("turn").addEventListener("click", guard(function () { turnBy("y"); }));

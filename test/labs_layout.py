@@ -102,11 +102,28 @@ CHECK = r"""
       if (r.right > vw + 0.5 || r.left < -0.5) issues.push('outside ' + name(el));
     }
   }
+  // What a scroll box shows is inside its border: a chip half scrolled out of a tray overlaps nothing beyond the tray.
+  const shown = (el) => {
+    const out = [];
+    for (const r of boxes(el)) {
+      let l = r.left, t = r.top, rt = r.right, bt = r.bottom;
+      for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+        const s = getComputedStyle(a);
+        if (/(auto|scroll)/.test(s.overflowX + s.overflowY)) {
+          const q = a.getBoundingClientRect();
+          l = Math.max(l, q.left + a.clientLeft); t = Math.max(t, q.top + a.clientTop);
+          rt = Math.min(rt, q.left + a.clientLeft + a.clientWidth); bt = Math.min(bt, q.top + a.clientTop + a.clientHeight);
+        }
+      }
+      if (rt - l > 0 && bt - t > 0) out.push({ left: l, top: t, right: rt, bottom: bt });
+    }
+    return out;
+  };
   const surface = (el) => el.tagName === 'CANVAS' || el.getAttribute('role') === 'img';
   for (let i = 0; i < ctrls.length; i++) for (let j = i + 1; j < ctrls.length; j++) {
     if (surface(ctrls[i]) || surface(ctrls[j])) continue;
     let hit = false;
-    for (const a of boxes(ctrls[i])) for (const b of boxes(ctrls[j])) {
+    for (const a of shown(ctrls[i])) for (const b of shown(ctrls[j])) {
       const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
       if (ox > 1 && oy > 1) hit = true;
     }

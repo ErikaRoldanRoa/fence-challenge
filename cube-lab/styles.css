@@ -157,7 +157,7 @@ body[data-busy] #space { cursor: progress; }
 }
 body[data-selected] .tray { display: none; }
 /* Dimmed, the pieces still answer a hover with the reason (and refuse a tap). */
-body[data-busy] .tray, body[data-cast] .tray, body[data-foreign] .tray { opacity: 0.35; }
+body[data-busy] .tray, body[data-cast] .tray { opacity: 0.35; }
 .chip[aria-disabled="true"] { cursor: not-allowed; }
 
 .chip {
@@ -200,6 +200,8 @@ body[data-selected]:not([data-cast]) .pad { display: flex; }
 body[data-play="wrap"] .roomsRow { display: flex; }
 .wallsRow { display: flex; }
 .wallsRow[hidden], body[data-play="wrap"] .wallsRow { display: none; }
+/* The steps of the hexacubes and heptacubes only show their wall: no pieces, and none of the wrap step. */
+body[data-mode="hexa"] .trayZone, body[data-mode="hepta"] .trayZone, body[data-play="wrap"] #mode-hexa, body[data-play="wrap"] #mode-hepta { display: none; }
 .walls { display: grid; grid-template-columns: repeat(3, 52px); gap: 8px; }
 .wallChips { display: flex; align-items: center; gap: 16px; padding-left: 8px; }
 .ctl.wall { --ring: rgba(0, 209, 255, 0.35); --fill: rgba(0, 209, 255, 0.05); width: 52px; height: 60px; border-radius: 12px; --ink: 1px; align-content: center; row-gap: 2px; }
