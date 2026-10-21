@@ -41,9 +41,9 @@ assert.deepStrictEqual([G.enclosed(diag, 6).volume, G.enclosed(diag, 6).regions]
 assert.deepStrictEqual(S.parse([[3, 3, 3], [0, 0, 0, "#AA0000"], [1, 0, 0, "#aa0000"], [2, 2, 2, "#AA0000"]]).pieces.length, 2);
 assert.deepStrictEqual(S.parse([[3, 3, 3], [7, 0, 0, 0], [7, 0, 1, 0], [9, 2, 2, 2]]).pieces, [[[0, 0, 0], [0, 1, 0]], [[2, 2, 2]]]);
 
-// The three walls of walls.js: right pieces, no overlap, and the
+// The four walls of walls.js (the three of the paper and the one of the tetracubes): right pieces, no overlap, and the
 // announced volume under both rules.
-const expect = { penta_v52: [5, 29, 52], hexa_v1331: [6, 166, 1331], hepta_greedy_25872: [7, 1023, 25872] };
+const expect = { penta_v52: [5, 29, 52], hexa_v1331: [6, 166, 1331], hepta_greedy_25872: [7, 1023, 25872], tetra_v1: [4, 8, 1] };
 assert.deepStrictEqual(WALLS.map((w) => w.id), Object.keys(expect));
 for (const w of WALLS) {
   const [n, count, vol] = expect[w.id];

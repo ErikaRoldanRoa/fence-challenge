@@ -198,10 +198,12 @@ body[data-selected]:not([data-cast]) .pad { display: flex; }
 /* Rooms to wrap (wrap) and the walls (pentacubes, explore). */
 .roomsRow, .wallsRow { display: none; align-items: center; gap: 8px; flex-wrap: wrap; }
 body[data-play="wrap"] .roomsRow { display: flex; }
-body[data-play="explore"][data-mode="penta"] .wallsRow { display: flex; }
-.walls { display: grid; grid-template-columns: repeat(3, 44px); gap: 8px; }
+.wallsRow { display: flex; }
+.wallsRow[hidden], body[data-play="wrap"] .wallsRow { display: none; }
+.walls { display: grid; grid-template-columns: repeat(3, 52px); gap: 8px; }
 .wallChips { display: flex; align-items: center; gap: 16px; padding-left: 8px; }
-.ctl.wall { --ring: rgba(0, 209, 255, 0.35); --fill: rgba(0, 209, 255, 0.05); width: 44px; height: 44px; border-radius: 12px; --ink: 1px; }
+.ctl.wall { --ring: rgba(0, 209, 255, 0.35); --fill: rgba(0, 209, 255, 0.05); width: 52px; height: 60px; border-radius: 12px; --ink: 1px; align-content: center; row-gap: 2px; }
+.ctl.wall .wallN { color: #bff4ff; }
 .ctl.wall::before { border-radius: 12px; }
 .ctl.wall img { width: 36px; height: 36px; display: block; }
 .ctl.wall[aria-pressed="true"] { --ring: var(--accent); --fill: rgba(0, 209, 255, 0.18); }
@@ -248,12 +250,11 @@ body[data-play="explore"][data-mode="penta"] .wallsRow { display: flex; }
 @media (max-width: 860px) {
   .lab {
     grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: 54px 44px 44px minmax(0, 1fr) 44px auto auto 52px;
-    grid-template-areas: "vol vol" "nav nav" "modes modes" "stage stage" "strip strip" "acts acts" "dock dock" "bar bar";
+    grid-template-rows: 54px 44px 44px 60px minmax(0, 1fr) 44px auto auto 52px;
+    grid-template-areas: "vol vol" "nav nav" "modes modes" "walls walls" "stage stage" "strip strip" "acts acts" "dock dock" "bar bar";
     gap: 8px;
     padding: 4px 10px max(6px, env(safe-area-inset-bottom));
   }
-  body[data-mode="penta"][data-play="explore"] .lab,
   body[data-play="wrap"] .lab {
     grid-template-rows: 54px 44px 44px minmax(0, 1fr) 44px auto auto auto 52px;
     grid-template-areas: "vol vol" "nav nav" "modes modes" "stage stage" "strip strip" "acts acts" "rows rows" "dock dock" "bar bar";
@@ -269,10 +270,11 @@ body[data-play="explore"][data-mode="penta"] .wallsRow { display: flex; }
   .volWrap .measure .area-num { font-size: clamp(22px, var(--area-num, 28px), 28px); }
   .acts { grid-area: acts; flex-wrap: nowrap; }
   .trayZone { grid-area: dock; }
-  .roomsRow, .wallsRow { grid-area: rows; }
+  .roomsRow { grid-area: rows; }
+  .wallsRow { grid-area: walls; }
   .rooms { flex-wrap: nowrap; }
   .roomDots { flex-basis: auto; }
-  .walls { grid-template-columns: repeat(6, 44px); }
+  .walls { grid-template-columns: repeat(3, 52px); }
   .tray {
     grid-template-columns: none;
     grid-auto-flow: column;

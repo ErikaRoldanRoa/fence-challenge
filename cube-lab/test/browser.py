@@ -102,6 +102,22 @@ def run(browser, name, w, h, touch):
                     return q
         raise AssertionError("no free floor cell in sight")
     check(st()["hand"] is None and st()["pieces"] == [], "starts empty, nothing in hand")
+    # the walls of the step are on the first screen, above the pieces: in the tetracube step the tetracubes' one, in the pentacube step the three of the paper; each a small picture of the wall
+    # with the cube and the number of cubes of its pieces; no sentence is written there, a bubble says what each one is
+    wall_labels = lambda: pg.eval_on_selector_all("#walls .ctl.wall", "els => els.map(e => e.getAttribute('aria-label'))")
+    check(st()["mode"] == "tetra" and pg.locator("#walls .ctl.wall").count() == 1 and pg.locator(".wallsRow").is_visible(), "the wall of the tetracubes is in view on the first screen")
+    check(wall_labels() == ["See the wall of the 8 tetracubes, each once"], f"it says what it is: {wall_labels()}")
+    check(pg.locator("#walls .wallN").all_inner_texts() == ["4"] and pg.locator("#walls .wallN svg").count() == 1 and pg.locator("#walls .ctl.wall img").count() == 1, "a picture of the wall, the cube and the number 4, as the step button has")
+    box = pg.locator(".wallsRow").bounding_box()
+    check(box is not None and box["y"] >= 0 and box["y"] + box["height"] <= pg.viewport_size["height"] and box["x"] >= 0 and box["x"] + box["width"] <= pg.viewport_size["width"], "the row is inside the window, nothing to scroll to")
+    tray = pg.locator("#tray").bounding_box()
+    check(tray is not None and box["y"] + box["height"] <= tray["y"] + 1, "and it sits above the pieces")
+    check(pg.inner_text(".wallsRow").strip() == "4", "the only writing is the number")
+    if not touch:
+        pg.hover("#walls .ctl.wall >> nth=0")
+        pg.wait_for_timeout(700)
+        check(pg.locator(".lab-tip").is_visible() and "8 tetracubes" in pg.inner_text(".lab-tip"), "on the mouse a bubble tells it")
+        pg.mouse.move(5, 500)
     check(pg.locator('[data-math="m.tetra"]').is_hidden(), "the tetracube math waits for a room found by hand")
     check(pg.get_attribute("#undo", "aria-disabled") == "true", "undo is off with nothing to undo")
     f0 = st()["frames"]
@@ -235,6 +251,10 @@ def run(browser, name, w, h, touch):
     # 9. the pentacubes: open a wall, its cast, the svg, the view from below
     pg.click("#mode-penta")
     check(pg.get_attribute("#print", "href") == "print/pentacubes.zip", "print: one zip for the step")
+    names = wall_labels()
+    check(names == ["See the wall of the 29 pentacubes, each once", "See the wall of the 166 hexacubes, each once", "See the wall of the 1023 heptacubes, each once"], f"the pentacube step shows the three walls of the paper: {names}")
+    check(pg.locator("#walls .wallN").all_inner_texts() == ["5", "6", "7"], "each with the cube and the number of cubes of its pieces")
+    check(not any(v in " ".join(names).replace(" ", "").replace("\u202f", "") for v in ("52", "1331", "25872")), "no volume is told before a wall is opened")
     pg.locator("#walls .ctl.wall").nth(0).click()
     pg.locator("#walls .ctl.wall").nth(1).click()
     check(st()["busy"] and "moment" in pg.inner_text("#status").lower() or "instant" in pg.inner_text("#status").lower(), "a tap while the wall goes up is answered")
@@ -387,6 +407,77 @@ def held_piece(browser):
     ctx.close()
 
 
+def tetra_wall(browser):
+    """The wall of the 8 tetracubes opens in the tetracube step, shows its card, and the walls leave the screen in the wrap step."""
+    print("[tetracube wall]")
+    ctx = browser.new_context(viewport={"width": 1400, "height": 900}, bypass_csp=True)
+    ctx.add_init_script("localStorage.setItem('fc-lang','en')")
+    pg = ctx.new_page()
+    errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(URL)
+    pg.wait_for_function("window.cubeLab")
+    pg.click("#walls .ctl.wall >> nth=0")
+    for _ in range(80):
+        s = pg.evaluate("cubeLab.state()")
+        if not s["busy"] and len(s["pieces"]) == 8:
+            break
+        pg.wait_for_timeout(150)
+    s = pg.evaluate("cubeLab.state()")
+    check(len(s["pieces"]) == 8 and s["volume"] == 1 and s["mode"] == "tetra", f"the wall of the tetracubes opens whole in the tetracube step ({len(s['pieces'])} pieces, volume {s['volume']}, {s['mode']})")
+    check(pg.locator("#walls .ctl.wall[aria-pressed='true']").count() == 1, "its button shows chosen")
+    check(pg.locator('.math-chip[data-math="m.wallinfo"]').is_visible(), "its card is on the screen")
+    pg.click('.math-chip[data-math="m.wallinfo"]')
+    pop = pg.inner_text(".math-pop")
+    check("8 pieces of 4 cubes" in pop and "Nothing does better" in pop and "34" in pop and "Our argument, not in the paper" in pop, "the card says what it is and that it is the lab's own argument")
+    pg.keyboard.press("Escape")
+    check(not pg.locator(".math-pop").count() or not pg.locator(".math-pop").is_visible(), "the card closes")
+    pg.click("#mode-penta")
+    check(pg.locator("#walls .ctl.wall").count() == 3 and pg.locator("#walls .ctl.wall[aria-pressed='true']").count() == 0, "in the pentacube step: the three walls of the paper, none chosen")
+    pg.click("#play-wrap")
+    pg.wait_for_timeout(300)
+    check(not pg.locator(".wallsRow").is_visible(), "in the wrap step the walls are not on the screen")
+    pg.click("#play-explore")
+    pg.wait_for_timeout(300)
+    check(pg.locator(".wallsRow").is_visible(), "back in the explore step they are")
+    check(not errs, f"no script error {errs[:1]}")
+    ctx.close()
+
+
+def wall_links(browser):
+    """?wall=1|2|3, a wall's id or the trailing number of its id opens that wall at once; anything else is ignored."""
+    print("[wall links]")
+    ctx = browser.new_context(viewport={"width": 1400, "height": 900}, bypass_csp=True)
+    ctx.add_init_script("localStorage.setItem('fc-lang','en')")
+    for q, pieces, volume, step in (("?wall=1", 29, 52, "penta"), ("?wall=1331", 166, 1331, "penta"), ("?wall=hepta_greedy_25872", 1023, 25872, "penta"), ("?wall=3", 1023, 25872, "penta"), ("?wall=4", 8, 1, "tetra"), ("?wall=TETRA_V1", 8, 1, "tetra")):
+        pg = ctx.new_page()
+        errs = []
+        pg.on("pageerror", lambda e: errs.append(str(e)))
+        pg.goto(URL + q)
+        pg.wait_for_function("window.cubeLab")
+        for _ in range(240):
+            s = pg.evaluate("cubeLab.state()")
+            if not s["busy"] and len(s["pieces"]) == pieces:
+                break
+            pg.wait_for_timeout(250)
+        s = pg.evaluate("cubeLab.state()")
+        check(len(s["pieces"]) == pieces and s["volume"] == volume and s["mode"] == step, f"{q} opens the wall of {pieces} pieces whole, in the {step} step ({len(s['pieces'])} pieces, volume {s['volume']}, {s['mode']})")
+        check(pg.locator("#walls .ctl.wall[aria-pressed='true']").count() == 1, f"{q}: its button shows chosen")
+        check(not errs, f"{q}: no script error {errs[:1]}")
+        pg.close()
+    for q in ("?wall=0", "?wall=5", "?wall=abc", "?wall=", "?wall=%E0%A4%A", "?wall=52x", "?wall=toString", "?wall=__proto__"):
+        pg = ctx.new_page()
+        errs = []
+        pg.on("pageerror", lambda e: errs.append(str(e)))
+        pg.goto(URL + q)
+        pg.wait_for_function("window.cubeLab")
+        pg.wait_for_timeout(600)
+        s = pg.evaluate("cubeLab.state()")
+        check(s["pieces"] == [] and s["mode"] == "tetra" and not errs, f"{q} opens nothing and breaks nothing {errs[:1]}")
+        pg.close()
+    ctx.close()
+
+
 def faces_only(browser):
     # ?conn=6: the chips speak of faces only and drop the corner arguments.
     print("[faces only]")
@@ -515,6 +606,8 @@ with sync_playwright() as p:
     faces_only(b)
     held_piece(b)
     dimmed_tray(b)
+    tetra_wall(b)
+    wall_links(b)
     print("[tips]")
     tip_checks(b, URL, "window.cubeLab", [("#mode-penta", "cu.mode.pentaTip"), ("#turn", "cu.turnTip"), ("#cast", "cu.castTip"), ("#play-wrap", "cu.play.wrap")],
                ".lab-nav a[href='../hub/']", "#mode-penta", "cube")

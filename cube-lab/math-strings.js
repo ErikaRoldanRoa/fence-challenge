@@ -47,6 +47,8 @@
     "m.wallinfo.paper.body": "{p} pièces de {n} cubes, {c} cubes en tout" + NB + "; elle enferme {v} cubes de vide.\nUne muraille de l’article.",
     "m.wallinfo.best.body": "29 pièces de 5 cubes, 145 cubes" + NB + "; elle enferme 52 cubes de vide.\nOn ne peut pas faire mieux" + NB + ": 53 cubes de vide ou plus demanderaient une muraille d’au moins 146 cubes, et il n’y en a que 145. Ici 144 cubes bordent exactement la poche et un seul cube dépasse" + NB + ": il faut les 29 pentacubes, tous.",
     "m.wallinfo.found.body": "{p} pièces de {n} cubes, {c} cubes en tout" + NB + "; elle enferme {v} cubes de vide.\nLa meilleure muraille trouvée à ce jour, sans preuve qu’on ne puisse pas faire mieux" + NB + ": aucune muraille de ces pièces ne peut enfermer plus de {ub} cubes de vide.",
+    "m.wallinfo.tetra.body": "{p} pièces de {n} cubes, {c} cubes en tout" + NB + "; elle enferme {v} cube de vide.\nOn ne peut pas faire mieux" + NB + ": deux cubes de vide demanderaient une muraille d’au moins 34 cubes, et les 8 tétracubes n’en font que 32.",
+    "m.wallinfo.plain.body": "{p} pièces de {n} cubes, {c} cubes en tout" + NB + "; elle enferme {v} cubes de vide.",
 
     "m.roominfo.aria": "Que faut-il pour emballer cette poche ?",
     "m.roominfo.title": "Que faut-il pour emballer cette poche ?",
@@ -97,6 +99,8 @@
     "m.wallinfo.paper.body": "{p} Teile aus {n} Würfeln, {c} Würfel insgesamt; sie schließt {v} leere Würfel ein.\nEine Mauer aus dem Artikel.",
     "m.wallinfo.best.body": "29 Teile aus 5 Würfeln, 145 Würfel; sie schließt 52 leere Würfel ein.\nBesser geht es nicht: 53 oder mehr leere Würfel bräuchten eine Mauer von mindestens 146 Würfeln, und es gibt nur 145. Hier säumen 144 Würfel genau den Hohlraum, und ein einziger Würfel ragt heraus: Alle 29 Pentakuben werden gebraucht.",
     "m.wallinfo.found.body": "{p} Teile aus {n} Würfeln, {c} Würfel insgesamt; sie schließt {v} leere Würfel ein.\nDie beste bisher gefundene Mauer, nicht als beste bewiesen: Keine Mauer aus diesen Teilen kann mehr als {ub} leere Würfel einschließen.",
+    "m.wallinfo.tetra.body": "{p} Teile aus {n} Würfeln, {c} Würfel insgesamt; sie schließt {v} leeren Würfel ein.\nBesser geht es nicht: Zwei leere Würfel bräuchten eine Mauer von mindestens 34 Würfeln, und die 8 Tetrakuben haben nur 32.",
+    "m.wallinfo.plain.body": "{p} Teile aus {n} Würfeln, {c} Würfel insgesamt; sie schließt {v} leere Würfel ein.",
 
     "m.roominfo.aria": "Was braucht man, um diesen Hohlraum einzuschließen?",
     "m.roominfo.title": "Was braucht man, um diesen Hohlraum einzuschließen?",
@@ -147,6 +151,8 @@
     "m.wallinfo.paper.body": "{p} pieces of {n} cubes, {c} cubes in all; it shuts in {v} cubes of emptiness.\nA wall of the paper.",
     "m.wallinfo.best.body": "29 pieces of 5 cubes, 145 cubes; it shuts in 52 cubes of emptiness.\nNothing does better: 53 or more cubes of emptiness would need a wall of at least 146 cubes, and there are only 145. Here 144 cubes line the pocket exactly and a single cube sticks out: all 29 pentacubes are needed.",
     "m.wallinfo.found.body": "{p} pieces of {n} cubes, {c} cubes in all; it shuts in {v} cubes of emptiness.\nThe best wall found so far, not proven best: no wall of these pieces can shut in more than {ub} cubes of emptiness.",
+    "m.wallinfo.tetra.body": "{p} pieces of {n} cubes, {c} cubes in all; it shuts in {v} cube of emptiness.\nNothing does better: two cubes of emptiness would need a wall of at least 34 cubes, and the 8 tetracubes make only 32.",
+    "m.wallinfo.plain.body": "{p} pieces of {n} cubes, {c} cubes in all; it shuts in {v} cubes of emptiness.",
 
     "m.roominfo.aria": "What does it take to wrap this room?",
     "m.roominfo.title": "What does it take to wrap this room?",

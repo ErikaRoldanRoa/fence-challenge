@@ -516,7 +516,7 @@
     var b = board();
     opened = b.opened || null;
     document.body.toggleAttribute("data-opened", !!opened);
-    document.body.toggleAttribute("data-foreign", !!opened && opened.n !== 5);
+    document.body.toggleAttribute("data-foreign", !!opened && opened.n !== MODES[mode].n);
   }
   function setSpace(s) {
     var b = board();
@@ -772,21 +772,33 @@
   }
 
   // ---------- the walls of walls.js ----------
+  // A link can open a wall at once: ?wall=1, 2, 3 (the walls of the paper, by the cubes of their pieces: 5, 6, 7) or 4 (the tetracubes'), the volume the wall of
+  // the paper shuts in (52, 1331, 25872), or the wall's id.
+  var WALL_LINKS = { "1": "penta_v52", "2": "hexa_v1331", "3": "hepta_greedy_25872", "4": "tetra_v1", "52": "penta_v52", "1331": "hexa_v1331", "25872": "hepta_greedy_25872" };
+  function wallFromLink() {
+    var m = /[?&]wall=([^&#]*)/.exec(location.search), q, id, k;
+    if (!m) return null;
+    try { q = decodeURIComponent(m[1]).trim().toLowerCase().replace(/\s+/g, ""); } catch (e) { return null; }
+    id = Object.prototype.hasOwnProperty.call(WALL_LINKS, q) ? WALL_LINKS[q] : q;
+    for (k = 0; k < WALLS.length; k++) if (WALLS[k].id.toLowerCase() === id) return WALLS[k];
+    return null;
+  }
+
   function loadWall(w) {
     if (busy) { say("cu.s.busy"); return; }
     play = "explore";
-    mode = "penta";
+    mode = w.n === 4 ? "tetra" : "penta";
     refresh(true);
     var b = board();
     remember();
     var size = 0, height = 0;
     w.pieces.forEach(function (p) { p.forEach(function (c) { size = Math.max(size, c[0] + 1, c[2] + 1); height = Math.max(height, c[1] + 1); }); });
     var margin = 2;
-    b.space = Math.max(MODES.penta.space, Math.max(size, height) + 2 * margin);
+    b.space = Math.max(MODES[mode].space, Math.max(size, height) + 2 * margin);
     var byCanon = {};
-    shapes.penta.forEach(function (s) { byCanon[s.canon] = s.index; });
+    shapes[mode].forEach(function (s) { byCanon[s.canon] = s.index; });
     var pieces = w.pieces.map(function (p, i) {
-      var k = w.n === 5 ? byCanon[G.canon(p)] : undefined;
+      var k = w.n === MODES[mode].n ? byCanon[G.canon(p)] : undefined;
       return { shape: k == null ? -1 : k, cells: p.map(function (c) { return [c[0] + margin, c[1], c[2] + margin]; }), hue: k == null ? hueOf((i * 0.618034) % 1, 1) : null };
     });
     // Bottom first, so the lid lands last and the room lights at the end.
@@ -972,19 +984,22 @@
   }
 
   function renderWalls() {
-    var row = $("walls");
+    var row = $("walls"), list = WALLS.filter(function (w) { return mode === "tetra" ? w.n === 4 : w.n >= 5; });
+    // the same cube as on the buttons of the steps: the number is the cubes of a piece
+    var cubeIcon = ($("mode-penta").querySelector("svg") || { outerHTML: "" }).outerHTML;
+    row.parentNode.hidden = !list.length;
     row.innerHTML = "";
-    WALLS.forEach(function (w, i) {
+    list.forEach(function (w, i) {
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "ctl wall";
       var on = opened === w;
       btn.setAttribute("aria-pressed", on ? "true" : "false");
       btn.classList.toggle("loading", on && busy);
-      var name = t("cu.wall", { k: i + 1, p: w.pieces.length, n: w.n });
+      var name = t("cu.wall." + w.n, { p: w.pieces.length });
       btn.setAttribute("aria-label", name);
       btn.title = name;
-      btn.innerHTML = '<img alt="" src="' + thumb(w) + '">';
+      btn.innerHTML = '<img alt="" src="' + thumb(w) + '"><span class="modeIcon wallN" aria-hidden="true">' + cubeIcon + '<b>' + w.n + '</b></span>';
       btn.addEventListener("click", function () { loadWall(w); });
       row.appendChild(btn);
     });
@@ -1126,7 +1141,7 @@
       "m.turn": !tetra && !wrap && !opened,
       "m.wall": !casting && (tetra || wrap),
       "m.cast": casting,
-      "m.wallinfo": !tetra && !wrap && !!opened,
+      "m.wallinfo": !wrap && !!opened,
       "m.bound": !tetra && !wrap && pentaWall && paperRule,
       "m.cover": !tetra && !wrap && pentaWall && paperRule,
       "m.roominfo": wrap && !!b.room
@@ -1152,8 +1167,10 @@
       // Upper bounds of the paper under the corner rule: 1633 (hexacubes), 37446 (heptacubes).
       var ub = { 6: 1633, 7: 37446 }[opened.n], best = opened.id === "penta_v52" && paperRule;
       c.setAttribute("data-math-vars", JSON.stringify({ k: WALLS.indexOf(opened) + 1, p: opened.pieces.length, n: opened.n, c: cubesN, v: G.enclosed([].concat.apply([], opened.pieces), CONN).volume, ub: ub }));
-      c.setAttribute("data-math-body", best ? "m.wallinfo.best.body" : ub && paperRule ? "m.wallinfo.found.body" : "m.wallinfo.paper.body");
-      c.setAttribute("data-paper-label", best ? "sec:pentacubes fig:52" : ub && paperRule ? "sec:hexacubes" : "sec:3d");
+      var tetraWall = opened.n === 4;
+      c.setAttribute("data-math-body", tetraWall ? (paperRule ? "m.wallinfo.tetra.body" : "m.wallinfo.plain.body") : best ? "m.wallinfo.best.body" : ub && paperRule ? "m.wallinfo.found.body" : "m.wallinfo.paper.body");
+      c.setAttribute("data-paper-label", tetraWall ? "" : best ? "sec:pentacubes fig:52" : ub && paperRule ? "sec:hexacubes" : "sec:3d");
+      if (tetraWall) c.setAttribute("data-math-src", "m.ours");
       if (best) { chip("m.cast").setAttribute("data-math-body", "m.cast52.body"); chip("m.cast").setAttribute("data-paper-label", "sec:pentacubes"); }
     }
     if (b.room) {
@@ -1591,4 +1608,6 @@
   resize();
   say("cu.s.start");
   requestAnimationFrame(loop);
+  var linkedWall = wallFromLink();
+  if (linkedWall) loadWall(linkedWall);
 })();
