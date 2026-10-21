@@ -34,8 +34,10 @@ The labs, one per result:
   walls found so far for hexacubes (1331) and heptacubes (25872) show how
   far larger pieces go.
   Build walls freely or wrap a given room, cut them open, spread them apart,
-  and lift the wall away to hold the room alone. Printable pieces:
-  [cube-lab/print/](cube-lab/print/).
+  and lift the wall away to hold the room alone. Each step (4 to 7 cubes in a
+  piece) shows its own wall under the step buttons, and `cube-lab/?wall=52`
+  opens the wall of 52 at once (`?wall=1331` and `?wall=25872` the other two).
+  Printable pieces: [cube-lab/print/](cube-lab/print/).
 - **Hexomino lab** ([hexomino-lab/](hexomino-lab/)): the largest fence the
   35 hexominoes can build encloses 1597 cells. Build your own, reveal the
   optimal one, and switch to its arrow view, where each piece becomes one

@@ -632,7 +632,7 @@
     b.sel = null;
     measure();
     draw();
-    say("cu.s.removed");
+    say(MODES[mode].view ? "cu.s.removedView" : "cu.s.removed");
   }
 
   // Apply a new pose to the held piece; it may overlap for now.
@@ -1058,6 +1058,7 @@
     draw();
     if (!keepView) fit();
     syncPrint();
+    syncDeleteTip();
     renderRooms();
     renderWalls();
     syncChips();
@@ -1129,6 +1130,15 @@
     a.setAttribute("data-i18n-title", tip);
     a.setAttribute("aria-label", t(label));
     a.setAttribute("title", t(tip));
+  }
+
+  // The steps without a tray take a piece out of the wall; the others put it back in the tray.
+  function syncDeleteTip() {
+    var d = $("delete"), key = MODES[mode].view ? "cu.deleteViewTip" : "cu.deleteTip";
+    d.setAttribute("data-i18n-aria-label", key);
+    d.setAttribute("data-i18n-title", key);
+    d.setAttribute("aria-label", t(key));
+    d.setAttribute("title", t(key));
   }
 
   // ---------- the math chips: only those that explain what is on screen ----------
