@@ -83,6 +83,7 @@ with sync_playwright() as p:
     check(pg.locator("#who button:not([disabled])").count() > 0, "and the contest still plays")
     link.click()
     pg.wait_for_selector("#w-q1", state="attached")
+    pg.wait_for_load_state("load")      # the page's script swaps the words; on a real network the heading is attached before it has run
     check(pg.url == URL and pg.text_content("#w-q1") == "Comment s'est passé ce concours ?", f"the link leads to the questionnaire, in the words of a contest: {pg.url} · {pg.text_content('#w-q1')!r}")
     check(not errs, f"no console error {errs[:2]}")
     ctx.close()
