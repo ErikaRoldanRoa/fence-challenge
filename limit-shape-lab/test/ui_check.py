@@ -682,7 +682,7 @@ with sync_playwright() as p:
                   f"{tag}: Table 3 as printed, the row of n = 7 lit: {rows}")
             esc_card()
             # The stage's two tokens open the result they show, as a card of their own (no Back); the keys do too.
-            for k, want in ((4, "Figure 23"), (5, "Section 3.4 · Identification of all optimal pentomino fences"), (6, "Section 4.3 · Identification of all optimal solutions"), (9, "Section 6.2 · Heuristic greedy solver")):
+            for k, want in ((4, "Figure 23"), (5, "Section 3.4 · Identification of all optimal pentomino fences"), (6, "Section 4.3 · Step 4: Identification of all optimal solutions"), (9, "Section 6.2 · Heuristic greedy solver")):
                 pg.evaluate(f"limitLab.setN({k})")
                 pg.wait_for_function(f"limitLab.state().n === {k} && !limitLab.busy()")
                 pg.click("#fence-tag")

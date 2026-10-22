@@ -540,8 +540,21 @@ def wall_links(browser):
         s = pg.evaluate("cubeLab.state()")
         check(len(s["pieces"]) == pieces and s["volume"] == volume and s["mode"] == step, f"{q} opens the wall of {pieces} pieces whole, in the {step} step ({len(s['pieces'])} pieces, volume {s['volume']}, {s['mode']})")
         check(pg.locator("#walls .ctl.wall[aria-pressed='true']").count() == 1, f"{q}: its button shows chosen")
+        # the tab names the step the link opened (the shared i18n once reset it to the first step's title after the page had set its own)
+        want_title = pg.evaluate("window.i18n.t('cu.docTitle.' + cubeLab.state().mode)")
+        check(pg.title() == want_title and (step == "tetra" or "tetracubes" not in pg.title()), f"{q}: the tab says '{pg.title()}'")
         check(not errs, f"{q}: no script error {errs[:1]}")
         pg.close()
+    # the first title is the page's own, in the visitor's language
+    for lang in ("fr", "de"):
+        c2 = browser.new_context(viewport={"width": 1400, "height": 900}, bypass_csp=True)
+        c2.add_init_script(f"localStorage.setItem('fc-lang','{lang}')")
+        p2 = c2.new_page()
+        p2.goto(URL + "?wall=1")
+        p2.wait_for_function("window.cubeLab")
+        p2.wait_for_timeout(500)
+        check(p2.title() == p2.evaluate("window.i18n.t('cu.docTitle.penta')") and "29" in p2.title(), f"{lang}: the tab of ?wall=1 says '{p2.title()}'")
+        c2.close()
     for q in ("?wall=0", "?wall=5", "?wall=abc", "?wall=", "?wall=%E0%A4%A", "?wall=52x", "?wall=toString", "?wall=__proto__"):
         pg = ctx.new_page()
         errs = []
