@@ -30,9 +30,11 @@
   var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   var CONN = /[?&]conn=6\b/.test(location.search) ? 6 : 26;
-  // The steps are the cubes of a piece. The first two are for building with the pieces of the tray; the others (hexacubes: 166 pieces, heptacubes: 1023) are for looking at their wall:
-  // there is no tray, so what is on the screen is always a wall built with the pieces that can be seen.
-  var MODES = { tetra: { n: 4, space: 9 }, penta: { n: 5, space: 12 }, hexa: { n: 6, space: 12, view: true }, hepta: { n: 7, space: 12, view: true } };
+  // The steps are the cubes of a piece. The first two are for building with the pieces of the tray; the others (hexacubes: 166 pieces, heptacubes: 1023) are for looking at their wall
+  // (view: no print, no rooms to wrap). The hexacubes keep a tray (list: the list of all 166, which also picks each piece of the wall); the heptacubes have none.
+  // Either way what is on the screen is a wall built with the pieces that can be seen.
+  var MODES = { tetra: { n: 4, space: 9 }, penta: { n: 5, space: 12 }, hexa: { n: 6, space: 12, view: true, list: true }, hepta: { n: 7, space: 12, view: true } };
+  function hasTray(m) { return !MODES[m].view || !!MODES[m].list; }
 
   // Piece hues skip the gold band, which belongs to the room.
   function hueOf(i, n) { return (80 + (i / n) * 315) % 360; }
@@ -42,10 +44,14 @@
   var boards = {}; // per step and way: { pieces: [{ shape, cells, hue }], hand, orient, sel, undo: [], space, room, opened }
   var shapes = {}; // per step: the n-cubes, each with its 24-orientation list
   Object.keys(MODES).forEach(function (m) {
-    var list = MODES[m].view ? [] : G.polycubes(MODES[m].n);
+    var list = hasTray(m) ? G.polycubes(MODES[m].n) : [];
     shapes[m] = list.map(function (cells, i) {
-      return { index: i, cells: cells, canon: G.canon(cells), orients: G.orientations(cells), hue: hueOf(i, list.length) };
+      return { index: i, cells: cells, canon: G.canon(cells), orients: G.orientations(cells), hue: hueOf(i, list.length), mirror: null };
     });
+    // A piece that is not its own mirror image names its twin (the list of the pieces says it).
+    var byName = {};
+    shapes[m].forEach(function (sh) { byName[sh.canon] = sh.index; });
+    shapes[m].forEach(function (sh) { var q = byName[G.canon(G.mirror(sh.cells))]; sh.mirror = q === sh.index ? null : q; });
     ["explore", "wrap"].forEach(function (w) {
       boards[m + "/" + w] = { pieces: [], hand: null, orient: 0, sel: null, undo: [], space: MODES[m].space, room: null };
     });
@@ -584,7 +590,7 @@
     draw();
     if (b.sel != null) {
       var sh = b.pieces[b.sel].shape;
-      if (sh >= 0) say("cu.s.selected", { n: sh + 1 }); else say("cu.s.selectedWall");
+      if (sh >= 0) say(MODES[mode].list ? "cu.s.selectedList" : "cu.s.selected", { n: sh + 1 }); else say("cu.s.selectedWall");
     }
   }
 
@@ -632,7 +638,7 @@
     b.sel = null;
     measure();
     draw();
-    say(MODES[mode].view ? "cu.s.removedView" : "cu.s.removed");
+    say(hasTray(mode) ? "cu.s.removed" : "cu.s.removedView");
   }
 
   // Apply a new pose to the held piece; it may overlap for now.
@@ -869,11 +875,17 @@
     var btn = tray.querySelector('[data-shape="' + i + '"]');
     if (!btn) return;
     var s = shapes[mode][i], b = board();
+    // the picture changes only with the pose of the piece in hand: the list of 166 is not redrawn at every change
+    var pose = mode + ":" + (i === b.hand ? b.orient % s.orients.length : -1);
+    if (btn.getAttribute("data-pose") === pose) return;
+    btn.setAttribute("data-pose", pose);
     btn.innerHTML = isoSvg(i === b.hand ? s.orients[b.orient % s.orients.length] : s.cells, s.hue);
   }
 
   function buildTray() {
     tray.innerHTML = "";
+    chosenShown = "";
+    scheduleFit();
     shapes[mode].forEach(function (s, i) {
       var btn = document.createElement("button");
       btn.type = "button";
@@ -914,14 +926,57 @@
     if (d.hasAttribute("data-cast")) return "cu.dim.cast";
     return null;
   }
+  // Set an attribute only when it changes: the list of 166 is looked at at every draw.
+  function put(el, name, value) { if (el.getAttribute(name) !== value) el.setAttribute(name, value); }
+  var chosenShown = "";
+  // The list shows whole chips only: its height (its width, on a phone) is a whole number of rows (columns), and it scrolls by rows (columns).
+  var fitting = 0;
+  function fitTray() {
+    fitting = 0;
+    tray.style.maxHeight = ""; tray.style.maxWidth = "";
+    var chip = tray.querySelector(".chip");
+    if (!chip || !tray.clientHeight || !tray.clientWidth) return;     // no list, or a hidden one
+    var cs = getComputedStyle(tray), r = chip.getBoundingClientRect(), along = cs.gridAutoFlow.indexOf("column") === 0;
+    if (along) {
+      var cg = parseFloat(cs.columnGap) || 0, px = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+      if (tray.scrollWidth <= tray.clientWidth + 1) return;
+      tray.style.maxWidth = Math.ceil(Math.max(1, Math.floor((tray.clientWidth - px + cg) / (r.width + cg))) * (r.width + cg) - cg + px) + "px";
+    } else {
+      var rg = parseFloat(cs.rowGap) || 0, py = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      if (tray.scrollHeight <= tray.clientHeight + 1) return;
+      tray.style.maxHeight = Math.ceil(Math.max(1, Math.floor((tray.clientHeight - py + rg) / (r.height + rg))) * (r.height + rg) - rg + py) + "px";
+    }
+  }
+  function scheduleFit() { if (!fitting) fitting = window.requestAnimationFrame(fitTray); }
+  window.addEventListener("resize", scheduleFit);
+  if (window.ResizeObserver) { var dockWatch = new ResizeObserver(scheduleFit); document.querySelectorAll(".dock, .dock > *").forEach(function (el) { dockWatch.observe(el); }); }
+
+  // The chip of the chosen piece lights up, and the list scrolls to its row (column) when the piece was chosen in the wall.
+  function chipIntoView(el) {
+    if (!tray.clientHeight || !tray.clientWidth) return;     // a hidden tray has nothing to scroll
+    var cs = getComputedStyle(tray), along = cs.gridAutoFlow.indexOf("column") === 0, r = el.getBoundingClientRect();
+    var t0 = tray.getBoundingClientRect(), i = +el.getAttribute("data-shape");
+    if (along) {
+      var pitch = r.width + (parseFloat(cs.columnGap) || 0), rowsN = cs.gridTemplateRows.split(" ").length, shown = Math.max(1, Math.round((tray.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) + (parseFloat(cs.columnGap) || 0)) / pitch));
+      var col = Math.floor(i / rowsN), first = Math.round(tray.scrollLeft / pitch);
+      if (col < first) tray.scrollLeft = col * pitch; else if (col > first + shown - 1) tray.scrollLeft = (col - shown + 1) * pitch;
+    } else {
+      var pv = r.height + (parseFloat(cs.rowGap) || 0), colsN = cs.gridTemplateColumns.split(" ").length, showv = Math.max(1, Math.round((tray.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) + (parseFloat(cs.rowGap) || 0)) / pv));
+      var row = Math.floor(i / colsN), top = Math.round(tray.scrollTop / pv);
+      if (row < top) tray.scrollTop = row * pv; else if (row > top + showv - 1) tray.scrollTop = (row - showv + 1) * pv;
+    }
+  }
   function syncTray() {
-    var b = board(), any = false, dim = dimReason();
+    var b = board(), any = false, dim = dimReason(), placed = {};
+    var sel = b.sel != null && b.pieces[b.sel] ? b.pieces[b.sel].shape : -1;
+    b.pieces.forEach(function (p) { placed[p.shape] = true; });
     tray.querySelectorAll(".chip").forEach(function (btn) {
-      var i = +btn.getAttribute("data-shape"), used = isPlaced(i), cells = shapes[mode][i].cells;
+      var i = +btn.getAttribute("data-shape"), used = !!placed[i], sh = shapes[mode][i], twin = sh.mirror != null;
       btn.classList.toggle("placed", used);
-      btn.setAttribute("aria-pressed", i === b.hand ? "true" : "false");
-      btn.setAttribute("aria-label", t(used ? "cu.pieceUsed" : "cu.piece", { n: i + 1, k: cells.length }));
-      if (dim) { btn.setAttribute("aria-disabled", "true"); btn.setAttribute("data-lab-tip", t(dim)); }
+      btn.classList.toggle("chosen", i === sel);
+      put(btn, "aria-pressed", i === b.hand ? "true" : "false");
+      put(btn, "aria-label", t((used ? "cu.pieceUsed" : "cu.piece") + (twin ? "Mirror" : ""), { n: i + 1, k: sh.cells.length, m: twin ? sh.mirror + 1 : "" }));
+      if (dim) { put(btn, "aria-disabled", "true"); put(btn, "data-lab-tip", t(dim)); }
       else { btn.removeAttribute("aria-disabled"); btn.removeAttribute("data-lab-tip"); }
       if (btn.tabIndex === 0) any = true;
       renderTrayPiece(i);
@@ -929,6 +984,12 @@
     if (!any || b.hand != null) {
       var chips = tray.querySelectorAll(".chip"), pick = b.hand != null ? b.hand : 0;
       chips.forEach(function (c, k) { c.tabIndex = k === pick ? 0 : -1; });
+    }
+    var key = mode + ":" + sel;
+    if (key !== chosenShown) {
+      chosenShown = key;
+      var el = sel >= 0 ? tray.querySelector('[data-shape="' + sel + '"]') : null;
+      if (el) chipIntoView(el);
     }
   }
 
@@ -997,9 +1058,10 @@
       btn.setAttribute("aria-pressed", on ? "true" : "false");
       btn.classList.toggle("loading", on && busy);
       var name = t("cu.wall." + w.n, { p: w.pieces.length });
+      if (list.length > 1) name = t("cu.wallOf", { w: name, k: i + 1, n: list.length });
       btn.setAttribute("aria-label", name);
       btn.title = name;
-      btn.innerHTML = '<img alt="" src="' + thumb(w) + '"><span class="modeIcon wallN" aria-hidden="true">' + cubeIcon + '<b>' + w.n + '</b></span>';
+      btn.innerHTML = '<img alt="" src="' + thumb(w) + '"><span class="modeIcon wallN" aria-hidden="true">' + cubeIcon + '<b>' + w.n + '</b></span>' + (list.length > 1 ? '<i class="wallK" aria-hidden="true">' + (i + 1) + '</i>' : "");
       btn.addEventListener("click", function () { loadWall(w); });
       row.appendChild(btn);
     });
@@ -1134,7 +1196,7 @@
 
   // The steps without a tray take a piece out of the wall; the others put it back in the tray.
   function syncDeleteTip() {
-    var d = $("delete"), key = MODES[mode].view ? "cu.deleteViewTip" : "cu.deleteTip";
+    var d = $("delete"), key = hasTray(mode) ? "cu.deleteTip" : "cu.deleteViewTip";
     d.setAttribute("data-i18n-aria-label", key);
     d.setAttribute("data-i18n-title", key);
     d.setAttribute("aria-label", t(key));
@@ -1176,11 +1238,12 @@
       var c = chip("m.wallinfo"), cubesN = 0;
       opened.pieces.forEach(function (p) { cubesN += p.length; });
       // Upper bounds of the paper under the corner rule: 1633 (hexacubes), 37446 (heptacubes).
-      var ub = { 6: 1633, 7: 37446 }[opened.n], best = opened.id === "penta_v52" && paperRule;
-      c.setAttribute("data-math-vars", JSON.stringify({ k: WALLS.indexOf(opened) + 1, p: opened.pieces.length, n: opened.n, c: cubesN, v: G.enclosed([].concat.apply([], opened.pieces), CONN).volume, ub: ub }));
+      var ub = { 6: 1633, 7: 37446 }[opened.n], vol = G.enclosed([].concat.apply([], opened.pieces), CONN).volume;
+      var best = opened.n === 5 && vol === 52 && paperRule, figure = opened.id === "penta_v52";
+      c.setAttribute("data-math-vars", JSON.stringify({ k: WALLS.indexOf(opened) + 1, p: opened.pieces.length, n: opened.n, c: cubesN, v: vol, ub: ub }));
       var tetraWall = opened.n === 4;
       c.setAttribute("data-math-body", tetraWall ? (paperRule ? "m.wallinfo.tetra.body" : "m.wallinfo.plain.body") : best ? "m.wallinfo.best.body" : ub && paperRule ? "m.wallinfo.found.body" : "m.wallinfo.paper.body");
-      c.setAttribute("data-paper-label", tetraWall ? "" : best ? "sec:pentacubes fig:52" : ub && paperRule ? "sec:hexacubes" : "sec:3d");
+      c.setAttribute("data-paper-label", tetraWall ? "" : best && figure ? "sec:pentacubes fig:52" : best ? "sec:pentacubes" : ub && paperRule ? "sec:hexacubes" : "sec:3d");
       if (tetraWall) c.setAttribute("data-math-src", "m.ours");
       if (best) { chip("m.cast").setAttribute("data-math-body", "m.cast52.body"); chip("m.cast").setAttribute("data-paper-label", "sec:pentacubes"); }
     }

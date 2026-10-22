@@ -11,6 +11,8 @@ assert.strictEqual(G.ROTATIONS.length, 24);
 const chiralPairs = (n) => G.polycubes(n).filter((p) => G.canon(p) !== G.canon(G.mirror(p))).length / 2;
 assert.strictEqual(chiralPairs(4), 1, "one mirror pair of tetracubes");
 assert.strictEqual(chiralPairs(5), 6, "six mirror pairs of pentacubes");
+assert.strictEqual(G.polycubes(6).length, 166, "166 hexacubes up to turning");
+assert.strictEqual(chiralPairs(6), 54, "54 mirror pairs of hexacubes: 112 free hexacubes");
 
 const shell = (a, b, c) => {
   const out = [];
@@ -41,9 +43,9 @@ assert.deepStrictEqual([G.enclosed(diag, 6).volume, G.enclosed(diag, 6).regions]
 assert.deepStrictEqual(S.parse([[3, 3, 3], [0, 0, 0, "#AA0000"], [1, 0, 0, "#aa0000"], [2, 2, 2, "#AA0000"]]).pieces.length, 2);
 assert.deepStrictEqual(S.parse([[3, 3, 3], [7, 0, 0, 0], [7, 0, 1, 0], [9, 2, 2, 2]]).pieces, [[[0, 0, 0], [0, 1, 0]], [[2, 2, 2]]]);
 
-// The four walls of walls.js (the three of the paper and the one of the tetracubes): right pieces, no overlap, and the
+// The six walls of walls.js (the three of the paper, two more of volume 52 and the one of the tetracubes): right pieces, no overlap, and the
 // announced volume under both rules.
-const expect = { penta_v52: [5, 29, 52], hexa_v1331: [6, 166, 1331], hepta_greedy_25872: [7, 1023, 25872], tetra_v1: [4, 8, 1] };
+const expect = { penta_v52: [5, 29, 52], penta_sol1000: [5, 29, 52], penta_sol35000000: [5, 29, 52], hexa_v1331: [6, 166, 1331], hepta_greedy_25872: [7, 1023, 25872], tetra_v1: [4, 8, 1] };
 assert.deepStrictEqual(WALLS.map((w) => w.id), Object.keys(expect));
 for (const w of WALLS) {
   const [n, count, vol] = expect[w.id];

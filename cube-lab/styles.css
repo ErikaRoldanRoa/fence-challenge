@@ -150,11 +150,13 @@ body[data-busy] #space { cursor: progress; }
   justify-content: space-between;
   overflow-y: auto;
   min-height: 0;
-  padding: 2px 2px 18px;
+  padding: 2px;
   scrollbar-width: thin;
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent);
+  /* whole rows only: app.js sizes the list to a whole number of rows, and it scrolls by rows */
+  scroll-snap-type: y mandatory;
+  scroll-padding: 2px;
 }
+.tray .chip { scroll-snap-align: start; }
 body[data-selected] .tray { display: none; }
 /* Dimmed, the pieces still answer a hover with the reason (and refuse a tap). */
 body[data-busy] .tray, body[data-cast] .tray { opacity: 0.35; }
@@ -178,6 +180,8 @@ body[data-busy] .tray, body[data-cast] .tray { opacity: 0.35; }
 }
 /* A used piece: dimmer, dashed, still tappable (it selects the piece). */
 .chip.placed { opacity: 0.55; border-style: dashed; border-color: #5b6d88; background: transparent; }
+/* In the list of the hexacubes, the chip of the chosen piece lights up as the piece does in the wall. */
+.chip.chosen { opacity: 1; border-style: solid; border-color: color-mix(in srgb, var(--accent) 70%, white); background: color-mix(in srgb, var(--accent) 22%, var(--panel-soft)); box-shadow: 0 0 14px rgba(0, 209, 255, 0.3); }
 
 /* The move pad takes the tray's place while a placed piece is chosen. */
 .pad { display: none; gap: 16px; align-items: center; justify-content: center; padding: 8px 0; }
@@ -198,16 +202,22 @@ body[data-selected]:not([data-cast]) .pad { display: flex; }
 /* Rooms to wrap (wrap) and the walls (pentacubes, explore). */
 .roomsRow, .wallsRow { display: none; align-items: center; gap: 8px; flex-wrap: wrap; }
 body[data-play="wrap"] .roomsRow { display: flex; }
-.wallsRow { display: flex; }
+.wallsRow { display: flex; padding: 8px; border: 1px solid rgba(0, 209, 255, 0.24); border-radius: 16px; background: rgba(0, 209, 255, 0.04); }
 .wallsRow[hidden], body[data-play="wrap"] .wallsRow { display: none; }
-/* The steps of the hexacubes and heptacubes only show their wall: no pieces, and none of the wrap step. */
-body[data-mode="hexa"] .trayZone, body[data-mode="hepta"] .trayZone, body[data-play="wrap"] #mode-hexa, body[data-play="wrap"] #mode-hepta { display: none; }
+/* The step of the heptacubes only shows its wall (no pieces); the hexacubes keep their list of pieces; neither is in the wrap step. */
+body[data-mode="hepta"] .trayZone, body[data-play="wrap"] #mode-hexa, body[data-play="wrap"] #mode-hepta { display: none; }
+/* The list of the hexacubes stays on the screen while a piece is chosen (another is one click away); the pad of arrows does not take its place. */
+body[data-mode="hexa"][data-selected] .tray { display: grid; }
+body[data-mode="hexa"][data-selected]:not([data-cast]) .pad { display: none; }
 .walls { display: grid; grid-template-columns: repeat(3, 52px); gap: 8px; }
 .wallChips { display: flex; align-items: center; gap: 16px; padding-left: 8px; }
 .ctl.wall { --ring: rgba(0, 209, 255, 0.35); --fill: rgba(0, 209, 255, 0.05); width: 52px; height: 60px; border-radius: 12px; --ink: 1px; align-content: center; row-gap: 2px; }
 .ctl.wall .wallN { color: #bff4ff; }
 .ctl.wall::before { border-radius: 12px; }
 .ctl.wall img { width: 36px; height: 36px; display: block; }
+/* Several walls in a step: each wears its number. */
+.ctl.wall { position: relative; }
+.ctl.wall .wallK { position: absolute; top: 4px; left: 7px; font-style: normal; font-weight: 700; font-size: 11px; line-height: 1; color: #bff4ff; }
 .ctl.wall[aria-pressed="true"] { --ring: var(--accent); --fill: rgba(0, 209, 255, 0.18); }
 .ctl.wall[aria-pressed="true"]::before { box-shadow: 0 0 12px rgba(0, 209, 255, 0.4); }
 .ctl.wall.loading::before { animation: loadPulse 0.8s ease-in-out infinite alternate; }
@@ -273,7 +283,7 @@ body[data-mode="hexa"] .trayZone, body[data-mode="hepta"] .trayZone, body[data-p
   .acts { grid-area: acts; flex-wrap: nowrap; }
   .trayZone { grid-area: dock; }
   .roomsRow { grid-area: rows; }
-  .wallsRow { grid-area: walls; }
+  .wallsRow { grid-area: walls; padding: 0; border: 0; border-radius: 0; background: none; }
   .rooms { flex-wrap: nowrap; }
   .roomDots { flex-basis: auto; }
   .walls { grid-template-columns: repeat(3, 52px); }
@@ -284,9 +294,8 @@ body[data-mode="hexa"] .trayZone, body[data-mode="hepta"] .trayZone, body[data-p
     grid-auto-columns: 52px;
     overflow-x: auto; overflow-y: hidden;
     justify-content: start;
-    padding: 2px 18px 2px 2px;
-    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent);
-    mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent);
+    padding: 2px;
+    scroll-snap-type: x mandatory;
   }
   .chip { width: 52px; height: 52px; }
   .chip svg { width: 44px; height: 44px; }

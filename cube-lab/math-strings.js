@@ -36,7 +36,7 @@
 
     "m.bound.aria": "Combien une muraille peut-elle contenir ?",
     "m.bound.title": "Combien une muraille peut-elle contenir ?",
-    "m.bound.body": "Pour chaque taille, une des meilleures poches, celle dont la muraille N(S) ∖ S est la plus petite, est un presque-cube (une boîte de côtés k ou k + 1, avec un presque-cube plat, d’une seule couche, sur une face)" + NB + ": c’est le théorème de Veomett et Radcliffe.\n52 cubes de vide demandent une muraille de 144 cubes, 53 ou plus au moins 146, et les 29 pentacubes n’ont que 145 cubes. La muraille 1 atteint 52" + NB + ": 52 est la réponse.",
+    "m.bound.body": "Pour chaque taille, une des meilleures poches, celle dont la muraille N(S) ∖ S est la plus petite, est un presque-cube (une boîte de côtés k ou k + 1, avec un presque-cube plat, d’une seule couche, sur une face)" + NB + ": c’est le théorème de Veomett et Radcliffe.\n52 cubes de vide demandent une muraille de 144 cubes, 53 ou plus au moins 146, et les 29 pentacubes n’ont que 145 cubes. Les trois murailles ici atteignent 52" + NB + ": 52 est la réponse.",
 
     "m.cover.aria": "Comment remplir exactement la muraille ?",
     "m.cover.title": "Comment remplir exactement la muraille ?",
@@ -88,7 +88,7 @@
 
     "m.bound.aria": "Wie viel kann eine Mauer fassen?",
     "m.bound.title": "Wie viel kann eine Mauer fassen?",
-    "m.bound.body": "Für jede Größe ist einer der besten Hohlräume, der mit der kleinsten Mauer N(S) ∖ S, ein Fast-Würfel (eine Kiste mit Seiten k oder k + 1, auf einer Fläche ein flacher Fast-Würfel aus einer einzigen Schicht): der Satz von Veomett und Radcliffe.\n52 leere Würfel brauchen eine Mauer von 144 Würfeln, 53 oder mehr mindestens 146, und die 29 Pentakuben haben nur 145 Würfel. Mauer 1 erreicht 52: 52 ist die Antwort.",
+    "m.bound.body": "Für jede Größe ist einer der besten Hohlräume, der mit der kleinsten Mauer N(S) ∖ S, ein Fast-Würfel (eine Kiste mit Seiten k oder k + 1, auf einer Fläche ein flacher Fast-Würfel aus einer einzigen Schicht): der Satz von Veomett und Radcliffe.\n52 leere Würfel brauchen eine Mauer von 144 Würfeln, 53 oder mehr mindestens 146, und die 29 Pentakuben haben nur 145 Würfel. Die drei Mauern hier erreichen 52: 52 ist die Antwort.",
 
     "m.cover.aria": "Wie füllt man die Mauer genau?",
     "m.cover.title": "Wie füllt man die Mauer genau?",
@@ -140,7 +140,7 @@
 
     "m.bound.aria": "How much can a wall hold?",
     "m.bound.title": "How much can a wall hold?",
-    "m.bound.body": "For every size, one of the best pockets, the one with the smallest wall N(S) ∖ S, is an almost-cube (a box with sides k or k + 1, with a flat almost-cube, one layer thick, on one face): the theorem of Veomett and Radcliffe.\n52 cubes of emptiness need a wall of 144 cubes, 53 or more at least 146, and the 29 pentacubes have only 145 cubes. Wall 1 reaches 52, so 52 is the answer.",
+    "m.bound.body": "For every size, one of the best pockets, the one with the smallest wall N(S) ∖ S, is an almost-cube (a box with sides k or k + 1, with a flat almost-cube, one layer thick, on one face): the theorem of Veomett and Radcliffe.\n52 cubes of emptiness need a wall of 144 cubes, 53 or more at least 146, and the 29 pentacubes have only 145 cubes. The three walls here reach 52, so 52 is the answer.",
 
     "m.cover.aria": "How is the wall filled exactly?",
     "m.cover.title": "How is the wall filled exactly?",

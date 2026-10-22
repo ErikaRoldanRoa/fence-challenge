@@ -253,8 +253,8 @@ def run(browser, name, w, h, touch):
     pg.click("#mode-penta")
     check(pg.get_attribute("#print", "href") == "print/pentacubes.zip", "print: one zip for the step")
     names = wall_labels()
-    check(names == ["See the wall of the 29 pentacubes, each once"], f"the pentacube step shows the wall built with its pieces, and no other: {names}")
-    check(pg.locator("#walls .wallN").all_inner_texts() == ["5"], "with the cube and the number of cubes of its pieces")
+    check(names == [f"See the wall of the 29 pentacubes, each once ({k} of 3)" for k in (1, 2, 3)], f"the pentacube step shows its three walls, built with its pieces, and no other: {names}")
+    check(pg.locator("#walls .wallN").all_inner_texts() == ["5", "5", "5"] and pg.locator("#walls .wallK").all_inner_texts() == ["1", "2", "3"], "each with the cube and the number of cubes of its pieces, and its own number among the three")
     check(not any(v in " ".join(names).replace(" ", "").replace("\u202f", "") for v in ("52", "1331", "25872")), "no volume is told before a wall is opened")
     pg.locator("#walls .ctl.wall").nth(0).click()
     pg.locator("#walls .ctl.wall").nth(0).click()
@@ -263,7 +263,7 @@ def run(browser, name, w, h, touch):
     s = st()
     check(s["volume"] == 52 and len(s["pieces"]) == 29, "wall 1 opens whole")
     check(pg.locator("#walls .ctl.wall").nth(0).get_attribute("aria-pressed") == "true", "the opened wall shows chosen")
-    check(pg.locator("#walls .ctl.wall").count() == 1, "one wall in the pentacube step")
+    check(pg.locator("#walls .ctl.wall").count() == 3, "three walls in the pentacube step")
     pg.click('[data-math="m.wallinfo"]')
     check("146" in pg.inner_text(".math-pop"), "wall 1 chip: best possible")
     check(pg.eval_on_selector_all(".math-pop .math-src .paper-ref", "els => els.map(e => e.textContent)") == ["§ 7.3 Pentacubes", "Fig. 30"], "wall 1 chip: the footer names the pentacube section and the figure of the wall")
@@ -434,12 +434,21 @@ def tetra_wall(browser):
     pg.keyboard.press("Escape")
     check(not pg.locator(".math-pop").count() or not pg.locator(".math-pop").is_visible(), "the card closes")
     pg.click("#mode-penta")
-    check(pg.locator("#walls .ctl.wall").count() == 1 and pg.locator("#walls .ctl.wall[aria-pressed='true']").count() == 0 and "29 pentacubes" in pg.get_attribute("#walls .ctl.wall", "aria-label"), "in the pentacube step: its own wall, not chosen")
+    check(pg.locator("#walls .ctl.wall").count() == 3 and pg.locator("#walls .ctl.wall[aria-pressed='true']").count() == 0 and "29 pentacubes" in pg.get_attribute("#walls .ctl.wall >> nth=0", "aria-label"), "in the pentacube step: its own three walls, none chosen")
     for step, label, pieces, volume in (("hexa", "166 hexacubes", 166, 1331), ("hepta", "1023 heptacubes", 1023, 25872)):
+        listed = step == "hexa"          # the hexacubes keep a list of their 166 pieces; the heptacubes only show their wall
         pg.click(f"#mode-{step}")
         pg.wait_for_timeout(300)
         check(pg.locator("#walls .ctl.wall").count() == 1 and label in pg.get_attribute("#walls .ctl.wall", "aria-label"), f"the {step} step shows the wall of the {label}, and no other")
-        check(not pg.locator(".trayZone").is_visible() and pg.locator("#tray .chip").count() == 0, f"the {step} step has no pieces to build with: nothing of another step is mixed in")
+        if listed:
+            chips = pg.locator("#tray .chip")
+            labels = pg.eval_on_selector_all("#tray .chip", "els => els.map(e => e.getAttribute('aria-label'))")
+            twins = [l for l in labels if "mirror image of piece" in l]
+            check(pg.locator(".trayZone").is_visible() and chips.count() == pieces and all(l.startswith("Piece ") and ", 6 cubes" in l for l in labels), f"the {step} step lists its {pieces} pieces, all of 6 cubes, and nothing of another step ({chips.count()} chips)")
+            check(len(twins) == 108 and len(set(labels)) == pieces, f"54 pairs of mirror twins are named in the bubbles, 58 pieces are their own mirror image: {len(twins)} of {pieces} name a twin (166 one-sided, 112 free)")
+            check(not pg.locator("#tray .chip.placed").count(), "nothing is placed before the wall is opened")
+        else:
+            check(not pg.locator(".trayZone").is_visible() and pg.locator("#tray .chip").count() == 0, f"the {step} step has no pieces to build with: nothing of another step is mixed in")
         check(not pg.locator("#print").is_visible(), f"and no pieces to print")
         pg.click("#walls .ctl.wall >> nth=0")
         for _ in range(400):
@@ -450,19 +459,42 @@ def tetra_wall(browser):
         s_ = pg.evaluate("cubeLab.state()")
         check(len(s_["pieces"]) == pieces and s_["volume"] == volume and s_["mode"] == step, f"the {step} wall opens whole: {len(s_['pieces'])} pieces, volume {s_['volume']}")
         check(pg.locator('.math-chip[data-math="m.wallinfo"]').is_visible() and not pg.locator('.math-chip[data-math="m.turn"]').is_visible(), f"the {step} step: the card of the wall, no mirror card")
-        # a piece of the wall is taken out (there is no tray to put it back in), and undo brings it back
+        if listed:
+            # the wall is built with exactly the pieces of the list: each once, so every chip is placed and every piece of the wall has the colour of its chip
+            check(pg.locator("#tray .chip.placed").count() == pieces and len({p_["shape"] for p_ in s_["pieces"]}) == pieces and all(p_["shape"] >= 0 for p_ in s_["pieces"]), f"the {step} wall is the {pieces} pieces of the list, each once: {pg.locator('#tray .chip.placed').count()} chips placed")
+            # a chip of the list chooses its piece in the wall
+            pg.locator("#tray .chip").nth(57).click()
+            pg.wait_for_timeout(400)
+            st_ = pg.evaluate("cubeLab.state()")
+            check(st_["sel"] is not None and st_["pieces"][st_["sel"]]["shape"] == 57 and "chosen" in pg.inner_text("#status"), f"a chip of the list chooses its piece in the wall: {pg.inner_text('#status').strip()!r}")
+            lit = pg.locator("#tray .chip.chosen")
+            check(lit.count() == 1 and lit.get_attribute("data-shape") == "57" and pg.locator("#tray").is_visible() and not pg.locator(".pad").is_visible(), "its chip lights up, the list stays on the screen and the pad of arrows does not take its place")
+            pg.keyboard.press("Escape")
+            pg.wait_for_timeout(200)
+            check(pg.locator("#tray .chip.chosen").count() == 0, "letting go puts the light out")
+        # a piece of the wall is taken out: put back in the tray where there is one, taken out where there is none; undo brings it back
         top = max(s_["pieces"][-1]["cells"], key=lambda c: c[1])
         q = pg.evaluate(f"cubeLab.screenOf({json.dumps(top)}, 'top')")
         pg.mouse.click(q["x"], q["y"])
         pg.wait_for_timeout(400)
-        check(pg.get_attribute("#delete", "aria-label") == "Take the chosen piece out (Delete)", f"the {step} step: the button says it takes the piece out, not back in a tray: {pg.get_attribute('#delete', 'aria-label')}")
+        want_label, want_status = ("Put the chosen piece back in the tray (Delete)", "Piece back in the tray.") if listed else ("Take the chosen piece out (Delete)", "Piece taken out.")
+        check(pg.get_attribute("#delete", "aria-label") == want_label, f"the {step} step: the button says what it does: {pg.get_attribute('#delete', 'aria-label')}")
+        if listed:
+            # a piece chosen in the wall: its chip lights up and the list scrolls to it
+            shape = s_["pieces"][-1]["shape"]
+            box = pg.evaluate(f"(() => {{ const c = document.querySelector('#tray .chip.chosen'), t = document.getElementById('tray').getBoundingClientRect(), r = c ? c.getBoundingClientRect() : null; return r ? {{shape: c.dataset.shape, inside: r.top >= t.top - 1 && r.bottom <= t.bottom + 1 && r.left >= t.left - 1 && r.right <= t.right + 1}} : null; }})()")
+            check(box is not None and box["shape"] == str(shape) and box["inside"], f"a piece chosen in the wall lights its chip (piece {shape + 1}) and the list shows it: {box}")
         pg.keyboard.press("Delete")
         pg.wait_for_timeout(500)
-        check(pg.inner_text("#status").strip() == "Piece taken out." and len(pg.evaluate("cubeLab.state()")["pieces"]) == pieces - 1, f"the {step} step: Delete takes the piece out and says so: {pg.inner_text('#status').strip()!r}")
+        check(pg.inner_text("#status").strip() == want_status and len(pg.evaluate("cubeLab.state()")["pieces"]) == pieces - 1, f"the {step} step: Delete takes the piece out and says so: {pg.inner_text('#status').strip()!r}")
+        if listed:
+            check(pg.locator("#tray .chip.placed").count() == pieces - 1, "and its chip is free again")
         pg.keyboard.press("Control+z")
         pg.wait_for_timeout(500)
         check(len(pg.evaluate("cubeLab.state()")["pieces"]) == pieces, f"the {step} step: undo brings it back")
-        for lang, want in (("fr", "Retirer la pièce choisie (Suppr)"), ("de", "Das gewählte Teil herausnehmen (Entf)"), ("en", "Take the chosen piece out (Delete)")):
+        words = (("fr", "Remettre la pièce choisie dans la réserve (Suppr)"), ("de", "Das gewählte Teil in die Ablage zurücklegen (Entf)"), ("en", "Put the chosen piece back in the tray (Delete)")) if listed else \
+                (("fr", "Retirer la pièce choisie (Suppr)"), ("de", "Das gewählte Teil herausnehmen (Entf)"), ("en", "Take the chosen piece out (Delete)"))
+        for lang, want in words:
             pg.evaluate(f"window.i18n.setLang('{lang}')")
             pg.wait_for_timeout(200)
             check(pg.get_attribute("#delete", "aria-label") == want, f"the {step} step, {lang}: {pg.get_attribute('#delete', 'aria-label')!r}")
@@ -622,6 +654,86 @@ def tip_checks(browser, url, ready, items, home_sel, touch_sel, tag):
     ctx.close()
 
 
+def three_walls(browser):
+    """The three walls of volume 52: each opens whole with the 29 pentacubes once and says what the paper says; they are told apart; the walls have a frame of their own above the pieces."""
+    print("[three walls of volume 52]")
+    ctx = browser.new_context(viewport={"width": 1400, "height": 900}, bypass_csp=True)
+    ctx.add_init_script("localStorage.setItem('fc-lang','en')")
+    pg = ctx.new_page()
+    errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(URL)
+    pg.wait_for_function("window.cubeLab")
+    pg.click("#mode-penta")
+    pg.wait_for_timeout(400)
+    seen = []
+    for k in range(3):
+        pg.locator("#walls .ctl.wall").nth(k).click()
+        pg.wait_for_function("!document.body.hasAttribute('data-busy')", timeout=60000)
+        pg.wait_for_timeout(500)
+        s = pg.evaluate("cubeLab.state()")
+        shapes = {p_["shape"] for p_ in s["pieces"]}
+        check(len(s["pieces"]) == 29 and s["volume"] == 52 and len(shapes) == 29 and min(shapes) >= 0, f"wall {k + 1} opens whole: 29 pieces, each of the 29 pentacubes once, volume {s['volume']}")
+        check(pg.locator("#walls .ctl.wall[aria-pressed='true']").count() == 1 and pg.locator("#walls .ctl.wall").nth(k).get_attribute("aria-pressed") == "true" and pg.locator("#tray .chip.placed").count() == 29, f"wall {k + 1} shows chosen and the 29 chips are placed")
+        pg.click('.math-chip[data-math="m.wallinfo"]')
+        pop = pg.inner_text(".math-pop")
+        pills = pg.eval_on_selector_all(".math-pop .math-src .paper-ref", "els => els.map(e => e.textContent)")
+        check("146" in pop and "144 cubes line the pocket exactly and a single cube sticks out" in pop, f"wall {k + 1} chip: best possible, 144 line the pocket and one cube sticks out")
+        check(pills == (["§ 7.3 Pentacubes", "Fig. 30"] if k == 0 else ["§ 7.3 Pentacubes"]), f"wall {k + 1} chip: the footer {pills}")
+        pg.keyboard.press("Escape")
+        pg.click('.math-chip[data-math="m.bound"]')
+        check("The three walls here reach 52" in pg.inner_text(".math-pop"), f"wall {k + 1}: the bound card speaks of the three walls")
+        pg.keyboard.press("Escape")
+        pg.click("#cast")
+        pg.wait_for_timeout(2800)
+        pg.click('.math-chip[data-math="m.cast"]')
+        check("3 × 4 × 4 box with a 2 × 2 layer on one face" in pg.inner_text(".math-pop"), f"wall {k + 1}: the pocket is the almost-cube the cast card names")
+        pg.keyboard.press("Escape")
+        pg.click("#cast")
+        pg.wait_for_timeout(2200)
+        seen.append(sorted(tuple(c) for p_ in s["pieces"] for c in p_["cells"]))
+    check(seen[0] != seen[1] and seen[0] != seen[2] and seen[1] != seen[2], "the three walls are three different walls")
+    # the walls and the pieces are two places: the walls stand in a frame of their own, above the list
+    fr = pg.evaluate("(() => { const w = document.querySelector('.wallsRow'), t = document.getElementById('tray'), cs = getComputedStyle(w); const a = w.getBoundingClientRect(), b = t.getBoundingClientRect(); return { border: cs.borderTopWidth, above: a.bottom <= b.top, inside: [...document.querySelectorAll('#walls .ctl.wall, .wallChips .math-chip')].every(e => { const r = e.getBoundingClientRect(); return r.left >= a.left && r.right <= a.right && r.top >= a.top && r.bottom <= a.bottom; }) }; })()")
+    check(fr["border"] == "1px" and fr["above"] and fr["inside"], f"the walls have a frame of their own, above the list of pieces: {fr}")
+    check(not errs, f"no script error {errs[:1]}")
+    ctx.close()
+
+
+def whole_chips(browser):
+    """No chip is cut in half: the list shows whole rows (whole columns on a phone) at every place it is scrolled to."""
+    print("[whole chips]")
+    probe = """(() => { const t = document.getElementById('tray'), r0 = t.getBoundingClientRect(); let part = 0, whole = 0;
+      t.querySelectorAll('.chip').forEach((c) => { const r = c.getBoundingClientRect();
+        const ox = Math.min(r.right, r0.right) - Math.max(r.left, r0.left), oy = Math.min(r.bottom, r0.bottom) - Math.max(r.top, r0.top);
+        if (ox > 1 && oy > 1) { if (r.left >= r0.left - 0.75 && r.right <= r0.right + 0.75 && r.top >= r0.top - 0.75 && r.bottom <= r0.bottom + 0.75) whole++; else part++; } });
+      return { part, whole, along: getComputedStyle(t).gridAutoFlow.indexOf('column') === 0, max: t.scrollWidth - t.clientWidth, maxv: t.scrollHeight - t.clientHeight, left: t.scrollLeft, top: t.scrollTop }; })()"""
+    for name, w, h, touch in (("desktop", 1400, 900, False), ("laptop", 1280, 720, False), ("tablet", 820, 1180, True), ("phone", 390, 844, True), ("small phone", 390, 664, True)):
+        ctx = browser.new_context(viewport={"width": w, "height": h}, is_mobile=touch, has_touch=touch, device_scale_factor=2 if touch else 1, bypass_csp=True)
+        ctx.add_init_script("localStorage.setItem('fc-lang','en')")
+        pg = ctx.new_page()
+        pg.goto(URL)
+        pg.wait_for_function("window.cubeLab")
+        pg.wait_for_timeout(500)
+        for step in ("penta", "hexa"):
+            pg.click(f"#mode-{step}")
+            pg.wait_for_timeout(500)
+            if step == "hexa":
+                pg.click("#walls .ctl.wall >> nth=0")
+                pg.wait_for_function("!document.body.hasAttribute('data-busy')", timeout=60000)
+                pg.wait_for_timeout(600)
+            info = pg.evaluate(probe)
+            for where in ("start", "a row in", "the end"):
+                if where == "a row in":
+                    pg.evaluate("(() => { const t = document.getElementById('tray'), c = t.querySelector('.chip'), g = getComputedStyle(t); const p = (g.gridAutoFlow.indexOf('column') === 0) ? c.offsetWidth + parseFloat(g.columnGap) : c.offsetHeight + parseFloat(g.rowGap); if (g.gridAutoFlow.indexOf('column') === 0) t.scrollLeft = 3 * p; else t.scrollTop = 3 * p; })()")
+                elif where == "the end":
+                    pg.evaluate("(() => { const t = document.getElementById('tray'); t.scrollLeft = t.scrollWidth; t.scrollTop = t.scrollHeight; })()")
+                pg.wait_for_timeout(500)
+                info = pg.evaluate(probe)
+                check(info["part"] == 0 and info["whole"] > 0, f"{name}, {step} step, list at {where}: {info['whole']} whole chips, {info['part']} cut in half")
+        ctx.close()
+
+
 with sync_playwright() as p:
     b = p.chromium.launch(channel="chrome", args=["--use-angle=swiftshader", "--enable-unsafe-swiftshader"])
     run(b, "desktop", 1400, 900, False)
@@ -629,6 +741,8 @@ with sync_playwright() as p:
     faces_only(b)
     held_piece(b)
     tetra_wall(b)
+    three_walls(b)
+    whole_chips(b)
     wall_links(b)
     print("[tips]")
     tip_checks(b, URL, "window.cubeLab", [("#mode-penta", "cu.mode.pentaTip"), ("#mode-hexa", "cu.mode.hexaTip"), ("#turn", "cu.turnTip"), ("#cast", "cu.castTip"), ("#play-wrap", "cu.play.wrap")],

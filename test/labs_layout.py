@@ -26,7 +26,11 @@ STATES = {
     "hub": [("idle", "", 0)],
     "cube-lab": [("idle", "", 0),
                  ("penta-last-wall", "document.getElementById('mode-penta').click();"
-                  "setTimeout(()=>{const w=[...document.querySelectorAll('#walls button')];w[w.length-1].click();},300)", 9000)],
+                  "setTimeout(()=>{const w=[...document.querySelectorAll('#walls button')];w[w.length-1].click();},300)", 9000),
+                 ("hexa-list", "document.getElementById('mode-hexa').click();", 1500),
+                 ("hexa-wall", "document.getElementById('mode-hexa').click();setTimeout(()=>document.querySelector('#walls button').click(),300)", 9000),
+                 ("hexa-chosen", "document.getElementById('mode-hexa').click();setTimeout(()=>document.querySelector('#walls button').click(),300);"
+                                 "setTimeout(()=>document.querySelectorAll('#tray .chip')[57].click(),7500)", 11000)],
     "hexomino-lab": [("idle", "", 0),
                      ("reveal", "document.getElementById('reveal').click()", 9000),
                      ("arrows", "document.getElementById('mode-arrows').click()", 800)],
@@ -86,22 +90,6 @@ CHECK = r"""
   ctrls = ctrls.filter((el) => !clipped(el) && !underBar(el));
   // A control that runs over two lines (a pill in a sentence) has one box per line: each is hit-tested on its own.
   const boxes = (el) => { const q = [...el.getClientRects()].filter((r) => r.width > 1 && r.height > 1); return q.length ? q : [el.getBoundingClientRect()]; };
-  for (const el of ctrls) {
-    for (const r of boxes(el)) {
-      if (clippedAt(el, r.left + r.width / 2, r.top + r.height / 2)) continue;
-      if (bar && !bar.contains(el) && r.top + r.height / 2 < bar.getBoundingClientRect().bottom) continue;   // this line has gone under the page's bar
-      const x = Math.min(vw - 1, Math.max(0, r.left + r.width / 2)), y = Math.min(vh - 1, Math.max(0, r.top + r.height / 2));
-      const hit = document.elementFromPoint(x, y);
-      if (!hit || !(hit === el || el.contains(hit))) issues.push('covered ' + name(el) + ' by ' + (hit ? name(hit) : 'null'));
-      // a pill is a rectangle of text: its corners belong to it too, so that a tap near its edge never opens its neighbour
-      if (el.classList.contains('paper-ref')) for (const [px, py] of [[r.left + 2, r.top + 2], [r.right - 2, r.top + 2], [r.left + 2, r.bottom - 2], [r.right - 2, r.bottom - 2]]) {
-        if (px < 0 || py < 0 || px > vw - 1 || py > vh - 1) continue;
-        const h2 = document.elementFromPoint(px, py);
-        if (h2 && !(h2 === el || el.contains(h2)) && h2.closest('.paper-ref')) issues.push('edge of ' + name(el) + ' belongs to ' + name(h2.closest('.paper-ref')));
-      }
-      if (r.right > vw + 0.5 || r.left < -0.5) issues.push('outside ' + name(el));
-    }
-  }
   // What a scroll box shows is inside its border: a chip half scrolled out of a tray overlaps nothing beyond the tray.
   const shown = (el) => {
     const out = [];
@@ -119,6 +107,23 @@ CHECK = r"""
     }
     return out;
   };
+  // Each control is tested where it can be seen: the part of a chip that a tray's edge cuts off is neither covered nor outside.
+  for (const el of ctrls) {
+    for (const r0 of shown(el)) {
+      const r = { left: r0.left, top: r0.top, right: r0.right, bottom: r0.bottom, width: r0.right - r0.left, height: r0.bottom - r0.top };
+      if (bar && !bar.contains(el) && r.top + r.height / 2 < bar.getBoundingClientRect().bottom) continue;   // this line has gone under the page's bar
+      const x = Math.min(vw - 1, Math.max(0, r.left + r.width / 2)), y = Math.min(vh - 1, Math.max(0, r.top + r.height / 2));
+      const hit = document.elementFromPoint(x, y);
+      if (!hit || !(hit === el || el.contains(hit))) issues.push('covered ' + name(el) + ' by ' + (hit ? name(hit) : 'null'));
+      // a pill is a rectangle of text: its corners belong to it too, so that a tap near its edge never opens its neighbour
+      if (el.classList.contains('paper-ref')) for (const [px, py] of [[r.left + 2, r.top + 2], [r.right - 2, r.top + 2], [r.left + 2, r.bottom - 2], [r.right - 2, r.bottom - 2]]) {
+        if (px < 0 || py < 0 || px > vw - 1 || py > vh - 1) continue;
+        const h2 = document.elementFromPoint(px, py);
+        if (h2 && !(h2 === el || el.contains(h2)) && h2.closest('.paper-ref')) issues.push('edge of ' + name(el) + ' belongs to ' + name(h2.closest('.paper-ref')));
+      }
+      if (r.right > vw + 0.5 || r.left < -0.5) issues.push('outside ' + name(el));
+    }
+  }
   const surface = (el) => el.tagName === 'CANVAS' || el.getAttribute('role') === 'img';
   for (let i = 0; i < ctrls.length; i++) for (let j = i + 1; j < ctrls.length; j++) {
     if (surface(ctrls[i]) || surface(ctrls[j])) continue;
