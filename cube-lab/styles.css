@@ -134,6 +134,12 @@ body[data-busy] #space { cursor: progress; }
 .ctl.castBtn[aria-pressed="true"] { --fill: #ffd36e; --fg: #07060a; }
 .ctl.castBtn[aria-pressed="true"]::before { box-shadow: 0 0 18px rgba(255, 211, 110, 0.55); }
 .ctl.castBtn[aria-disabled="true"] { opacity: 0.32; cursor: not-allowed; }
+/* The look button (solid, shrunk, see-through, both): its picture is the state it is in, four tiles touching or apart, filled or glass. */
+.ctl.lookBtn { --ring: rgba(0, 209, 255, 0.45); --fill: rgba(0, 209, 255, 0.08); --fg: #bff4ff; }
+.ctl.lookBtn:not([data-look="0"]) { --ring: var(--accent); --fill: rgba(0, 209, 255, 0.2); }
+.ctl.lookBtn:not([data-look="0"])::before { box-shadow: 0 0 12px rgba(0, 209, 255, 0.35); }
+.lookBtn svg g { display: none; }
+.lookBtn[data-look="0"] .lk0, .lookBtn[data-look="1"] .lk1, .lookBtn[data-look="2"] .lk2, .lookBtn[data-look="3"] .lk3 { display: inline; }
 
 /* ---------- the dock: pieces (or the move pad), actions, walls or rooms ---------- */
 .dock { grid-area: dock; display: flex; flex-direction: column; gap: 12px; min-height: 0; min-width: 0; }
@@ -165,7 +171,7 @@ body[data-busy] .tray, body[data-cast] .tray { opacity: 0.35; }
 .chip {
   display: grid; place-items: center;
   width: 60px; height: 56px; padding: 0;
-  border: 1px solid var(--line); border-radius: 12px;
+  border: 2px solid var(--line); border-radius: 12px;
   background: var(--panel-soft);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -173,13 +179,17 @@ body[data-busy] .tray, body[data-cast] .tray { opacity: 0.35; }
 }
 .chip svg { width: 48px; height: 48px; display: block; }
 .chip:active { transform: scale(0.94); }
+/* The class of a piece in the lists, on its frame: flat (teal), 3D and its own mirror image (amber), 3D with a mirror twin (magenta). The bubble says it in words. */
+.chip.k-flat { border-color: rgba(52, 211, 189, 0.6); }
+.chip.k-sym { border-color: rgba(251, 191, 36, 0.6); }
+.chip.k-twin { border-color: rgba(232, 121, 249, 0.65); }
 .chip[aria-pressed="true"] {
   border-color: color-mix(in srgb, var(--accent) 70%, white);
   background: color-mix(in srgb, var(--accent) 22%, var(--panel-soft));
   box-shadow: 0 0 14px rgba(0, 209, 255, 0.3);
 }
 /* A used piece: dimmer, dashed, still tappable (it selects the piece). */
-.chip.placed { opacity: 0.55; border-style: dashed; border-color: #5b6d88; background: transparent; }
+.chip.placed { opacity: 0.55; border-style: dashed; background: transparent; }
 /* In the list of the hexacubes, the chip of the chosen piece lights up as the piece does in the wall. */
 .chip.chosen { opacity: 1; border-style: solid; border-color: color-mix(in srgb, var(--accent) 70%, white); background: color-mix(in srgb, var(--accent) 22%, var(--panel-soft)); box-shadow: 0 0 14px rgba(0, 209, 255, 0.3); }
 
@@ -300,10 +310,12 @@ body[data-mode="hexa"][data-selected]:not([data-cast]) .pad { display: none; }
   .chip { width: 52px; height: 52px; }
   .chip svg { width: 44px; height: 44px; }
   .pad { padding: 0; }
-  .strip { flex-direction: row; gap: 10px; }
+  .strip { flex-direction: row; gap: 8px; }
   .castCol { flex-direction: row; }
-  .slider { flex-direction: row; width: auto; height: 44px; min-height: 0; max-height: none; padding: 0 12px; flex: 1 1 0; }
+  /* Cast, look and the two sliders share one row: the sliders keep their length by a tighter frame. */
+  .slider { flex-direction: row; gap: 4px; width: auto; height: 44px; min-height: 0; max-height: none; padding: 0 9px; flex: 1 1 0; }
   .slider { min-width: 0; }
+  .slider svg { width: 18px; height: 18px; }
   .slider input { writing-mode: horizontal-tb; direction: ltr; width: 100%; min-width: 0; height: 24px; flex: 1 1 auto; }
   /* Horizontal sliders drawn by the lab, so Safari shows the same colours as Chromium. */
   .slider input { -webkit-appearance: none; appearance: none; background: transparent; height: 28px; }

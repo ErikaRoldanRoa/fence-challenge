@@ -14,6 +14,18 @@ assert.strictEqual(chiralPairs(5), 6, "six mirror pairs of pentacubes");
 assert.strictEqual(G.polycubes(6).length, 166, "166 hexacubes up to turning");
 assert.strictEqual(chiralPairs(6), 54, "54 mirror pairs of hexacubes: 112 free hexacubes");
 
+// The classes the lists of the cube lab wear on their frames: flat (a plane holds the piece), 3D and its own mirror image, 3D with a mirror twin.
+{
+  const flat = (p) => [0, 1, 2].some((a) => p.every((c) => c[a] === p[0][a]));
+  const classes = (n) => {
+    const l = G.polycubes(n), f = l.filter(flat).length, t = l.filter((p) => !flat(p) && G.canon(p) !== G.canon(G.mirror(p))).length;
+    return [f, l.length - f - t, t];
+  };
+  assert.deepStrictEqual([4, 5, 6].map(classes), [[5, 1, 2], [12, 5, 12], [35, 23, 108]], "flat, 3D and its own mirror image, 3D with a twin");
+  assert.ok([4, 5, 6].every((n) => G.polycubes(n).filter(flat).every((p) => G.canon(p) === G.canon(G.mirror(p)))), "a flat piece is its own mirror image");
+  console.log("classes: flat / 3D alone / 3D twin = 5 1 2, 12 5 12, 35 23 108");
+}
+
 const shell = (a, b, c) => {
   const out = [];
   for (let x = 0; x < a + 2; x++) for (let y = 0; y < b + 2; y++) for (let z = 0; z < c + 2; z++)

@@ -679,6 +679,7 @@ def three_walls(browser):
         pop = pg.inner_text(".math-pop")
         pills = pg.eval_on_selector_all(".math-pop .math-src .paper-ref", "els => els.map(e => e.textContent)")
         check("146" in pop and "144 cubes line the pocket exactly and a single cube sticks out" in pop, f"wall {k + 1} chip: best possible, 144 line the pocket and one cube sticks out")
+        check("It is one of many: more than 35 million walls of volume 52 had been found when the search was stopped." in pop, f"wall {k + 1} chip: one of many, as the paper's search found")
         check(pills == (["§ 7.3 Pentacubes", "Fig. 30"] if k == 0 else ["§ 7.3 Pentacubes"]), f"wall {k + 1} chip: the footer {pills}")
         pg.keyboard.press("Escape")
         pg.click('.math-chip[data-math="m.bound"]')
@@ -734,19 +735,202 @@ def whole_chips(browser):
         ctx.close()
 
 
+# The standard shapes, written as pictures here and nowhere else in the lab: the letters the lists put on the flat pieces are checked against them.
+POLYOMINOES = {
+    4: {"I": ["####"], "O": ["##", "##"], "T": ["###", ".#."], "L": ["###", "#.."], "S": [".##", "##."]},
+    5: {"F": [".##", "##.", ".#."], "I": ["#####"], "L": ["####", "#..."], "N": ["##..", ".###"], "P": ["##", "##", "#."],
+        "T": ["###", ".#.", ".#."], "U": ["#.#", "###"], "V": ["#..", "#..", "###"], "W": ["#..", "##.", ".##"],
+        "X": [".#.", "###", ".#."], "Y": ["####", ".#.."], "Z": ["##.", ".#.", ".##"]},
+}
+
+
+def canon2(cells):
+    """A planar piece up to the 8 turns and flips of the plane."""
+    best = None
+    for k in range(8):
+        pts = list(cells)
+        if k & 1:
+            pts = [(-x, y) for x, y in pts]
+        for _ in range(k >> 1):
+            pts = [(-y, x) for x, y in pts]
+        mx, my = min(x for x, y in pts), min(y for x, y in pts)
+        t = tuple(sorted((x - mx, y - my) for x, y in pts))
+        if best is None or t < best:
+            best = t
+    return best
+
+
+def pic(rows):
+    return {(x, y) for y, row in enumerate(rows) for x, ch in enumerate(row) if ch == "#"}
+
+
+def classes_names_looks(browser):
+    """The pieces of the lists wear their class (flat, 3D alone, 3D with a twin) on their frame and in their bubble, the flat ones their name; the look button
+    shrinks the pieces, makes them see-through, or both, and the key L does the same."""
+    print("[classes, names, looks]")
+    ctx = browser.new_context(viewport={"width": 1400, "height": 900}, bypass_csp=True)
+    ctx.add_init_script("localStorage.setItem('fc-lang','en')")
+    pg = ctx.new_page()
+    errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
+    pg.goto(URL)
+    pg.wait_for_function("window.cubeLab")
+    labels = lambda: pg.eval_on_selector_all("#tray .chip", "els => els.map(e => e.getAttribute('aria-label'))")
+    classes = lambda: pg.eval_on_selector_all("#tray .chip", "els => els.map(e => (e.className.match(/k-(\\w+)/) || [])[1])")
+    colour = lambda sel: pg.evaluate(f"getComputedStyle(document.querySelector({sel!r})).borderTopColor")
+    # the same cells the lab builds its pieces from, and the classes worked out here from them
+    truth = lambda n: pg.evaluate(f"""(() => {{ const G = window.CubeGeometry, flat = (p) => [0, 1, 2].some((a) => p.every((c) => c[a] === p[0][a]));
+      return G.polycubes({n}).map((p) => ({{ flat: flat(p), chiral: G.canon(p) !== G.canon(G.mirror(p)), cells: p }})); }})()""")
+    frames = {}
+    for step, n, want in (("tetra", 4, (5, 1, 2)), ("penta", 5, (12, 5, 12)), ("hexa", 6, (35, 23, 108))):
+        pg.click(f"#mode-{step}")
+        pg.wait_for_timeout(500)
+        cl, lb, tr = classes(), labels(), truth(n)
+        got = (cl.count("flat"), cl.count("sym"), cl.count("twin"))
+        check(got == want and len(cl) == len(tr), f"{step}: {got[0]} flat, {got[1]} 3D alone, {got[2]} 3D with a twin, as worked out from the cells: {got}")
+        ok = all((c == "flat") == t["flat"] and (c == "twin") == (t["chiral"] and not t["flat"]) for c, t in zip(cl, tr))
+        check(ok, f"{step}: every chip wears the class of its own piece")
+        # the words say it too: colour is never the only cue
+        words = all((("flat" in l) if c == "flat" else ("3D, its own mirror image" in l) if c == "sym" else ("3D, mirror image of piece" in l)) for c, l in zip(cl, lb))
+        check(words and len(set(lb)) == len(lb), f"{step}: every label says the class in words, each piece its own")
+        # the bubble says what the piece is and nothing of its number or its cubes (Erika, 22.10); the screen reader keeps the full label
+        tips = pg.eval_on_selector_all("#tray .chip", "els => els.map(e => e.getAttribute('data-lab-tip'))")
+        want = {"flat": None, "sym": "3D, its own mirror image", "twin": "3D, it has a mirror twin"}
+        ok_tips = all(("Piece" not in tp and "cube" not in tp) and ((tp == want[c]) if want[c] else (tp == "Flat" or tp.startswith("Flat, the "))) for c, tp in zip(cl, tips))
+        check(ok_tips, f"{step}: every bubble is the class and the name, no number and no cubes: {sorted(set(tips))[:4]}...")
+        # a twin names its twin, and the twin names it back
+        back = {}
+        for i, l in enumerate(lb):
+            if "mirror image of piece" in l:
+                back[i + 1] = int(l.split("mirror image of piece ")[1].split(",")[0])
+        check(all(back.get(m) == i for i, m in back.items()), f"{step}: the {len(back)} twins name each other")
+        # the names of the flat pieces, against the standard shapes drawn above
+        if n in POLYOMINOES:
+            named = {}
+            for l, t in zip(lb, tr):
+                if t["flat"]:
+                    word = "tetromino" if n == 4 else "pentomino"
+                    letter = l.split(f"the {word} ")[1].split(",")[0] if f"the {word} " in l else None
+                    axis = next(a for a in range(3) if all(c[a] == t["cells"][0][a] for c in t["cells"]))
+                    plane = {tuple(v for a, v in enumerate(c) if a != axis) for c in t["cells"]}
+                    named.setdefault(letter, []).append(canon2([(a, b) for a, b in plane]))
+            letters = sorted(named)
+            check(letters == sorted(POLYOMINOES[n]) and all(len(v) == 1 for v in named.values()), f"{step}: each of the {len(POLYOMINOES[n])} flat pieces has its own letter: {letters}")
+            check(all(named[k][0] == canon2(pic(POLYOMINOES[n][k])) for k in POLYOMINOES[n]), f"{step}: each letter is on the shape it names")
+        else:
+            flat_l = [l for l, c in zip(lb, cl) if c == "flat"]
+            check(len(flat_l) == 35 and all(l.endswith(", 6 cubes, flat") for l in flat_l), f"{step}: the 35 flat hexacubes are only called flat")
+        for c in ("flat", "sym", "twin"):
+            frames[(step, c)] = colour(f"#tray .chip.k-{c}")
+    check(len({frames[("penta", c)] for c in ("flat", "sym", "twin")}) == 3 and len(set(frames.values())) == 3, f"the three classes have three frames: {sorted(set(frames.values()))}")
+    # an opened wall places every piece: the chips stay dashed, dim, and keep their class frame; the label says placed
+    pg.click("#mode-penta")
+    pg.click("#walls .ctl.wall >> nth=0")
+    pg.wait_for_function("!document.body.hasAttribute('data-busy')", timeout=60000)
+    pg.wait_for_timeout(600)
+    kept = {c: colour(f"#tray .chip.k-{c}") for c in ("flat", "sym", "twin")}
+    check(kept == {c: frames[("penta", c)] for c in kept}, f"a placed chip keeps the frame of its class: {kept}")
+    check(pg.evaluate("getComputedStyle(document.querySelector('#tray .chip.placed')).borderTopStyle") == "dashed" and pg.locator("#tray .chip.placed").count() == 29, "and it is still dashed")
+    check(all(l.endswith(", placed: choose it where it stands") for l in labels()), "its label says it is placed")
+    tips = pg.eval_on_selector_all("#tray .chip", "els => els.map(e => e.getAttribute('data-lab-tip'))")
+    check(all(tp.endswith(", placed: choose it where it stands") and "Piece" not in tp for tp in tips), "and its bubble too, without the number")
+
+    # ---- the look of the pieces, on the wall of volume 52 (29 pieces, 145 cubes)
+    look = lambda: pg.evaluate("cubeLab.state().look")
+    deep = lambda: pg.evaluate("cubeLab.looks(true)")
+    btn = lambda: pg.get_attribute("#look", "aria-label")
+    check(pg.locator("#look").is_visible() and look() == 0 and pg.get_attribute("#look", "data-look") == "0", "the look button is there, on solid")
+    check(btn() == "Pieces solid. Next: pieces shrunk a little, to tell them apart (key L)" and pg.get_attribute("#look", "data-lab-tip") == btn(), f"it says the look and what its next press does: {btn()}")
+    d = deep()
+    check(d["widths"] == ["0.900"] and not d["transparent"] and d["depthWrite"] and d["see"] == 0, f"solid: every cube 0.9 wide, opaque: {d['widths']}")
+    want_words = ["Pieces solid.", "Pieces shrunk a little, to tell them apart.", "Pieces see-through.", "Pieces shrunk and see-through."]
+    for k in (1, 2, 3, 0):
+        pg.click("#look")
+        pg.wait_for_timeout(250)
+        d = deep()
+        check(look() == k and pg.get_attribute("#look", "data-look") == str(k) and pg.inner_text("#status").strip() == want_words[k], f"look {k}: the status says '{pg.inner_text('#status').strip()}'")
+        shrunk, see = bool(k & 1), bool(k & 2)
+        if shrunk:
+            check(set(d["widths"]) <= {"0.760", "0.880", "1.000"} and "0.760" in d["widths"] and "1.000" in d["widths"], f"look {k}: the cubes are 0.76, 0.88 or 1 wide: {d['widths']}")
+            check(d["apart"] >= 0.11 and d["sharing"] > 0 and d["joined"] < 1e-3, f"look {k}: cubes of two pieces stand {d['apart']:.2f} apart at least, cubes of one piece join ({d['sharing']} joins, widest gap {d['joined']:.4f})")
+        else:
+            check(d["widths"] == ["0.900"], f"look {k}: every cube 0.9 wide: {d['widths']}")
+        check(d["transparent"] == see and d["depthWrite"] == (not see) and d["see"] == (1 if see else 0) and d["doubleSided"] == see, f"look {k}: {'see-through' if see else 'opaque'} (transparent {d['transparent']}, depth written {d['depthWrite']})")
+        check(d["roomSolid"] == (52 if see else 0), f"look {k}: the room of 52 cubes {'stands inside as a solid' if see else 'is a glow'} ({d['roomSolid']} solid cubes)")
+    # the wall is still the wall: same pieces, same volume, in every look
+    s_ = pg.evaluate("cubeLab.state()")
+    check(len(s_["pieces"]) == 29 and s_["volume"] == 52, f"the look changes nothing but the picture: {len(s_['pieces'])} pieces, volume {s_['volume']}")
+    # the key L, the same cycle, from the board
+    pg.focus("#space")
+    pg.keyboard.press("l")
+    pg.wait_for_timeout(150)
+    k1 = look()
+    pg.keyboard.press("L")
+    pg.wait_for_timeout(150)
+    k2 = look()
+    pg.keyboard.press("l")
+    pg.keyboard.press("l")
+    pg.wait_for_timeout(150)
+    check((k1, k2, look()) == (1, 2, 0), f"the key L cycles the look: {k1}, {k2}, then {look()} after two more")
+    # the look stays when the pieces are cut, spread, chosen, and when the step changes
+    pg.click("#look")
+    pg.evaluate("(() => { const e = document.getElementById('spread'); e.value = 40; e.dispatchEvent(new Event('input', { bubbles: true })); })()")
+    pg.wait_for_timeout(300)
+    d = deep()
+    check(d["joined"] < 1e-3 and d["sharing"] > 0 and d["apart"] > 0, f"shrunk and spread: cubes of one piece still join ({d['sharing']} joins), no two pieces touch ({d['apart']:.2f} apart at least)")
+    pg.evaluate("(() => { const e = document.getElementById('spread'); e.value = 0; e.dispatchEvent(new Event('input', { bubbles: true })); })()")
+    pg.evaluate("(() => { const e = document.getElementById('cut'); e.value = 3; e.dispatchEvent(new Event('input', { bubbles: true })); })()")
+    pg.wait_for_timeout(300)
+    check(look() == 1 and len(pg.evaluate("cubeLab.looks(true).widths")) >= 1, "shrunk and cut open: still drawn")
+    pg.evaluate("(() => { const e = document.getElementById('cut'); e.value = e.max; e.dispatchEvent(new Event('input', { bubbles: true })); })()")
+    pg.evaluate("cubeLab.select(3)")
+    pg.wait_for_timeout(300)
+    pg.screenshot(path=str(Path(OUT) / "look-shrunk-chosen.png"))
+    pg.keyboard.press("Escape")
+    pg.click("#look")
+    pg.wait_for_timeout(300)
+    pg.evaluate("cubeLab.select(3)")
+    pg.wait_for_timeout(300)
+    pg.screenshot(path=str(Path(OUT) / "look-seethrough-chosen.png"))
+    pg.keyboard.press("Escape")
+    pg.click("#mode-hexa")
+    pg.wait_for_timeout(500)
+    check(look() == 2, "the look stays when the step changes")
+    # French and German say it too
+    for lang, first in (("fr", "Pièces transparentes. Ensuite"), ("de", "Teile durchsichtig. Danach")):
+        pg.click(f'[data-lang-btn="{lang}"]')
+        pg.wait_for_timeout(300)
+        check(btn().startswith(first), f"{lang}: {btn()}")
+    pg.click('[data-lang-btn="en"]')
+    pg.wait_for_timeout(200)
+    # the pictures of the walls are drawn solid, whatever the look is when they are first drawn: they have a material of their own, which no look touches
+    # (comparing two pictures from two page loads is no test here: a headless GPU now and then loses its second context, the pictures then come out broken, with the pushed version too)
+    check(pg.evaluate("cubeLab.looks().thumbOwnMaterial") and look() == 2, "the pictures of the walls have a material of their own: no look reaches them")
+    # the biggest wall, in the looks that cost most: drawn at once
+    pg.click("#mode-hepta")
+    pg.click("#walls .ctl.wall >> nth=0")
+    pg.wait_for_function("!document.body.hasAttribute('data-busy')", timeout=120000)
+    pg.wait_for_timeout(600)
+    times = pg.evaluate("""(() => { const out = []; for (const k of [1, 3, 0]) { const t0 = performance.now(); cubeLab.setLook(k); out.push(Math.round(performance.now() - t0)); } return out; })()""")
+    check(max(times) < 2500, f"the 1023 heptacubes (7161 cubes): the looks are drawn in {times} ms")
+    check(not errs, f"no script error {errs[:1]}")
+    ctx.close()
+
+
 with sync_playwright() as p:
     b = p.chromium.launch(channel="chrome", args=["--use-angle=swiftshader", "--enable-unsafe-swiftshader"])
-    run(b, "desktop", 1400, 900, False)
-    run(b, "phone", 390, 844, True)
-    faces_only(b)
-    held_piece(b)
-    tetra_wall(b)
-    three_walls(b)
-    whole_chips(b)
-    wall_links(b)
-    print("[tips]")
-    tip_checks(b, URL, "window.cubeLab", [("#mode-penta", "cu.mode.pentaTip"), ("#mode-hexa", "cu.mode.hexaTip"), ("#turn", "cu.turnTip"), ("#cast", "cu.castTip"), ("#play-wrap", "cu.play.wrap")],
-               ".lab-nav a[href='../hub/']", "#mode-penta", "cube")
+    only = os.environ.get("ONLY")      # ONLY=classes_names_looks runs that one part alone
+    part = lambda f: (not only or only == f.__name__) and f(b)
+    if not only or only == "run":
+        run(b, "desktop", 1400, 900, False)
+        run(b, "phone", 390, 844, True)
+    for f in (faces_only, held_piece, tetra_wall, three_walls, whole_chips, classes_names_looks, wall_links):
+        part(f)
+    if not only or only == "tips":
+        print("[tips]")
+        tip_checks(b, URL, "window.cubeLab", [("#mode-penta", "cu.mode.pentaTip"), ("#mode-hexa", "cu.mode.hexaTip"), ("#turn", "cu.turnTip"), ("#cast", "cu.castTip"), ("#look", "cu.look.0"), ("#play-wrap", "cu.play.wrap")],
+                   ".lab-nav a[href='../hub/']", "#mode-penta", "cube")
     b.close()
 srv.shutdown()
 print("FAILS:", fails if fails else "none")

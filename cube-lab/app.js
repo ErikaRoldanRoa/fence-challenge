@@ -21,7 +21,8 @@
  * pinch or wheel zooms, never closer than the build allows.
  * Keys: arrows and PageUp/PageDown move, Enter places (and selects), Delete
  * puts back, R turns, T tips, Q/E turn the view, +/- zoom, [ and ] choose a
- * piece, Escape lets go, Ctrl+Z undoes. */
+ * piece, L changes the look of the pieces (solid, shrunk a little, see-through,
+ * both), Escape lets go, Ctrl+Z undoes. */
 (function () {
   "use strict";
   var G = window.CubeGeometry, THREE = window.THREE, WALLS = window.CUBE_WALLS || [], ROOMS = window.CUBE_ROOMS || [];
@@ -39,6 +40,58 @@
   // Piece hues skip the gold band, which belongs to the room.
   function hueOf(i, n) { return (80 + (i / n) * 315) % 360; }
 
+  // The flat pieces are polyominoes and have names (the 5 tetrominoes, the 12 pentominoes; a flat hexacube is only "flat"). The others are told apart
+  // by their mirror image: a 3D piece is its own mirror image, or it has a twin.
+  var POLYOMINOES = {
+    4: { I: [[0, 0], [1, 0], [2, 0], [3, 0]], O: [[0, 0], [1, 0], [0, 1], [1, 1]], T: [[0, 0], [1, 0], [2, 0], [1, 1]], L: [[0, 0], [0, 1], [0, 2], [1, 0]], S: [[0, 0], [1, 0], [1, 1], [2, 1]] },
+    5: {
+      F: [[1, 0], [2, 0], [0, 1], [1, 1], [1, 2]], I: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]], L: [[0, 0], [0, 1], [0, 2], [0, 3], [1, 0]],
+      N: [[0, 0], [1, 0], [1, 1], [2, 1], [3, 1]], P: [[0, 0], [1, 0], [0, 1], [1, 1], [0, 2]], T: [[0, 0], [1, 0], [2, 0], [1, 1], [1, 2]],
+      U: [[0, 0], [2, 0], [0, 1], [1, 1], [2, 1]], V: [[0, 0], [0, 1], [0, 2], [1, 0], [2, 0]], W: [[0, 0], [0, 1], [1, 1], [1, 2], [2, 2]],
+      X: [[1, 0], [0, 1], [1, 1], [2, 1], [1, 2]], Y: [[0, 0], [1, 0], [2, 0], [3, 0], [1, 1]], Z: [[0, 0], [1, 0], [1, 1], [1, 2], [2, 2]]
+    }
+  };
+  // A planar piece as one string, the same under the 8 turns and flips of the plane.
+  function form2D(cells) {
+    var best = null;
+    for (var k = 0; k < 8; k++) {
+      var pts = cells.map(function (c) {
+        var x = k & 1 ? -c[0] : c[0], y = c[1];
+        for (var r = 0; r < k >> 1; r++) { var u = x; x = -y; y = u; }
+        return [x, y];
+      });
+      var mx = Math.min.apply(null, pts.map(function (p) { return p[0]; })), my = Math.min.apply(null, pts.map(function (p) { return p[1]; }));
+      var s = pts.map(function (p) { return (p[0] - mx) + "," + (p[1] - my); }).sort().join(";");
+      if (best === null || s < best) best = s;
+    }
+    return best;
+  }
+  var POLY_NAMES = {};
+  Object.keys(POLYOMINOES).forEach(function (n) {
+    POLY_NAMES[n] = {};
+    Object.keys(POLYOMINOES[n]).forEach(function (name) { POLY_NAMES[n][form2D(POLYOMINOES[n][name])] = name; });
+  });
+  // sh.cls: "flat", "sym" (3D, its own mirror image) or "twin" (3D, with a mirror twin); sh.name: the polyomino's letter, when it has one.
+  function classify(sh) {
+    var axis = -1;
+    for (var a = 0; a < 3 && axis < 0; a++) if (sh.cells.every(function (c) { return c[a] === sh.cells[0][a]; })) axis = a;
+    sh.name = null;
+    if (axis >= 0) {
+      var named = POLY_NAMES[sh.cells.length];
+      if (named) sh.name = named[form2D(sh.cells.map(function (c) { return c.filter(function (v, i) { return i !== axis; }); }))] || null;
+    }
+    sh.cls = axis >= 0 ? "flat" : sh.mirror == null ? "sym" : "twin";
+  }
+  // The class in words: the colour of a frame is never the only cue. The screen reader gets it with the piece's number (classText), the bubble without (classTip).
+  function classText(sh) {
+    if (sh.cls === "flat") return sh.name ? t(sh.cells.length === 4 ? "cu.cls.flatT" : "cu.cls.flatP", { x: sh.name }) : t("cu.cls.flat");
+    return sh.cls === "sym" ? t("cu.cls.sym") : t("cu.cls.twin", { m: sh.mirror + 1 });
+  }
+  function classTip(sh) {
+    var w = sh.cls === "twin" ? t("cu.cls.twinTip") : classText(sh);
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  }
+
   // ---------- state ----------
   var mode = "tetra", play = "explore";
   var boards = {}; // per step and way: { pieces: [{ shape, cells, hue }], hand, orient, sel, undo: [], space, room, opened }
@@ -52,6 +105,7 @@
     var byName = {};
     shapes[m].forEach(function (sh) { byName[sh.canon] = sh.index; });
     shapes[m].forEach(function (sh) { var q = byName[G.canon(G.mirror(sh.cells))]; sh.mirror = q === sh.index ? null : q; });
+    shapes[m].forEach(classify);
     ["explore", "wrap"].forEach(function (w) {
       boards[m + "/" + w] = { pieces: [], hand: null, orient: 0, sel: null, undo: [], space: MODES[m].space, room: null };
     });
@@ -59,6 +113,10 @@
   function board() { return boards[mode + "/" + play]; }
 
   var spread = 0, cut = Infinity;
+  // How the pieces are drawn. Bit 0: each piece shrunk a little, so that it stands apart from its neighbours (a cube keeps its face flush with a cube of
+  // its own piece, so a piece stays one block). Bit 1: see-through (the faces faint, the border of every face bright, the room shows through).
+  var look = 0;
+  var INSET = 0.12; // a free face of a shrunk piece sits this far inside its cell
   var cursor = null; // where the piece in hand would go (mouse or keys)
   var busy = false; // a wall is being assembled, or a win is being shown
   var cast = 0, castGoal = 0; // 0 the wall, 1 the room alone
@@ -99,6 +157,23 @@
   var shellGeo = new THREE.BoxGeometry(1.06, 1.06, 1.06);
   var roomGeo = new THREE.BoxGeometry(0.62, 0.62, 0.62), roomCoreGeo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
   var cubeMat = new THREE.MeshStandardMaterial({ roughness: 0.55, metalness: 0.05 });
+  // See-through: the same material, its faces made faint and the border of every face kept bright (one uniform, no second mesh to build for 7161 cubes).
+  var seeUniform = { value: 0 };
+  cubeMat.onBeforeCompile = function (shader) {
+    shader.uniforms.uSee = seeUniform;
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec2 vEdgeUv;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvEdgeUv = uv;");
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", "#include <common>\nvarying vec2 vEdgeUv;\nuniform float uSee;")
+      .replace("#include <alphamap_fragment>", "#include <alphamap_fragment>\n" +
+        "float edgeD = min(min(vEdgeUv.x, 1.0 - vEdgeUv.x), min(vEdgeUv.y, 1.0 - vEdgeUv.y));\n" +
+        "float edgeK = 1.0 - smoothstep(0.03, 0.10, edgeD);\n" +
+        "diffuseColor.a *= mix(1.0, mix(0.06, 0.95, edgeK), uSee);\n" +
+        "diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0), 0.3 * edgeK * uSee);");
+  };
+  // The thumbnails of the walls are drawn once, always solid: their own material.
+  var thumbMat = new THREE.MeshStandardMaterial({ roughness: 0.55, metalness: 0.05 });
   // The room: white-gold light, a colour no piece wears.
   var roomMat = new THREE.MeshBasicMaterial({ color: 0xffcf5a, transparent: true, opacity: 0.5, depthWrite: false, blending: THREE.AdditiveBlending });
   var roomCoreMat = new THREE.MeshBasicMaterial({ color: 0xfff3cf, transparent: true, opacity: 0.2, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
@@ -129,10 +204,12 @@
     var s = board().space;
     floor = new THREE.Mesh(new THREE.PlaneGeometry(s, s), new THREE.MeshBasicMaterial({ color: 0x131c28, transparent: true, opacity: 0.9 }));
     floor.rotation.x = -Math.PI / 2;
+    floor.renderOrder = -2; // before the cubes, which are drawn after it when they are see-through
     world.add(floor);
     grid = new THREE.GridHelper(s, s, 0x3a4a62, 0x2a3850);
     grid.material.transparent = true;
     grid.position.y = 0.002;
+    grid.renderOrder = -1;
     world.add(grid);
   }
 
@@ -202,6 +279,30 @@
     return out;
   }
 
+  // Which piece stands in each cell (a flat grid, filled again at every draw when the pieces are shrunk); -1 for none.
+  var GRID = 64, ownerGrid = new Int32Array(GRID * GRID * GRID), reach = [0, 0, 0, 0, 0, 0];
+  function fillOwners(pieces) {
+    ownerGrid.fill(-1);
+    pieces.forEach(function (p, pi) {
+      if (p.clash) return;
+      p.cells.forEach(function (c) {
+        if (c[0] >= 0 && c[1] >= 0 && c[2] >= 0 && c[0] < GRID - 1 && c[1] < GRID - 1 && c[2] < GRID - 1) ownerGrid[(c[0] + 1) + GRID * ((c[1] + 1) + GRID * (c[2] + 1))] = pi;
+      });
+    });
+  }
+  function ownerAt(x, y, z) {
+    return x < -1 || y < -1 || z < -1 || x >= GRID - 1 || y >= GRID - 1 || z >= GRID - 1 ? -1 : ownerGrid[(x + 1) + GRID * ((y + 1) + GRID * (z + 1))];
+  }
+  // How far the cube of piece `pi` at cell `c` reaches from the middle of its cell, toward -x, +x, -y, +y, -z, +z (the pieces shrunk): all the way to the
+  // edge of the cell on a side shared with a cube of its own piece, INSET short of it on any other side.
+  function reachOf(pi, c) {
+    var x = c[0], y = c[1], z = c[2], f = 0.5 - INSET;
+    reach[0] = ownerAt(x - 1, y, z) === pi ? 0.5 : f; reach[1] = ownerAt(x + 1, y, z) === pi ? 0.5 : f;
+    reach[2] = ownerAt(x, y - 1, z) === pi ? 0.5 : f; reach[3] = ownerAt(x, y + 1, z) === pi ? 0.5 : f;
+    reach[4] = ownerAt(x, y, z - 1) === pi ? 0.5 : f; reach[5] = ownerAt(x, y, z + 1) === pi ? 0.5 : f;
+    return reach;
+  }
+
   function draw() {
     midCache = null;
     var b = board(), count = 0;
@@ -212,6 +313,7 @@
     instanceCell = [];
     var i = 0, off = new THREE.Vector3(), pos = new THREE.Vector3();
     var scale = Math.max(0, 1 - ease(cast) * 1.15);
+    if (look & 1) fillOwners(b.pieces);
     b.pieces.forEach(function (p, pi) {
       pieceOffset(p, off);
       var col = pieceColor(p, colorTmp);
@@ -219,7 +321,12 @@
         cellPos(c, pos).add(off);
         dummy.position.copy(pos);
         // A held piece that overlaps is drawn as see-through red glass instead.
-        dummy.scale.setScalar(c[1] >= cut || scale <= 0 || p.clash ? 0.0001 : scale);
+        if (c[1] >= cut || scale <= 0 || p.clash) dummy.scale.setScalar(0.0001);
+        else if (look & 1) {
+          var r = reachOf(pi, c);
+          dummy.position.x += (r[1] - r[0]) / 2 * scale; dummy.position.y += (r[3] - r[2]) / 2 * scale; dummy.position.z += (r[5] - r[4]) / 2 * scale;
+          dummy.scale.set((r[0] + r[1]) / CUBE * scale, (r[2] + r[3]) / CUBE * scale, (r[4] + r[5]) / CUBE * scale);
+        } else dummy.scale.setScalar(scale);
         dummy.updateMatrix();
         cubes.setMatrixAt(i, dummy.matrix);
         cubes.setColorAt(i, col);
@@ -229,6 +336,12 @@
       });
     });
     cubes.count = count;
+    // See-through: faint faces, nothing written to the depth buffer, both sides of every face.
+    var see = (look & 2) !== 0;
+    cubeMat.transparent = see;
+    cubeMat.depthWrite = !see;
+    cubeMat.side = see ? THREE.DoubleSide : THREE.FrontSide;
+    seeUniform.value = see ? 1 : 0;
     // The first mesh had no colours; make three.js build the shader again.
     cubeMat.needsUpdate = true;
     cubes.instanceMatrix.needsUpdate = true;
@@ -291,13 +404,22 @@
     if (!p || cast) return;
     outline = new THREE.Group();
     var off = pieceOffset(p, new THREE.Vector3());
+    // Among the bright edges of a see-through wall the glow of the chosen piece has to be stronger to be told apart.
+    selGlow.opacity = look & 2 ? 0.5 : 0.22;
+    if (look & 1) fillOwners(b.pieces);
     p.cells.forEach(function (c) {
       if (c[1] >= cut) return;
-      var l = new THREE.LineSegments(edgeGeo, selLine);
+      var l = new THREE.LineSegments(edgeGeo, selLine), g = new THREE.Mesh(shellGeo, selGlow);
       cellPos(c, l.position).add(off);
+      // The pieces shrunk: the ring and the glow hug the shrunk cube.
+      if (look & 1) {
+        var q = reachOf(b.sel, c);
+        l.position.x += (q[1] - q[0]) / 2; l.position.y += (q[3] - q[2]) / 2; l.position.z += (q[5] - q[4]) / 2;
+        l.scale.set((q[0] + q[1] + 0.07) / 0.97, (q[2] + q[3] + 0.07) / 0.97, (q[4] + q[5] + 0.07) / 0.97);
+        g.scale.set((q[0] + q[1] + 0.16) / 1.06, (q[2] + q[3] + 0.16) / 1.06, (q[4] + q[5] + 0.16) / 1.06);
+      }
       l.renderOrder = 4;
       outline.add(l);
-      var g = new THREE.Mesh(shellGeo, selGlow);
       g.position.copy(l.position);
       outline.add(g);
       if (p.clash) {
@@ -314,10 +436,22 @@
     room = roomCore = null;
     var cells = last.enclosed.filter(function (c) { return c[1] < cut; });
     if (!cells.length || board().room) return;
+    var pos = new THREE.Vector3();
+    // Through a see-through wall the room stands inside it as a solid, as in the cast: the shape of what the wall shuts in. It stays put while the wall spreads away from it.
+    if (look & 2) {
+      room = new THREE.InstancedMesh(boxGeo, solidMat, cells.length);
+      cells.forEach(function (c, i) {
+        cellPos(c, pos);
+        dummy.position.copy(pos);
+        dummy.scale.setScalar(0.96 / CUBE);
+        dummy.updateMatrix();
+        room.setMatrixAt(i, dummy.matrix);
+      });
+      world.add(room);
+      return;
+    }
     room = new THREE.InstancedMesh(roomGeo, roomMat, cells.length);
     roomCore = new THREE.InstancedMesh(roomCoreGeo, roomCoreMat, cells.length);
-    var pos = new THREE.Vector3();
-    // The room stays put while the wall spreads away from it.
     cells.forEach(function (c, i) {
       cellPos(c, pos);
       dummy.position.copy(pos);
@@ -754,6 +888,20 @@
     setCast(castGoal ? 0 : 1);
   }
 
+  // The look button says what the pieces look like now and what its next press does (its bubble, its label, its picture).
+  function syncLook() {
+    var btn = $("look"), s = t("cu.look." + look);
+    btn.setAttribute("data-look", String(look));
+    put(btn, "aria-label", s);
+    put(btn, "data-lab-tip", s);
+  }
+  function setLook(v) {
+    look = v & 3;
+    syncLook();
+    draw();
+    say("cu.s.look" + look);
+  }
+
   // ---------- a room wrapped: a burst of light, then a short cast ----------
   function win(r) {
     rememberSolved(r.id);
@@ -889,7 +1037,7 @@
     shapes[mode].forEach(function (s, i) {
       var btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "chip";
+      btn.className = "chip k-" + s.cls;
       btn.setAttribute("data-shape", String(i));
       btn.addEventListener("click", function () {
         if (busy) { say("cu.s.busy"); return; }
@@ -971,13 +1119,13 @@
     var sel = b.sel != null && b.pieces[b.sel] ? b.pieces[b.sel].shape : -1;
     b.pieces.forEach(function (p) { placed[p.shape] = true; });
     tray.querySelectorAll(".chip").forEach(function (btn) {
-      var i = +btn.getAttribute("data-shape"), used = !!placed[i], sh = shapes[mode][i], twin = sh.mirror != null;
+      var i = +btn.getAttribute("data-shape"), used = !!placed[i], sh = shapes[mode][i];
       btn.classList.toggle("placed", used);
       btn.classList.toggle("chosen", i === sel);
       put(btn, "aria-pressed", i === b.hand ? "true" : "false");
-      put(btn, "aria-label", t((used ? "cu.pieceUsed" : "cu.piece") + (twin ? "Mirror" : ""), { n: i + 1, k: sh.cells.length, m: twin ? sh.mirror + 1 : "" }));
+      put(btn, "aria-label", t("cu.piece", { n: i + 1, k: sh.cells.length }) + ", " + classText(sh) + (used ? ", " + t("cu.placedHint") : ""));
       if (dim) { put(btn, "aria-disabled", "true"); put(btn, "data-lab-tip", t(dim)); }
-      else { btn.removeAttribute("aria-disabled"); btn.removeAttribute("data-lab-tip"); }
+      else { btn.removeAttribute("aria-disabled"); put(btn, "data-lab-tip", classTip(sh) + (used ? ", " + t("cu.placedHint") : "")); }
       if (btn.tabIndex === 0) any = true;
       renderTrayPiece(i);
     });
@@ -1022,7 +1170,7 @@
     sc.add(l);
     var n = 0, hi = [0, 0, 0];
     w.pieces.forEach(function (p) { n += p.length; p.forEach(function (c) { for (var a = 0; a < 3; a++) hi[a] = Math.max(hi[a], c[a] + 1); }); });
-    var mesh = new THREE.InstancedMesh(boxGeo, cubeMat, n), i = 0, col = new THREE.Color();
+    var mesh = new THREE.InstancedMesh(boxGeo, thumbMat, n), i = 0, col = new THREE.Color();
     w.pieces.forEach(function (p, k) {
       if (w.gold) col.set(0xffd36e); else col.setHSL(hueOf((k * 0.618034) % 1, 1) / 360, 0.78, 0.6);
       p.forEach(function (c) {
@@ -1445,6 +1593,7 @@
     else if (k === "e" || k === "E") { view.theta -= 0.2; placeCamera(); }
     else if (k === "+" || k === "=") { view.r *= 0.88; placeCamera(); }
     else if (k === "-" || k === "_") { view.r /= 0.88; placeCamera(); }
+    else if (k === "l" || k === "L") setLook(look + 1);
     else if (k === "Delete" || k === "Backspace") { if (board().sel != null) { e.preventDefault(); removeSelected(); } }
     else if (k === "Escape") letGo();
     else if (k === "[" || k === "]") {
@@ -1471,6 +1620,7 @@
   $("undo").addEventListener("click", guard(undo));
   $("clear").addEventListener("click", guard(clearAll));
   $("cast").addEventListener("click", toggleCast);
+  $("look").addEventListener("click", function () { setLook(look + 1); });
   document.querySelectorAll("[data-nudge]").forEach(function (btn) {
     btn.addEventListener("click", guard(function () { moveSelected(arrow(btn.getAttribute("data-nudge"))); }));
   });
@@ -1491,6 +1641,7 @@
   });
   document.addEventListener("fc-langchange", function () {
     document.title = t("cu.docTitle." + mode);
+    syncLook();
     syncTray();
     renderWalls();
     renderRooms();
@@ -1599,6 +1750,33 @@
     setPlay: setPlay,
     select: function (i) { select(i); },
     toggleCast: toggleCast,
+    setLook: setLook,
+    // For tests: how the cubes are drawn. The widths of the cubes (in cells), whether the material lets the room show through; with `deep`, how far apart cubes of
+    // different pieces stand, and the widest gap between two cubes of one piece that share a face.
+    looks: function (deep) {
+      var m = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), widths = {}, boxes = [];
+      for (var i = 0; i < cubes.count; i++) {
+        cubes.getMatrixAt(i, m);
+        m.decompose(p, q, sc);
+        if (sc.x < 0.01) continue;
+        [sc.x, sc.y, sc.z].forEach(function (v) { widths[(v * CUBE).toFixed(3)] = true; });
+        if (deep) boxes.push({ piece: instancePiece[i], cell: instanceCell[i], c: [p.x, p.y, p.z], h: [sc.x * CUBE / 2, sc.y * CUBE / 2, sc.z * CUBE / 2] });
+      }
+      var out = { look: look, thumbOwnMaterial: thumbMat !== cubeMat && !thumbMat.transparent, roomSolid: room && room.material === solidMat ? room.count : 0, widths: Object.keys(widths).sort(), transparent: cubeMat.transparent, depthWrite: cubeMat.depthWrite, see: seeUniform.value, doubleSided: cubeMat.side === THREE.DoubleSide };
+      if (deep) {
+        var apart = Infinity, joined = 0, sharing = 0;
+        for (var a = 0; a < boxes.length; a++) for (var b = a + 1; b < boxes.length; b++) {
+          var A = boxes[a], B = boxes[b], gap = -Infinity, step = Math.abs(A.cell[0] - B.cell[0]) + Math.abs(A.cell[1] - B.cell[1]) + Math.abs(A.cell[2] - B.cell[2]);
+          for (var k = 0; k < 3; k++) gap = Math.max(gap, Math.abs(A.c[k] - B.c[k]) - A.h[k] - B.h[k]);
+          if (A.piece !== B.piece) apart = Math.min(apart, gap);
+          else if (step === 1) { sharing++; joined = Math.max(joined, Math.abs(gap)); }
+        }
+        out.apart = apart;
+        out.joined = joined;
+        out.sharing = sharing;
+      }
+      return out;
+    },
     rooms: function () { return ROOMS.map(function (r) { return { id: r.id, step: r.step, room: r.room, witness: r.witness }; }); },
     // For tests: put pieces (lists of cells, shifted by `off`) on the board.
     place: function (list, off) {
@@ -1616,7 +1794,7 @@
       var b = board(), dist = camera.position.distanceTo(view.target);
       return { play: play, room: b.room ? b.room.id : null, roomCells: b.room ? b.room.cells : null, solved: solved, busy: busy,
         cast: cast, castGoal: castGoal, mode: mode, hand: b.hand, sel: b.sel, orient: b.orient, cursor: cursor,
-        undo: b.undo.length, volume: last.volume, regions: last.regions, camR: dist, minR: view.minR, frames: frames,
+        undo: b.undo.length, volume: last.volume, regions: last.regions, camR: dist, minR: view.minR, frames: frames, look: look,
         camTarget: view.target.toArray(), clash: b.sel != null && b.pieces[b.sel] ? !!b.pieces[b.sel].clash : false,
         pieces: b.pieces.map(function (p) { return { shape: p.shape, cells: p.cells }; }) };
     }
@@ -1681,6 +1859,7 @@
   }
 
   renderWalls();
+  syncLook();
   refresh();
   resize();
   say("cu.s.start");
