@@ -301,6 +301,106 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
   width: 100%;
 }
 
+/* ---------- the trophy: the best fence of all (as in the hex lab) ----------
+   Dark until won, then kept on the device; nothing is written under it, what
+   it means is in its tooltip and its label. The polyform engraved on it
+   belongs to the square tiling. */
+
+.sq-lab .shelf {
+  position: fixed;
+  top: 10px;
+  left: 12px;
+  z-index: 30;
+  display: inline-flex;
+  align-items: flex-end;
+  height: 34px;
+  margin: 0;
+  padding: 0;
+}
+
+.sq-lab .trophy {
+  display: block;
+  overflow: visible;
+  width: 34px;
+  height: 34px;
+  color: #ffd24a;
+  transition: filter 0.2s ease, opacity 0.2s ease;
+}
+
+.sq-lab .trophy svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.sq-lab .trophy .cup,
+.sq-lab .trophy .rest {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.sq-lab .trophy .mark {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.2;
+  stroke-linejoin: round;
+  opacity: 0.9;
+}
+
+.sq-lab .trophy .tile {
+  fill: rgba(70, 44, 0, 0.86);
+  stroke: currentColor;
+  stroke-width: 0.18;
+  stroke-linejoin: round;
+}
+
+.sq-lab .trophy:not(.on) {
+  opacity: 0.42;
+  filter: grayscale(1);
+}
+
+.sq-lab .trophy:not(.on) .tile {
+  display: none;
+}
+
+.sq-lab .trophy.on {
+  filter: drop-shadow(0 0 5px currentColor);
+}
+
+.sq-lab .trophy.on .cup {
+  fill: currentColor;
+}
+
+.sq-lab .trophy.on .mark {
+  display: none;
+}
+
+.sq-lab .trophy.on rect.rest {
+  fill: currentColor;
+  fill-opacity: 0.35;
+}
+
+@keyframes trophy-pop {
+  0% { transform: scale(0.7); }
+  45% { transform: scale(1.35); filter: drop-shadow(0 0 14px currentColor); }
+  100% { transform: scale(1); }
+}
+
+.sq-lab .trophy.pop {
+  animation: trophy-pop 0.7s ease-out;
+  transform-origin: 50% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sq-lab .trophy.pop {
+    animation: none;
+  }
+}
+
 /* ---------- narrow or portrait screens: area on top, then rotate and flip
    (back to the hub and print at the other end of their row), the board, the
    pieces in two rows, erase and the camera right under the pieces, then the
@@ -435,6 +535,19 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
   .sq-lab .game-layout:has(#camera-toggle:not([hidden])) > .game-toolbar {
     transform: none;
   }
+
+  /* The cup stands in the row of erase and the camera, between them, where the area pill stands on a tall phone. */
+  .sq-lab .shelf {
+    position: static;
+    grid-area: bar;
+    justify-self: center;
+    align-self: center;
+    z-index: 10;
+  }
+
+  .sq-lab .game-layout:has(#camera-toggle:not([hidden])) > .shelf {
+    transform: translateX(-16px);
+  }
 }
 
 /* The narrowest phones: the board is narrower than the screen, so the top
@@ -531,6 +644,12 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
 
   .langSel {
     top: 5px;
+  }
+
+  /* The cup stands right of rotate and flip. */
+  .sq-lab .shelf {
+    top: 8px;
+    left: 118px;
   }
 
   .game-main {

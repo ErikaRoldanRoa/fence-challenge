@@ -28,6 +28,10 @@
   const SIDE_BRAND_GAP = 16;
   const SIDE_MIN_CHIP = 44;
   const SIDE_BOARD_SHARE = 0.52;
+  // The trophy: the best fence of all. A closed fence of all twelve pieces that encloses this much wins it (the paper
+  // proves it is the most there is); dark until won, then kept on the device. Nothing is written under it.
+  const TROPHY_KEY = "fc-trophies-sq12";
+  const BEST_FENCE_AREA = 128;
   // The area's room beside its neighbours, and its number's smallest size (as in play-ui.js).
   const AREA_GAP = 8;
   const AREA_NUM_MIN = 16;
@@ -166,6 +170,9 @@
     gameBoard: document.getElementById("game-board"),
     gameToolbar: document.querySelector("#panel-game .game-toolbar"),
     cameraToggle: document.getElementById("camera-toggle"),
+    shelf: document.getElementById("shelf"),
+    trophy: document.getElementById("trophy-global"),
+    trophyStatus: document.getElementById("trophy-status"),
     cameraFrame: document.getElementById("board-camera-frame"),
     cameraHost: document.getElementById("board-camera-host"),
   };
@@ -188,6 +195,9 @@
 
   const pieceButtons = new Map();
 
+  // What the player has won (kept on the device) and the storage it lives in.
+  const trophy = { won: false, storage: null };
+
   // The camera view inside the board (../camera/inboard.js), while it is open.
   const cameraState = {
     view: null,
@@ -200,6 +210,7 @@
 
   function init() {
     buildPieceTray();
+    initTrophy();
     bindLanguageButtons();
     bindGameControls();
     bindCamera();
@@ -222,6 +233,7 @@
     }
 
     document.addEventListener("fc-langchange", () => {
+      renderTrophy(false);
       localizePieceTray();
       localizeCameraToggle();
       renderStatus();
@@ -1068,6 +1080,53 @@
   function updateGameMetrics() {
     const totalArea = gameState.analysis ? gameState.analysis.totalArea : 0;
     dom.areaValue.textContent = String(totalArea);
+    checkTrophy();
+  }
+
+  function initTrophy() {
+    if (!dom.shelf || !dom.trophy) {
+      return;
+    }
+    try {
+      trophy.storage = window.localStorage;
+      trophy.won = Boolean(JSON.parse(trophy.storage.getItem(TROPHY_KEY)).g);
+    } catch (e) {
+      trophy.won = false;
+    }
+    renderTrophy(false);
+  }
+
+  // After the area is measured: a closed fence of all twelve pieces with the best area wins the trophy, once.
+  function checkTrophy() {
+    const analysis = gameState.analysis;
+    if (!dom.trophy || trophy.won || !analysis || gameState.placedPieces.size !== PENTOMINOES.length) {
+      return;
+    }
+    if (analysis.totalArea === BEST_FENCE_AREA && analysis.regionCount === 1 && !analysis.cornerLeak) {
+      trophy.won = true;
+      try {
+        trophy.storage.setItem(TROPHY_KEY, JSON.stringify({ g: true }));
+      } catch (e) {
+        // storage refused: the trophy still shines for this visit
+      }
+      renderTrophy(true);
+    }
+  }
+
+  function renderTrophy(justWon) {
+    if (!dom.shelf || !dom.trophy) {
+      return;
+    }
+    const text = t(trophy.won ? "sq.t.on" : "sq.t.off");
+    dom.trophy.classList.toggle("on", trophy.won);
+    dom.trophy.title = text;
+    dom.shelf.setAttribute("aria-label", text);
+    if (justWon) {
+      dom.trophy.classList.remove("pop");
+      void dom.trophy.offsetWidth; // restart the animation
+      dom.trophy.classList.add("pop");
+      dom.trophyStatus.textContent = t("sq.t.won");
+    }
   }
 
   // The status is kept as a key plus values so it can be shown again in another language.
