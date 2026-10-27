@@ -123,7 +123,8 @@ def case_checks(page, label, lang, vp, touch, t, won, glob):
     press(page, "#shelf", touch)
     page.wait_for_timeout(200)
     c = page.evaluate(CASE)
-    check(c["open"] and c["focus"] == "case-close", f"[{label}] the shelf opens the case and the focus goes to its close button")
+    check(c["open"] and c["focus"] == "case-panel", f"[{label}] the shelf opens the case and the focus goes into it")
+    check(not page.evaluate("() => document.getElementById('case-close').matches(':focus-visible')"), f"[{label}] with no ring on the cross after a tap")
     check(c["count"] == f"{won} / 360" and c["fill"].startswith(f"{100 * won / 360:.2f}"[:4]), f"[{label}] the case counts {won} / 360 and the bar follows")
     check(c["cups"] == 360 and c["on"] == won, f"[{label}] 360 small cups, {won} of them won")
     check(c["tiers"] == {"gold": 60, "silver": 244, "bronze": 56}, f"[{label}] the tiers are 60 gold, 244 silver, 56 bronze")
@@ -152,6 +153,9 @@ def case_checks(page, label, lang, vp, touch, t, won, glob):
     page.evaluate("() => { document.querySelector('.case-panel').scrollTop = 0; document.getElementById('case-grid').scrollTop = 0; }")
 
     # keyboard: Tab goes round close and grid; the arrows walk the grid; the board does not hear the keys
+    page.focus("#case-panel")
+    page.keyboard.press("Shift+Tab")
+    check(page.evaluate("() => document.activeElement.id") == "case-grid", f"[{label}] Shift+Tab from the panel goes to the grid, not out of the case")
     page.focus("#case-close")
     page.keyboard.press("Tab")
     check(page.evaluate("() => document.activeElement.id") == "case-grid", f"[{label}] Tab goes from the close button to the grid")

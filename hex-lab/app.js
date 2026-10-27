@@ -235,6 +235,7 @@ const dom = {
   caseSeen: document.getElementById("case-seen"),
   caseGrid: document.getElementById("case-grid"),
   caseClose: document.getElementById("case-close"),
+  casePanel: document.getElementById("case-panel"),
 };
 
 const state = {
@@ -1402,7 +1403,7 @@ function openCase() {
   trophies.seen = trophies.order ? HexVerdict.canonicalKey(trophies.order) : null;
   renderCase();
   dom.case.hidden = false;
-  dom.caseClose.focus();
+  dom.casePanel.focus();   // the panel, not the cross: a tap does not leave a focus ring on the cross
   if (trophies.seen) selectCup(trophies.seen, false);
 }
 
@@ -1412,12 +1413,12 @@ function closeCase() {
   trophies.opener = null;
 }
 
-// Escape closes; Tab goes round the two things that can take the focus; the arrows walk the grid.
+// Escape closes; Tab goes round the cross and the grid (and the panel itself, where the focus lands); the arrows walk the grid.
 function onCaseKey(e) {
   if (e.key === "Escape") { e.preventDefault(); closeCase(); return; }
   if (e.key === "Tab") {
     const first = dom.caseClose, last = dom.caseGrid;
-    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    if (e.shiftKey && (document.activeElement === first || document.activeElement === dom.casePanel)) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     return;
   }

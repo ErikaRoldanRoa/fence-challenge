@@ -211,6 +211,8 @@ body {
 }
 
 /* The head stays on the screen while the grid scrolls, so the count and the cross are always there. */
+.case-panel:focus { outline: none; }
+
 .case-head {
   position: sticky;
   top: 0;
