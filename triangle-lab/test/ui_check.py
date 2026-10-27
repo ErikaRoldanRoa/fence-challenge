@@ -32,7 +32,7 @@ VIEWS = [
     ("phone sideways", 844, 390, True, 12),
 ]
 LANGS = ["en", "fr", "de"]
-CONTROLS = ["#detect-area", ".langSel", "#rotate-piece", "#flip-piece", ".lab-nav a:nth-child(1)", ".lab-nav a:nth-child(2)", "#clear-board", ".side-brand"]
+CONTROLS = ["#detect-area", ".langSel", "#rotate-piece", "#flip-piece", ".lab-nav a:nth-child(1)", ".lab-nav a:nth-child(2)", "#clear-board", "#camera-chip", ".side-brand"]
 
 STATE = """() => {
   const e0 = state.boardCells[0].vertices;
