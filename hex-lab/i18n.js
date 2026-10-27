@@ -49,7 +49,7 @@
     "hx.s.camClosed": "Caméra fermée. Les pièces restent sur le plateau.",
     "hx.v.better": "Tu peux faire mieux avec cette configuration.",
     "hx.v.notYet": "Pas encore le meilleur possible parmi toutes les configurations.",
-    "hx.v.best": "Tu as le meilleur possible parmi toutes les configurations" + NB + ": {n} sur {all} l’atteignent.",
+    "hx.v.best": "Tu as le meilleur possible parmi toutes les configurations" + NB + ": {n} sur {all} l’atteignent.",
     "hx.v.tip": "Une configuration est l’ordre des pièces autour de la barrière."
   });
 
@@ -94,7 +94,7 @@
     "hx.s.camClosed": "Kamera geschlossen. Die Teile bleiben auf dem Spielfeld.",
     "hx.v.better": "Mit dieser Konfiguration geht noch mehr.",
     "hx.v.notYet": "Noch nicht das Bestmögliche über alle Konfigurationen.",
-    "hx.v.best": "Du hast das Bestmögliche über alle Konfigurationen: {n} von {all} erreichen es.",
+    "hx.v.best": "Du hast das Bestmögliche über alle Konfigurationen: {n} von {all} erreichen es.",
     "hx.v.tip": "Eine Konfiguration ist die Reihenfolge der Teile um den Zaun."
   });
 
@@ -139,7 +139,7 @@
     "hx.s.camClosed": "Camera closed. The pieces stay on the board.",
     "hx.v.better": "You can do better with this configuration.",
     "hx.v.notYet": "Not yet the best possible in all configurations.",
-    "hx.v.best": "You have the best possible over all configurations: {n} of the {all} reach it.",
+    "hx.v.best": "You have the best possible over all configurations: {n} of the {all} reach it.",
     "hx.v.tip": "A configuration is the order of the pieces around the fence."
   });
 })();

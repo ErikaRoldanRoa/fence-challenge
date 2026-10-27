@@ -28,13 +28,13 @@ NOTYET_34 = {"arc": [[-5, 5], [-5, 6], [-4, 6], [-3, 5]], "bar": [[-5, 1], [-5, 
 
 TEXT = {
     "en": {"better": "You can do better with this configuration.", "notYet": "Not yet the best possible in all configurations.",
-           "best": "You have the best possible over all configurations: 60 of the 360 reach it.", "closed": "Fence closed, area %d hexagons!",
+           "best": "You have the best possible over all configurations: 60 of the 360 reach it.", "closed": "Fence closed, area %d hexagons!",
            "tip": "A configuration is the order of the pieces around the fence."},
     "fr": {"better": "Tu peux faire mieux avec cette configuration.", "notYet": "Pas encore le meilleur possible parmi toutes les configurations.",
-           "best": "Tu as le meilleur possible parmi toutes les configurations : 60 sur 360 l’atteignent.", "closed": "Barrière fermée, aire %d hexagones !",
+           "best": "Tu as le meilleur possible parmi toutes les configurations : 60 sur 360 l’atteignent.", "closed": "Barrière fermée, aire %d hexagones !",
            "tip": "Une configuration est l’ordre des pièces autour de la barrière."},
     "de": {"better": "Mit dieser Konfiguration geht noch mehr.", "notYet": "Noch nicht das Bestmögliche über alle Konfigurationen.",
-           "best": "Du hast das Bestmögliche über alle Konfigurationen: 60 von 360 erreichen es.", "closed": "Zaun geschlossen, Fläche %d Sechsecke!",
+           "best": "Du hast das Bestmögliche über alle Konfigurationen: 60 von 360 erreichen es.", "closed": "Zaun geschlossen, Fläche %d Sechsecke!",
            "tip": "Eine Konfiguration ist die Reihenfolge der Teile um den Zaun."},
 }
 
