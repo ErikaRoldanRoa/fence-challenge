@@ -162,6 +162,8 @@ root, with the server running on port 8000 where a base address is asked:
   `python3 triangle-lab/test/ui_check.py http://localhost:8000/ OUTDIR`
 - the pieces of the three cards on the home page follow the finger:
   `python3 test/engine_drag_check.py http://localhost:8000/`
+- the three 2D labs' checks and this one also run in the engine of Safari (a mouse drag stands in for touch there):
+  `FC_BROWSER=webkit python3 hex-lab/test/ui_check.py http://localhost:8000/ OUTDIR`
 - the hub and the layout of every lab:
   `python3 test/hub_check.py http://localhost:8000/ OUTDIR`,
   `python3 test/labs_layout.py http://localhost:8000/`
