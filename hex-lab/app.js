@@ -624,6 +624,11 @@ function onPointerDown(event) {
     state.freshPieceId = null;
     state.selectedPieceId = occupiedBy;
     state.draggingPieceId = occupiedBy;
+    // The piece keeps its place under the finger: the offset of its marker cell from the pointer, in board units.
+    const taken = state.placedPieces.find((p) => p.id === occupiedBy);
+    const anchor = taken && state.boardCellMap.get(cellKey(taken.marker));
+    const here = pointerToWorld(point);
+    state._grab = anchor ? { x: anchor.centroid.x - here.x, y: anchor.centroid.y - here.y } : { x: 0, y: 0 };
     dom.canvas.setPointerCapture(event.pointerId);
     refreshTray();
     render();
@@ -646,8 +651,9 @@ function onPointerMove(event) {
   }
   const piece = state.placedPieces.find((p) => p.id === state.draggingPieceId);
   if (!piece) return;
-  const point = pointerToCanvas(event);
-  const nearest = findNearestBoardCell(point);
+  const grab = state._grab || { x: 0, y: 0 };
+  const here = pointerToWorld(pointerToCanvas(event));
+  const nearest = findNearestBoardCellAt(here.x + grab.x, here.y + grab.y);
   if (!nearest) return;
   if (piece.marker.q === nearest.q && piece.marker.r === nearest.r) return;
   if (!canPlace(piece.typeId, piece.variantIndex, nearest, piece.id)) return;
@@ -679,6 +685,7 @@ function onPointerUp(event) {
   state._moved = false;
   state._downPieceId = null;
   state._downWasSelected = false;
+  state._grab = null;
   state.draggingPieceId = null;
   try { dom.canvas.releasePointerCapture(event.pointerId); } catch (e) { /* not captured */ }
 }
@@ -1271,10 +1278,18 @@ function pointerToCanvas(event) {
   };
 }
 
-function findNearestBoardCell(point) {
+// A canvas point (device pixels) as a point of the board, in board units.
+function pointerToWorld(point) {
   const { scale, offsetX, offsetY } = state.view;
-  const wx = (point.x - offsetX) / scale;
-  const wy = (point.y - offsetY) / scale;
+  return { x: (point.x - offsetX) / scale, y: (point.y - offsetY) / scale };
+}
+
+function findNearestBoardCell(point) {
+  const world = pointerToWorld(point);
+  return findNearestBoardCellAt(world.x, world.y);
+}
+
+function findNearestBoardCellAt(wx, wy) {
   const guess = pointToCell(wx, wy, 1);
   const candidates = [guess, ...cellNeighbors(guess)];
   let best = null, bestD2 = Infinity;

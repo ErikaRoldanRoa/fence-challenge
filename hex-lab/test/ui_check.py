@@ -5,6 +5,7 @@ BASE_URL serves the repository root (e.g. http://127.0.0.1:8791/).
 Needs playwright. Exits 1 when a check fails; screenshots go to OUTDIR.
 """
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -60,6 +61,14 @@ SHELF = """() => { const t = (id) => { const e = document.getElementById(id); re
   return { cfg: t('trophy-config'), glob: t('trophy-global'), hidden: document.getElementById('shelf').hidden, status: document.getElementById('status').textContent,
            label: document.getElementById('shelf').getAttribute('aria-label'),
            stored: (() => { try { return localStorage.getItem('%s'); } catch (e) { return 'blocked'; } })(), words: document.getElementById('shelf').innerText.trim() }; }""" % KEY
+
+# The cell at the far end of the first piece on the board, where a finger takes hold of it, and the cell step in CSS pixels.
+GRAB = """() => { const p = state.placedPieces[0]; if (!p) return null;
+  const cells = pieceAbsoluteCells(p); const e = state.boardCellMap.get(cellKey(cells[cells.length - 1]));
+  const pt = worldToCss(e.centroid); const r = dom.canvas.getBoundingClientRect();
+  const o = worldToCss(state.boardCellMap.get(cellKey({ q: 0, r: 0 })).centroid), n = worldToCss(state.boardCellMap.get(cellKey({ q: 1, r: 0 })).centroid);
+  return { x: r.left + pt.x, y: r.top + pt.y, step: Math.hypot(n.x - o.x, n.y - o.y), n: cells.length,
+           onBoard: cells.every((c) => state.boardCellMap.has(cellKey(c))) }; }"""
 
 
 def check(cond, msg):
@@ -313,6 +322,46 @@ def run_special(browser):
     check(not errors, "[blocked storage] and raises no error" + (": " + "; ".join(errors[:2]) if errors else ""))
     ctx.close()
 
+def touch_drag(page, a, b, steps=10):
+    cdp = page.context.new_cdp_session(page)
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": a[0], "y": a[1]}]})
+    for k in range(1, steps + 1):
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": a[0] + (b[0] - a[0]) * k / steps, "y": a[1] + (b[1] - a[1]) * k / steps}]})
+        page.wait_for_timeout(15)
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+    cdp.detach()
+
+
+def drag_checks(browser):
+    # a piece keeps its place under the finger: taken by its far end, it ends where the finger went, to within one cell step
+    for tag, vp, touch in (("desk", {"width": 1280, "height": 800}, False), ("tall", {"width": 390, "height": 844}, True),
+                           ("short", {"width": 360, "height": 640}, True)):
+        ctx, page, errors = new_page(browser, "en", vp, touch)
+        chip = page.locator("#piece-tray [data-type]").first
+        (chip.tap if touch else chip.click)()
+        page.wait_for_timeout(150)
+        g0 = page.evaluate(GRAB)
+        check(g0 is not None and g0["n"] == 4 and g0["onBoard"], f"[drag {tag}] a chip puts its piece, four hexagons, on the board")
+        if g0:
+            a = (g0["x"], g0["y"])
+            for dx, dy in ((3, 0), (-1.5, 2), (0, -2)):
+                b = (a[0] + dx * g0["step"], a[1] + dy * g0["step"])
+                if touch:
+                    touch_drag(page, a, b)
+                else:
+                    page.mouse.move(*a)
+                    page.mouse.down()
+                    for k in range(1, 9):
+                        page.mouse.move(a[0] + (b[0] - a[0]) * k / 8, a[1] + (b[1] - a[1]) * k / 8)
+                    page.mouse.up()
+                page.wait_for_timeout(150)
+                g1 = page.evaluate(GRAB)
+                gap = math.hypot(g1["x"] - b[0], g1["y"] - b[1]) / g0["step"]
+                check(g1["onBoard"] and gap <= 0.6, f"[drag {tag}] a drag of ({dx}, {dy}) steps: the piece ends {gap:.2f} step from the finger, on the board")
+                a = (g1["x"], g1["y"])
+        check(not errors, f"[drag {tag}] no console errors")
+        ctx.close()
+
 
 with sync_playwright() as p:
     browser = p.chromium.launch()
@@ -323,6 +372,7 @@ with sync_playwright() as p:
         run(browser, lang, short, True, "short")
     run(browser, "en", side, True, "side")
     run_special(browser)
+    drag_checks(browser)
     browser.close()
 
 print("\n%d failed" % len(fails) if fails else "\nall checks passed")
