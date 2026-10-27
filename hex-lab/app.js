@@ -225,6 +225,7 @@ const dom = {
   labNav: document.querySelector(".lab-nav"),
   langSel: document.querySelector(".langSel"),
   status: document.getElementById("status"),
+  verdict: document.getElementById("verdict"),
 };
 
 const state = {
@@ -247,6 +248,7 @@ const state = {
   enclosedLargest: 0,
   area: 0,
   status: null,
+  verdict: null,
 };
 
 // The camera view inside the board (../camera/inboard.js), while it is open.
@@ -339,6 +341,7 @@ function wireEvents() {
   });
   document.addEventListener("fc-langchange", () => {
     renderStatus();
+    renderVerdict();
     updateAreaChip(state.area);
     localizeCameraChip();
     refreshTray();
@@ -383,6 +386,7 @@ function measureLive() {
   state.enclosedRegionCount = result.regionCount;
   state.enclosedLargest = result.largestRegion;
   updateAreaChip(result.area);
+  hideVerdict();
 }
 
 function removePiece(pieceId) {
@@ -404,12 +408,15 @@ function onDetectArea() {
   state.enclosedRegionCount = result.regionCount;
   state.enclosedLargest = result.largestRegion;
   updateAreaChip(result.area);
+  // A closed fence that uses all seven pieces also says how its configuration stands (verdict.js).
+  const kind = result.area >= 2 && result.regionCount === 1 ? configurationVerdict(result) : null;
   // Hexagons never meet at a corner only, so there is no corner leak here:
   // one inside of area at least 1 is a closed fence.
   if (result.area === 0) setStatus("hx.s.areaNone");
   else if (result.regionCount > 1) setStatus("hx.s.areaSplit", { area: result.area, regions: result.regionCount });
   else if (result.area === 1) setStatus("hx.s.fence1");
-  else setStatus("hx.s.fence", { area: result.area });
+  else setStatus("hx.s.fence", { area: result.area }, kind);
+  showVerdict(kind);
   render();
 }
 
@@ -421,6 +428,7 @@ function onClear() {
   state.enclosedRegionCount = 0;
   state.enclosedLargest = 0;
   updateAreaChip(0);
+  hideVerdict();
   setStatus("hx.s.cleared");
   refreshTray();
   render();
@@ -1272,15 +1280,55 @@ function updateAreaChip(area) {
   dom.areaChip.textContent = String(area);
 }
 
-// Keeps the message as a key so a language switch can render it again.
-function setStatus(key, vars) {
-  state.status = { key, vars: vars || null };
+// Keeps the message as a key so a language switch can render it again. kind: the verdict on the
+// configuration (verdict.js), read out after the message.
+function setStatus(key, vars, kind) {
+  state.status = { key, vars: vars || null, kind: kind || null };
   renderStatus();
 }
 
 function renderStatus() {
   if (!state.status) return;
-  dom.status.textContent = t(state.status.key, state.status.vars || undefined);
+  const s = state.status;
+  dom.status.textContent = t(s.key, s.vars || undefined) + (s.kind ? " " + verdictText(s.kind) : "");
+}
+
+/* ---------- the verdict on the configuration ---------- */
+
+// "better" (this order can still enclose more), "notYet" (this order is at its best, another does better),
+// "best" (no order does better), or null: not a closed fence of all seven pieces, or a phone that came
+// through a contest page (window.FenceContest exists only there), which keeps the hint to itself.
+function configurationVerdict(result) {
+  if (!window.HexVerdict || window.FenceContest) return null;
+  if (state.placedPieces.length !== state.pieceTypes.length) return null;
+  const owner = new Map();
+  for (const piece of state.placedPieces) {
+    for (const cell of pieceAbsoluteCells(piece)) owner.set(cellKey(cell), piece.typeId);
+  }
+  const order = HexVerdict.configuration(owner, result.enclosedSet);
+  return order ? HexVerdict.verdict(order, result.area) : null;
+}
+
+function verdictText(kind) {
+  const n = HexVerdict.counts();
+  return t("hx.v." + kind, { n: n.atBest, all: n.orders });
+}
+
+function showVerdict(kind) {
+  state.verdict = kind || null;
+  renderVerdict();
+}
+
+function hideVerdict() {
+  if (state.verdict) showVerdict(null);
+}
+
+function renderVerdict() {
+  const el = dom.verdict;
+  if (!el) return;
+  el.hidden = !state.verdict;
+  el.classList.toggle("best", state.verdict === "best");
+  el.textContent = state.verdict ? verdictText(state.verdict) : "";
 }
 
 /* ---------- camera inside the board ---------- */

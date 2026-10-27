@@ -46,7 +46,11 @@
     "hx.s.camSearching": "Montre les quatre carrés des coins du plateau imprimé.",
     "hx.s.camLocked": "Plateau trouvé. Tiens le téléphone immobile.",
     "hx.s.camError": "La caméra ne s’ouvre pas ici. Vérifie l’autorisation de la caméra.",
-    "hx.s.camClosed": "Caméra fermée. Les pièces restent sur le plateau."
+    "hx.s.camClosed": "Caméra fermée. Les pièces restent sur le plateau.",
+    "hx.v.better": "Tu peux faire mieux avec cette configuration.",
+    "hx.v.notYet": "Pas encore le meilleur possible parmi toutes les configurations.",
+    "hx.v.best": "Tu as le meilleur possible parmi toutes les configurations" + NB + ": {n} sur {all} l’atteignent.",
+    "hx.v.tip": "Une configuration est l’ordre des pièces autour de la barrière."
   });
 
   Object.assign(DICT.de, {
@@ -87,7 +91,11 @@
     "hx.s.camSearching": "Zeig die vier Eckquadrate des gedruckten Spielfelds.",
     "hx.s.camLocked": "Spielfeld gefunden. Halte das Handy ruhig.",
     "hx.s.camError": "Die Kamera lässt sich hier nicht öffnen. Prüf die Kamera-Erlaubnis.",
-    "hx.s.camClosed": "Kamera geschlossen. Die Teile bleiben auf dem Spielfeld."
+    "hx.s.camClosed": "Kamera geschlossen. Die Teile bleiben auf dem Spielfeld.",
+    "hx.v.better": "Mit dieser Konfiguration geht noch mehr.",
+    "hx.v.notYet": "Noch nicht das Bestmögliche über alle Konfigurationen.",
+    "hx.v.best": "Du hast das Bestmögliche über alle Konfigurationen: {n} von {all} erreichen es.",
+    "hx.v.tip": "Eine Konfiguration ist die Reihenfolge der Teile um den Zaun."
   });
 
   Object.assign(DICT.en, {
@@ -128,6 +136,10 @@
     "hx.s.camSearching": "Show the four corner squares of the printed board.",
     "hx.s.camLocked": "Board found. Hold the phone still.",
     "hx.s.camError": "The camera cannot open here. Check the camera permission.",
-    "hx.s.camClosed": "Camera closed. The pieces stay on the board."
+    "hx.s.camClosed": "Camera closed. The pieces stay on the board.",
+    "hx.v.better": "You can do better with this configuration.",
+    "hx.v.notYet": "Not yet the best possible in all configurations.",
+    "hx.v.best": "You have the best possible over all configurations: {n} of the {all} reach it.",
+    "hx.v.tip": "A configuration is the order of the pieces around the fence."
   });
 })();

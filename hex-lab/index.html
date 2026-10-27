@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="preload" as="script" href="../i18n.js" />
-  <link rel="preload" as="script" href="./i18n.js" />
+  <link rel="preload" as="script" href="./i18n.js?v=20261027a" />
   <link rel="preload" as="script" href="../lattice-hex.js" />
   <link rel="preload" as="script" href="../fence-analysis.js" />
   <link rel="preload" as="script" href="../play-ui.js" />
-  <link rel="preload" as="script" href="./app.js" />
+  <link rel="preload" as="script" href="./app.js?v=20261027a" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title data-i18n="hx.pageTitle">Challenge 3 · 7 tetrahexes · Fence Challenge</title>
   <link rel="stylesheet" href="../fonts/manrope.css" />
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./styles.css?v=20261027a" />
   <link rel="stylesheet" href="../camera/inboard.css" />
   <link rel="stylesheet" href="../play-ui.css" />
   <script src="../i18n.js"></script>
-  <script src="./i18n.js"></script>
+  <script src="./i18n.js?v=20261027a"></script>
   <meta name="theme-color" content="#07060a" />
   <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
 </head>
@@ -32,6 +32,7 @@
       <h1 class="visually-hidden" data-i18n="hx.h1">Challenge 3 · 7 tetrahexes</h1>
       <header class="toolbar">
         <button id="detect-area" class="measure" type="button" data-i18n-aria-label="common.detectArea" aria-label="Measure area" data-i18n-title="common.detectArea" title="Measure area"><span class="area-word" data-i18n="common.areaLabel">Area</span><strong class="area-num" id="area-chip">0</strong></button>
+        <p id="verdict" class="verdict" hidden aria-hidden="true" data-i18n-title="hx.v.tip" title="A configuration is the order of the pieces around the fence."></p>
       </header>
 
       <section class="play-zone">
@@ -70,7 +71,9 @@
   <script src="../fence-analysis.js"></script>
   <script src="../contest.js" data-board="hex6"></script>
   <script src="../play-ui.js"></script>
-  <script src="./app.js"></script>
+  <script src="./data/orders.js?v=20261027a"></script>
+  <script src="./verdict.js?v=20261027a"></script>
+  <script src="./app.js?v=20261027a"></script>
   <script defer src="../vendor/js-aruco2/cv.js"></script>
   <script defer src="../vendor/js-aruco2/aruco.js"></script>
   <script defer src="../vendor/js-aruco2/dictionaries/aruco_4x4_1000.js"></script>
