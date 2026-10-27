@@ -19,9 +19,14 @@ fails = []
 
 # name, width, height, touch, the least triangle edge in px (a finger is about 40 px wide)
 VIEWS = [
-    ("short phone", 390, 664, True, 16),
+    ("short phone", 390, 664, True, 19),
     ("tall phone", 390, 844, True, 21),
-    ("small phone", 360, 640, True, 14),
+    ("small phone", 360, 640, True, 17),
+    ("low phone", 390, 580, True, None),
+    ("edge of short", 390, 679, True, None),
+    ("edge of tall", 390, 680, True, None),
+    ("middle phone", 390, 720, True, None),
+    ("big phone", 412, 915, True, None),
     ("tablet", 820, 1180, True, None),
     ("laptop", 1400, 900, False, None),
     ("phone sideways", 844, 390, True, 12),
@@ -95,7 +100,7 @@ with sync_playwright() as pw:
         if least:
             check(s["edge"] >= least, f"[{label}] a triangle edge is {s['edge']:.1f} px (at least {least})")
         check(len(s["chips"]) == 12 and all(inside(c, w, h) for c in s["chips"]), f"[{label}] twelve piece chips, all on the screen")
-        if portrait_phone:
+        if portrait_phone and h >= 640:
             small = min(min(c[2] - c[0], c[3] - c[1]) for c in s["chips"])
             check(small >= 36, f"[{label}] the smallest chip is {small:.0f} px (at least 36)")
         bad = [(i, j) for i, j in itertools.combinations(range(len(s["chips"])), 2) if overlap(s["chips"][i], s["chips"][j])]

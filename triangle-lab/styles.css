@@ -238,6 +238,9 @@ body {
   justify-self: center;
   position: relative;
   z-index: 9;
+  /* the paper's line, and under it the author's name on a line of its own */
+  white-space: pre-line;
+  text-align: center;
 }
 
 /* Back to the hub and print the kit: in the top strip, left of the
@@ -258,15 +261,16 @@ body {
 @media (max-width: 700px), (max-aspect-ratio: 4/5) {
   :root {
     /* the board's width: its drawing area is 8 : 7, a hexagon being wider than tall */
-    --board-size: min(calc(100vw - 20px), calc((100dvh - 414px) * 8 / 7));
+    --board-size: min(calc(100vw - 20px), calc((100dvh - 372px) * 8 / 7));
   }
 
+  /* The first row is the strip of the language switch: it stays, though the area has left it. */
   .main-stage {
-    grid-template-rows: auto minmax(0, 1fr) auto auto auto minmax(0, 1fr);
+    grid-template-rows: 44px minmax(0, 1fr) auto auto auto minmax(0, 1fr);
     row-gap: 10px;
   }
 
-  .main-stage > .toolbar { grid-row: 1; }
+  .main-stage > .toolbar { grid-row: 4; }
   .main-stage > .play-zone { grid-row: 3; }
   .boardbar { grid-row: 4; }
   .main-stage > .side-brand { grid-row: 5; max-width: 100%; }
@@ -279,11 +283,21 @@ body {
     padding: 6px 10px max(8px, env(safe-area-inset-bottom));
   }
 
-  /* The area pill shares the top strip with the language switch. */
+  /* The area pill sits in the row of erase and the camera, between them, over the boardbar's empty middle. The camera's
+     chip is wider than erase: with it showing, the pill moves half the difference to the left, so that it stands in the
+     middle of the room between the two instead of leaning on the camera. */
+  .main-stage:has(#camera-chip:not([hidden])) > .toolbar {
+    transform: translateX(-16px);
+  }
+
   .toolbar {
-    width: 100%;
-    justify-content: flex-start;
-    padding-right: 172px;
+    width: auto;
+    height: auto;
+    justify-self: center;
+    align-self: center;
+    justify-content: center;
+    padding: 0;
+    z-index: 10;
   }
 
   .play-zone {
@@ -352,6 +366,23 @@ body {
   .boardbar {
     width: min(100%, var(--board-size));
   }
+}
+
+/* A phone that is not tall (under 680 px: the board is then about as wide as erase, the camera and the area side by
+   side, and in German the area does not fit between them): the area stays in the top strip, left, beside the
+   language switch. */
+@media (max-height: 679px) and (orientation: portrait) {
+  .main-stage > .toolbar {
+    grid-row: 1;
+    width: 100%;
+    height: 44px;
+    align-self: stretch;
+    justify-self: stretch;
+    justify-content: flex-start;
+    padding-right: 172px;
+    transform: none;
+  }
+  .main-stage:has(#camera-chip:not([hidden])) > .toolbar { transform: none; }
 }
 
 /* ---------- phones held sideways: a top strip 56 px tall (rotate and flip
@@ -461,7 +492,7 @@ body {
     width: max-content;
     max-width: var(--sw-panel-width, calc(100vw - 36px - min(calc(100dvh - 74px), 52vw)));
     transform: translateX(-50%);
-    white-space: normal;
+    white-space: pre-line;
     text-align: center;
     text-wrap: balance;
   }
