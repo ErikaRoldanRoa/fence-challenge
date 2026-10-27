@@ -95,6 +95,16 @@ def run(browser, lang, vp, touch, tag, contest=False):
 
     check(verdict_state(page)["hidden"], f"[{label}] no verdict on an empty board")
     check(page.evaluate("() => document.getElementById('verdict').title") == t["tip"], f"[{label}] the bubble says what a configuration is")
+    lines = page.evaluate("() => document.querySelector('.side-brand').innerText.split('\\n').map((s) => s.trim())")
+    check(len(lines) == 2 and lines[1] == "Dr. Erika Roldán", f"[{label}] the author's name stands on its own line under the paper's line")
+    pill0 = rect(page, "#detect-area")
+    if touch and vp["height"] > vp["width"]:
+        # a phone held upright: the area stands low, in the row of erase and the camera, out of the way of the browser's own bars
+        trash = rect(page, "#clear-board")
+        check(pill0[1] > vp["height"] / 2, f"[{label}] the area pill is low on a phone")
+        check(abs((pill0[1] + pill0[3]) / 2 - (trash[1] + trash[3]) / 2) < 14, f"[{label}] the area pill stands in the row of erase")
+    elif not touch:
+        check(pill0[3] < 100, f"[{label}] the area pill stays on top on a large screen")
     cases = [("best", 35, best), ("better", 34, BETTER_34), ("notYet", 34, NOTYET_34)]
     for kind, area, pieces in cases:
         page.evaluate(PLACE, pieces)
@@ -112,8 +122,10 @@ def run(browser, lang, vp, touch, tag, contest=False):
         check(v["status"] == t["closed"] % area + " " + t[kind], f"[{label}] {kind}: the screen-reader line says both")
         pill = rect(page, "#detect-area")
         check(v["rect"][1] >= pill[3] - 6 and not overlap(v["rect"], pill), f"[{label}] {kind}: the line sits under the area pill")
-        check(v["rect"][0] >= 0 and v["rect"][2] <= vp["width"], f"[{label}] {kind}: the line stays inside the screen")
+        check(v["rect"][0] >= 0 and v["rect"][2] <= vp["width"] and v["rect"][3] <= vp["height"], f"[{label}] {kind}: the line stays inside the screen")
         check(not overlap(v["rect"], rect(page, ".langSel")), f"[{label}] {kind}: the line does not cover the language switch")
+        cred = rect(page, ".side-brand")
+        check(not overlap(v["rect"], cred) and cred[3] <= vp["height"], f"[{label}] {kind}: nothing covers the credit, and it stays on the screen")
         if kind in ("best", "better"):
             page.screenshot(path=str(OUT / f"{lang}-{tag}-{kind}.png"))
         if kind == "best":

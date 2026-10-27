@@ -272,6 +272,9 @@ body {
   justify-self: center;
   position: relative;
   z-index: 9;
+  /* the paper's line, and under it the author's name on a line of its own */
+  white-space: pre-line;
+  text-align: center;
 }
 
 /* Back to the hub and print the kit: in the top strip, left of the
@@ -284,11 +287,13 @@ body {
 }
 
 
-/* ---------- narrow or portrait screens: area on top, then rotate and flip
-   (back to the hub and print at the other end of their row), the board, the
-   pieces in two rows, erase and the camera right under the pieces, then the
-   credit; this group is centred in the room under the area, its rows 10 px
-   apart, as in the other two labs ---------- */
+/* ---------- narrow or portrait screens: rotate and flip first (back to the
+   hub and print at the other end of their row), the board, the pieces in two
+   rows, then erase, the area and the camera in one row, then the credit; this
+   group is centred in the room under the language switch, its rows 10 px
+   apart, as in the other two labs. The area sits low because a phone's own
+   bars (the translation offer, the camera permission) come in at the top and
+   would cover it ---------- */
 
 @media (max-width: 700px), (max-aspect-ratio: 4/5) {
   :root {
@@ -300,7 +305,7 @@ body {
     row-gap: 10px;
   }
 
-  .main-stage > .toolbar { grid-row: 1; }
+  .main-stage > .toolbar { grid-row: 4; }
   .main-stage > .play-zone { grid-row: 3; }
   .boardbar { grid-row: 4; }
   .main-stage > .side-brand { grid-row: 5; max-width: 100%; }
@@ -313,15 +318,29 @@ body {
     padding: 6px 10px max(8px, env(safe-area-inset-bottom));
   }
 
-  /* The area pill shares the top strip with the language switch. */
+  /* The area pill sits in the row of erase and the camera, between them, over the boardbar's empty middle. */
   .toolbar {
-    width: 100%;
-    justify-content: flex-start;
-    padding-right: 172px;
+    width: auto;
+    height: auto;
+    justify-self: center;
+    align-self: center;
+    justify-content: center;
+    padding: 0;
+    z-index: 10;
   }
 
-  /* Two lines of the verdict fit between the pill and the rotate and flip buttons. */
+  /* While the verdict is open the credit line steps down by its height (app.js sets --verdict-room): nothing covers it. */
+  .main-stage > .side-brand {
+    transition: transform 0.15s ease;
+  }
+
+  .main-stage.has-verdict > .side-brand {
+    transform: translateY(var(--verdict-room, 0px));
+  }
+
+  /* The verdict opens under the pill, where the credit line stood. */
   .verdict {
+    top: calc(100% + 8px);
     max-width: calc(100vw - 20px);
     padding: 4px 10px;
     font-size: 0.85rem;
@@ -514,7 +533,7 @@ body {
     height: 56px;
   }
 
-  /* The credit, centred under them: one line when it fits, else two. */
+  /* The credit, centred under them: the paper's line, and the name under it. */
   .main-stage > .side-brand {
     position: fixed;
     left: var(--panel-left);
@@ -523,7 +542,7 @@ body {
     width: fit-content;
     max-width: none;
     margin: 0 auto;
-    white-space: normal;
+    white-space: pre-line;
     text-align: center;
     text-wrap: balance;
   }
