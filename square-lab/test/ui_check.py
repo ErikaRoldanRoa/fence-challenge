@@ -3,9 +3,11 @@
 Usage: python3 ui_check.py BASE_URL OUTDIR [cup]
 BASE_URL serves the repository root (e.g. http://127.0.0.1:8791/).
 Needs playwright. Exits 1 when a check fails; screenshots (English) go to OUTDIR.
+FC_BROWSER=webkit runs it in the engine of Safari (the default is chromium).
 """
 import itertools
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -16,6 +18,7 @@ BASE, OUT = sys.argv[1].rstrip("/") + "/", Path(sys.argv[2])
 OUT.mkdir(parents=True, exist_ok=True)
 URL = BASE + "square-lab/index.html"
 ROOT = Path(__file__).resolve().parents[2]
+ENGINE = os.environ.get("FC_BROWSER", "chromium")
 ONLY_CUP = len(sys.argv) > 3 and sys.argv[3] == "cup"      # the trophy checks alone
 STORE = "fc-trophies-sq12"
 fails = []
@@ -57,7 +60,8 @@ STATE = """() => {
            scrollW: document.documentElement.scrollWidth, scrollH: document.documentElement.scrollHeight, iw: innerWidth, ih: innerHeight,
            chips: Array.from(document.querySelectorAll('#piece-tray .piece-btn')).map((e) => { const b = e.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; }),
            controls: %s.map((s) => [s, q(s)]),
-           brand: document.querySelector('.side-brand').innerText.split('\\n').map((x) => x.trim()) };
+           brand: document.querySelector('.side-brand').textContent.split('\\n').map((x) => x.trim()),
+           brandRows: (() => { const r = document.createRange(); r.selectNodeContents(document.querySelector('.side-brand')); return new Set(Array.from(r.getClientRects()).filter((q) => q.width > 0).map((q) => Math.round(q.top))).size; })() };
 }""" % json.dumps(CONTROLS)
 
 # The cells the pieces cover, read from the pixels at each cell's centre (a piece has its own colour; an empty cell is
@@ -97,6 +101,14 @@ def inside(a, w, h):
 
 
 def touch_drag(page, a, b, steps=10):
+    if ENGINE != "chromium":   # only Chromium takes touch events from a script: elsewhere a mouse drag stands in
+        page.mouse.move(a[0], a[1])
+        page.mouse.down()
+        for k in range(1, steps + 1):
+            page.mouse.move(a[0] + (b[0] - a[0]) * k / steps, a[1] + (b[1] - a[1]) * k / steps)
+            page.wait_for_timeout(15)
+        page.mouse.up()
+        return
     cdp = page.context.new_cdp_session(page)
     cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": a[0], "y": a[1]}]})
     for k in range(1, steps + 1):
@@ -251,7 +263,7 @@ def cup_checks(browser, fences):
 
 
 with sync_playwright() as pw:
-    browser = pw.chromium.launch()
+    browser = getattr(pw, ENGINE).launch()
     for lang, (name, w, h, touch, least) in ([] if ONLY_CUP else itertools.product(LANGS, VIEWS)):
         label = f"{lang} {name} {w}x{h}"
         ctx = browser.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch, device_scale_factor=2)
@@ -288,7 +300,7 @@ with sync_playwright() as pw:
             const b = e.getBoundingClientRect(); const t = document.elementFromPoint((b.left + b.right) / 2, (b.top + b.bottom) / 2);
             return !!t && (t === e || e.contains(t)); })""", [sel for sel, _ in shown])
         check(all(hits), f"[{label}] each control is hit at its centre")
-        check(len(s["brand"]) == 2 and s["brand"][1] == "Dr. Erika Roldán", f"[{label}] the credit has the paper's line, and the author's name under it {s['brand']}")
+        check(len(s["brand"]) == 2 and s["brand"][1] == "Dr. Erika Roldán" and s["brandRows"] == 2, f"[{label}] the credit has the paper's line, and the author's name under it {s['brand']} on {s['brandRows']} rows")
 
         # where the area stands: low on a tall phone, between erase and the camera; in the top strip on a short one
         d = dict(shown)

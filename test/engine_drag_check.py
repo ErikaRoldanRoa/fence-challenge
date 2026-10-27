@@ -6,13 +6,16 @@ tiling (a triangle card moves its pieces on a sparser set of places, so it may e
 
 Usage: python3 test/engine_drag_check.py BASE_URL
 BASE_URL serves the repository root (e.g. http://127.0.0.1:8791/). Needs playwright. Exits 1 on a failure.
+FC_BROWSER=webkit runs it in the engine of Safari (the default is chromium).
 """
 import math
+import os
 import sys
 
 from playwright.sync_api import sync_playwright
 
 BASE = sys.argv[1].rstrip("/") + "/"
+ENGINE = os.environ.get("FC_BROWSER", "chromium")
 # card -> the farthest the cell taken may end from the finger, in steps between two cells
 CARDS = {"sq": 0.1, "hex": 0.6, "tri": 1.05}
 fails = []
@@ -40,6 +43,14 @@ def check(cond, msg):
 
 
 def touch_drag(page, a, b, steps=10):
+    if ENGINE != "chromium":   # only Chromium takes touch events from a script: elsewhere a mouse drag stands in
+        page.mouse.move(a[0], a[1])
+        page.mouse.down()
+        for k in range(1, steps + 1):
+            page.mouse.move(a[0] + (b[0] - a[0]) * k / steps, a[1] + (b[1] - a[1]) * k / steps)
+            page.wait_for_timeout(15)
+        page.mouse.up()
+        return
     cdp = page.context.new_cdp_session(page)
     cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": a[0], "y": a[1]}]})
     for k in range(1, steps + 1):
@@ -50,7 +61,7 @@ def touch_drag(page, a, b, steps=10):
 
 
 with sync_playwright() as pw:
-    browser = pw.chromium.launch()
+    browser = getattr(pw, ENGINE).launch()
     for name, (w, h), touch in (("phone", (390, 844), True), ("laptop", (1280, 900), False)):
         ctx = browser.new_context(viewport={"width": w, "height": h}, device_scale_factor=2, has_touch=touch, is_mobile=touch)
         page = ctx.new_page()

@@ -3,9 +3,11 @@
 Usage: python3 ui_check.py BASE_URL OUTDIR
 BASE_URL serves the repository root (e.g. http://127.0.0.1:8791/).
 Needs playwright. Exits 1 when a check fails; screenshots go to OUTDIR.
+FC_BROWSER=webkit runs it in the engine of Safari (the default is chromium).
 """
 import json
 import math
+import os
 import sys
 from pathlib import Path
 
@@ -14,6 +16,7 @@ from playwright.sync_api import sync_playwright
 BASE, OUT = sys.argv[1].rstrip("/") + "/", Path(sys.argv[2])
 OUT.mkdir(parents=True, exist_ok=True)
 URL = BASE + "hex-lab/index.html"
+ENGINE = os.environ.get("FC_BROWSER", "chromium")
 KEY = "fc-trophies-hex7"
 fails = []
 
@@ -216,8 +219,9 @@ def run(browser, lang, vp, touch, tag):
     check(s["cfg"]["title"] == t["cfg_off"] and s["glob"]["title"] == t["glob_off"], f"[{label}] their tooltips say not yet")
     check(s["cfg"]["hiddenFromReaders"] and s["glob"]["hiddenFromReaders"], f"[{label}] the two cups are decoration, the shelf button speaks for them")
     check(s["label"] == f'{t["case"]}: {t["count"] % 0}. {t["cfg_off"]}. {t["glob_off"]}.', f"[{label}] the shelf button names the case, the count and where the two cups stand")
-    lines = page.evaluate("() => document.querySelector('.side-brand').innerText.split('\\n').map((x) => x.trim())")
-    check(len(lines) == 2 and lines[1] == "Dr. Erika Roldán", f"[{label}] the author's name stands on its own line under the paper's line")
+    lines = page.evaluate("() => document.querySelector('.side-brand').textContent.split('\\n').map((x) => x.trim())")
+    rows = page.evaluate("() => { const r = document.createRange(); r.selectNodeContents(document.querySelector('.side-brand')); return new Set(Array.from(r.getClientRects()).filter((q) => q.width > 0).map((q) => Math.round(q.top))).size; }")
+    check(len(lines) == 2 and lines[1] == "Dr. Erika Roldán" and rows == 2, f"[{label}] the author's name stands on its own line under the paper's line")
     check(page.evaluate("() => document.getElementById('verdict') === null"), f"[{label}] no text about doing better or not")
 
     # ---- where things stand on this screen ----
@@ -323,6 +327,14 @@ def run_special(browser):
     ctx.close()
 
 def touch_drag(page, a, b, steps=10):
+    if ENGINE != "chromium":   # only Chromium takes touch events from a script: elsewhere a mouse drag stands in
+        page.mouse.move(a[0], a[1])
+        page.mouse.down()
+        for k in range(1, steps + 1):
+            page.mouse.move(a[0] + (b[0] - a[0]) * k / steps, a[1] + (b[1] - a[1]) * k / steps)
+            page.wait_for_timeout(15)
+        page.mouse.up()
+        return
     cdp = page.context.new_cdp_session(page)
     cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": a[0], "y": a[1]}]})
     for k in range(1, steps + 1):
@@ -364,7 +376,7 @@ def drag_checks(browser):
 
 
 with sync_playwright() as p:
-    browser = p.chromium.launch()
+    browser = getattr(p, ENGINE).launch()
     desk, tall, short, side = {"width": 1280, "height": 800}, {"width": 390, "height": 844}, {"width": 360, "height": 640}, {"width": 844, "height": 390}
     for lang in ("en", "fr", "de"):
         run(browser, lang, desk, False, "desk")

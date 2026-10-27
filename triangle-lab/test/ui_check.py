@@ -3,10 +3,12 @@
 Usage: python3 ui_check.py BASE_URL OUTDIR
 BASE_URL serves the repository root (e.g. http://127.0.0.1:8791/).
 Needs playwright. Exits 1 when a check fails; screenshots (English) go to OUTDIR.
+FC_BROWSER=webkit runs it in the engine of Safari (the default is chromium).
 """
 import itertools
 import json
 import math
+import os
 import sys
 from pathlib import Path
 
@@ -15,6 +17,7 @@ from playwright.sync_api import sync_playwright
 BASE, OUT = sys.argv[1].rstrip("/") + "/", Path(sys.argv[2])
 OUT.mkdir(parents=True, exist_ok=True)
 URL = BASE + "triangle-lab/index.html"
+ENGINE = os.environ.get("FC_BROWSER", "chromium")
 fails = []
 
 # name, width, height, touch, the least triangle edge in px (a finger is about 40 px wide)
@@ -68,6 +71,14 @@ def inside(a, w, h):
 
 
 def touch_drag(page, a, b, steps=10):
+    if ENGINE != "chromium":   # only Chromium takes touch events from a script: elsewhere a mouse drag stands in
+        page.mouse.move(a[0], a[1])
+        page.mouse.down()
+        for k in range(1, steps + 1):
+            page.mouse.move(a[0] + (b[0] - a[0]) * k / steps, a[1] + (b[1] - a[1]) * k / steps)
+            page.wait_for_timeout(15)
+        page.mouse.up()
+        return
     cdp = page.context.new_cdp_session(page)
     cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": a[0], "y": a[1]}]})
     for k in range(1, steps + 1):
@@ -78,7 +89,7 @@ def touch_drag(page, a, b, steps=10):
 
 
 with sync_playwright() as pw:
-    browser = pw.chromium.launch()
+    browser = getattr(pw, ENGINE).launch()
     for lang, (name, w, h, touch, least) in itertools.product(LANGS, VIEWS):
         label = f"{lang} {name} {w}x{h}"
         ctx = browser.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch, device_scale_factor=2)
