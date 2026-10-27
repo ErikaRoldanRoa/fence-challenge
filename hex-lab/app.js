@@ -1412,7 +1412,8 @@ function esc(s) {
 
 function openCase() {
   if (!trophies.state) return;
-  trophies.opener = document.activeElement;
+  const here = document.activeElement;   // Safari does not focus a button that is tapped or clicked
+  trophies.opener = here && here !== document.body ? here : dom.shelf;
   // it opens on the configuration now on the board, when there is a closed fence of all seven pieces
   trophies.seen = trophies.order ? HexVerdict.canonicalKey(trophies.order) : null;
   renderCase();
