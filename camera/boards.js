@@ -16,7 +16,8 @@
  *   layout 1  m = max(1.2, 0.2 * max(W, H))   (W, H: board bounding box).
  *             The sheets printed so far. Their entries keep their ids, sizes
  *             and marks so those sheets keep working; they are never printed
- *             again. `current` names the board such a sheet is played on today.
+ *             again. `current` names the board such a sheet is played on today
+   *             (a layout 2 sheet whose board was replaced later has one too).
  *   layout 2  m = the entry's `mark`: one fixed side per board, in world
  *             units. The kit prints these sheets.
  *
@@ -99,11 +100,11 @@
       home: { page: "hex-lab" },
     },
     {
-      id: "tri10",
+      id: "tri8",
       lattice: "triangular",
-      spec: { hexSide: 10 },
+      spec: { hexSide: 8 },
       pieces: { kind: "free", order: 6 },
-      markers: { tl: 66, tr: 293, br: 309, bl: 339 },
+      markers: { tl: 11, tr: 64, br: 86, bl: 217 },
       layout: { v: 2, mark: 2.8 },
       geometry: "printed",
       home: { page: "triangle-lab" },
@@ -111,8 +112,9 @@
     // Layout 1: the sheets printed so far. Their printed QR codes open
     // camera/?board=sq9|hex4|tri4|sq20|hex6|tri13, so those ids still resolve.
     // The side-5 hexagon sheet is played on the side-6 card, cell on cell.
-    // The side-13 triangle sheet is played in the side-10 lab, cell on cell,
-    // when every piece lies inside the lab's board.
+    // The side-13 triangle sheet, and the side-10 one (below, a layout-2 sheet
+    // printed before the lab's board was made smaller), are played in the
+    // side-8 lab, cell on cell, when every piece lies inside the lab's board.
     // The hexiamond triangle kit is read and judged, but its pieces are not
     // the ones the triangle card is played with, so it hands nothing over.
     {
@@ -172,12 +174,23 @@
     },
     {
       id: "tri13",
-      current: "tri10",
+      current: "tri8",
       lattice: "triangular",
       spec: { hexSide: 13 },
       pieces: { kind: "free", order: 6 },
       markers: { tl: 170, tr: 171, br: 182, bl: 197 },
       layout: { v: 1 },
+      geometry: "printed",
+      home: { page: "triangle-lab" },
+    },
+    {
+      id: "tri10",
+      current: "tri8",
+      lattice: "triangular",
+      spec: { hexSide: 10 },
+      pieces: { kind: "free", order: 6 },
+      markers: { tl: 66, tr: 293, br: 309, bl: 339 },
+      layout: { v: 2, mark: 2.8 },
       geometry: "printed",
       home: { page: "triangle-lab" },
     },
@@ -339,10 +352,12 @@
     return to;
   }
 
-  /* Sheets of layout 1 are recognised but never printed again. */
+  /* Sheets of layout 1, and sheets whose board was replaced by another
+   * (`current`), are recognised but never printed again. */
   function isPrintable(boardId) {
     const def = byId.get(boardId);
     if (!def) return false;
+    if (def.current && def.current !== def.id) return false;
     return !(def.layout && def.layout.v === 1);
   }
 

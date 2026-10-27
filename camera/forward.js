@@ -27,6 +27,7 @@
     tri4: HUB + "tri",
     sq20: "../square-lab/index.html#camera",
     hex6: "../hex-lab/index.html#camera",
+    tri8: "../triangle-lab/index.html#camera",
     tri10: "../triangle-lab/index.html#camera",
     "sq9-v1": HUB + "sq",
     hex4: HUB + "hex",

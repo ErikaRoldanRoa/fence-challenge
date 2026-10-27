@@ -1,12 +1,12 @@
 "use strict";
 
 const HEXIAMOND_ORDER = 6;
-// The board: a hexagon of side 10 (600 triangles).
-const BOARD_HEX_SIDE = 10;
+// The board: a hexagon of side 8 (384 triangles).
+const BOARD_HEX_SIDE = 8;
 const SQRT3 = Math.sqrt(3);
 const SQRT3_HALF = SQRT3 / 2;
 // The board the camera reads for this lab (see ../camera/boards.js).
-const CAMERA_BOARD = "tri10";
+const CAMERA_BOARD = "tri8";
 const MARKER_COLORS = [
   "#ff5b7f",
   "#ff9d1e",
@@ -710,6 +710,12 @@ function onPointerDown(event) {
     state._dragSlop = event.pointerType === "touch" ? 10 : 6;
     state.selectedPieceId = occupiedBy;
     state.draggingPieceId = occupiedBy;
+    // The piece keeps its place under the finger: its anchor cell follows the
+    // pointer at the distance it had when the piece was taken.
+    const taken = state.placedPieces.find((item) => item.id === occupiedBy);
+    const anchor = LatticeTriangular.cellCentroidWorld(taken.marker);
+    const here = screenToWorld(point);
+    state._grab = { x: anchor.x - here.x, y: anchor.y - here.y };
     dom.canvas.setPointerCapture(event.pointerId);
     refreshTray();
     render();
@@ -742,8 +748,9 @@ function onPointerMove(event) {
   }
   const type = state.pieceTypeMap.get(piece.typeId);
   const markerOrientation = type.variants[piece.variantIndex].markerO;
-  const point = pointerToCanvas(event);
-  const nearest = findNearestBoardCell(point, markerOrientation);
+  const grab = state._grab || { x: 0, y: 0 };
+  const here = screenToWorld(pointerToCanvas(event));
+  const nearest = nearestBoardCellAt({ x: here.x + grab.x, y: here.y + grab.y }, markerOrientation);
   if (!nearest) {
     return;
   }
@@ -791,6 +798,7 @@ function onPointerUp(event) {
   state._downPieceId = null;
   state._downWasSelected = false;
   state.draggingPieceId = null;
+  state._grab = null;
   if (dom.canvas.hasPointerCapture(event.pointerId)) {
     dom.canvas.releasePointerCapture(event.pointerId);
   }
@@ -1649,7 +1657,10 @@ function drawPlacedPieces() {
 }
 
 function findNearestBoardCell(point, orientation = null) {
-  const worldPoint = screenToWorld(point);
+  return nearestBoardCellAt(screenToWorld(point), orientation);
+}
+
+function nearestBoardCellAt(worldPoint, orientation = null) {
   let best = null;
   let bestDist2 = Number.POSITIVE_INFINITY;
   for (const entry of state.boardCellEntries) {

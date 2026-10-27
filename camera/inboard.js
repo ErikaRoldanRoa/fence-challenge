@@ -18,7 +18,7 @@
  * is recorded or sent.
  *
  *   host         positioned element exactly covering the board's drawing area
- *   boardId      the board the page plays (camera/boards.js): sq9, hex5, tri4, sq20, hex6, tri10
+ *   boardId      the board the page plays (camera/boards.js): sq9, hex5, tri4, sq20, hex6, tri8
  *   worldToHost  {x, y} in the board's world units -> CSS pixels from the
  *                host's padding box; call refresh() when it changes
  *   onState      "starting" | "searching" | "locked" | "stopped" | "error:<kind>"
