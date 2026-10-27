@@ -1312,8 +1312,7 @@ function renderStatus() {
 /* ---------- the trophies ---------- */
 
 function initTrophies() {
-  // a phone that came through a contest page (window.FenceContest exists only there) keeps the hints to itself
-  if (!window.HexTrophies || window.FenceContest || !dom.shelf) {
+  if (!window.HexTrophies || !dom.shelf) {
     if (dom.shelf) dom.shelf.hidden = true;
     return;
   }

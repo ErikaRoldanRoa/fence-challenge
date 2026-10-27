@@ -276,14 +276,18 @@ def run(browser, lang, vp, touch, tag):
 
 
 def run_special(browser):
-    # a phone that came through a contest page keeps the hints to itself
-    ctx, page, errors = new_page(browser, "en", {"width": 1280, "height": 800}, False,
+    # a phone that came through a contest page has the trophies too
+    ctx, page, errors = new_page(browser, "en", {"width": 390, "height": 844}, True,
                                  init="try{localStorage.setItem('fc-contest','%s')}catch(e){}" % json.dumps({"workshop": "w", "device": "d", "name": "n"}))
     s = shelf(page)
-    check(s["hidden"], "[contest] no trophies on a contest phone")
+    check(not s["hidden"], "[contest] a contest phone has the shelf")
     s = play(page, best_fence(page))
-    check(s["hidden"] and s["stored"] is None, "[contest] and nothing is stored there")
-    check(page.evaluate("() => document.getElementById('case').hidden"), "[contest] the case stays shut")
+    check(s["glob"]["on"] and s["cfg"]["on"] and s["stored"] not in (None, "blocked"), "[contest] its trophies light and are kept")
+    press(page, "#shelf", True)
+    page.wait_for_timeout(200)
+    check(page.evaluate(CASE)["open"], "[contest] the case opens")
+    covered = page.evaluate("() => { const b = document.getElementById('case-close').getBoundingClientRect(); const t = document.elementFromPoint((b.left + b.right) / 2, (b.top + b.bottom) / 2); return !(t && document.getElementById('case').contains(t)); }")
+    check(not covered, "[contest] nothing of the contest covers the case's cross")
     check(not errors, "[contest] no console errors")
     ctx.close()
     # a case with everything won, and one with the gold tier won: set from stored progress
