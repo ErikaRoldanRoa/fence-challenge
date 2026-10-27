@@ -121,7 +121,11 @@ def run(browser, lang, vp, touch, tag, contest=False):
         check(v["best"] == (kind == "best"), f"[{label}] {kind}: highlighted only at the top")
         check(v["status"] == t["closed"] % area + " " + t[kind], f"[{label}] {kind}: the screen-reader line says both")
         pill = rect(page, "#detect-area")
-        check(v["rect"][1] >= pill[3] - 6 and not overlap(v["rect"], pill), f"[{label}] {kind}: the line sits under the area pill")
+        if touch and vp["height"] >= 680 and vp["height"] > vp["width"]:
+            # a tall phone: the area is low, so the line opens above it, over the lower pieces, never over the credit
+            check(v["rect"][3] <= pill[1] + 6 and not overlap(v["rect"], pill), f"[{label}] {kind}: the line sits above the area pill")
+        else:
+            check(v["rect"][1] >= pill[3] - 6 and not overlap(v["rect"], pill), f"[{label}] {kind}: the line sits under the area pill")
         check(v["rect"][0] >= 0 and v["rect"][2] <= vp["width"] and v["rect"][3] <= vp["height"], f"[{label}] {kind}: the line stays inside the screen")
         check(not overlap(v["rect"], rect(page, ".langSel")), f"[{label}] {kind}: the line does not cover the language switch")
         cred = rect(page, ".side-brand")

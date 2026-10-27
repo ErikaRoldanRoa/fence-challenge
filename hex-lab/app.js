@@ -1329,10 +1329,6 @@ function renderVerdict() {
   el.hidden = !state.verdict;
   el.classList.toggle("best", state.verdict === "best");
   el.textContent = state.verdict ? verdictText(state.verdict) : "";
-  // On a phone held upright the credit line steps down by the bubble's height instead of lying under it.
-  const stage = document.querySelector(".main-stage");
-  stage.classList.toggle("has-verdict", !!state.verdict);
-  if (state.verdict) stage.style.setProperty("--verdict-room", Math.ceil(el.offsetHeight + 8) + "px");
 }
 
 /* ---------- camera inside the board ---------- */

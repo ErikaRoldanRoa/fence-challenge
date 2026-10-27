@@ -300,8 +300,9 @@ body {
     --board-size: min(calc(100vw - 20px), calc(100dvh - 404px));
   }
 
+  /* The first row is the strip of the language switch (and of the trophies): it stays, though the area has left it. */
   .main-stage {
-    grid-template-rows: auto minmax(0, 1fr) auto auto auto minmax(0, 1fr);
+    grid-template-rows: 44px minmax(0, 1fr) auto auto auto minmax(0, 1fr);
     row-gap: 10px;
   }
 
@@ -318,7 +319,13 @@ body {
     padding: 6px 10px max(8px, env(safe-area-inset-bottom));
   }
 
-  /* The area pill sits in the row of erase and the camera, between them, over the boardbar's empty middle. */
+  /* The area pill sits in the row of erase and the camera, between them, over the boardbar's empty middle. The camera's
+     chip is wider than erase: with it showing, the pill moves half the difference to the left, so that it stands in the
+     middle of the room between the two instead of leaning on the camera. */
+  .main-stage:has(#camera-chip:not([hidden])) > .toolbar {
+    transform: translateX(-16px);
+  }
+
   .toolbar {
     width: auto;
     height: auto;
@@ -329,22 +336,21 @@ body {
     z-index: 10;
   }
 
-  /* While the verdict is open the credit line steps down by its height (app.js sets --verdict-room): nothing covers it. */
-  .main-stage > .side-brand {
-    transition: transform 0.15s ease;
-  }
-
-  .main-stage.has-verdict > .side-brand {
-    transform: translateY(var(--verdict-room, 0px));
-  }
-
-  /* The verdict opens under the pill, where the credit line stood. */
+  /* The verdict opens above the pill, over the lower pieces and never over the credit line; it is only to be read
+     (a tap goes through it). */
   .verdict {
-    top: calc(100% + 8px);
+    top: auto;
+    bottom: calc(100% + 10px);
     max-width: calc(100vw - 20px);
     padding: 4px 10px;
     font-size: 0.85rem;
     line-height: 1.2;
+    pointer-events: none;
+  }
+
+  /* It is centred on the screen, not on the pill, which stands 16 px left of the middle beside the camera's chip. */
+  .main-stage:has(#camera-chip:not([hidden])) .verdict {
+    transform: translateX(calc(-50% + 16px));
   }
 
   .play-zone {
@@ -415,6 +421,29 @@ body {
   }
 }
 
+
+/* A phone that is not tall (under 680 px: the board is then about as wide as erase, the camera and the area side by
+   side, and in German the area does not fit between them): the area stays in the top strip, left, as it always was,
+   and the verdict opens under it. */
+@media (max-height: 679px) and (orientation: portrait) {
+  .main-stage > .toolbar {
+    grid-row: 1;
+    width: 100%;
+    height: 44px;
+    align-self: stretch;
+    justify-self: stretch;
+    justify-content: flex-start;
+    padding-right: 172px;
+    transform: none;
+  }
+  .main-stage:has(#camera-chip:not([hidden])) > .toolbar { transform: none; }
+  .verdict,
+  .main-stage:has(#camera-chip:not([hidden])) .verdict {
+    top: calc(100% + 16px);
+    bottom: auto;
+    transform: translateX(-50%);
+  }
+}
 
 /* ---------- a phone held sideways: rotate and flip, the area and the links
    in a strip along the top; under it the board on the left, and on the
