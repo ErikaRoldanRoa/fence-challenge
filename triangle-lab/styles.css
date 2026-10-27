@@ -257,7 +257,8 @@ body {
 
 @media (max-width: 700px), (max-aspect-ratio: 4/5) {
   :root {
-    --board-size: min(calc(100vw - 20px), calc(100dvh - 404px));
+    /* the board's width: its drawing area is 8 : 7, a hexagon being wider than tall */
+    --board-size: min(calc(100vw - 20px), calc((100dvh - 414px) * 8 / 7));
   }
 
   .main-stage {
@@ -305,7 +306,7 @@ body {
   #board-canvas {
     grid-area: board;
     height: auto;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 8 / 7;
   }
 
   /* The camera window covers the board's grid cell exactly. */
