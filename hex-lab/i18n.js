@@ -47,10 +47,13 @@
     "hx.s.camLocked": "Plateau trouvé. Tiens le téléphone immobile.",
     "hx.s.camError": "La caméra ne s’ouvre pas ici. Vérifie l’autorisation de la caméra.",
     "hx.s.camClosed": "Caméra fermée. Les pièces restent sur le plateau.",
-    "hx.v.better": "Tu peux faire mieux avec cette configuration.",
-    "hx.v.notYet": "Pas encore le meilleur possible parmi toutes les configurations.",
-    "hx.v.best": "Tu as le meilleur possible parmi toutes les configurations" + NB + ": {n} sur {all} l’atteignent.",
-    "hx.v.tip": "Une configuration est l’ordre des pièces autour de la barrière."
+    "hx.t.shelf": "Trophées",
+    "hx.t.config.off": "Pas encore le meilleur de cette configuration",
+    "hx.t.config.on": "Le meilleur de cette configuration",
+    "hx.t.global.off": "Pas encore le meilleur de toutes les configurations",
+    "hx.t.global.on": "Le meilleur de toutes les configurations",
+    "hx.t.wonConfig": "Trophée gagné" + NB + ": le meilleur de cette configuration.",
+    "hx.t.wonGlobal": "Trophée gagné" + NB + ": le meilleur de toutes les configurations."
   });
 
   Object.assign(DICT.de, {
@@ -92,10 +95,13 @@
     "hx.s.camLocked": "Spielfeld gefunden. Halte das Handy ruhig.",
     "hx.s.camError": "Die Kamera lässt sich hier nicht öffnen. Prüf die Kamera-Erlaubnis.",
     "hx.s.camClosed": "Kamera geschlossen. Die Teile bleiben auf dem Spielfeld.",
-    "hx.v.better": "Mit dieser Konfiguration geht noch mehr.",
-    "hx.v.notYet": "Noch nicht das Bestmögliche über alle Konfigurationen.",
-    "hx.v.best": "Du hast das Bestmögliche über alle Konfigurationen: {n} von {all} erreichen es.",
-    "hx.v.tip": "Eine Konfiguration ist die Reihenfolge der Teile um den Zaun."
+    "hx.t.shelf": "Pokale",
+    "hx.t.config.off": "Noch nicht das Beste dieser Konfiguration",
+    "hx.t.config.on": "Das Beste dieser Konfiguration",
+    "hx.t.global.off": "Noch nicht das Beste aller Konfigurationen",
+    "hx.t.global.on": "Das Beste aller Konfigurationen",
+    "hx.t.wonConfig": "Pokal gewonnen: das Beste dieser Konfiguration.",
+    "hx.t.wonGlobal": "Pokal gewonnen: das Beste aller Konfigurationen."
   });
 
   Object.assign(DICT.en, {
@@ -137,9 +143,12 @@
     "hx.s.camLocked": "Board found. Hold the phone still.",
     "hx.s.camError": "The camera cannot open here. Check the camera permission.",
     "hx.s.camClosed": "Camera closed. The pieces stay on the board.",
-    "hx.v.better": "You can do better with this configuration.",
-    "hx.v.notYet": "Not yet the best possible in all configurations.",
-    "hx.v.best": "You have the best possible over all configurations: {n} of the {all} reach it.",
-    "hx.v.tip": "A configuration is the order of the pieces around the fence."
+    "hx.t.shelf": "Trophies",
+    "hx.t.config.off": "Not yet the best of this configuration",
+    "hx.t.config.on": "The best of this configuration",
+    "hx.t.global.off": "Not yet the best of all configurations",
+    "hx.t.global.on": "The best of all configurations",
+    "hx.t.wonConfig": "Trophy won: the best of this configuration.",
+    "hx.t.wonGlobal": "Trophy won: the best of all configurations."
   });
 })();

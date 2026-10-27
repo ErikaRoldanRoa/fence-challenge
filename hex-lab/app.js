@@ -225,7 +225,9 @@ const dom = {
   labNav: document.querySelector(".lab-nav"),
   langSel: document.querySelector(".langSel"),
   status: document.getElementById("status"),
-  verdict: document.getElementById("verdict"),
+  shelf: document.getElementById("shelf"),
+  trophyConfig: document.getElementById("trophy-config"),
+  trophyGlobal: document.getElementById("trophy-global"),
 };
 
 const state = {
@@ -248,8 +250,10 @@ const state = {
   enclosedLargest: 0,
   area: 0,
   status: null,
-  verdict: null,
 };
+
+// What the player has won (kept on the device, trophies.js) and the configuration now on the board.
+const trophies = { state: null, storage: null, order: null };
 
 // The camera view inside the board (../camera/inboard.js), while it is open.
 // auto: opened by the page (a printed sheet's QR code), not by a tap;
@@ -268,6 +272,7 @@ function init() {
   state.boardBounds = state.board.bounds;
 
   buildPieces();
+  initTrophies();
 
   wireEvents();
   useTouchTips();
@@ -341,7 +346,7 @@ function wireEvents() {
   });
   document.addEventListener("fc-langchange", () => {
     renderStatus();
-    renderVerdict();
+    renderTrophies();
     updateAreaChip(state.area);
     localizeCameraChip();
     refreshTray();
@@ -379,14 +384,15 @@ function wireEvents() {
 }
 
 // The area is measured after every change to the board, as on the hub; a
-// tap on the area pill reads the verdict out.
+// tap on the area pill reads the status out.
 function measureLive() {
   const result = computeEnclosedArea();
   state.enclosedCells = result.enclosedSet;
   state.enclosedRegionCount = result.regionCount;
   state.enclosedLargest = result.largestRegion;
   updateAreaChip(result.area);
-  hideVerdict();
+  const won = updateTrophies(result);
+  if (won) setStatus(won);
 }
 
 function removePiece(pieceId) {
@@ -408,15 +414,14 @@ function onDetectArea() {
   state.enclosedRegionCount = result.regionCount;
   state.enclosedLargest = result.largestRegion;
   updateAreaChip(result.area);
-  // A closed fence that uses all seven pieces also says how its configuration stands (verdict.js).
-  const kind = result.area >= 2 && result.regionCount === 1 ? configurationVerdict(result) : null;
+  // A closed fence of all seven pieces may win a trophy, and the status then says so after the area.
+  const won = updateTrophies(result);
   // Hexagons never meet at a corner only, so there is no corner leak here:
   // one inside of area at least 1 is a closed fence.
   if (result.area === 0) setStatus("hx.s.areaNone");
   else if (result.regionCount > 1) setStatus("hx.s.areaSplit", { area: result.area, regions: result.regionCount });
   else if (result.area === 1) setStatus("hx.s.fence1");
-  else setStatus("hx.s.fence", { area: result.area }, kind);
-  showVerdict(kind);
+  else setStatus("hx.s.fence", { area: result.area }, won);
   render();
 }
 
@@ -428,7 +433,8 @@ function onClear() {
   state.enclosedRegionCount = 0;
   state.enclosedLargest = 0;
   updateAreaChip(0);
-  hideVerdict();
+  trophies.order = null;
+  renderTrophies();
   setStatus("hx.s.cleared");
   refreshTray();
   render();
@@ -1280,55 +1286,80 @@ function updateAreaChip(area) {
   dom.areaChip.textContent = String(area);
 }
 
-// Keeps the message as a key so a language switch can render it again. kind: the verdict on the
-// configuration (verdict.js), read out after the message.
-function setStatus(key, vars, kind) {
-  state.status = { key, vars: vars || null, kind: kind || null };
+// Keeps the message as a key so a language switch can render it again. extra: the key of a second sentence, read out
+// after the first (a trophy won).
+function setStatus(key, vars, extra) {
+  state.status = { key, vars: vars || null, extra: extra || null };
   renderStatus();
 }
 
 function renderStatus() {
   if (!state.status) return;
   const s = state.status;
-  dom.status.textContent = t(s.key, s.vars || undefined) + (s.kind ? " " + verdictText(s.kind) : "");
+  dom.status.textContent = t(s.key, s.vars || undefined) + (s.extra ? " " + t(s.extra) : "");
 }
 
-/* ---------- the verdict on the configuration ---------- */
+/* ---------- the trophies ---------- */
 
-// "better" (this order can still enclose more), "notYet" (this order is at its best, another does better),
-// "best" (no order does better), or null: not a closed fence of all seven pieces, or a phone that came
-// through a contest page (window.FenceContest exists only there), which keeps the hint to itself.
-function configurationVerdict(result) {
-  if (!window.HexVerdict || window.FenceContest) return null;
+function initTrophies() {
+  // a phone that came through a contest page (window.FenceContest exists only there) keeps the hints to itself
+  if (!window.HexTrophies || window.FenceContest || !dom.shelf) {
+    if (dom.shelf) dom.shelf.hidden = true;
+    return;
+  }
+  try { trophies.storage = window.localStorage; } catch (e) { trophies.storage = null; }
+  trophies.state = trophies.storage ? HexTrophies.load(trophies.storage) : HexTrophies.empty();
+  renderTrophies();
+}
+
+// The seven pieces around the one inside, in order, or null.
+function configurationOrder(result) {
   if (state.placedPieces.length !== state.pieceTypes.length) return null;
   const owner = new Map();
   for (const piece of state.placedPieces) {
     for (const cell of pieceAbsoluteCells(piece)) owner.set(cellKey(cell), piece.typeId);
   }
-  const order = HexVerdict.configuration(owner, result.enclosedSet);
-  return order ? HexVerdict.verdict(order, result.area) : null;
+  return HexVerdict.configuration(owner, result.enclosedSet);
 }
 
-function verdictText(kind) {
-  const n = HexVerdict.counts();
-  return t("hx.v." + kind, { n: n.atBest, all: n.orders });
+// After the area is measured: a closed fence of all seven pieces may win a trophy. Returns the key of the sentence
+// to read out when it did, else null.
+function updateTrophies(result) {
+  if (!trophies.state) return null;
+  trophies.order = result.area >= 2 && result.regionCount === 1 ? configurationOrder(result) : null;
+  let won = null, popConfig = false, popGlobal = false;
+  if (trophies.order) {
+    const r = HexTrophies.record(trophies.state, trophies.order, result.area);
+    if (r.wonConfig || r.wonGlobal) {
+      trophies.state = r.state;
+      if (trophies.storage) HexTrophies.save(trophies.storage, r.state);
+      popConfig = r.wonConfig;
+      popGlobal = r.wonGlobal;
+      won = r.wonGlobal ? "hx.t.wonGlobal" : "hx.t.wonConfig";
+    }
+  }
+  renderTrophies(popConfig, popGlobal);
+  return won;
 }
 
-function showVerdict(kind) {
-  state.verdict = kind || null;
-  renderVerdict();
+function renderTrophies(popConfig, popGlobal) {
+  if (!trophies.state) return;
+  const lit = HexTrophies.lit(trophies.state, trophies.order);
+  setTrophy(dom.trophyConfig, lit.config, lit.tier ? "tier-" + lit.tier : "", t(lit.config ? "hx.t.config.on" : "hx.t.config.off"), popConfig);
+  setTrophy(dom.trophyGlobal, lit.global, "", t(lit.global ? "hx.t.global.on" : "hx.t.global.off"), popGlobal);
 }
 
-function hideVerdict() {
-  if (state.verdict) showVerdict(null);
-}
-
-function renderVerdict() {
-  const el = dom.verdict;
-  if (!el) return;
-  el.hidden = !state.verdict;
-  el.classList.toggle("best", state.verdict === "best");
-  el.textContent = state.verdict ? verdictText(state.verdict) : "";
+function setTrophy(el, on, tierClass, label, pop) {
+  el.classList.toggle("on", on);
+  for (const c of ["tier-gold", "tier-silver", "tier-bronze"]) el.classList.toggle(c, c === tierClass);
+  el.setAttribute("aria-label", label);
+  el.title = label;
+  if (pop) {
+    el.classList.remove("pop");
+    void el.offsetWidth;
+    el.classList.add("pop");
+    setTimeout(() => el.classList.remove("pop"), 800);
+  }
 }
 
 /* ---------- camera inside the board ---------- */

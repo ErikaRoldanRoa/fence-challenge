@@ -93,17 +93,11 @@ for (const f of FIXTURES) {
   assert.strictEqual(V.verdict(["arc", "bar", "bee"], 3), null, "an unknown order says nothing");
 }
 
-/* ---- the words: three languages, no area in any of them ---- */
-global.DICT = { fr: {}, de: {}, en: {} };
-require("../i18n.js");
-for (const lang of ["fr", "de", "en"]) {
-  for (const kind of ["better", "notYet", "best", "tip"]) {
-    const s = global.DICT[lang]["hx.v." + kind];
-    assert.ok(typeof s === "string" && s.length > 8, lang + " hx.v." + kind);
-    assert.ok(!/\b3[0-9]\b/.test(s), lang + " hx.v." + kind + " names no area");
-  }
-  assert.ok(/\{n\}/.test(global.DICT[lang]["hx.v.best"]) && /\{all\}/.test(global.DICT[lang]["hx.v.best"]), lang + ": the count comes from the data");
-  assert.ok(!/\d/.test(global.DICT[lang]["hx.v.better"] + global.DICT[lang]["hx.v.notYet"]), lang + ": no number outside the top line");
+/* ---- the tiers: how far a configuration's best falls short of the best of all ---- */
+for (const [area, tier] of [[35, "gold"], [34, "silver"], [33, "bronze"]]) {
+  const key = keys.find((k) => DATA.areaByOrder[k] === area);
+  assert.strictEqual(V.tier(key.split(",")), tier, "the tier of a configuration whose best is " + area);
 }
+assert.strictEqual(V.tier(["arc", "bar"]), null, "an unknown order has no tier");
 
 console.log("verdict.test.js: ok (" + keys.length + " orders, " + FIXTURES.length + " fences)");

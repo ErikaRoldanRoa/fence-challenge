@@ -8,6 +8,7 @@
  *                                 "notYet"  this order is at its best, another does better
  *                                 "best"    no order does better
  *                                 null      nothing to say (unknown order, or an area above what the data allows)
+ *   tier(order)                 "gold" | "silver" | "bronze": how far this order's best falls short of the best of all (0, 1, 2 cells), or null
  *   counts()                      { orders, atBest } from the data
  *
  * owner: Map "q,r" -> piece id for every occupied cell; inside: Set "q,r" of the one enclosed region. */
@@ -94,10 +95,16 @@
     return top === DATA.best ? "best" : "notYet";
   }
 
+  const TIERS = ["gold", "silver", "bronze"];
+  function tier(order) {
+    const top = DATA.areaByOrder[canonicalKey(order)];
+    return top === undefined ? null : TIERS[DATA.best - top] || null;
+  }
+
   function counts() {
     const all = Object.keys(DATA.areaByOrder);
     return { orders: all.length, atBest: all.filter((k) => DATA.areaByOrder[k] === DATA.best).length };
   }
 
-  return { configuration, orderAround, canonicalKey, verdict, counts };
+  return { configuration, orderAround, canonicalKey, verdict, tier, counts };
 });

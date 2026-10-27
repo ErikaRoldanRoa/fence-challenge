@@ -1,4 +1,4 @@
-"""Browser check of the hex lab's verdict line, played like a visitor.
+"""Browser check of the hex lab's trophies, played like a visitor.
 
 Usage: python3 ui_check.py BASE_URL OUTDIR
 BASE_URL serves the repository root (e.g. http://127.0.0.1:8791/).
@@ -13,6 +13,7 @@ from playwright.sync_api import sync_playwright
 BASE, OUT = sys.argv[1].rstrip("/") + "/", Path(sys.argv[2])
 OUT.mkdir(parents=True, exist_ok=True)
 URL = BASE + "hex-lab/index.html"
+KEY = "fc-trophies-hex7"
 fails = []
 
 # One of the two fences the paper draws (its Figure 8, top), moved to the middle of the board; named in the page.
@@ -27,15 +28,17 @@ NOTYET_34 = {"arc": [[-5, 5], [-5, 6], [-4, 6], [-3, 5]], "bar": [[-5, 1], [-5, 
              "worm": [[1, -3], [2, -3], [2, -2], [2, -1]]}
 
 TEXT = {
-    "en": {"better": "You can do better with this configuration.", "notYet": "Not yet the best possible in all configurations.",
-           "best": "You have the best possible over all configurations: 60 of the 360 reach it.", "closed": "Fence closed, area %d hexagons!",
-           "tip": "A configuration is the order of the pieces around the fence."},
-    "fr": {"better": "Tu peux faire mieux avec cette configuration.", "notYet": "Pas encore le meilleur possible parmi toutes les configurations.",
-           "best": "Tu as le meilleur possible parmi toutes les configurations : 60 sur 360 l’atteignent.", "closed": "Barrière fermée, aire %d hexagones !",
-           "tip": "Une configuration est l’ordre des pièces autour de la barrière."},
-    "de": {"better": "Mit dieser Konfiguration geht noch mehr.", "notYet": "Noch nicht das Bestmögliche über alle Konfigurationen.",
-           "best": "Du hast das Bestmögliche über alle Konfigurationen: 60 von 360 erreichen es.", "closed": "Zaun geschlossen, Fläche %d Sechsecke!",
-           "tip": "Eine Konfiguration ist die Reihenfolge der Teile um den Zaun."},
+    "en": {"cfg_on": "The best of this configuration", "cfg_off": "Not yet the best of this configuration",
+           "glob_on": "The best of all configurations", "glob_off": "Not yet the best of all configurations",
+           "won_cfg": "Trophy won: the best of this configuration.", "won_glob": "Trophy won: the best of all configurations.", "closed": "Fence closed, area %d hexagons!"},
+    "fr": {"cfg_on": "Le meilleur de cette configuration", "cfg_off": "Pas encore le meilleur de cette configuration",
+           "glob_on": "Le meilleur de toutes les configurations", "glob_off": "Pas encore le meilleur de toutes les configurations",
+           "won_cfg": "Trophée gagné : le meilleur de cette configuration.", "won_glob": "Trophée gagné : le meilleur de toutes les configurations.",
+           "closed": "Barrière fermée, aire %d hexagones !"},
+    "de": {"cfg_on": "Das Beste dieser Konfiguration", "cfg_off": "Noch nicht das Beste dieser Konfiguration",
+           "glob_on": "Das Beste aller Konfigurationen", "glob_off": "Noch nicht das Beste aller Konfigurationen",
+           "won_cfg": "Pokal gewonnen: das Beste dieser Konfiguration.", "won_glob": "Pokal gewonnen: das Beste aller Konfigurationen.",
+           "closed": "Zaun geschlossen, Fläche %d Sechsecke!"},
 }
 
 PLACE = """(pieces) => {
@@ -52,6 +55,11 @@ PLACE = """(pieces) => {
   measureLive(); refreshTray(); render();
 }"""
 
+SHELF = """() => { const t = (id) => { const e = document.getElementById(id); return { on: e.classList.contains('on'), tier: ['gold','silver','bronze'].find(c => e.classList.contains('tier-' + c)) || null,
+    label: e.getAttribute('aria-label'), title: e.title, pop: e.classList.contains('pop') }; };
+  return { cfg: t('trophy-config'), glob: t('trophy-global'), hidden: document.getElementById('shelf').hidden, status: document.getElementById('status').textContent,
+           stored: (() => { try { return localStorage.getItem('%s'); } catch (e) { return 'blocked'; } })(), words: document.getElementById('shelf').innerText.trim() }; }""" % KEY
+
 
 def check(cond, msg):
     print(("ok   " if cond else "FAIL ") + msg)
@@ -59,102 +67,142 @@ def check(cond, msg):
         fails.append(msg)
 
 
-def verdict_state(page):
-    return page.evaluate("""() => { const v = document.getElementById('verdict'); const r = v.getBoundingClientRect();
-        return { hidden: v.hidden || getComputedStyle(v).display === 'none', text: v.textContent, best: v.classList.contains('best'),
-                 rect: [r.left, r.top, r.right, r.bottom], status: document.getElementById('status').textContent }; }""")
-
-
 def rect(page, sel):
-    r = page.evaluate("(s) => { const b = document.querySelector(s).getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; }", sel)
-    return r
+    return page.evaluate("""(s) => { const e = document.querySelector(s); if (!e || e.hidden || getComputedStyle(e).display === 'none') return null;
+        const b = e.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; }""", sel)
 
 
 def overlap(a, b):
-    return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+    return a and b and a[0] < b[2] - 0.5 and b[0] < a[2] - 0.5 and a[1] < b[3] - 0.5 and b[1] < a[3] - 0.5
 
 
-def run(browser, lang, vp, touch, tag, contest=False):
+def shelf(page):
+    return page.evaluate(SHELF)
+
+
+def play(page, pieces):
+    page.evaluate(PLACE, pieces)
+    page.wait_for_timeout(120)
+    return shelf(page)
+
+
+def new_page(browser, lang, vp, touch, init=""):
     ctx = browser.new_context(viewport=vp, has_touch=touch, is_mobile=touch, device_scale_factor=2)
-    init = "try{localStorage.setItem('fc-lang','%s')}catch(e){}" % lang
-    if contest:
-        init += "try{localStorage.setItem('fc-contest','%s')}catch(e){}" % json.dumps({"workshop": "w", "device": "d", "name": "n"})
-    ctx.add_init_script(init)
+    ctx.add_init_script("try{localStorage.setItem('fc-lang','%s')}catch(e){}" % lang + init)
     page = ctx.new_page()
     errors = []
     page.on("console", lambda m: m.type == "error" and errors.append(m.text))
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.goto(URL)
-    page.wait_for_selector("#piece-tray .chip, #piece-tray button, #piece-tray *")
+    page.wait_for_selector("#piece-tray *")
     page.wait_for_timeout(400)
-    t = TEXT[lang]
-    label = f"{lang} {tag}" + (" contest" if contest else "")
+    return ctx, page, errors
 
+
+def best_fence(page):
     names = page.evaluate("(s) => LatticeHex.TETRAHEX_FULL_SET.build(s.map(cs => cs.map(([q, r]) => ({ q, r })))).map(p => p.id)", PUBLISHED)
-    best = {n: [[q - 3, r - 2] for q, r in cells] for n, cells in zip(names, PUBLISHED)}
+    return {n: [[q - 3, r - 2] for q, r in cells] for n, cells in zip(names, PUBLISHED)}
 
-    check(verdict_state(page)["hidden"], f"[{label}] no verdict on an empty board")
-    check(page.evaluate("() => document.getElementById('verdict').title") == t["tip"], f"[{label}] the bubble says what a configuration is")
-    lines = page.evaluate("() => document.querySelector('.side-brand').innerText.split('\\n').map((s) => s.trim())")
+
+def run(browser, lang, vp, touch, tag):
+    t = TEXT[lang]
+    label = f"{lang} {tag}"
+    ctx, page, errors = new_page(browser, lang, vp, touch)
+    tall_phone = touch and vp["height"] > vp["width"] and vp["height"] >= 680
+    short_phone = touch and vp["height"] > vp["width"] and vp["height"] < 680
+
+    # ---- a new player: both trophies dark, nothing written under them, the credit on two lines ----
+    s = shelf(page)
+    check(not s["hidden"] and not s["cfg"]["on"] and not s["glob"]["on"], f"[{label}] a new player sees two dark trophies")
+    check(s["words"] == "", f"[{label}] nothing is written under or beside the trophies")
+    check(s["cfg"]["label"] == t["cfg_off"] and s["glob"]["label"] == t["glob_off"] and s["cfg"]["title"] == t["cfg_off"], f"[{label}] their labels say not yet")
+    lines = page.evaluate("() => document.querySelector('.side-brand').innerText.split('\\n').map((x) => x.trim())")
     check(len(lines) == 2 and lines[1] == "Dr. Erika Roldán", f"[{label}] the author's name stands on its own line under the paper's line")
-    pill0 = rect(page, "#detect-area")
-    if touch and vp["height"] > vp["width"]:
-        # a phone held upright: the area stands low, in the row of erase and the camera, out of the way of the browser's own bars
-        trash = rect(page, "#clear-board")
-        check(pill0[1] > vp["height"] / 2, f"[{label}] the area pill is low on a phone")
-        check(abs((pill0[1] + pill0[3]) / 2 - (trash[1] + trash[3]) / 2) < 14, f"[{label}] the area pill stands in the row of erase")
-    elif not touch:
-        check(pill0[3] < 100, f"[{label}] the area pill stays on top on a large screen")
-    cases = [("best", 35, best), ("better", 34, BETTER_34), ("notYet", 34, NOTYET_34)]
-    for kind, area, pieces in cases:
-        page.evaluate(PLACE, pieces)
-        v = verdict_state(page)
-        check(v["hidden"], f"[{label}] {kind}: nothing shown before the area is tapped")
-        check(page.evaluate("() => document.getElementById('area-chip').textContent") == str(area), f"[{label}] {kind}: the area pill reads {area}")
-        page.click("#detect-area")
-        page.wait_for_timeout(150)
-        v = verdict_state(page)
-        if contest:
-            check(v["hidden"] and t["closed"] % area in v["status"] and t[kind] not in v["status"], f"[{label}] {kind}: a contest phone gets no verdict")
-            continue
-        check(not v["hidden"] and v["text"] == t[kind], f"[{label}] {kind}: the line reads « {v['text']} »")
-        check(v["best"] == (kind == "best"), f"[{label}] {kind}: highlighted only at the top")
-        check(v["status"] == t["closed"] % area + " " + t[kind], f"[{label}] {kind}: the screen-reader line says both")
-        pill = rect(page, "#detect-area")
-        if touch and vp["height"] >= 680 and vp["height"] > vp["width"]:
-            # a tall phone: the area is low, so the line opens above it, over the lower pieces, never over the credit
-            check(v["rect"][3] <= pill[1] + 6 and not overlap(v["rect"], pill), f"[{label}] {kind}: the line sits above the area pill")
-        else:
-            check(v["rect"][1] >= pill[3] - 6 and not overlap(v["rect"], pill), f"[{label}] {kind}: the line sits under the area pill")
-        check(v["rect"][0] >= 0 and v["rect"][2] <= vp["width"] and v["rect"][3] <= vp["height"], f"[{label}] {kind}: the line stays inside the screen")
-        check(not overlap(v["rect"], rect(page, ".langSel")), f"[{label}] {kind}: the line does not cover the language switch")
-        cred = rect(page, ".side-brand")
-        check(not overlap(v["rect"], cred) and cred[3] <= vp["height"], f"[{label}] {kind}: nothing covers the credit, and it stays on the screen")
-        if kind in ("best", "better"):
-            page.screenshot(path=str(OUT / f"{lang}-{tag}-{kind}.png"))
-        if kind == "best":
-            # a change to the board takes the line away: it spoke about the fence that was there
-            page.evaluate("() => { state.selectedPieceId = state.placedPieces[0].id; render(); dom.canvas.focus(); }")
-            page.keyboard.press("Delete")
-            page.wait_for_timeout(150)
-            check(verdict_state(page)["hidden"], f"[{label}] {kind}: removing a piece takes the line away")
-    # six pieces, however placed: no verdict (a closed ring of all seven is what it speaks about)
-    page.evaluate(PLACE, {k: v for k, v in BETTER_34.items() if k != "bee"})
-    page.click("#detect-area")
-    page.wait_for_timeout(100)
-    check(verdict_state(page)["hidden"], f"[{label}] six pieces: no verdict")
+    check(page.evaluate("() => document.getElementById('verdict') === null"), f"[{label}] no text about doing better or not")
+
+    # ---- where things stand on this screen ----
+    pill, lang_sw, sh = rect(page, "#detect-area"), rect(page, ".langSel"), rect(page, "#shelf")
+    trash, cam = rect(page, "#clear-board"), rect(page, "#camera-chip")
+    small, big = rect(page, "#trophy-config"), rect(page, "#trophy-global")
+    check(abs(small[3] - big[3]) < 0.6, f"[{label}] the two trophies stand on one baseline")
+    check(not overlap(sh, lang_sw) and not overlap(sh, pill) and not overlap(sh, trash) and not overlap(sh, cam), f"[{label}] the trophies touch nothing else")
+    if tall_phone or not touch:
+        check(sh[0] < 30 and sh[1] < 20, f"[{label}] the trophies stand in the top-left corner")
+    if tall_phone:
+        check(pill[1] > vp["height"] / 2, f"[{label}] the area pill is low on a tall phone")
+    if short_phone:
+        check(trash[2] < sh[0] and sh[2] < cam[0], f"[{label}] on a short phone the trophies stand between erase and the camera")
+        check(abs((sh[0] - trash[2]) - (cam[0] - sh[2])) < 6, f"[{label}] and in the middle of the room between them")
+    check(rect(page, ".side-brand")[3] <= vp["height"], f"[{label}] the credit stays on the screen")
+
+    # ---- a fence below its configuration's best wins nothing ----
+    s = play(page, BETTER_34)
+    check(not s["cfg"]["on"] and not s["glob"]["on"] and s["stored"] is None, f"[{label}] a fence short of its best wins nothing and stores nothing")
+
+    # ---- the best of its configuration: the small trophy lights, in its tier's colour, and is kept ----
+    s = play(page, NOTYET_34)
+    check(s["cfg"]["on"] and s["cfg"]["tier"] == "silver" and not s["glob"]["on"], f"[{label}] the best of a configuration lights the small trophy, silver")
+    check(s["cfg"]["pop"] and not s["glob"]["pop"], f"[{label}] and it pops")
+    check(s["cfg"]["label"] == t["cfg_on"] and s["status"] == t["won_cfg"], f"[{label}] the label and the status read out the win")
+    check(s["stored"] is not None and json.loads(s["stored"])["g"] is False and len(json.loads(s["stored"])["c"]) == 1, f"[{label}] one configuration is stored")
+    page.wait_for_timeout(900)
+    s = play(page, NOTYET_34)
+    check(s["cfg"]["on"] and not s["cfg"]["pop"], f"[{label}] the same fence again wins nothing more")
+
+    # ---- the best of all: both light; the global one stays in every configuration ----
+    s = play(page, best_fence(page))
+    check(s["cfg"]["on"] and s["cfg"]["tier"] == "gold" and s["glob"]["on"] and s["glob"]["pop"], f"[{label}] the best of all lights both, the small one gold")
+    check(s["glob"]["label"] == t["glob_on"] and s["status"] == t["won_glob"], f"[{label}] the global win is read out")
+    page.screenshot(path=str(OUT / f"{lang}-{tag}-both.png"))
+    page.wait_for_timeout(900)
+    s = play(page, BETTER_34)
+    check(s["glob"]["on"] and not s["glob"]["pop"], f"[{label}] the global trophy stays lit in another configuration")
+    check(not s["cfg"]["on"], f"[{label}] while that configuration's own trophy is still dark")
+    page.evaluate("() => { onClear(); }")
+    s = shelf(page)
+    check(s["glob"]["on"] and not s["cfg"]["on"], f"[{label}] with the board empty the global trophy stays and the small one rests")
+    check(json.loads(s["stored"])["g"] is True and len(json.loads(s["stored"])["c"]) == 2, f"[{label}] two configurations and the global one are stored")
+
+    # ---- remembered: a new visit finds them ----
+    page.reload()
+    page.wait_for_selector("#piece-tray *")
+    page.wait_for_timeout(300)
+    s = shelf(page)
+    check(s["glob"]["on"] and not s["cfg"]["on"], f"[{label}] after a reload the global trophy is still lit")
+    s = play(page, NOTYET_34)
+    check(s["cfg"]["on"] and not s["cfg"]["pop"], f"[{label}] and the configuration won before is lit at once, without a pop")
     check(not errors, f"[{label}] no console errors" + (": " + "; ".join(errors[:3]) if errors else ""))
+    ctx.close()
+
+
+def run_special(browser):
+    # a phone that came through a contest page keeps the hints to itself
+    ctx, page, errors = new_page(browser, "en", {"width": 1280, "height": 800}, False,
+                                 init="try{localStorage.setItem('fc-contest','%s')}catch(e){}" % json.dumps({"workshop": "w", "device": "d", "name": "n"}))
+    s = shelf(page)
+    check(s["hidden"], "[contest] no trophies on a contest phone")
+    s = play(page, best_fence(page))
+    check(s["hidden"] and s["stored"] is None, "[contest] and nothing is stored there")
+    check(not errors, "[contest] no console errors")
+    ctx.close()
+    # a browser that refuses storage: the trophies still work for the visit
+    ctx, page, errors = new_page(browser, "en", {"width": 1280, "height": 800}, False,
+                                 init="Object.defineProperty(window,'localStorage',{get(){throw new Error('blocked')}});")
+    s = play(page, NOTYET_34)
+    check(s["cfg"]["on"] and s["stored"] == "blocked", "[blocked storage] a win still lights the trophy for the visit")
+    check(not errors, "[blocked storage] and raises no error" + (": " + "; ".join(errors[:2]) if errors else ""))
     ctx.close()
 
 
 with sync_playwright() as p:
     browser = p.chromium.launch()
-    desk, phone, side = {"width": 1280, "height": 800}, {"width": 390, "height": 844}, {"width": 844, "height": 390}
+    desk, tall, short, side = {"width": 1280, "height": 800}, {"width": 390, "height": 844}, {"width": 360, "height": 640}, {"width": 844, "height": 390}
     for lang in ("en", "fr", "de"):
         run(browser, lang, desk, False, "desk")
-        run(browser, lang, phone, True, "phone")
+        run(browser, lang, tall, True, "tall")
+        run(browser, lang, short, True, "short")
     run(browser, "en", side, True, "side")
-    run(browser, "en", desk, False, "desk", contest=True)
+    run_special(browser)
     browser.close()
 
 print("\n%d failed" % len(fails) if fails else "\nall checks passed")
