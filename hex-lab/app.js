@@ -228,6 +228,13 @@ const dom = {
   shelf: document.getElementById("shelf"),
   trophyConfig: document.getElementById("trophy-config"),
   trophyGlobal: document.getElementById("trophy-global"),
+  case: document.getElementById("case"),
+  caseCount: document.getElementById("case-count"),
+  caseFill: document.getElementById("case-fill"),
+  caseGlobals: document.getElementById("case-globals"),
+  caseSeen: document.getElementById("case-seen"),
+  caseGrid: document.getElementById("case-grid"),
+  caseClose: document.getElementById("case-close"),
 };
 
 const state = {
@@ -253,7 +260,7 @@ const state = {
 };
 
 // What the player has won (kept on the device, trophies.js) and the configuration now on the board.
-const trophies = { state: null, storage: null, order: null };
+const trophies = { state: null, storage: null, order: null, opener: null, seen: null };
 
 // The camera view inside the board (../camera/inboard.js), while it is open.
 // auto: opened by the page (a printed sheet's QR code), not by a tap;
@@ -347,6 +354,7 @@ function wireEvents() {
   document.addEventListener("fc-langchange", () => {
     renderStatus();
     renderTrophies();
+    if (!dom.case.hidden) renderCase();
     updateAreaChip(state.area);
     localizeCameraChip();
     refreshTray();
@@ -362,6 +370,7 @@ function wireEvents() {
 
   window.addEventListener("keydown", (e) => {
     if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (!dom.case.hidden) return;   // the trophy case is open: the keys belong to it
     if (e.key === "Escape" && camera.view) { closeCamera(); return; }
     const dir = window.FencePlay ? window.FencePlay.arrowOf(e, dom.canvas) : null;
     if (dir) {
@@ -1310,6 +1319,11 @@ function initTrophies() {
   try { trophies.storage = window.localStorage; } catch (e) { trophies.storage = null; }
   trophies.state = trophies.storage ? HexTrophies.load(trophies.storage) : HexTrophies.empty();
   renderTrophies();
+  dom.shelf.addEventListener("click", openCase);
+  dom.caseClose.addEventListener("click", closeCase);
+  dom.case.addEventListener("click", (e) => { if (e.target === dom.case) closeCase(); });
+  dom.case.addEventListener("keydown", onCaseKey);
+  dom.caseGrid.addEventListener("click", (e) => { const cup = e.target.closest(".sc"); if (cup) showSeen(cup.dataset.key); });
 }
 
 // The seven pieces around the one inside, in order, or null.
@@ -1347,12 +1361,14 @@ function renderTrophies(popConfig, popGlobal) {
   const lit = HexTrophies.lit(trophies.state, trophies.order);
   setTrophy(dom.trophyConfig, lit.config, lit.tier ? "tier-" + lit.tier : "", t(lit.config ? "hx.t.config.on" : "hx.t.config.off"), popConfig);
   setTrophy(dom.trophyGlobal, lit.global, "", t(lit.global ? "hx.t.global.on" : "hx.t.global.off"), popGlobal);
+  const n = HexTrophies.counts(trophies.state);
+  dom.shelf.setAttribute("aria-label", t("hx.t.case") + ": " + t("hx.t.count", { n: n.won, all: n.total }) + ". " +
+    dom.trophyConfig.title + ". " + dom.trophyGlobal.title + ".");
 }
 
 function setTrophy(el, on, tierClass, label, pop) {
   el.classList.toggle("on", on);
   for (const c of ["tier-gold", "tier-silver", "tier-bronze"]) el.classList.toggle(c, c === tierClass);
-  el.setAttribute("aria-label", label);
   el.title = label;
   if (pop) {
     el.classList.remove("pop");
@@ -1360,6 +1376,119 @@ function setTrophy(el, on, tierClass, label, pop) {
     el.classList.add("pop");
     setTimeout(() => el.classList.remove("pop"), 800);
   }
+}
+
+/* ---------- the case ---------- */
+
+// One drawing of the cup, the shelf's own: the global cup's parts (everything but the engraved polyform) are copied
+// into the global cups of the case and, once, into a symbol the grid's 360 small cups and the chosen one point at.
+function cupParts() {
+  return Array.from(dom.trophyGlobal.querySelectorAll("svg > :not(g)")).map((el) => el.outerHTML).join("");
+}
+function cupSymbol() {
+  return '<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="hx-cup" viewBox="0 0 24 24">' + cupParts() + "</symbol></svg>";
+}
+const HEX_POINTS = "1,0 0.5,0.866 -0.5,0.866 -1,0 -0.5,-0.866 0.5,-0.866";
+const MILESTONE_TONE = { 10: "bronze", 50: "silver", 100: "gold" };   // the last one (all of them) is gold too
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+
+function openCase() {
+  if (!trophies.state) return;
+  trophies.opener = document.activeElement;
+  // it opens on the configuration now on the board, when there is a closed fence of all seven pieces
+  trophies.seen = trophies.order ? HexVerdict.canonicalKey(trophies.order) : null;
+  renderCase();
+  dom.case.hidden = false;
+  dom.caseClose.focus();
+  if (trophies.seen) selectCup(trophies.seen, false);
+}
+
+function closeCase() {
+  dom.case.hidden = true;
+  if (trophies.opener && trophies.opener.focus) trophies.opener.focus();
+  trophies.opener = null;
+}
+
+// Escape closes; Tab goes round the two things that can take the focus; the arrows walk the grid.
+function onCaseKey(e) {
+  if (e.key === "Escape") { e.preventDefault(); closeCase(); return; }
+  if (e.key === "Tab") {
+    const first = dom.caseClose, last = dom.caseGrid;
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    return;
+  }
+  if (document.activeElement !== dom.caseGrid) return;
+  const cups = Array.from(dom.caseGrid.querySelectorAll(".sc"));
+  const columns = Math.max(1, getComputedStyle(dom.caseGrid).gridTemplateColumns.split(" ").length);
+  const at = cups.findIndex((el) => el.dataset.key === trophies.seen);
+  const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: columns, ArrowUp: -columns }[e.key];
+  let next = null;
+  if (step !== undefined) next = at < 0 ? 0 : at + step;
+  else if (e.key === "Home") next = 0;
+  else if (e.key === "End") next = cups.length - 1;
+  if (next === null) return;
+  e.preventDefault();
+  if (next >= 0 && next < cups.length) selectCup(cups[next].dataset.key, true);
+}
+
+// A global cup: the best of all (the polyform engraved), a milestone (its number), a tier (its number). Never a word.
+function globalCup(g) {
+  const tone = g.kind === "best" ? "gold" : g.kind === "milestone" ? (MILESTONE_TONE[g.n] || "gold") : g.kind;
+  const engraved = g.kind === "best"
+    ? Array.from(dom.trophyGlobal.querySelectorAll("svg > g")).map((el) => el.outerHTML).join("")
+    : '<text class="digits' + (g.n >= 100 ? " d3" : "") + '" x="12" y="8.4">' + g.n + "</text>";
+  const what = g.kind === "best" ? t("hx.t.best") : g.kind === "milestone" ? t("hx.t.milestone", { n: g.n }) : t("hx.t.tier." + g.kind);
+  const label = esc(what + ": " + t(g.won ? "hx.t.state.on" : "hx.t.state.off"));
+  return '<span class="case-g tone-' + tone + (g.won ? " on" : "") + '" role="img" aria-label="' + label + '" title="' + label + '">' +
+    '<span class="trophy' + (g.won ? " on" : "") + '"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + cupParts() + engraved + "</svg></span></span>";
+}
+
+function renderCase() {
+  const s = trophies.state;
+  const n = HexTrophies.counts(s);
+  dom.caseCount.textContent = n.won + " / " + n.total;
+  dom.caseCount.setAttribute("aria-label", t("hx.t.count", { n: n.won, all: n.total }));
+  dom.caseFill.style.width = (100 * n.won / n.total).toFixed(2) + "%";
+  dom.caseGlobals.innerHTML = HexTrophies.globals(s).map(globalCup).join("");
+  dom.caseGrid.setAttribute("aria-label", t("hx.t.grid") + ": " + t("hx.t.count", { n: n.won, all: n.total }));
+  dom.caseGrid.innerHTML = cupSymbol() + HexTrophies.entries(s).map((e) =>
+    '<span class="sc tier-' + e.tier + (e.won ? " on" : "") + '" data-key="' + e.key + '"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#hx-cup"/></svg></span>').join("");
+  showSeen(trophies.seen);
+}
+
+function selectCup(key, focusGrid) {
+  showSeen(key);
+  const cup = dom.caseGrid.querySelector('.sc[data-key="' + key + '"]');
+  if (cup && cup.scrollIntoView) cup.scrollIntoView({ block: "nearest" });
+  if (focusGrid) dom.caseGrid.focus();
+}
+
+// One configuration, shown as its seven pieces in order, each in its own colour, beside a cup that says whether it is won.
+// With none chosen, seven empty places wait where they will appear (the row keeps its height, so the grid never jumps).
+function showSeen(key) {
+  trophies.seen = key || null;
+  dom.caseGrid.querySelectorAll(".sc.sel").forEach((el) => el.classList.remove("sel"));
+  const entry = key ? HexTrophies.entries(trophies.state).find((e) => e.key === key) : null;
+  const hex = (fill) => '<svg class="hexdot" viewBox="-1.1 -1 2.2 2" aria-hidden="true"><polygon points="' + HEX_POINTS + '" fill="' + fill + '"/></svg>';
+  if (!entry) {
+    dom.caseSeen.innerHTML = '<span class="seen-empty">' + hex("none").repeat(7) + "</span>";
+    dom.caseSeen.setAttribute("aria-hidden", "true");
+    dom.caseSeen.removeAttribute("aria-label");
+    return;
+  }
+  const cup = dom.caseGrid.querySelector('.sc[data-key="' + key + '"]');
+  if (cup) cup.classList.add("sel");
+  const dots = entry.order.map((name) => {
+    const type = state.pieceTypeMap.get(name);
+    return hex(type ? type.color : "#888");
+  }).join("");
+  dom.caseSeen.innerHTML = '<svg class="seen-cup' + (entry.won ? " on tone-" + entry.tier : "") + '" viewBox="0 0 24 24" aria-hidden="true"><use href="#hx-cup"/></svg>' + dots;
+  dom.caseSeen.removeAttribute("aria-hidden");
+  dom.caseSeen.setAttribute("aria-label", t("hx.t.seen") + ": " + entry.order.join(", ") + ". " + t(entry.won ? "hx.t.state.on" : "hx.t.state.off"));
 }
 
 /* ---------- camera inside the board ---------- */

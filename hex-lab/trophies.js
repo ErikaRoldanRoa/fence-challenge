@@ -7,7 +7,11 @@
  *   load(storage) / save(storage, state)   the same, through a Storage (never throws; an unreadable one gives empty())
  *   record(state, order, area)   { state, kind, wonConfig, wonGlobal } for a closed fence of all seven pieces
  *   lit(state, order)            { config, global, tier } what the two trophies show for the configuration now on the board
- *   counts(state)                { won, total, global } */
+ *   counts(state)                { won, total, global }
+ *   entries(state)               every configuration, sorted by key: [{ key, order, tier, won }]  (the case's grid)
+ *   globals(state)              the global trophies, derived from what is won: [{ id, kind, won, n }]  (the case's row)
+ *                                 best (the best of all), milestones (10, 50, 100, all configurations won), and one for each
+ *                                 tier once every configuration of that tier is won */
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory(require("./verdict.js"), require("./data/orders.js"));
   else root.HexTrophies = factory(root.HexVerdict, root.HexOrderData);
@@ -65,5 +69,30 @@
     return { won: state.c.length, total: V.counts().orders, global: state.g };
   }
 
-  return { KEY, empty, load, save, record, lit, counts };
+  const MILESTONES = [10, 50, 100, V.counts().orders];
+  const TIERS = ["gold", "silver", "bronze"];
+
+  function tierOfKey(key) {
+    return TIERS[DATA.best - DATA.areaByOrder[key]];
+  }
+
+  function entries(state) {
+    const won = new Set(state.c);
+    return Object.keys(DATA.areaByOrder).sort().map((key) => ({ key, order: key.split(","), tier: tierOfKey(key), won: won.has(key) }));
+  }
+
+  function globals(state) {
+    const total = { gold: 0, silver: 0, bronze: 0 }, got = { gold: 0, silver: 0, bronze: 0 };
+    const won = new Set(state.c);
+    for (const key of Object.keys(DATA.areaByOrder)) {
+      total[tierOfKey(key)] += 1;
+      if (won.has(key)) got[tierOfKey(key)] += 1;
+    }
+    const out = [{ id: "best", kind: "best", won: state.g, n: 0 }];
+    for (const n of MILESTONES) out.push({ id: "m" + n, kind: "milestone", won: state.c.length >= n, n });
+    for (const tier of TIERS) out.push({ id: "tier-" + tier, kind: tier, won: got[tier] === total[tier], n: total[tier] });
+    return out;
+  }
+
+  return { KEY, empty, load, save, record, lit, counts, entries, globals };
 });

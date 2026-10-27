@@ -130,6 +130,14 @@ body {
   align-items: flex-end;
   gap: 6px;
   height: 34px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .shelf[hidden] {
@@ -167,6 +175,161 @@ body {
 .trophy.on .cup { fill: currentColor; }
 .trophy.on .mark { display: none; }
 .trophy.on rect.rest { fill: currentColor; fill-opacity: 0.35; }
+
+/* The shelf is one button: it opens the case. */
+.shelf:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+/* The case: a cup and a count, the global trophies, and one small cup for each configuration. No words. */
+.case {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 12px;
+  background: rgba(3, 7, 14, 0.84);
+}
+
+.case[hidden] { display: none; }
+
+.case-panel {
+  box-sizing: border-box;
+  width: min(100%, 460px);
+  max-height: 100%;
+  overflow: auto;
+  padding: 0 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #070f1d;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  overscroll-behavior: contain;
+}
+
+/* The head stays on the screen while the grid scrolls, so the count and the cross are always there. */
+.case-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0 10px;
+  background: #070f1d;
+}
+.case-cup { width: 30px; height: 30px; --tc: #ffd24a; }
+.case-count { margin-left: auto; color: var(--accent); font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.case-close {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.case-close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.case-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.case-bar { flex: 0 0 100%; height: 8px; margin: -2px 0 0; overflow: hidden; border: 1px solid var(--line); border-radius: 99px; background: #0e1a2c; }
+.case-bar i { display: block; width: 0; height: 100%; background: linear-gradient(90deg, var(--accent), #ffd24a); transition: width 0.3s ease; }
+
+.case-globals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 4px; }
+
+.case-g {
+  display: grid;
+  place-items: center;
+  padding: 8px 4px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #0a1527;
+  color: var(--tc);
+}
+
+.case-g.on { border-color: currentColor; box-shadow: 0 0 14px -4px currentColor; }
+.case-g .trophy { width: 40px; height: 40px; }
+.case-g .trophy:not(.on) { opacity: 0.62; }
+.case-g .digits { fill: currentColor; stroke: none; font: 800 5.2px system-ui, sans-serif; text-anchor: middle; }
+.case-g .digits.d3 { font-size: 4.2px; }
+.case-g .trophy.on .digits { fill: rgba(70, 44, 0, 0.92); }
+
+.tone-gold { --tc: #ffd24a; }
+.tone-silver { --tc: #cfe8ff; }
+.tone-bronze { --tc: #e0904a; }
+
+.case-seen { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 30px; margin: 10px 0 6px; }
+.case-seen .hexdot { width: 22px; height: 22px; }
+.case-seen .hexdot polygon { stroke: rgba(255, 255, 255, 0.35); stroke-width: 0.06; }
+.case-seen .seen-cup { width: 26px; height: 26px; margin-right: 6px; color: var(--tc, #3a4b60); fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.case-seen .seen-cup.on { fill: currentColor; filter: drop-shadow(0 0 4px currentColor); }
+.case-seen .seen-empty { display: flex; gap: 5px; }
+.case-seen .seen-empty .hexdot polygon { fill: none; stroke: #22334a; stroke-width: 0.1; }
+
+.case-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(19px, 1fr)); gap: 2px 3px; }
+.case-grid:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+.case-grid .sc {
+  display: block;
+  box-sizing: border-box;
+  aspect-ratio: 1;
+  padding: 1px;
+  border-radius: 4px;
+  color: #3a4b60;
+  cursor: pointer;
+  scroll-margin: 84px 0 8px;   /* under the head that stays on the screen */
+}
+
+.case-grid .rest { fill: none; }
+.case-grid .sc svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.case-grid .sc.on svg { fill: currentColor; filter: drop-shadow(0 0 2px currentColor); }
+.case-grid .sc.tier-gold { color: #ffd24a; }
+.case-grid .sc.tier-silver { color: #cfe8ff; }
+.case-grid .sc.tier-bronze { color: #e0904a; }
+.case-grid .sc:not(.on).tier-gold,
+.case-grid .sc:not(.on).tier-silver,
+.case-grid .sc:not(.on).tier-bronze { color: #3a4b60; }
+.case-grid .sc.sel { background: rgba(112, 255, 122, 0.18); outline: 1px solid var(--accent); }
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .case-panel {
+    display: grid;
+    grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+    grid-template-rows: auto auto auto 1fr;
+    column-gap: 18px;
+    align-content: start;
+    width: min(100%, 860px);
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .case-head { position: static; grid-column: 1; }
+  .case-globals { grid-column: 1; }
+  .case-seen { grid-column: 1; align-self: start; }
+
+  .case-grid {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    grid-template-columns: repeat(auto-fill, minmax(18px, 1fr));
+    gap: 2px;
+    align-content: start;
+    max-height: 100%;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 14px 2px;
+  }
+
+  .case-grid .sc { scroll-margin: 8px 0; }
+}
 
 @keyframes trophy-pop {
   0% { transform: scale(0.7); }

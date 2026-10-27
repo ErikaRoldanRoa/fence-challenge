@@ -47,13 +47,24 @@
     "hx.s.camLocked": "Plateau trouvé. Tiens le téléphone immobile.",
     "hx.s.camError": "La caméra ne s’ouvre pas ici. Vérifie l’autorisation de la caméra.",
     "hx.s.camClosed": "Caméra fermée. Les pièces restent sur le plateau.",
-    "hx.t.shelf": "Trophées",
     "hx.t.config.off": "Pas encore le meilleur de cette configuration",
     "hx.t.config.on": "Le meilleur de cette configuration",
     "hx.t.global.off": "Pas encore le meilleur de toutes les configurations",
     "hx.t.global.on": "Le meilleur de toutes les configurations",
     "hx.t.wonConfig": "Trophée gagné" + NB + ": le meilleur de cette configuration.",
-    "hx.t.wonGlobal": "Trophée gagné" + NB + ": le meilleur de toutes les configurations."
+    "hx.t.wonGlobal": "Trophée gagné" + NB + ": le meilleur de toutes les configurations.",
+    "hx.t.case": "Coffre aux trophées",
+    "hx.t.close": "Fermer",
+    "hx.t.grid": "Les configurations",
+    "hx.t.count": "{n} sur {all} configurations",
+    "hx.t.state.on": "gagné",
+    "hx.t.state.off": "pas encore",
+    "hx.t.best": "Le meilleur de toutes les configurations",
+    "hx.t.milestone": "{n} configurations gagnées",
+    "hx.t.tier.gold": "Toutes les configurations en or",
+    "hx.t.tier.silver": "Toutes les configurations en argent",
+    "hx.t.tier.bronze": "Toutes les configurations en bronze",
+    "hx.t.seen": "Configuration"
   });
 
   Object.assign(DICT.de, {
@@ -95,13 +106,24 @@
     "hx.s.camLocked": "Spielfeld gefunden. Halte das Handy ruhig.",
     "hx.s.camError": "Die Kamera lässt sich hier nicht öffnen. Prüf die Kamera-Erlaubnis.",
     "hx.s.camClosed": "Kamera geschlossen. Die Teile bleiben auf dem Spielfeld.",
-    "hx.t.shelf": "Pokale",
     "hx.t.config.off": "Noch nicht das Beste dieser Konfiguration",
     "hx.t.config.on": "Das Beste dieser Konfiguration",
     "hx.t.global.off": "Noch nicht das Beste aller Konfigurationen",
     "hx.t.global.on": "Das Beste aller Konfigurationen",
     "hx.t.wonConfig": "Pokal gewonnen: das Beste dieser Konfiguration.",
-    "hx.t.wonGlobal": "Pokal gewonnen: das Beste aller Konfigurationen."
+    "hx.t.wonGlobal": "Pokal gewonnen: das Beste aller Konfigurationen.",
+    "hx.t.case": "Pokalschrank",
+    "hx.t.close": "Schließen",
+    "hx.t.grid": "Die Konfigurationen",
+    "hx.t.count": "{n} von {all} Konfigurationen",
+    "hx.t.state.on": "gewonnen",
+    "hx.t.state.off": "noch nicht",
+    "hx.t.best": "Das Beste aller Konfigurationen",
+    "hx.t.milestone": "{n} Konfigurationen gewonnen",
+    "hx.t.tier.gold": "Alle Konfigurationen in Gold",
+    "hx.t.tier.silver": "Alle Konfigurationen in Silber",
+    "hx.t.tier.bronze": "Alle Konfigurationen in Bronze",
+    "hx.t.seen": "Konfiguration"
   });
 
   Object.assign(DICT.en, {
@@ -143,12 +165,23 @@
     "hx.s.camLocked": "Board found. Hold the phone still.",
     "hx.s.camError": "The camera cannot open here. Check the camera permission.",
     "hx.s.camClosed": "Camera closed. The pieces stay on the board.",
-    "hx.t.shelf": "Trophies",
     "hx.t.config.off": "Not yet the best of this configuration",
     "hx.t.config.on": "The best of this configuration",
     "hx.t.global.off": "Not yet the best of all configurations",
     "hx.t.global.on": "The best of all configurations",
     "hx.t.wonConfig": "Trophy won: the best of this configuration.",
-    "hx.t.wonGlobal": "Trophy won: the best of all configurations."
+    "hx.t.wonGlobal": "Trophy won: the best of all configurations.",
+    "hx.t.case": "Trophy case",
+    "hx.t.close": "Close",
+    "hx.t.grid": "The configurations",
+    "hx.t.count": "{n} of {all} configurations",
+    "hx.t.state.on": "won",
+    "hx.t.state.off": "not yet",
+    "hx.t.best": "The best of all configurations",
+    "hx.t.milestone": "{n} configurations won",
+    "hx.t.tier.gold": "All the gold configurations",
+    "hx.t.tier.silver": "All the silver configurations",
+    "hx.t.tier.bronze": "All the bronze configurations",
+    "hx.t.seen": "Configuration"
   });
 })();
