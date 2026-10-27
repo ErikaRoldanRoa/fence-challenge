@@ -902,7 +902,8 @@
 
   function renderGameBoard() {
     const view = prepareCanvas(dom.gameBoard, gameCtx, 320);
-    const pad = 14;
+    // The frame around the grid is a fiftieth of the board's side: 14 px at most, 4 to 7 on a phone, where the cells need the room.
+    const pad = Math.max(4, Math.min(14, Math.floor(view.width * 0.02)));
     const cellSize = Math.max(8, Math.floor(Math.min((view.width - pad * 2) / BOARD_SIZE, (view.height - pad * 2) / BOARD_SIZE)));
     const boardPx = cellSize * BOARD_SIZE;
     const originX = Math.floor((view.width - boardPx) / 2);

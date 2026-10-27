@@ -155,6 +155,15 @@ body {
   max-width: calc(100% - 2 * (76px + 16px));
 }
 
+/* The paper's line, and under it the author's name on a line of its own
+   (play-ui.css, loaded after this file, keeps a credit on one line). The
+   pentomino DP lab loads this sheet too and keeps its layout: what is new for
+   phones below is for the square lab only (body.sq-lab). */
+.sq-lab .game-layout > .side-brand {
+  white-space: pre-line;
+  text-align: center;
+}
+
 /* Back to the hub and print the kit: in the top strip, left of the
    language switch. */
 .lab-nav {
@@ -361,7 +370,13 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
   }
 }
 
-/* Phones: the area pill shares the top strip with the language switch. */
+/* Phones: the language switch has the top strip to itself. The area pill sits
+   in the row of erase and the camera, between them, over the bar's empty
+   middle, because the phone's own bars (a translation offer, a camera
+   permission) come in at the top. The camera's button is wider than erase's
+   touch box: with it showing, the pill moves half the difference to the left,
+   so that it stands in the middle of the room between the two instead of
+   leaning on the camera. */
 @media (max-width: 640px) {
   .langSel {
     position: absolute;
@@ -373,10 +388,66 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
   }
 }
 
+@media (max-width: 640px) and (orientation: portrait) {
+  /* The board takes the height the phone has. The chips are a sixth of its width less 40 px, so what the rest of the
+     screen needs grows with the board: 262 px, and three quarters of the room above that is the board's side. */
+  .sq-lab #panel-game {
+    --board-size: max(96px, min(calc(100vw - 20px), calc((100dvh - 262px) * 0.75)));
+  }
+
+  /* The first row is the strip of the language switch: it stays, though the area has left it. */
+  .sq-lab .game-layout {
+    grid-template-rows: 44px minmax(0, 1fr) auto auto auto auto auto minmax(0, 1fr);
+  }
+
+  .sq-lab .game-toolbar {
+    grid-area: bar;
+    width: auto;
+    height: auto;
+    margin-left: 0;
+    justify-self: center;
+    align-self: center;
+    justify-content: center;
+    padding: 0;
+    z-index: 10;
+  }
+
+  .sq-lab .game-layout:has(#camera-toggle:not([hidden])) > .game-toolbar {
+    transform: translateX(-16px);
+  }
+}
+
+/* A phone that is not tall (under 680 px: the board is then about as wide as
+   erase, the camera and the area side by side, and in German the area does
+   not fit between them): the area stays in the top strip, left, beside the
+   language switch. */
+@media (max-width: 640px) and (orientation: portrait) and (max-height: 679px) {
+  .sq-lab .game-toolbar {
+    grid-area: toolbar;
+    width: 100%;
+    height: var(--toolbar-height);
+    justify-self: stretch;
+    justify-content: flex-start;
+    padding-right: 172px;
+    transform: none;
+  }
+
+  .sq-lab .game-layout:has(#camera-toggle:not([hidden])) > .game-toolbar {
+    transform: none;
+  }
+}
+
 /* The narrowest phones: the board is narrower than the screen, so the top
    strip takes the screen's width and the area keeps clear of the switch. */
 @media (max-width: 359px) {
   .game-toolbar {
+    width: calc(100vw - 20px);
+    margin-left: calc((var(--board-size) - 100vw + 20px) / 2);
+  }
+}
+
+@media (max-width: 359px) and (orientation: portrait) and (max-height: 679px) {
+  .sq-lab .game-toolbar {
     width: calc(100vw - 20px);
     margin-left: calc((var(--board-size) - 100vw + 20px) / 2);
   }
@@ -492,7 +563,7 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
     justify-self: center;
     align-self: start;
     max-width: 100%;
-    white-space: normal;
+    white-space: pre-line;
     text-align: center;
     text-wrap: balance;
   }

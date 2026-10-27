@@ -9,7 +9,7 @@
   var fr = {
     "sq.docTitle": "Défi 2 · 12 pentominos · Fence Challenge",
     "sq.title": "Défi 2 · 12 pentominos",
-    "sq.brand.line": "Défi des barrières · LRMR25 · Dr. Erika Roldán",
+    "sq.brand.line": "Défi des barrières · LRMR25\nDr. Erika Roldán",
     "sq.brand.citeTitle": "Citer" + NB + ": Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025, doi:10.1515/dmvm-2025-0056",
     "sq.pieceDock.aria": "Réserve de pièces",
     "sq.board.aria": "Plateau de 20 cases sur 20 : les flèches déplacent la pièce choisie, R la tourne, F la retourne, Suppr l’enlève.",
@@ -56,7 +56,7 @@
   var de = {
     "sq.docTitle": "Rätsel 2 · 12 Pentominos · Fence Challenge",
     "sq.title": "Rätsel 2 · 12 Pentominos",
-    "sq.brand.line": "Zaun-Challenge · LRMR25 · Dr. Erika Roldán",
+    "sq.brand.line": "Zaun-Challenge · LRMR25\nDr. Erika Roldán",
     "sq.brand.citeTitle": "Zitieren: Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025, doi:10.1515/dmvm-2025-0056",
     "sq.pieceDock.aria": "Teile-Ablage",
     "sq.board.aria": "Zaun-Spielfeld mit 20 mal 20 Feldern: Die Pfeiltasten verschieben das gewählte Teil, R dreht es, F spiegelt es, Entf entfernt es.",
@@ -103,7 +103,7 @@
   var en = {
     "sq.docTitle": "Challenge 2 · 12 pentominoes · Fence Challenge",
     "sq.title": "Challenge 2 · 12 pentominoes",
-    "sq.brand.line": "Fence Challenge · LRMR25 · Dr. Erika Roldán",
+    "sq.brand.line": "Fence Challenge · LRMR25\nDr. Erika Roldán",
     "sq.brand.citeTitle": "Cite: Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025, doi:10.1515/dmvm-2025-0056",
     "sq.pieceDock.aria": "Piece tray",
     "sq.board.aria": "Fence board, 20 by 20 cells: the arrow keys move the chosen piece, R turns it, F flips it, Delete removes it.",
