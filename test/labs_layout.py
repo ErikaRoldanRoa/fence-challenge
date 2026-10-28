@@ -1,4 +1,4 @@
-"""Layout check of the four 2026 labs and the hub of all the labs.
+"""Layout check of the four 2026 labs, the hub of all the labs, and the trophy shelf and case of the square and triangle labs.
 
 For each lab, viewport and state: no horizontal scroll, every visible control
 is hit at its centre, no two controls overlap, an open math card stays inside
@@ -22,8 +22,19 @@ VIEWS = [(390, 664, True), (390, 844, True), (820, 1180, True), (1400, 900, Fals
 LANGS = ["fr", "de", "en"]
 
 # Each lab: list of (state name, js to reach it, wait ms).
+# A player who has won forty configurations (the storage the lab reads before it draws), for the states that show the case full.
+def _won(key, n=40, step=497731):
+    return "try{localStorage.setItem('%s',%s)}catch(e){}" % (key, json.dumps(json.dumps({"g": True, "c": [[i * step, i % 3] for i in range(n)]})))
+SHELF = "document.getElementById('shelf').click()"
+SEEN = "setTimeout(()=>document.querySelector('#case-grid .sc').click(), 200)"
+def trophy_states(key):
+    seed = _won(key)
+    return [("idle", "", 0), ("case", SHELF, 600), ("case-won", SHELF, 600, seed), ("case-seen", SHELF + ";" + SEEN, 900, seed)]
+
 STATES = {
     "hub": [("idle", "", 0)],
+    "square-lab": trophy_states("fc-trophies-sq12"),
+    "triangle-lab": trophy_states("fc-trophies-tri12"),
     "cube-lab": [("idle", "", 0),
                  ("penta-last-wall", "document.getElementById('mode-penta').click();"
                   "setTimeout(()=>{const w=[...document.querySelectorAll('#walls button')];w[w.length-1].click();},300)", 9000),
@@ -44,7 +55,10 @@ STATES = {
                          ("worst", "document.getElementById('dp-worst').click()", 14000)],
 }
 # Extra viewports for one lab, in some of its states: (views, state names).
+SMALL = [(360, 640, True), (320, 568, True), (667, 375, True), (1024, 600, False)]   # a short phone, a narrow one, one held sideways, a small laptop
 EXTRA = {
+    "square-lab": (SMALL, ("idle", "case-won", "case-seen")),
+    "triangle-lab": (SMALL, ("idle", "case-won", "case-seen")),
     "limit-shape-lab": ([(320, 640, True), (667, 375, True), (960, 600, False), (1100, 700, False), (1366, 768, False)],
                         ("idle", "n6", "n6-card", "n11-card", "n500")),
 }
@@ -58,7 +72,7 @@ CHECK = r"""
     return r.width > 2 && r.height > 2 && s.visibility !== 'hidden' && s.display !== 'none' &&
       r.bottom > 0 && r.right > 0 && r.top < vh && r.left < vw && !el.closest('[hidden]');
   };
-  const pop = document.querySelector('.math-pop:not([hidden])');
+  const pop = document.querySelector('.math-pop:not([hidden])') || document.querySelector('#case:not([hidden]) #case-panel');   // a modal: the backdrop covers the rest on purpose
   const name = (el) => (el.id ? '#' + el.id : el.className && typeof el.className === 'string' ? el.tagName.toLowerCase() + '.' + el.className.split(' ').join('.') : el.tagName.toLowerCase()) + (el.dataset && (el.dataset.math || el.dataset.chip) ? '[' + (el.dataset.math || el.dataset.chip) + ']' : '');
   const issues = [];
   const se = document.scrollingElement;
@@ -155,8 +169,9 @@ def main():
                     ctx = b.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch and not WEBKIT,
                                         device_scale_factor=2 if touch else 1)
                     ctx.add_init_script("try{localStorage.setItem('fc-lang','%s')}catch(e){}" % lang)
-                    for (st, js, wait) in states:
+                    for (st, js, wait, *seed) in states:
                         pg = ctx.new_page(); errs = []
+                        if seed: pg.add_init_script(seed[0])
                         pg.on("pageerror", lambda e, errs=errs: errs.append(str(e)))
                         pg.goto(BASE + lab + "/?lang=" + lang, wait_until="networkidle")
                         pg.evaluate("()=>{const b=document.querySelector('[data-lang-btn=\"%s\"]'); if(b) b.click();}" % lang)

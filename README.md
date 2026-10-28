@@ -169,7 +169,7 @@ root, with the server running on port 8000 where a base address is asked:
   `python3 test/engine_drag_check.py http://localhost:8000/`
 - the three 2D labs' checks and this one also run in the engine of Safari (a mouse drag stands in for touch there):
   `FC_BROWSER=webkit python3 hex-lab/test/ui_check.py http://localhost:8000/ OUTDIR`
-- the hub and the layout of every lab:
+- the hub, and the layout of the 2026 labs and of the shelf and case of the square and triangle labs:
   `python3 test/hub_check.py http://localhost:8000/ OUTDIR`,
   `python3 test/labs_layout.py http://localhost:8000/`
 - the contest on a phone (the party, the trophy, the end; its network is faked):
