@@ -18,6 +18,9 @@ function storage() {
   return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), _m: m };
 }
 
+/* ---- one entry on the device for this lab's puzzle (the square lab kept the best of all under the same name before) ---- */
+assert.strictEqual(T.KEY, "fc-trophies-tri12");
+
 /* ---- a new player has nothing ---- */
 let state = T.empty();
 assert.deepStrictEqual(state, { g: false, c: [] });

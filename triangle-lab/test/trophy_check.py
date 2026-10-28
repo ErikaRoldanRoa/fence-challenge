@@ -136,6 +136,11 @@ with sync_playwright() as pw:
         check(count.startswith("3 / 19") and count.endswith("400"), f"[{label}] the count: {count!r}")
         seen = page.evaluate("Array.from(document.querySelectorAll('#case-seen .pc')).map((e) => e.classList.contains('empty'))")
         check(len(seen) == 12 and not any(seen), f"[{label}] the configuration on the board is shown as twelve pieces")
+        # the keys belong to the case while it is open: R does not turn a piece behind it
+        page.evaluate("state.status = null; state.selectedPieceId = state.placedPieces[0].id")
+        page.keyboard.press("r")
+        page.wait_for_timeout(80)
+        check(page.evaluate("state.status") is None, f"[{label}] with the case open the R key does nothing to the board")
         check(page.evaluate("document.querySelectorAll('#case-globals .case-g').length") == 7, f"[{label}] seven global cups")
         check(page.evaluate("document.querySelectorAll('#case-globals .case-g.on').length") == 0, f"[{label}] none of them is won")
         box = page.evaluate("""() => { const p = document.getElementById('case-panel').getBoundingClientRect(); const c = document.getElementById('case-close').getBoundingClientRect();
@@ -153,6 +158,9 @@ with sync_playwright() as pw:
         page.wait_for_timeout(100)
         check(page.evaluate("document.getElementById('case').hidden"), f"[{label}] Escape closes the case")
         check(page.evaluate("document.activeElement && document.activeElement.id") == "shelf", f"[{label}] the focus goes back to the shelf")
+        page.keyboard.press("r")
+        page.wait_for_timeout(80)
+        check(page.evaluate("state.status") is not None, f"[{label}] with the case closed the R key works on the board again")
         # a piece taken away: no closed fence, the trophy of the configuration dims, what was won is kept
         page.evaluate("state.placedPieces.pop(); measureLive(); render();")
         s = page.evaluate(SEEN)

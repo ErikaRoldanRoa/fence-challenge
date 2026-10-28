@@ -1,8 +1,7 @@
 /* Fence Challenge · triangle lab: the configurations (orders of the twelve hexiamonds around the inside) whose best
- * fence is 1 or 2 below what the dynamic programme gives, because its best boundary overlaps itself or leaves the inside
- * in several parts. Each list holds the sorted ranks of the configurations (hexiamond-moves.js, best-fence.js says how
- * a rank is made), as little-endian 32-bit numbers in base 64. Generated from the tables of the programme, not
- * written by hand. */
+ * fence is 1 or 2 triangles below what the dynamic programme gives, because its best boundary overlaps itself or leaves the
+ * inside in several parts. Each list holds the sorted ranks of the configurations (best-fence.js says how a rank is
+ * made), as little-endian 32-bit numbers in base 64. Generated from the tables of the programme, not written by hand. */
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory();
   else root.HexiamondExceptions = factory();

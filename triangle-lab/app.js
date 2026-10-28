@@ -223,6 +223,7 @@ function wireEvents() {
 
   window.addEventListener("keydown", (event) => {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (!dom.case.hidden) return; // the trophy case is open: the keys belong to it
     if (event.key === "Escape" && camera.view) {
       closeCamera();
       return;

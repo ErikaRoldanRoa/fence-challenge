@@ -1,9 +1,9 @@
 /* Fence Challenge · triangle lab: the moves of the twelve hexiamonds for the fence dynamic programme.
  * A move is a piece in one orientation with a run of consecutive edges of its boundary along the inside of a fence:
  * the direction of the edge before the run (seen from its start), the direction of the edge after it (seen from its
- * end), the displacement from the start to the end of the run, and the shoelace sum of the run. A move dominated by
- * another with the same two directions and displacement is left out. The six directions are, in the lattice basis,
- * (1,0) (0,1) (-1,1) (-1,0) (0,-1) (1,-1). Generated from the tables of the programme, not written by hand. */
+ * end), the displacement from the start to the end of the run, and the shoelace sum of the run (the area it adds, in triangles). A move
+ * dominated by another with the same two directions and displacement is left out. The directions, in the lattice
+ * basis, are listed in `directions`. Generated from the tables of the programme, not written by hand. */
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory();
   else root.HexiamondMoves = factory();
@@ -11,10 +11,11 @@
   "use strict";
   return {
     best: 116,
+    scale: 1,
     // how many configurations have a best fence at the best (gold) and one below (silver)
     tiers: { gold: 624, silver: 2520 },
-    directions: [[1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, -1]],
-    pieces: ['rhomboid', 'crook', 'crown', 'yacht', 'lobster', 'shoe', 'hexagon', 'chevron', 'signpost', 'snake', 'sphinx', 'butterfly'],
+    directions: [[1,0],[0,1],[-1,1],[-1,0],[0,-1],[1,-1]],
+    pieces: ["rhomboid","crook","crown","yacht","lobster","shoe","hexagon","chevron","signpost","snake","sphinx","butterfly"],
     // moves[p]: for each move of piece p, tin, tout, dx, dy, dA
     moves: [
       [0,0,-3,1,-2,0,0,-3,3,0,0,0,-2,1,-1,0,0,-1,1,0,0,0,0,1,0,0,0,0,3,0,0,0,1,1,-1,0,0,2,1,-2,0,1,-2,0,0,0,1,-1,0,0,0,1,0,0,0,0,1,0,1,0,0,1,0,2,0,0,2,-2,0,0,0,2,-2,2,0,0,2,-1,0,0,0,2,-1,1,0,0,2,0,0,0,0,3,-1,0,0,0,3,0,0,0,0,3,2,0,-6,0,3,3,0,-6,0,4,1,1,-5,0,4,1,2,-4,0,4,1,3,-3,0,4,2,1,-4,0,4,3,1,-3,0,5,-2,3,-3,0,5,-1,2,-4,0,5,0,1,-5,0,5,1,1,-4,0,5,2,1,-3,1,0,-3,1,-3,1,0,-2,1,-4,1,0,-1,1,-5,1,0,-1,2,-4,1,0,-1,3,-3,1,1,-3,0,0,1,1,-3,3,0,1,1,-1,-2,-2,1,1,-1,-1,-1,1,1,-1,0,0,1,1,-1,1,0,1,1,-1,2,-1,1,1,-1,3,-2,1,2,-2,2,0,1,2,-1,1,0,1,2,0,-2,0,1,2,0,-1,0,1,2,0,0,0,1,3,-2,0,0,1,3,-1,0,0,1,3,0,-2,0,1,3,0,-1,0,1,3,0,0,0,1,4,0,-1,0,1,4,0,0,0,1,4,0,2,-6,1,4,0,3,-6,1,5,-3,4,-3,1,5,-2,3,-4,1,5,-1,2,-5,1,5,-1,3,-4,1,5,-1,4,-3,2,0,-4,1,-3,2,0,-4,3,-3,2,0,-3,1,-4,2,0,-3,2,-4,2,0,-2,1,-5,2,1,-3,2,-3,2,1,-2,1,-4,2,1,-1,-2,-3,2,1,-1,-1,-4,2,1,-1,0,-5,2,2,-3,0,0,2,2,-3,2,-2,2,2,-2,1,-1,2,2,-1,0,0,2,2,0,-3,0,2,2,0,-1,0,2,2,1,-2,-1,2,2,2,-3,-2,2,3,-2,0,0,2,3,-1,0,0,2,3,0,0,0,2,3,1,-1,0,2,3,2,-2,0,2,4,0,-2,0,2,4,0,-1,0,2,4,0,0,0,2,4,1,-1,0,2,4,2,-2,0,2,5,-3,3,-6,2,5,-2,2,-6,2,5,0,0,0,2,5,1,-1,0,3,0,-3,0,-6,3,0,-2,0,-6,3,0,0,0,0,3,0,1,0,0,3,1,-3,-1,-3,3,1,-2,-1,-4,3,1,-1,-3,-3,3,1,-1,-2,-4,3,1,-1,-1,-5,3,2,-2,-1,-3,3,2,-1,-1,-4,3,2,0,-1,-5,3,2,1,-2,-4,3,2,2,-3,-3,3,3,-2,-1,-2,3,3,-1,-1,-1,3,3,0,-3,0,3,3,0,-1,0,3,3,1,-1,0,3,3,2,-1,-1,3,3,3,-3,0,3,3,3,-1,-2,3,4,0,-2,0,3,4,0,-1,0,3,4,0,0,0,3,4,1,0,0,3,4,2,0,0,3,5,0,0,0,3,5,1,-1,0,3,5,1,0,0,3,5,2,-2,0,3,5,2,0,0,4,0,0,0,0,4,0,0,1,0,4,0,0,2,0,4,0,1,0,0,4,0,2,0,0,4,1,0,-3,-6,4,1,0,-2,-6,4,1,0,0,0,4,1,0,1,0,4,2,1,-4,-3,4,2,1,-3,-4,4,2,1,-2,-5,4,2,2,-3,-4,4,2,3,-4,-3,4,3,1,-3,-3,4,3,1,-2,-4,4,3,1,-1,-5,4,3,2,-1,-4,4,3,3,-1,-3,4,4,1,-3,-2,4,4,1,-2,-1,4,4,1,-1,0,4,4,1,0,0,4,4,1,1,-1,4,4,1,2,-2,4,4,3,-3,0,4,4,3,0,0,4,5,0,0,0,4,5,0,1,0,4,5,0,2,0,4,5,1,-1,0,4,5,2,-2,0,5,0,-2,2,0,5,0,-1,1,0,5,0,0,0,0,5,0,1,0,0,5,0,2,0,0,5,1,-2,2,0,5,1,-1,1,0,5,1,0,0,0,5,1,0,1,0,5,1,0,2,0,5,2,-1,1,0,5,2,0,0,0,5,2,2,-2,-6,5,2,3,-3,-6,5,3,2,-1,-5,5,3,3,-2,-4,5,3,3,-1,-4,5,3,4,-3,-3,5,3,4,-1,-3,5,4,1,0,-5,5,4,1,1,-4,5,4,1,2,-3,5,4,2,-1,-4,5,4,3,-2,-3,5,5,-2,3,-2,5,5,-1,2,-1,5,5,0,1,0,5,5,0,3,0,5,5,1,0,0,5,5,2,-1,-1,5,5,3,-2,-2,5,5,3,0,0],

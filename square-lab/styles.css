@@ -401,6 +401,231 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
   }
 }
 
+/* The trophies, now two (the one for the best of all was alone before): the small one for the configuration on the board, the big one for the best of all. Dark until won; a
+   configuration's trophy takes its tier's colour once won (gold, silver, bronze). Nothing is written under them: what each
+   means is in its tooltip and its label. The polyform engraved on them belongs to the square tiling. */
+.sq-lab .shelf {
+  position: fixed;
+  top: 10px;
+  left: 12px;
+  z-index: 30;
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 34px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sq-lab .shelf[hidden] {
+  display: none;
+}
+
+.sq-lab .trophy {
+  display: block;
+  overflow: visible;
+  color: var(--tc);
+  transition: filter 0.2s ease, opacity 0.2s ease;
+}
+
+.sq-lab .trophy svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.sq-lab .trophy.t-small { width: 25px; height: 25px; --tc: #cfe8ff; }
+.sq-lab .trophy.t-big { width: 34px; height: 34px; --tc: #ffd24a; }
+.sq-lab .trophy.t-small.tier-gold { --tc: #ffd24a; }
+.sq-lab .trophy.t-small.tier-silver { --tc: #cfe8ff; }
+.sq-lab .trophy.t-small.tier-bronze { --tc: #e0904a; }
+
+.sq-lab .trophy .cup,
+.sq-lab .trophy .rest { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; }
+.sq-lab .trophy .mark { fill: none; stroke: currentColor; stroke-width: 0.22; stroke-linejoin: round; opacity: 0.9; }
+.sq-lab .trophy .tile { fill: rgba(70, 44, 0, 0.86); stroke: currentColor; stroke-width: 0.2; stroke-linejoin: round; }
+
+.sq-lab .trophy:not(.on) { opacity: 0.42; filter: grayscale(1); }
+.sq-lab .trophy:not(.on) .tile { display: none; }
+.sq-lab .trophy.on { filter: drop-shadow(0 0 5px currentColor); }
+.sq-lab .trophy.on .cup { fill: currentColor; }
+.sq-lab .trophy.on .mark { display: none; }
+.sq-lab .trophy.on rect.rest { fill: currentColor; fill-opacity: 0.35; }
+
+/* The shelf is one button: it opens the case. */
+.sq-lab .shelf:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+/* The case: a cup and a count, the global trophies, the pieces of the configuration chosen, and one small cup for each
+   configuration won (there are too many configurations for a grid of all of them). No words. */
+.sq-lab .case {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 12px;
+  background: rgba(3, 7, 14, 0.84);
+}
+
+.sq-lab .case[hidden] { display: none; }
+
+.sq-lab .case-panel {
+  box-sizing: border-box;
+  width: min(100%, 460px);
+  max-height: 100%;
+  overflow: auto;
+  padding: 0 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #070f1d;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  overscroll-behavior: contain;
+}
+
+/* The head stays on the screen while the grid scrolls, so the count and the cross are always there. */
+.sq-lab .case-panel:focus { outline: none; }
+
+.sq-lab .case-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0 10px;
+  background: #070f1d;
+}
+.sq-lab .case-cup { width: 30px; height: 30px; --tc: #ffd24a; }
+.sq-lab .case-count { margin-left: auto; color: var(--accent); font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.sq-lab .case-close {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.sq-lab .case-close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.sq-lab .case-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.sq-lab .case-globals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 4px; }
+
+.sq-lab .case-g {
+  display: grid;
+  place-items: center;
+  padding: 8px 4px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #0a1527;
+  color: var(--tc);
+}
+
+.sq-lab .case-g.on { border-color: currentColor; box-shadow: 0 0 14px -4px currentColor; }
+.sq-lab .case-g .trophy { width: 40px; height: 40px; }
+.sq-lab .case-g .trophy:not(.on) { opacity: 0.62; }
+.sq-lab .case-g .digits { fill: currentColor; stroke: none; font: 800 5.2px system-ui, sans-serif; text-anchor: middle; }
+.sq-lab .case-g .digits.d3 { font-size: 3.7px; }
+.sq-lab .case-g .digits.d4 { font-size: 3px; }
+.sq-lab .case-g .trophy.on .digits { fill: rgba(70, 44, 0, 0.92); }
+
+.sq-lab .tone-gold { --tc: #ffd24a; }
+.sq-lab .tone-silver { --tc: #cfe8ff; }
+.sq-lab .tone-bronze { --tc: #e0904a; }
+
+/* The twelve pieces of the configuration chosen, in order, beside a cup that says whether it is won. With none chosen,
+   twelve empty places wait where they will appear (the row keeps its height, so the grid never jumps). */
+.sq-lab .case-seen { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px; min-height: 34px; margin: 10px 0 6px; }
+.sq-lab .case-seen .pc { display: block; width: 22px; height: 22px; }
+.sq-lab .case-seen .pc svg { display: block; width: 100%; height: 100%; }
+.sq-lab .case-seen .pc canvas { display: block; width: 100%; height: 100%; }
+.sq-lab .case-seen .pc.empty { box-sizing: border-box; border: 1px dashed #22334a; border-radius: 6px; }
+.sq-lab .case-seen .seen-cup { width: 24px; height: 24px; margin-right: 4px; color: var(--tc, #3a4b60); fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.sq-lab .case-seen .seen-cup.on { fill: currentColor; filter: drop-shadow(0 0 4px currentColor); }
+
+.sq-lab .case-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(19px, 1fr)); gap: 2px 3px; }
+.sq-lab .case-grid:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+.sq-lab .case-grid .sc {
+  display: block;
+  box-sizing: border-box;
+  aspect-ratio: 1;
+  padding: 0;   /* the inset is on the drawing: Safari adds a padding to the height of a box that has an aspect ratio */
+  border-radius: 4px;
+  color: #3a4b60;
+  cursor: pointer;
+  scroll-margin: 84px 0 8px;   /* under the head that stays on the screen */
+}
+
+.sq-lab .case-grid .rest { fill: none; }
+.sq-lab .case-grid .sc svg { display: block; box-sizing: border-box; padding: 1px; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.sq-lab .case-grid .sc.on svg { fill: currentColor; filter: drop-shadow(0 0 2px currentColor); }
+.sq-lab .case-grid .sc.tier-gold { color: #ffd24a; }
+.sq-lab .case-grid .sc.tier-silver { color: #cfe8ff; }
+.sq-lab .case-grid .sc.tier-bronze { color: #e0904a; }
+.sq-lab .case-grid .sc.sel { background: rgba(0, 209, 255, 0.16); outline: 1px solid var(--accent); }
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .sq-lab .case-panel {
+    display: grid;
+    grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+    grid-template-rows: auto auto auto 1fr;
+    column-gap: 18px;
+    align-content: start;
+    width: min(100%, 860px);
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .sq-lab .case-head { position: static; grid-column: 1; }
+  .sq-lab .case-globals { grid-column: 1; }
+  .sq-lab .case-seen { grid-column: 1; align-self: start; }
+
+  .sq-lab .case-grid {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    grid-template-columns: repeat(auto-fill, minmax(18px, 1fr));
+    gap: 2px;
+    align-content: start;
+    max-height: 100%;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 14px 2px;
+  }
+
+  .sq-lab .case-grid .sc { scroll-margin: 8px 0; }
+}
+
+@keyframes trophy-pop {
+  0% { transform: scale(0.7); }
+  45% { transform: scale(1.35); filter: drop-shadow(0 0 14px currentColor); }
+  100% { transform: scale(1); }
+}
+
+.sq-lab .trophy.pop { animation: trophy-pop 0.7s ease-out; transform-origin: 50% 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sq-lab .trophy.pop { animation: none; }
+}
+
 /* ---------- narrow or portrait screens: area on top, then rotate and flip
    (back to the hub and print at the other end of their row), the board, the
    pieces in two rows, erase and the camera right under the pieces, then the

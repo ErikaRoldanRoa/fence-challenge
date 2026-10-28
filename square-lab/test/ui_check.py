@@ -45,6 +45,8 @@ TEXT = {
     "fr": ("Pas encore la meilleure barrière de toutes", "La meilleure barrière de toutes", "Trophée gagné\u202f: la meilleure barrière de toutes."),
     "de": ("Noch nicht der beste Zaun von allen", "Der beste Zaun von allen", "Pokal gewonnen: der beste Zaun von allen."),
 }
+# the small trophy, for the configuration on the board, before it is won
+CONFIG_OFF = {"en": "Not yet the best fence of this configuration", "fr": "Pas encore la meilleure barrière de cette configuration", "de": "Noch nicht der beste Zaun dieser Konfiguration"}
 CONTROLS = ["#detect-game-area", ".langSel", "#rotate-piece", "#flip-piece", ".lab-nav a:nth-child(1)", ".lab-nav a:nth-child(2)",
             "#clear-board", "#camera-toggle", ".side-brand", "#shelf"]
 
@@ -140,8 +142,9 @@ function fence(order) {
 console.log(JSON.stringify({ best: fence(O.best), poor: fence(O.worst) }));
 """
 
-CUP = """() => { const e = document.querySelector('#shelf .trophy'); let stored = null; try { stored = localStorage.getItem('%s'); } catch (x) { stored = 'blocked'; }
+CUP = """() => { const e = document.getElementById('trophy-global'), c = document.getElementById('trophy-config'); let stored = null; try { stored = localStorage.getItem('%s'); } catch (x) { stored = 'blocked'; }
   return { on: e.classList.contains('on'), pop: e.classList.contains('pop'), title: e.title, label: document.getElementById('shelf').getAttribute('aria-label'),
+           configOn: c.classList.contains('on'), configTier: ['gold', 'silver', 'bronze'].find((t) => c.classList.contains('tier-' + t)) || null,
            status: document.getElementById('trophy-status').textContent, stored, words: document.getElementById('shelf').innerText.trim() }; }""" % STORE
 
 
@@ -225,13 +228,16 @@ def cup_checks(browser, fences):
     check(build(page, fences["poor"]["pieces"]), "[cup] the poor fence goes on the board through the page's controls")
     s = page.evaluate(CUP)
     check(len(page.evaluate(CELLS)["cells"]) == 60, "[cup] twelve pieces, sixty cells, on the board")
-    check(not s["on"] and s["stored"] is None and s["status"] == "", "[cup] a closed fence of all twelve pieces below the best wins nothing and stores nothing")
+    check(not s["on"], "[cup] a closed fence of all twelve pieces below the best of all does not win the cup of the best of all")
+    check(s["stored"] is None or json.loads(s["stored"])["g"] is False, "[cup] and the cup is not marked as won in the storage")
     clear(page)
     check(build(page, fences["best"]["pieces"]), "[cup] the best fence goes on the board through the page's controls")
     s = page.evaluate(CUP)
     check(s["on"] and s["pop"], "[cup] the best fence lights the cup, and it pops")
-    check(s["title"] == text[1] and s["label"] == text[1] and s["status"] == text[2], "[cup] the tooltip, the label and the status read out the win")
-    check(s["stored"] is not None and json.loads(s["stored"]) == {"g": True}, "[cup] and it is kept on the device")
+    check(s["title"] == text[1] and text[1] in s["label"] and s["status"] == text[2], "[cup] the tooltip, the label and the status read out the win")
+    kept = json.loads(s["stored"]) if s["stored"] else None
+    check(kept is not None and kept["g"] is True and any(e[1] == 0 for e in kept["c"]), f"[cup] and it is kept on the device, with the gold trophy of its configuration {kept}")
+    check(s["configOn"] and s["configTier"] == "gold", "[cup] the small trophy of that configuration is lit in gold")
     check(s["words"] == "", "[cup] nothing is written under it")
     page.screenshot(path=str(OUT / "cup-won.png"))
     clear(page)
@@ -239,7 +245,7 @@ def cup_checks(browser, fences):
     page.wait_for_selector("#piece-tray .piece-btn")
     page.wait_for_timeout(300)
     s = page.evaluate(CUP)
-    check(s["on"] and not s["pop"] and s["label"] == text[1], "[cup] after a reload the cup is still lit, without a pop")
+    check(s["on"] and not s["pop"] and text[1] in s["label"], "[cup] after a reload the cup is still lit, without a pop")
     check(not page.errors, f"[cup] no errors in the page {page.errors[:2]}")
     ctx.close()
 
@@ -248,7 +254,7 @@ def cup_checks(browser, fences):
     page = page_of(ctx)
     check(build(page, fences["best"]["pieces"][:11]), "[cup] eleven pieces of the best fence go on the board")
     s = page.evaluate(CUP)
-    check(not s["on"] and s["stored"] is None, "[cup] eleven pieces win nothing")
+    check(not s["on"] and not s["configOn"] and s["stored"] is None, "[cup] eleven pieces win nothing")
     ctx.close()
 
     # a browser that refuses storage: the cup still shines for the visit
@@ -324,8 +330,10 @@ with sync_playwright() as pw:
         else:
             check(cup[0] < 30 and cup[1] < 20, f"[{label}] the cup stands in the top-left corner")
         off = TEXT[lang][0]
-        check(page.evaluate("() => { const e = document.getElementById('shelf'); return e.getAttribute('aria-label') + '|' + e.querySelector('.trophy').title + '|' + e.querySelector('.trophy').classList.contains('on'); }") == f"{off}|{off}|false",
-              f"[{label}] a new player's cup is dark and says so")
+        trophies = page.evaluate("""() => { const e = document.getElementById('shelf'), g = document.getElementById('trophy-global'), c = document.getElementById('trophy-config');
+            return [e.getAttribute('aria-label'), g.title, g.classList.contains('on'), c.title, c.classList.contains('on')]; }""")
+        check(off in trophies[0] and trophies[1] == off and not trophies[2] and trophies[3] == CONFIG_OFF[lang] and not trophies[4],
+              f"[{label}] a new player's two trophies are dark and say so")
         if lang == "en":
             page.screenshot(path=str(OUT / f"{name.replace(' ', '-')}.png"))
 
