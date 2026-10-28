@@ -52,6 +52,7 @@ NOW = "2026-10-21T08:12:00+02:00"
 def phone_page(browser, fences=CIGALES, public=PUBLIC, counts=COUNTS, size=(1588, 1123), fail=False):
     ctx = browser.new_context(viewport={"width": size[0], "height": size[1]})
     pg = ctx.new_page()
+    pg.clock.set_fixed_time(NOW)   # the contest day, before it closes: no scenario depends on today's date
     errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     pg.on("console", lambda m: errs.append(m.text) if m.type == "error" and "contest.test" not in m.text and "ERR_" not in m.text else None)
