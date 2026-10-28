@@ -7,8 +7,8 @@
  *
  *   empty()                      what a new player has: { g: false, c: [] }   (c: [rank, shortfall] of the configurations won)
  *   load(storage) / save(storage, state)   the same, through a Storage (never throws; an unreadable one gives empty())
- *   record(state, order, area, closed)   { state, kind, wonConfig, wonGlobal } for a fence of all twelve pieces with one inside; the best of all
- *                                needs closed (no corner open; omitted = closed)
+ *   record(state, order, area, closed)   { state, kind, wonConfig, wonGlobal } for a fence of all twelve pieces with one inside;
+ *                                a board with a corner open (closed false) wins nothing
  *   lit(state, order)            { config, global, tier } what the two trophies show for the configuration now on the board
  *   counts(state)                { won, total, global }
  *   entries(state)               the configurations won, by rank: [{ key, order, tier, won: true }]  (the case's grid)
@@ -62,11 +62,13 @@
 
   const has = (state, rank) => state.c.some((e) => e[0] === rank);
 
-  // closed: the board has no corner the outside slips through. The best of all is won only by a closed fence, the paper's definition;
-  // a configuration's trophy counts the paper's best area of that configuration (a few configurations reach it only with a corner open).
+  // closed: the board has no corner the outside slips through. Only a closed fence is a fence (LRMR25, p. 187), so a board with a
+  // corner open wins nothing; the pentomino data are the same under that reading (the list of exceptions is the same), so no
+  // trophy is out of reach for it. Omitted = closed.
   function record(state, order, area, closed) {
-    const kind = V.verdict(order, area);          // "better" | "notYet" | "best" | null
     const next = { g: state.g, c: state.c.slice() };
+    if (closed === false) return { state: next, kind: null, wonConfig: false, wonGlobal: false };
+    const kind = V.verdict(order, area);          // "better" | "notYet" | "best" | null
     let wonConfig = false, wonGlobal = false;
     if (kind === "notYet" || kind === "best") {
       const rank = BEST.rank(order);
@@ -75,7 +77,7 @@
         wonConfig = true;
       }
     }
-    if (kind === "best" && closed !== false && !next.g) { next.g = true; wonGlobal = true; }
+    if (kind === "best" && !next.g) { next.g = true; wonGlobal = true; }
     return { state: next, kind, wonConfig, wonGlobal };
   }
 
