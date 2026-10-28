@@ -1,4 +1,4 @@
-"""Layout check of the four 2026 labs, the hub of all the labs, and the trophy shelf and case of the square and triangle labs.
+"""Layout check of the four 2026 labs, the hub of all the labs, and the trophy shelf and case of the square, triangle and hex labs.
 
 For each lab, viewport and state: no horizontal scroll, every visible control
 is hit at its centre, no two controls overlap, an open math card stays inside
@@ -31,8 +31,14 @@ def trophy_states(key):
     seed = _won(key)
     return [("idle", "", 0), ("case", SHELF, 600), ("case-won", SHELF, 600, seed), ("case-seen", SHELF + ";" + SEEN, 900, seed)]
 
+# The hex lab keeps the configurations it has won as keys of its own table, not as [rank, shortfall] pairs: its won state is set once
+# the page has loaded (every ninth configuration won, and the best of all).
+HEXSEED = "const keys = Object.keys(HexOrderData.areaByOrder); trophies.state = {g: true, c: keys.filter((k, i) => i % 9 === 0)}; renderTrophies(false, false);"
+HEX_STATES = [("idle", "", 0), ("case", SHELF, 600), ("case-won", HEXSEED + SHELF, 700), ("case-seen", HEXSEED + SHELF + ";" + SEEN, 1000)]
+
 STATES = {
     "hub": [("idle", "", 0)],
+    "hex-lab": HEX_STATES,
     "square-lab": trophy_states("fc-trophies-sq12"),
     "triangle-lab": trophy_states("fc-trophies-tri12"),
     "cube-lab": [("idle", "", 0),
@@ -57,6 +63,7 @@ STATES = {
 # Extra viewports for one lab, in some of its states: (views, state names).
 SMALL = [(360, 640, True), (320, 568, True), (667, 375, True), (1024, 600, False)]   # a short phone, a narrow one, one held sideways, a small laptop
 EXTRA = {
+    "hex-lab": (SMALL, ("idle", "case-won", "case-seen")),
     "square-lab": (SMALL, ("idle", "case-won", "case-seen")),
     "triangle-lab": (SMALL, ("idle", "case-won", "case-seen")),
     "limit-shape-lab": ([(320, 640, True), (667, 375, True), (960, 600, False), (1100, 700, False), (1366, 768, False)],
