@@ -61,7 +61,7 @@ PLACE = """(pieces) => {
 
 SHELF = """() => { const t = (id) => { const e = document.getElementById(id); return { on: e.classList.contains('on'), tier: ['gold','silver','bronze'].find(c => e.classList.contains('tier-' + c)) || null,
     hiddenFromReaders: e.getAttribute('aria-hidden') === 'true', title: e.title, pop: e.classList.contains('pop') }; };
-  return { cfg: t('trophy-config'), glob: t('trophy-global'), hidden: document.getElementById('shelf').hidden, status: document.getElementById('status').textContent,
+  return { cfg: t('trophy-config'), glob: t('trophy-global'), hidden: document.getElementById('shelf').hidden, status: document.getElementById('status').textContent, said: document.getElementById('trophy-status').textContent,
            label: document.getElementById('shelf').getAttribute('aria-label'),
            stored: (() => { try { return localStorage.getItem('%s'); } catch (e) { return 'blocked'; } })(), words: document.getElementById('shelf').innerText.trim() }; }""" % KEY
 
@@ -247,7 +247,7 @@ def run(browser, lang, vp, touch, tag):
     s = play(page, NOTYET_34)
     check(s["cfg"]["on"] and s["cfg"]["tier"] == "silver" and not s["glob"]["on"], f"[{label}] the best of a configuration lights the small trophy, silver")
     check(s["cfg"]["pop"] and not s["glob"]["pop"], f"[{label}] and it pops")
-    check(s["cfg"]["title"] == t["cfg_on"] and s["status"] == t["won_cfg"] and s["label"].startswith(f'{t["case"]}: {t["count"] % 1}.'), f"[{label}] the tooltip, the button's label and the status read out the win")
+    check(s["cfg"]["title"] == t["cfg_on"] and s["said"] == t["won_cfg"] and s["label"].startswith(f'{t["case"]}: {t["count"] % 1}.'), f"[{label}] the tooltip, the button's label and the live region of the trophies read out the win")
     check(s["stored"] is not None and json.loads(s["stored"])["g"] is False and len(json.loads(s["stored"])["c"]) == 1, f"[{label}] one configuration is stored")
     page.wait_for_timeout(900)
     s = play(page, NOTYET_34)
@@ -256,7 +256,7 @@ def run(browser, lang, vp, touch, tag):
     # ---- the best of all: both light; the global one stays in every configuration ----
     s = play(page, best_fence(page))
     check(s["cfg"]["on"] and s["cfg"]["tier"] == "gold" and s["glob"]["on"] and s["glob"]["pop"], f"[{label}] the best of all lights both, the small one gold")
-    check(s["glob"]["title"] == t["glob_on"] and s["status"] == t["won_glob"], f"[{label}] the global win is read out")
+    check(s["glob"]["title"] == t["glob_on"] and s["said"] == t["won_glob"], f"[{label}] the global win is read out")
     page.screenshot(path=str(OUT / f"{lang}-{tag}-both.png"))
     page.wait_for_timeout(900)
     s = play(page, BETTER_34)
@@ -318,6 +318,20 @@ def run_special(browser):
         page.screenshot(path=str(OUT / f"en-case-{name}.png"))
         check(not errors, f"[{name} case] no console errors" + (": " + "; ".join(errors[:2]) if errors else ""))
         ctx.close()
+    # a trophy is won by a piece set down, not while it is carried, and its read-out is not taken away by the status line
+    ctx, page, errors = new_page(browser, "en", {"width": 390, "height": 844}, True)
+    page.evaluate(PLACE.replace("measureLive();", "measureLive(false);"), NOTYET_34)       # a piece carried over a finished fence
+    page.wait_for_timeout(120)
+    s = shelf(page)
+    check(not s["cfg"]["on"] and s["stored"] is None, "[carried] while a piece is carried over a finished fence nothing is won and nothing is kept")
+    page.evaluate("measureLive()")                                                          # set down
+    page.wait_for_timeout(120)
+    s = shelf(page)
+    check(s["cfg"]["on"] and s["stored"] is not None, "[carried] set down, the trophy of the configuration is won and kept")
+    page.evaluate("setStatus('hx.s.placed', { name: 'arc' })")
+    check(page.evaluate("document.getElementById('trophy-status').textContent") == TEXT["en"]["won_cfg"], "[carried] a status line written right after does not take the read-out away")
+    check(not errors, "[carried] no console errors" + (": " + "; ".join(errors[:2]) if errors else ""))
+    ctx.close()
     # a browser that refuses storage: the trophies still work for the visit
     ctx, page, errors = new_page(browser, "en", {"width": 1280, "height": 800}, False,
                                  init="Object.defineProperty(window,'localStorage',{get(){throw new Error('blocked')}});")

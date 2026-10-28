@@ -225,6 +225,7 @@ const dom = {
   labNav: document.querySelector(".lab-nav"),
   langSel: document.querySelector(".langSel"),
   status: document.getElementById("status"),
+  trophyStatus: document.getElementById("trophy-status"),
   shelf: document.getElementById("shelf"),
   trophyConfig: document.getElementById("trophy-config"),
   trophyGlobal: document.getElementById("trophy-global"),
@@ -395,14 +396,16 @@ function wireEvents() {
 
 // The area is measured after every change to the board, as on the hub; a
 // tap on the area pill reads the status out.
-function measureLive() {
+// settled is false while a piece is carried: the area follows the finger, but a trophy is won only by a piece set down.
+function measureLive(settled = true) {
   const result = computeEnclosedArea();
   state.enclosedCells = result.enclosedSet;
   state.enclosedRegionCount = result.regionCount;
   state.enclosedLargest = result.largestRegion;
   updateAreaChip(result.area);
-  const won = updateTrophies(result);
-  if (won) setStatus(won);
+  const won = updateTrophies(result, settled);
+  // read out in a live region of its own: the status line is rewritten at once by "placed", "moved", "removed"
+  if (won) dom.trophyStatus.textContent = t(won);
 }
 
 function removePiece(pieceId) {
@@ -663,7 +666,7 @@ function onPointerMove(event) {
     state._moved = true;
     setStatus("hx.s.moving", { name: pieceName(piece.typeId) });
   }
-  measureLive();
+  measureLive(false);
   render();
 }
 
@@ -681,6 +684,7 @@ function onPointerUp(event) {
     if (piece) setStatus("hx.s.moved", { name: pieceName(piece.typeId) });
     // a piece just moved counts as new: the next tap on it only selects it
     if (piece) state.freshPieceId = pieceId;
+    measureLive();   // set down: the trophies are judged now
   }
   state._moved = false;
   state._downPieceId = null;
@@ -1186,12 +1190,13 @@ function onChipDown(event, type) {
     if (!piece || (piece.marker.q === nearest.q && piece.marker.r === nearest.r)) return;
     if (!canPlace(piece.typeId, piece.variantIndex, nearest, piece.id)) return;
     piece.marker = { q: nearest.q, r: nearest.r };
-    measureLive();
+    measureLive(false);
     render();
   }, () => {
     const piece = pieceId ? state.placedPieces.find((p) => p.id === pieceId) : null;
     if (!piece) return;
     state.freshPieceId = piece.id; // the next tap on it only selects it
+    measureLive();
     setStatus("hx.s.placed", { name: pieceName(piece.typeId) });
     refreshTray();
     render();
@@ -1353,11 +1358,11 @@ function configurationOrder(result) {
 
 // After the area is measured: a closed fence of all seven pieces may win a trophy. Returns the key of the sentence
 // to read out when it did, else null.
-function updateTrophies(result) {
+function updateTrophies(result, settled = true) {
   if (!trophies.state) return null;
   trophies.order = result.area >= 2 && result.regionCount === 1 ? configurationOrder(result) : null;
   let won = null, popConfig = false, popGlobal = false;
-  if (trophies.order) {
+  if (trophies.order && settled) {
     const r = HexTrophies.record(trophies.state, trophies.order, result.area);
     if (r.wonConfig || r.wonGlobal) {
       trophies.state = r.state;

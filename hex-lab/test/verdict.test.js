@@ -93,6 +93,20 @@ for (const f of FIXTURES) {
   assert.strictEqual(V.verdict(["arc", "bar", "bee"], 3), null, "an unknown order says nothing");
 }
 
+/* ---- an inside with a hole has no single walk round it: a piece stands inside it, so there are two boundaries ---- */
+{
+  const { res, owner } = fenceOf(FIXTURES[0].pieces);
+  const STEP = [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]];
+  const near = (k) => { const [q, r] = k.split(",").map(Number); return STEP.map(([dq, dr]) => (q + dq) + "," + (r + dr)); };
+  const deep = [...res.enclosedSet].find((k) => near(k).every((n) => res.enclosedSet.has(n) && near(n).every((m) => res.enclosedSet.has(m))));
+  assert.ok(deep, "a hexagon well inside the inside");
+  const holed = new Set(res.enclosedSet);
+  holed.delete(deep);
+  const island = new Map(owner);
+  island.set(deep, "arc");
+  assert.strictEqual(V.configuration(island, holed), null);
+}
+
 /* ---- the tiers: how far a configuration's best falls short of the best of all ---- */
 for (const [area, tier] of [[35, "gold"], [34, "silver"], [33, "bronze"]]) {
   const key = keys.find((k) => DATA.areaByOrder[k] === area);

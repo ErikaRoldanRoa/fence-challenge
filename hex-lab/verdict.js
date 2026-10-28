@@ -49,6 +49,11 @@
     }
     if (d < 0) return null;
     const start = { q, r, d };
+    let edges = 0;                                      // every edge of the boundary of the inside, whatever loop it is on
+    for (const k of inside) {
+      const [cq, cr] = k.split(",").map(Number);
+      for (let s = 0; s < 6; s += 1) if (!inside.has(key(cq + STEP[s][0], cr + STEP[s][1]))) edges += 1;
+    }
     const seq = [];
     for (let guard = 0; guard < 4000; guard += 1) {
       const yq = q + STEP[d][0], yr = r + STEP[d][1];
@@ -64,7 +69,7 @@
       } else {
         d = next;
       }
-      if (q === start.q && r === start.r && d === start.d) return mergeCyclic(seq);
+      if (q === start.q && r === start.r && d === start.d) return seq.length === edges ? mergeCyclic(seq) : null;   // one loop of two: a hole in the inside
     }
     return null;
   }
