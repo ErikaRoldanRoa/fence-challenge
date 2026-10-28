@@ -1861,11 +1861,12 @@ function onCaseKey(e) {
 // A global cup: the best of all (the polyform engraved), a milestone (its number), a tier (its number). Never a word.
 function globalCup(g) {
   const tone = g.kind === "best" ? "gold" : g.kind === "milestone" ? (MILESTONE_TONE[g.n] || "gold") : g.kind;
-  const size = g.n >= 1000 ? " d4" : g.n >= 100 ? " d3" : "";
+  const shown = g.n >= 10000 ? Math.round(g.n / 1000) + "k" : String(g.n); // five digits do not fit the cup
+  const size = shown.length >= 4 ? " d4" : shown.length === 3 ? " d3" : "";
   const engraved = g.kind === "best"
     ? Array.from(dom.trophyGlobal.querySelectorAll("svg > g")).map((el) => el.outerHTML).join("")
-    : '<text class="digits' + size + '" x="12" y="8.4">' + g.n + "</text>";
-  const what = g.kind === "best" ? t("tri.t.best") : g.kind === "milestone" ? t("tri.t.milestone", { n: g.n }) : t("tri.t.tier." + g.kind);
+    : '<text class="digits' + size + '" x="12" y="8.4">' + shown + "</text>";
+  const what = g.kind === "best" ? t("tri.t.best") : g.kind === "milestone" ? t("tri.t.milestone", { n: g.n }) : t("tri.t.tier." + g.kind) + " (" + g.n.toLocaleString(window.i18n && window.i18n.get ? window.i18n.get() : undefined) + ")";
   const label = esc(what + ": " + t(g.won ? "tri.t.state.on" : "tri.t.state.off"));
   return '<span class="case-g tone-' + tone + (g.won ? " on" : "") + '" role="img" aria-label="' + label + '" title="' + label + '">' +
     '<span class="trophy' + (g.won ? " on" : "") + '"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + cupParts() + engraved + "</svg></span></span>";

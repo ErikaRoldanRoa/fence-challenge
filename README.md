@@ -152,6 +152,8 @@ root, with the server running on port 8000 where a base address is asked:
   `node pentomino-dp-lab/test/dp.test.js`,
   `node hex-lab/test/verdict.test.js`,
   `node hex-lab/test/trophies.test.js`,
+  `node square-lab/test/best-fence.test.js`, `node square-lab/test/verdict.test.js`, `node square-lab/test/trophies.test.js`,
+  `node triangle-lab/test/best-fence.test.js`, `node triangle-lab/test/verdict.test.js`, `node triangle-lab/test/trophies.test.js`,
   `node test/paper-refs.test.js`
 - the labs in a browser: `python3 cube-lab/test/browser.py OUTDIR`,
   `python3 hexomino-lab/test/ui_check.py http://localhost:8000/ OUTDIR`,
@@ -159,7 +161,10 @@ root, with the server running on port 8000 where a base address is asked:
   `python3 pentomino-dp-lab/test/browser.py OUTDIR`,
   `python3 square-lab/test/ui_check.py http://localhost:8000/ OUTDIR`,
   `python3 hex-lab/test/ui_check.py http://localhost:8000/ OUTDIR`,
-  `python3 triangle-lab/test/ui_check.py http://localhost:8000/ OUTDIR`
+  `python3 triangle-lab/test/ui_check.py http://localhost:8000/ OUTDIR`,
+  the trophies of the square, hexagonal and triangular labs (a closed fence of all the pieces on the board, the shelf, the case, three
+  languages): `python3 square-lab/test/trophy_check.py http://localhost:8000/ OUTDIR`, `python3 hex-lab/test/ui_check.py ...` (its
+  trophy section), `python3 triangle-lab/test/trophy_check.py http://localhost:8000/ OUTDIR`
 - the pieces of the three cards on the home page follow the finger:
   `python3 test/engine_drag_check.py http://localhost:8000/`
 - the three 2D labs' checks and this one also run in the engine of Safari (a mouse drag stands in for touch there):
