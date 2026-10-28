@@ -61,7 +61,7 @@ STATES = {
                          ("worst", "document.getElementById('dp-worst').click()", 14000)],
 }
 # Extra viewports for one lab, in some of its states: (views, state names).
-SMALL = [(360, 640, True), (320, 568, True), (667, 375, True), (1024, 600, False)]   # a short phone, a narrow one, one held sideways, a small laptop
+SMALL = [(360, 640, True), (320, 568, True), (375, 553, True), (360, 500, True), (667, 375, True), (1024, 600, False)]   # a short phone, a narrow one, an iPhone SE in Safari, a very short one, one held sideways, a small laptop
 EXTRA = {
     "hex-lab": (SMALL, ("idle", "case-won", "case-seen")),
     "square-lab": (SMALL, ("idle", "case-won", "case-seen")),
