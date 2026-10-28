@@ -623,6 +623,9 @@ body {
   }
   /* beside the camera's chip it moves half the difference of their widths to the left, as the area pill does in a tall phone */
   .main-stage:has(#camera-chip:not([hidden])) > .shelf { transform: translateX(-16px); }
+  /* the row of erase, the trophies and the camera is at least as wide as the three need, even where the board is narrower:
+     the board shrinks with the height of the phone (about 164 px at 568 px), and the trophies then lay over their neighbours */
+  .boardbar { width: min(100%, max(var(--board-size), 216px)); }
 }
 
 /* ---------- a phone held sideways: rotate and flip, the area and the links
