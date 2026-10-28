@@ -773,6 +773,13 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
   .sq-lab .game-layout:has(#camera-toggle:not([hidden])) > .shelf {
     transform: translateX(-16px);
   }
+
+  /* The row of erase, the cup and the camera is at least as wide as the three need, even where the board is narrower (it
+     shrinks with the height of the phone): under about 520 px the cup would lay over its neighbours. */
+  .sq-lab .game-bar {
+    width: max(100%, 216px);
+    justify-self: center;
+  }
 }
 
 /* The narrowest phones: the board is narrower than the screen, so the top
