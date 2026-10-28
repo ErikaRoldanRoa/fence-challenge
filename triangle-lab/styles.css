@@ -650,10 +650,12 @@ body {
     padding: 0 var(--sw-strip-right, 0px) 0 var(--sw-strip-left, 0px);
     justify-content: center;
     align-items: center;
+    pointer-events: none;   /* the strip lies over rotate, flip, home and print: only the area pill takes taps */
   }
 
   .toolbar .measure {
     align-self: center;
+    pointer-events: auto;
   }
 
   .board-wrap {
