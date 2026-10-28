@@ -81,6 +81,7 @@ const dom = {
   sideBrand: document.querySelector(".side-brand"),
   boardbar: document.querySelector(".boardbar"),
   status: document.getElementById("status"),
+  trophyStatus: document.getElementById("trophy-status"),
   shelf: document.getElementById("shelf"),
   trophyConfig: document.getElementById("trophy-config"),
   trophyGlobal: document.getElementById("trophy-global"),
@@ -170,15 +171,17 @@ function pieceName(typeId) {
 
 // The area is measured after every change to the board, as on the hub; a
 // tap on the area pill reads the verdict out.
-function measureLive() {
+// settled is false while a piece is carried: the area follows the finger, but a trophy is won only by a piece set down.
+function measureLive(settled = true) {
   const result = computeEnclosedArea();
   state.enclosedCells = result.enclosedSet;
   state.enclosedRegionCount = result.regionCount;
   state.enclosedLargest = result.largestRegion;
   state.leakCells = result.leakCells;
   updateAreaChip(result.area);
-  const won = updateTrophies(result);
-  if (won) setStatus(won);
+  const won = updateTrophies(result, settled);
+  // read out in a live region of its own: the status line is rewritten at once by "placed", "moved", "removed"
+  if (won) dom.trophyStatus.textContent = t(won);
 }
 
 function wireEvents() {
@@ -468,12 +471,13 @@ function onChipDown(event, type) {
     if (!nearest || (piece.marker.i === nearest.i && piece.marker.j === nearest.j && piece.marker.o === nearest.o)) return;
     if (!canPlace(piece.typeId, piece.variantIndex, nearest, piece.id)) return;
     piece.marker = { i: nearest.i, j: nearest.j, o: nearest.o };
-    measureLive();
+    measureLive(false);
     render();
   }, () => {
     const piece = pieceId ? state.placedPieces.find((p) => p.id === pieceId) : null;
     if (!piece) return;
     state.freshPieceId = piece.id; // the next tap on it only selects it
+    measureLive();
     setStatus("tri.s.placed", { name: pieceName(piece.typeId) });
     refreshTray();
     render();
@@ -794,7 +798,7 @@ function onPointerMove(event) {
     state._moved = true;
     setStatus("tri.s.moving", { name: pieceName(piece.typeId) });
   }
-  measureLive();
+  measureLive(false);
   render();
 }
 
@@ -815,6 +819,7 @@ function onPointerUp(event) {
     if (piece) setStatus("tri.s.moved", { name: pieceName(piece.typeId) });
     // a piece just moved counts as new: the next tap on it only selects it
     if (piece) state.freshPieceId = pieceId;
+    measureLive();   // set down: the trophies are judged now
   }
   state._moved = false;
   state._downPieceId = null;
@@ -1756,12 +1761,12 @@ function configurationOrder(result) {
 
 // After the area is measured: a closed fence of all twelve pieces, with one inside, may win a trophy. Returns the key of
 // the sentence to read out when it did, else null.
-function updateTrophies(result) {
+function updateTrophies(result, settled = true) {
   if (!trophies.state) return null;
   trophies.order = result.area >= 2 && result.regionCount === 1 ? configurationOrder(result) : null;
   let won = null, popConfig = false, popGlobal = false;
-  if (trophies.order) {
-    const r = TriTrophies.record(trophies.state, trophies.order, result.area);
+  if (trophies.order && settled) {
+    const r = TriTrophies.record(trophies.state, trophies.order, result.area, !result.cornerLeak);
     if (r.wonConfig || r.wonGlobal) {
       trophies.state = r.state;
       if (trophies.storage) TriTrophies.save(trophies.storage, r.state);

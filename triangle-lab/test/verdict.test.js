@@ -42,6 +42,20 @@ for (const f of fences) {
   }
   assert.strictEqual(V.configuration(open, inside), null);
 
+  /* ---- an inside with a hole has no single walk round it: a piece stands inside it, so there are two boundaries ---- */
+  const next = (k) => {
+    const [i, j, o] = k.split(",").map(Number);
+    return (o === 0 ? [[i, j, 1], [i, j - 1, 1], [i - 1, j, 1]] : [[i, j, 0], [i, j + 1, 0], [i + 1, j, 0]]).map((c) => c.join(","));
+  };
+  const deep = [...inside].find((k) => next(k).every((n) => inside.has(n) && next(n).every((m) => inside.has(m))));
+  assert.ok(deep, "a triangle well inside the inside");
+  const holed = new Set(inside);
+  holed.delete(deep);
+  const island = new Map(owner);
+  island.set(deep, order[0]);
+  assert.strictEqual(V.orderAround(island, holed), null);
+  assert.strictEqual(V.configuration(island, holed), null);
+
   /* ---- fewer than twelve pieces, or nothing inside: no configuration ---- */
   const fewer = new Map(owner);
   for (const [k, p] of owner) if (p === order[0]) fewer.set(k, order[1]);

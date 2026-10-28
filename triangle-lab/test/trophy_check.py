@@ -205,6 +205,35 @@ with sync_playwright() as pw:
     check(not errors, f"no errors in the console {errors[:2]}")
     ctx.close()
 
+    # ---- a trophy is won by a piece set down, and read out in a live region of its own
+    ctx, page, errors = new_page(browser, 390, 844, True, "en")
+    page.evaluate(PLACE, FENCES[0])
+    page.evaluate("measureLive(false)")            # a piece carried over a finished fence: the area follows it, nothing is won
+    s = page.evaluate(SEEN)
+    check(not s["config"]["on"] and s["stored"] is None, "while a piece is carried over a finished fence nothing is won and nothing is kept")
+    page.evaluate("measureLive()")                 # set down
+    s = page.evaluate(SEEN)
+    check(s["config"]["on"] and s["stored"] is not None, "set down, the trophy of the configuration is won and kept")
+    said = page.evaluate("document.getElementById('trophy-status').textContent")
+    check(WON["en"] in said, f"and it is read out in a live region of its own: {said!r}")
+    page.evaluate("setStatus('tri.s.placed', { name: 'crown' })")
+    check(WON["en"] in page.evaluate("document.getElementById('trophy-status').textContent"), "a status line written right after does not take the announcement away")
+    check(not errors, f"no errors in the console {errors[:2]}")
+    ctx.close()
+
+    # ---- the best of all needs a closed fence (the verdict is stood in for: no fence of the best area is among the fixtures)
+    ctx, page, errors = new_page(browser, 390, 844, True, "en")
+    page.evaluate(PLACE, FENCES[0])
+    page.evaluate("() => { TriVerdict.verdict = () => 'best'; }")
+    page.evaluate("updateTrophies(Object.assign({}, computeEnclosedArea(), { cornerLeak: true }))")
+    stored = json.loads(page.evaluate(SEEN)["stored"])
+    check(stored["g"] is False and len(stored["c"]) == 1, "with a corner left open the configuration's trophy is won and the best of all is not")
+    page.evaluate("updateTrophies(computeEnclosedArea())")
+    stored = json.loads(page.evaluate(SEEN)["stored"])
+    check(stored["g"] is True, "with the corner closed the best of all is won")
+    check(not errors, f"no errors in the console {errors[:2]}")
+    ctx.close()
+
     browser.close()
 
 print("\n%d check(s) failed" % len(fails) if fails else "\nall checks passed")

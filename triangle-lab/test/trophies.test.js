@@ -50,6 +50,15 @@ assert.deepStrictEqual(T.lit(state, null), { config: false, global: false, tier:
 const turned = silver.slice(2).concat(silver.slice(0, 2)).reverse();
 assert.deepStrictEqual(T.lit(state, turned), { config: true, global: false, tier: "silver" });
 
+/* ---- the best of all needs a closed fence: with a corner open it wins the configuration's trophy and not the global one ---- */
+let open = T.record(state, best, BEST, false);
+assert.strictEqual(open.kind, "best");
+assert.deepStrictEqual([open.wonConfig, open.wonGlobal], [true, false]);
+assert.strictEqual(open.state.g, false);
+open = T.record(open.state, best, BEST, true);
+assert.deepStrictEqual([open.wonConfig, open.wonGlobal], [false, true], "closed later: the global trophy is won then");
+assert.deepStrictEqual(T.record(state, best, BEST).state.g, true, "no flag means closed");
+
 /* ---- the best of all wins the global trophy and that configuration's, and the global one stays ---- */
 r = T.record(state, best, BEST);
 assert.strictEqual(r.kind, "best");
