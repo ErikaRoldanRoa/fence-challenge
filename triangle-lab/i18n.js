@@ -48,7 +48,24 @@
     "tri.s.camSearching": "Montre les quatre carrés des coins du plateau imprimé.",
     "tri.s.camLocked": "Plateau trouvé. Tiens le téléphone immobile.",
     "tri.s.camError": "La caméra ne s’ouvre pas ici. Vérifie l’autorisation de la caméra.",
-    "tri.s.camClosed": "Caméra fermée. Les pièces restent sur le plateau."
+    "tri.s.camClosed": "Caméra fermée. Les pièces restent sur le plateau.",
+    "tri.t.config.off": "Pas encore le meilleur de cette configuration",
+    "tri.t.config.on": "Le meilleur de cette configuration",
+    "tri.t.global.off": "Pas encore le meilleur de toutes les configurations",
+    "tri.t.global.on": "Le meilleur de toutes les configurations",
+    "tri.t.wonConfig": "Trophée gagné" + NB + ": le meilleur de cette configuration.",
+    "tri.t.wonGlobal": "Trophée gagné" + NB + ": le meilleur de toutes les configurations.",
+    "tri.t.case": "Coffre aux trophées",
+    "tri.t.close": "Fermer",
+    "tri.t.grid": "Les configurations gagnées",
+    "tri.t.count": "{n} sur {all} configurations",
+    "tri.t.state.on": "gagné",
+    "tri.t.state.off": "pas encore",
+    "tri.t.best": "Le meilleur de toutes les configurations",
+    "tri.t.milestone": "{n} configurations gagnées",
+    "tri.t.tier.gold": "Toutes les configurations en or",
+    "tri.t.tier.silver": "Toutes les configurations en argent",
+    "tri.t.seen": "Configuration"
   });
 
   Object.assign(DICT.de, {
@@ -91,7 +108,24 @@
     "tri.s.camSearching": "Zeig die vier Eckquadrate des gedruckten Spielfelds.",
     "tri.s.camLocked": "Spielfeld gefunden. Halte das Handy ruhig.",
     "tri.s.camError": "Die Kamera lässt sich hier nicht öffnen. Prüf die Kamera-Erlaubnis.",
-    "tri.s.camClosed": "Kamera geschlossen. Die Teile bleiben auf dem Spielfeld."
+    "tri.s.camClosed": "Kamera geschlossen. Die Teile bleiben auf dem Spielfeld.",
+    "tri.t.config.off": "Noch nicht das Beste dieser Konfiguration",
+    "tri.t.config.on": "Das Beste dieser Konfiguration",
+    "tri.t.global.off": "Noch nicht das Beste aller Konfigurationen",
+    "tri.t.global.on": "Das Beste aller Konfigurationen",
+    "tri.t.wonConfig": "Pokal gewonnen: das Beste dieser Konfiguration.",
+    "tri.t.wonGlobal": "Pokal gewonnen: das Beste aller Konfigurationen.",
+    "tri.t.case": "Pokalschrank",
+    "tri.t.close": "Schließen",
+    "tri.t.grid": "Die gewonnenen Konfigurationen",
+    "tri.t.count": "{n} von {all} Konfigurationen",
+    "tri.t.state.on": "gewonnen",
+    "tri.t.state.off": "noch nicht",
+    "tri.t.best": "Das Beste aller Konfigurationen",
+    "tri.t.milestone": "{n} Konfigurationen gewonnen",
+    "tri.t.tier.gold": "Alle Konfigurationen in Gold",
+    "tri.t.tier.silver": "Alle Konfigurationen in Silber",
+    "tri.t.seen": "Konfiguration"
   });
 
   Object.assign(DICT.en, {
@@ -134,6 +168,23 @@
     "tri.s.camSearching": "Show the four corner squares of the printed board.",
     "tri.s.camLocked": "Board found. Hold the phone still.",
     "tri.s.camError": "The camera cannot open here. Check the camera permission.",
-    "tri.s.camClosed": "Camera closed. The pieces stay on the board."
+    "tri.s.camClosed": "Camera closed. The pieces stay on the board.",
+    "tri.t.config.off": "Not yet the best of this configuration",
+    "tri.t.config.on": "The best of this configuration",
+    "tri.t.global.off": "Not yet the best of all configurations",
+    "tri.t.global.on": "The best of all configurations",
+    "tri.t.wonConfig": "Trophy won: the best of this configuration.",
+    "tri.t.wonGlobal": "Trophy won: the best of all configurations.",
+    "tri.t.case": "Trophy case",
+    "tri.t.close": "Close",
+    "tri.t.grid": "The configurations won",
+    "tri.t.count": "{n} of {all} configurations",
+    "tri.t.state.on": "won",
+    "tri.t.state.off": "not yet",
+    "tri.t.best": "The best of all configurations",
+    "tri.t.milestone": "{n} configurations won",
+    "tri.t.tier.gold": "All the gold configurations",
+    "tri.t.tier.silver": "All the silver configurations",
+    "tri.t.seen": "Configuration"
   });
 })();

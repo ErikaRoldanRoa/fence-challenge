@@ -117,6 +117,230 @@ body {
   height: 44px;
 }
 
+/* The trophies: the small one for the configuration on the board, the big one for the best of all. Dark until won; a
+   configuration's trophy takes its tier's colour once won (gold, silver, bronze). Nothing is written under them: what each
+   means is in its tooltip and its label. The polyform engraved on them belongs to the triangular tiling. */
+.shelf {
+  position: fixed;
+  top: 10px;
+  left: 12px;
+  z-index: 30;
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 34px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.shelf[hidden] {
+  display: none;
+}
+
+.trophy {
+  display: block;
+  overflow: visible;
+  color: var(--tc);
+  transition: filter 0.2s ease, opacity 0.2s ease;
+}
+
+.trophy svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.trophy.t-small { width: 25px; height: 25px; --tc: #cfe8ff; }
+.trophy.t-big { width: 34px; height: 34px; --tc: #ffd24a; }
+.trophy.t-small.tier-gold { --tc: #ffd24a; }
+.trophy.t-small.tier-silver { --tc: #cfe8ff; }
+.trophy.t-small.tier-bronze { --tc: #e0904a; }
+
+.trophy .cup,
+.trophy .rest { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; }
+.trophy .mark { fill: none; stroke: currentColor; stroke-width: 0.22; stroke-linejoin: round; opacity: 0.9; }
+.trophy .tile { fill: rgba(70, 44, 0, 0.86); stroke: currentColor; stroke-width: 0.2; stroke-linejoin: round; }
+
+.trophy:not(.on) { opacity: 0.42; filter: grayscale(1); }
+.trophy:not(.on) .tile { display: none; }
+.trophy.on { filter: drop-shadow(0 0 5px currentColor); }
+.trophy.on .cup { fill: currentColor; }
+.trophy.on .mark { display: none; }
+.trophy.on rect.rest { fill: currentColor; fill-opacity: 0.35; }
+
+/* The shelf is one button: it opens the case. */
+.shelf:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+/* The case: a cup and a count, the global trophies, the pieces of the configuration chosen, and one small cup for each
+   configuration won (there are too many configurations for a grid of all of them). No words. */
+.case {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 12px;
+  background: rgba(3, 7, 14, 0.84);
+}
+
+.case[hidden] { display: none; }
+
+.case-panel {
+  box-sizing: border-box;
+  width: min(100%, 460px);
+  max-height: 100%;
+  overflow: auto;
+  padding: 0 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #070f1d;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  overscroll-behavior: contain;
+}
+
+/* The head stays on the screen while the grid scrolls, so the count and the cross are always there. */
+.case-panel:focus { outline: none; }
+
+.case-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0 10px;
+  background: #070f1d;
+}
+.case-cup { width: 30px; height: 30px; --tc: #ffd24a; }
+.case-count { margin-left: auto; color: var(--accent); font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.case-close {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.case-close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.case-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.case-globals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 4px; }
+
+.case-g {
+  display: grid;
+  place-items: center;
+  padding: 8px 4px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #0a1527;
+  color: var(--tc);
+}
+
+.case-g.on { border-color: currentColor; box-shadow: 0 0 14px -4px currentColor; }
+.case-g .trophy { width: 40px; height: 40px; }
+.case-g .trophy:not(.on) { opacity: 0.62; }
+.case-g .digits { fill: currentColor; stroke: none; font: 800 5.2px system-ui, sans-serif; text-anchor: middle; }
+.case-g .digits.d3 { font-size: 3.7px; }
+.case-g .digits.d4 { font-size: 3px; }
+.case-g .trophy.on .digits { fill: rgba(70, 44, 0, 0.92); }
+
+.tone-gold { --tc: #ffd24a; }
+.tone-silver { --tc: #cfe8ff; }
+.tone-bronze { --tc: #e0904a; }
+
+/* The twelve pieces of the configuration chosen, in order, beside a cup that says whether it is won. With none chosen,
+   twelve empty places wait where they will appear (the row keeps its height, so the grid never jumps). */
+.case-seen { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px; min-height: 34px; margin: 10px 0 6px; }
+.case-seen .pc { display: block; width: 22px; height: 22px; }
+.case-seen .pc svg { display: block; width: 100%; height: 100%; }
+.case-seen .pc.empty { box-sizing: border-box; border: 1px dashed #22334a; border-radius: 6px; }
+.case-seen .seen-cup { width: 24px; height: 24px; margin-right: 4px; color: var(--tc, #3a4b60); fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.case-seen .seen-cup.on { fill: currentColor; filter: drop-shadow(0 0 4px currentColor); }
+
+.case-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(19px, 1fr)); gap: 2px 3px; }
+.case-grid:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+.case-grid .sc {
+  display: block;
+  box-sizing: border-box;
+  aspect-ratio: 1;
+  padding: 0;   /* the inset is on the drawing: Safari adds a padding to the height of a box that has an aspect ratio */
+  border-radius: 4px;
+  color: #3a4b60;
+  cursor: pointer;
+  scroll-margin: 84px 0 8px;   /* under the head that stays on the screen */
+}
+
+.case-grid .rest { fill: none; }
+.case-grid .sc svg { display: block; box-sizing: border-box; padding: 1px; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.case-grid .sc.on svg { fill: currentColor; filter: drop-shadow(0 0 2px currentColor); }
+.case-grid .sc.tier-gold { color: #ffd24a; }
+.case-grid .sc.tier-silver { color: #cfe8ff; }
+.case-grid .sc.tier-bronze { color: #e0904a; }
+.case-grid .sc.sel { background: var(--accent-soft); outline: 1px solid var(--accent); }
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .case-panel {
+    display: grid;
+    grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+    grid-template-rows: auto auto auto 1fr;
+    column-gap: 18px;
+    align-content: start;
+    width: min(100%, 860px);
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .case-head { position: static; grid-column: 1; }
+  .case-globals { grid-column: 1; }
+  .case-seen { grid-column: 1; align-self: start; }
+
+  .case-grid {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    grid-template-columns: repeat(auto-fill, minmax(18px, 1fr));
+    gap: 2px;
+    align-content: start;
+    max-height: 100%;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 14px 2px;
+  }
+
+  .case-grid .sc { scroll-margin: 8px 0; }
+}
+
+@keyframes trophy-pop {
+  0% { transform: scale(0.7); }
+  45% { transform: scale(1.35); filter: drop-shadow(0 0 14px currentColor); }
+  100% { transform: scale(1); }
+}
+
+.trophy.pop { animation: trophy-pop 0.7s ease-out; transform-origin: 50% 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .trophy.pop { animation: none; }
+}
+
 .play-zone {
   width: 100%;
   min-height: 0;
@@ -370,7 +594,7 @@ body {
 
 /* A phone that is not tall (under 680 px: the board is then about as wide as erase, the camera and the area side by
    side, and in German the area does not fit between them): the area stays in the top strip, left, beside the
-   language switch. */
+   language switch, and the trophies stand in the bottom row. */
 @media (max-height: 679px) and (orientation: portrait) {
   .main-stage > .toolbar {
     grid-row: 1;
@@ -383,6 +607,16 @@ body {
     transform: none;
   }
   .main-stage:has(#camera-chip:not([hidden])) > .toolbar { transform: none; }
+  /* the trophies stand in the bottom row, between erase and the camera */
+  .shelf {
+    position: static;
+    grid-row: 4;
+    justify-self: center;
+    align-self: center;
+    z-index: 10;
+  }
+  /* beside the camera's chip it moves half the difference of their widths to the left, as the area pill does in a tall phone */
+  .main-stage:has(#camera-chip:not([hidden])) > .shelf { transform: translateX(-16px); }
 }
 
 /* ---------- phones held sideways: a top strip 56 px tall (rotate and flip
@@ -395,6 +629,12 @@ body {
 @media (orientation: landscape) and (max-height: 500px) {
   .app-shell {
     padding: 0;
+  }
+
+  /* The trophies stand right of rotate and flip. */
+  .shelf {
+    top: 8px;
+    left: 118px;
   }
 
   .langSel {

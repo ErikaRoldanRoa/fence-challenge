@@ -81,6 +81,16 @@ const dom = {
   sideBrand: document.querySelector(".side-brand"),
   boardbar: document.querySelector(".boardbar"),
   status: document.getElementById("status"),
+  shelf: document.getElementById("shelf"),
+  trophyConfig: document.getElementById("trophy-config"),
+  trophyGlobal: document.getElementById("trophy-global"),
+  case: document.getElementById("case"),
+  casePanel: document.getElementById("case-panel"),
+  caseClose: document.getElementById("case-close"),
+  caseCount: document.getElementById("case-count"),
+  caseGlobals: document.getElementById("case-globals"),
+  caseSeen: document.getElementById("case-seen"),
+  caseGrid: document.getElementById("case-grid"),
 };
 
 const state = {
@@ -122,12 +132,16 @@ const state = {
 // hushed: a view closed without a message.
 const camera = { view: null, auto: false, hushed: null };
 
+// What the player has won (kept on the device, trophies.js) and the configuration now on the board.
+const trophies = { state: null, storage: null, order: null, opener: null, seen: null };
+
 init();
 
 function init() {
   buildBoard();
   buildPieces();
   wireEvents();
+  initTrophies();
   useTouchTips();
   resizeCanvas();
   refreshTray();
@@ -163,6 +177,8 @@ function measureLive() {
   state.enclosedLargest = result.largestRegion;
   state.leakCells = result.leakCells;
   updateAreaChip(result.area);
+  const won = updateTrophies(result);
+  if (won) setStatus(won);
 }
 
 function wireEvents() {
@@ -190,6 +206,8 @@ function wireEvents() {
   });
   document.addEventListener("fc-langchange", () => {
     renderStatus();
+    renderTrophies();
+    if (!dom.case.hidden) renderCase();
     updateAreaChip(state.area);
     localizeCameraChip();
     refreshTray();
@@ -246,6 +264,8 @@ function measure() {
   state.enclosedLargest = result.largestRegion;
   state.leakCells = result.leakCells;
   updateAreaChip(result.area);
+  // A closed fence of all twelve pieces may win a trophy, and the status then says so after the area.
+  const won = updateTrophies(result);
   // "Fence closed" only for a real fence: one inside, and no corner the
   // outside slips through.
   const parts = [];
@@ -255,6 +275,7 @@ function measure() {
   else if (result.cornerLeak) parts.push({ key: result.area === 1 ? "tri.s.area1" : "tri.s.area", vars: { area: result.area } });
   else parts.push({ key: result.area === 1 ? "tri.s.fence1" : "tri.s.fence", vars: { area: result.area } });
   if (result.cornerLeak && result.area > 0) parts.push({ key: "tri.s.leak" });
+  if (won) parts.push({ key: won });
   setStatusParts(parts);
   render();
 }
@@ -1039,7 +1060,8 @@ function placeAreaPill(vw) {
   root.removeProperty("--sw-strip-right");
   const nav = dom.actions.querySelector(".lab-nav");
   if (!nav) return;
-  const lo = dom.flipBtn.getBoundingClientRect().right + SW.gap;
+  const shelf = dom.shelf && !dom.shelf.hidden ? dom.shelf.getBoundingClientRect() : null;
+  const lo = Math.max(dom.flipBtn.getBoundingClientRect().right, shelf ? shelf.right : 0) + SW.gap;
   const hi = nav.getBoundingClientRect().left - SW.gap;
   const pill = dom.detectAreaBtn.getBoundingClientRect();
   const num = dom.areaChip.getBoundingClientRect();
@@ -1702,6 +1724,193 @@ function renderStatus() {
     return;
   }
   dom.status.textContent = state.status.map((part) => t(part.key, part.vars || undefined)).join(" ");
+}
+
+/* ---------- the trophies ---------- */
+
+function initTrophies() {
+  if (!window.TriTrophies || !dom.shelf) {
+    if (dom.shelf) dom.shelf.hidden = true;
+    return;
+  }
+  try { trophies.storage = window.localStorage; } catch (e) { trophies.storage = null; }
+  trophies.state = trophies.storage ? TriTrophies.load(trophies.storage) : TriTrophies.empty();
+  renderTrophies();
+  dom.shelf.addEventListener("click", openCase);
+  dom.caseClose.addEventListener("click", closeCase);
+  dom.case.addEventListener("click", (e) => { if (e.target === dom.case) closeCase(); });
+  dom.case.addEventListener("keydown", onCaseKey);
+  dom.caseGrid.addEventListener("click", (e) => { const cup = e.target.closest(".sc"); if (cup) showSeen(Number(cup.dataset.key)); });
+}
+
+// The twelve pieces around the one inside, in order, or null.
+function configurationOrder(result) {
+  if (state.placedPieces.length !== state.pieceTypes.length) return null;
+  const owner = new Map();
+  for (const piece of state.placedPieces) {
+    for (const cell of pieceAbsoluteCells(piece)) owner.set(cellKey(cell), piece.typeId);
+  }
+  return TriVerdict.configuration(owner, result.enclosedSet);
+}
+
+// After the area is measured: a closed fence of all twelve pieces, with one inside, may win a trophy. Returns the key of
+// the sentence to read out when it did, else null.
+function updateTrophies(result) {
+  if (!trophies.state) return null;
+  trophies.order = result.area >= 2 && result.regionCount === 1 ? configurationOrder(result) : null;
+  let won = null, popConfig = false, popGlobal = false;
+  if (trophies.order) {
+    const r = TriTrophies.record(trophies.state, trophies.order, result.area);
+    if (r.wonConfig || r.wonGlobal) {
+      trophies.state = r.state;
+      if (trophies.storage) TriTrophies.save(trophies.storage, r.state);
+      popConfig = r.wonConfig;
+      popGlobal = r.wonGlobal;
+      won = r.wonGlobal ? "tri.t.wonGlobal" : "tri.t.wonConfig";
+    }
+  }
+  renderTrophies(popConfig, popGlobal);
+  return won;
+}
+
+function renderTrophies(popConfig, popGlobal) {
+  if (!trophies.state) return;
+  const lit = TriTrophies.lit(trophies.state, trophies.order);
+  setTrophy(dom.trophyConfig, lit.config, lit.tier ? "tier-" + lit.tier : "", t(lit.config ? "tri.t.config.on" : "tri.t.config.off"), popConfig);
+  setTrophy(dom.trophyGlobal, lit.global, "", t(lit.global ? "tri.t.global.on" : "tri.t.global.off"), popGlobal);
+  const n = TriTrophies.counts(trophies.state);
+  dom.shelf.setAttribute("aria-label", t("tri.t.case") + ": " + countText(n) + ". " +
+    dom.trophyConfig.title + ". " + dom.trophyGlobal.title + ".");
+}
+
+function countText(n) {
+  const lang = window.i18n && window.i18n.get ? window.i18n.get() : undefined;
+  return t("tri.t.count", { n: n.won.toLocaleString(lang), all: n.total.toLocaleString(lang) });
+}
+
+function setTrophy(el, on, tierClass, label, pop) {
+  el.classList.toggle("on", on);
+  for (const c of ["tier-gold", "tier-silver", "tier-bronze"]) el.classList.toggle(c, c === tierClass);
+  el.title = label;
+  if (pop) {
+    el.classList.remove("pop");
+    void el.offsetWidth;
+    el.classList.add("pop");
+    setTimeout(() => el.classList.remove("pop"), 800);
+  }
+}
+
+/* ---------- the case ---------- */
+
+// One drawing of the cup, the shelf's own: the global cup's parts (everything but the engraved polyform) are copied
+// into the global cups of the case and, once, into a symbol the small cups and the chosen one point at.
+function cupParts() {
+  return Array.from(dom.trophyGlobal.querySelectorAll("svg > :not(g)")).map((el) => el.outerHTML).join("");
+}
+function cupSymbol() {
+  return '<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="tri-cup" viewBox="0 0 24 24">' + cupParts() + "</symbol></svg>";
+}
+const MILESTONE_TONE = { 10: "bronze", 50: "silver", 100: "gold" };   // the others (1000) are gold too
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+
+function openCase() {
+  if (!trophies.state) return;
+  const here = document.activeElement;   // Safari does not focus a button that is tapped or clicked
+  trophies.opener = here && here !== document.body ? here : dom.shelf;
+  // it opens on the configuration now on the board, when there is a closed fence of all twelve pieces
+  trophies.seen = trophies.order ? HexiamondBest.rank(trophies.order) : null;
+  renderCase();
+  dom.case.hidden = false;
+  dom.casePanel.focus();   // the panel, not the cross: a tap does not leave a focus ring on the cross
+  if (trophies.seen !== null && TriTrophies.entries(trophies.state).some((e) => e.key === trophies.seen)) selectCup(trophies.seen, false);
+}
+
+function closeCase() {
+  dom.case.hidden = true;
+  if (trophies.opener && trophies.opener.focus) trophies.opener.focus();
+  trophies.opener = null;
+}
+
+// Escape closes; Tab goes round the cross and the grid (and the panel itself, where the focus lands); the arrows walk the grid.
+function onCaseKey(e) {
+  if (e.key === "Escape") { e.preventDefault(); closeCase(); return; }
+  if (e.key === "Tab") {
+    const first = dom.caseClose, last = dom.caseGrid;
+    if (e.shiftKey && (document.activeElement === first || document.activeElement === dom.casePanel)) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    return;
+  }
+  if (document.activeElement !== dom.caseGrid) return;
+  const cups = Array.from(dom.caseGrid.querySelectorAll(".sc"));
+  const columns = Math.max(1, getComputedStyle(dom.caseGrid).gridTemplateColumns.split(" ").length);
+  const at = cups.findIndex((el) => Number(el.dataset.key) === trophies.seen);
+  const step = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: columns, ArrowUp: -columns }[e.key];
+  let next = null;
+  if (step !== undefined) next = at < 0 ? 0 : at + step;
+  else if (e.key === "Home") next = 0;
+  else if (e.key === "End") next = cups.length - 1;
+  if (next === null) return;
+  e.preventDefault();
+  if (next >= 0 && next < cups.length) selectCup(Number(cups[next].dataset.key), true);
+}
+
+// A global cup: the best of all (the polyform engraved), a milestone (its number), a tier (its number). Never a word.
+function globalCup(g) {
+  const tone = g.kind === "best" ? "gold" : g.kind === "milestone" ? (MILESTONE_TONE[g.n] || "gold") : g.kind;
+  const size = g.n >= 1000 ? " d4" : g.n >= 100 ? " d3" : "";
+  const engraved = g.kind === "best"
+    ? Array.from(dom.trophyGlobal.querySelectorAll("svg > g")).map((el) => el.outerHTML).join("")
+    : '<text class="digits' + size + '" x="12" y="8.4">' + g.n + "</text>";
+  const what = g.kind === "best" ? t("tri.t.best") : g.kind === "milestone" ? t("tri.t.milestone", { n: g.n }) : t("tri.t.tier." + g.kind);
+  const label = esc(what + ": " + t(g.won ? "tri.t.state.on" : "tri.t.state.off"));
+  return '<span class="case-g tone-' + tone + (g.won ? " on" : "") + '" role="img" aria-label="' + label + '" title="' + label + '">' +
+    '<span class="trophy' + (g.won ? " on" : "") + '"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + cupParts() + engraved + "</svg></span></span>";
+}
+
+function renderCase() {
+  const s = trophies.state;
+  const n = TriTrophies.counts(s);
+  const lang = window.i18n && window.i18n.get ? window.i18n.get() : undefined;
+  dom.caseCount.textContent = n.won.toLocaleString(lang) + " / " + n.total.toLocaleString(lang);
+  dom.caseCount.setAttribute("aria-label", countText(n));
+  dom.caseGlobals.innerHTML = TriTrophies.globals(s).map(globalCup).join("");
+  dom.caseGrid.setAttribute("aria-label", t("tri.t.grid") + ": " + countText(n));
+  dom.caseGrid.innerHTML = cupSymbol() + TriTrophies.entries(s).map((e) =>
+    '<span class="sc tier-' + e.tier + ' on" data-key="' + e.key + '"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#tri-cup"/></svg></span>').join("");
+  showSeen(trophies.seen);
+}
+
+function selectCup(key, focusGrid) {
+  showSeen(key);
+  const cup = dom.caseGrid.querySelector('.sc[data-key="' + key + '"]');
+  if (cup && cup.scrollIntoView) cup.scrollIntoView({ block: "nearest" });
+  if (focusGrid) dom.caseGrid.focus();
+}
+
+// One configuration won, shown as its twelve pieces in order, each in its own colour, beside its cup. With none chosen,
+// twelve empty places wait where they will appear (the row keeps its height, so the grid never jumps).
+function showSeen(key) {
+  trophies.seen = key === undefined || key === null ? null : key;
+  dom.caseGrid.querySelectorAll(".sc.sel").forEach((el) => el.classList.remove("sel"));
+  const entry = trophies.seen !== null ? TriTrophies.entries(trophies.state).find((e) => e.key === trophies.seen) : null;
+  if (!entry) {
+    dom.caseSeen.innerHTML = '<span class="pc empty"></span>'.repeat(12);
+    dom.caseSeen.setAttribute("aria-hidden", "true");
+    dom.caseSeen.removeAttribute("aria-label");
+    return;
+  }
+  const cup = dom.caseGrid.querySelector('.sc[data-key="' + entry.key + '"]');
+  if (cup) cup.classList.add("sel");
+  const pieces = entry.order.map((name) => {
+    const type = state.pieceTypeMap.get(name);
+    return '<span class="pc">' + (type ? buildPiecePreviewSvg(type) : "") + "</span>";
+  }).join("");
+  dom.caseSeen.innerHTML = '<svg class="seen-cup on tone-' + entry.tier + '" viewBox="0 0 24 24" aria-hidden="true"><use href="#tri-cup"/></svg>' + pieces;
+  dom.caseSeen.removeAttribute("aria-hidden");
+  dom.caseSeen.setAttribute("aria-label", t("tri.t.seen") + ": " + entry.order.join(", ") + ". " + t("tri.t.state.on"));
 }
 
 /* ---------- camera inside the board ---------- */
