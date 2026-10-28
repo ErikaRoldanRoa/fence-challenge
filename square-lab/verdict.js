@@ -95,6 +95,7 @@
       count += 1;
       if (count > 4000) return null;
     } while (at !== startKey);
+    if (count !== edges.size) return null;                  // another loop is left: the inside has a hole (a piece or pieces of its own)
     return mergeCyclic(seq);
   }
 

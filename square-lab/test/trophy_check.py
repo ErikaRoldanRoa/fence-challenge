@@ -211,6 +211,20 @@ with sync_playwright() as pw:
         check(not errors, f"no errors in the console {errors[:2]}")
         ctx.close()
 
+    # ---- the best of all needs a closed fence (the verdict is stood in for: no fence of the best area is among the fixtures)
+    ctx, page, errors = new_page(browser, 390, 844, True, "en")
+    page.evaluate("() => { SqVerdict.verdict = () => 'best'; }")
+    page.evaluate("() => { window.__analyze = FenceAnalysis.analyze; FenceAnalysis.analyze = (a) => Object.assign({}, window.__analyze(a), { cornerLeak: true }); }")
+    put(page, FENCES[0])
+    stored = json.loads(page.evaluate(SEEN)["stored"])
+    check(stored["g"] is False and len(stored["c"]) == 1, "with a corner left open the configuration's trophy is won and the best of all is not")
+    page.evaluate("() => { FenceAnalysis.analyze = window.__analyze; }")
+    put(page, FENCES[0])
+    stored = json.loads(page.evaluate(SEEN)["stored"])
+    check(stored["g"] is True, "with the corner closed the best of all is won")
+    check(not errors, f"no errors in the console {errors[:2]}")
+    ctx.close()
+
     browser.close()
 
 print("\n%d check(s) failed" % len(fails) if fails else "\nall checks passed")

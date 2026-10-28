@@ -37,6 +37,20 @@ for (const f of fences) {
   for (const c of [[x, y - 1], [x + 1, y], [x, y + 1], [x - 1, y]]) if (!inside.has(c.join(","))) open.delete(c.join(","));
   assert.strictEqual(V.configuration(open, inside), null);
 
+  /* ---- an inside with a hole has no single walk round it: a piece stands inside it, so there are two boundaries ---- */
+  const deep = [...inside].find((k) => {
+    const [x, y] = k.split(",").map(Number);
+    for (let dx = -1; dx <= 1; dx += 1) for (let dy = -1; dy <= 1; dy += 1) if (!inside.has((x + dx) + "," + (y + dy))) return false;
+    return true;
+  });
+  assert.ok(deep, "a cell well inside the inside");
+  const holed = new Set(inside);
+  holed.delete(deep);
+  const island = new Map(owner);
+  island.set(deep, order[0]);
+  assert.strictEqual(V.orderAround(island, holed), null);
+  assert.strictEqual(V.configuration(island, holed), null);
+
   /* ---- fewer than twelve pieces, or nothing inside: no configuration ---- */
   const fewer = new Map(owner);
   for (const [k, p] of owner) if (p === order[0]) fewer.set(k, order[1]);

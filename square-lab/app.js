@@ -1140,7 +1140,7 @@
     let popGlobal = false;
     let said = null;
     if (trophies.order) {
-      const r = SqTrophies.record(trophies.state, trophies.order, analysis.totalArea);
+      const r = SqTrophies.record(trophies.state, trophies.order, analysis.totalArea, !analysis.cornerLeak);
       if (r.wonConfig || r.wonGlobal) {
         trophies.state = r.state;
         if (trophies.storage) SqTrophies.save(trophies.storage, r.state);
