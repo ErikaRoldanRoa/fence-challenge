@@ -17,6 +17,7 @@ OUT = sys.argv[2] if len(sys.argv) > 2 else "/tmp/contest-check"
 os.makedirs(OUT, exist_ok=True)
 failures, count = [], 0
 API = "https://api.contest.test/exec"
+OPEN_AT = "2026-10-22T14:00:00+02:00"   # a moment of the contest day, before it closes: no scenario depends on today's date
 
 
 def check(cond, msg):
@@ -54,8 +55,7 @@ def phone(browser, lang="fr", reduced=False, now=None, ticket=None):
     errors = []
     pg.on("pageerror", lambda e: errors.append(str(e)))
     pg.on("console", lambda m: errors.append(m.text) if m.type == "error" and "api.contest.test" not in m.text and "ERR_" not in m.text else None)
-    if now:
-        pg.clock.set_fixed_time(now)
+    pg.clock.set_fixed_time(now or OPEN_AT)
     return ctx, pg, posts, answer, errors
 
 
