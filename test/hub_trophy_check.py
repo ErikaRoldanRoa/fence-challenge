@@ -80,6 +80,17 @@ with sync_playwright() as p:
             s = pg.evaluate(STATE, card)
             check(shown == lesser["area"] and s["pill"] and s["shown"] == str(lesser["area"]) and not s["won"], f"{tag} {card}: a fence of {lesser['area']} cells is live and leaves the trophy dark: {s}")
             pg.evaluate(CLEAR, card)
+        # a board that is not a fence leaves the trophy dark, whatever its area: the card's rule is the whole rule
+        for card in CARDS:
+            best = FENCES[card]["best"]
+            for flaw, patch in (("two insides", "{ regionCount: 2 }"), ("a corner left open", "{ cornerLeak: true }")):
+                pg.evaluate("() => { window.__analyze = FenceAnalysis.analyze; FenceAnalysis.analyze = (a) => Object.assign({}, window.__analyze(a), %s); }" % patch)
+                shown = pg.evaluate(PLACE, [card, best["placedPieces"]])
+                pg.wait_for_timeout(100)
+                s = pg.evaluate(STATE, card)
+                check(shown == best["area"] and not s["pill"] and not s["won"] and s["stored"] is None, f"{tag} {card}: the best area with {flaw} is no fence and leaves the trophy dark: {s}")
+                pg.evaluate("() => { FenceAnalysis.analyze = window.__analyze; }")
+                pg.evaluate(CLEAR, card)
         # the best fence of one card lights its trophy and no other
         for card in CARDS:
             best = FENCES[card]["best"]
