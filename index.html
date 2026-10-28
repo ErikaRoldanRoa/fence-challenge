@@ -71,7 +71,23 @@
       a:focus-visible,button:focus-visible,[tabindex]:focus-visible,summary:focus-visible,.icon:focus-visible{outline:2px solid rgba(255,255,255,0.6);outline-offset:2px;}
       .icon.info{color:var(--purple);border-color:rgba(178,120,255,0.45);font-family:var(--mono);font-weight:800;font-size:14px;}
       
-      .icon.goal{cursor:help;border-color:rgba(255,210,74,0.45);background:linear-gradient(180deg,rgba(255,210,74,0.12),rgba(255,210,74,0.04));font-size:15px;}
+      /* The goal is a trophy: dark until the card's best fence is built, then lit for good on this device (hub.js). It carries
+         no number: the page never says what the best is. */
+      .icon.goal{cursor:help;color:#ffd24a;}
+      .icon.goal svg{display:block;width:30px;height:30px;overflow:visible;transition:filter .25s ease,opacity .25s ease;}
+      .icon.goal .cup,.icon.goal .rest{fill:none;stroke:currentColor;stroke-width:1.4;stroke-linejoin:round;stroke-linecap:round;}
+      .icon.goal .mark{fill:none;stroke:currentColor;stroke-width:.22;stroke-linejoin:round;opacity:.9;}
+      .icon.goal .tile{fill:rgba(70,44,0,.86);stroke:currentColor;stroke-width:.2;stroke-linejoin:round;}
+      .icon.goal:not(.won) svg{opacity:.5;filter:grayscale(1);}
+      .icon.goal:not(.won) .tile{display:none;}
+      .icon.goal.won{border-color:rgba(255,210,74,0.7);background:linear-gradient(180deg,rgba(255,210,74,0.16),rgba(255,210,74,0.05));}
+      .icon.goal.won svg{filter:drop-shadow(0 0 5px currentColor);}
+      .icon.goal.won .cup{fill:currentColor;}
+      .icon.goal.won .mark{display:none;}
+      .icon.goal.won rect.rest{fill:currentColor;fill-opacity:.35;}
+      @keyframes goalPop{0%{transform:scale(.7);}40%{transform:scale(1.28);}100%{transform:scale(1);}}
+      .icon.goal.pop svg{animation:goalPop .7s ease-out;}
+      @media(prefers-reduced-motion:reduce){.icon.goal.pop svg{animation:none;}}
       
       .icon.reset{cursor:pointer;font-size:13px;color:var(--muted2);}
       
@@ -309,9 +325,9 @@
             <button class="icon act" data-flip="sq" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 8.5h14M15 5l3.5 3.5L15 12M19.5 15.5h-14M9 12l-3.5 3.5L9 19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </span>
             <span class="pIconSet nav">
-            <span class="icon goal" role="img" tabindex="0" data-tip-pos="below"
+            <span class="icon goal" role="img" tabindex="0" data-tip-pos="below" data-goal="sq"
                   data-i18n-data-tip="hub.goalTip" data-tip="Enclos la plus grande aire possible."
-                  data-i18n-aria-label="hub.goalAria" aria-label="But de la mission : enclos la plus grande aire possible.">🏆</span>
+                  data-i18n-aria-label="hub.goalAria" aria-label="But de la mission : enclos la plus grande aire possible. Trophée pas encore gagné."><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="cup" d="M6.8 1.2h10.4v6.4a5.2 5.2 0 0 1-10.4 0V1.2z"/><path class="rest" d="M6.8 3.4H3.9v1.6a3.7 3.7 0 0 0 3.7 3.7M17.2 3.4h2.9v1.6a3.7 3.7 0 0 1-3.7 3.7M12 12.9v6.6"/><rect class="rest" x="8" y="19.6" width="8" height="3.7" rx="1"/><g transform="translate(12 6.7) scale(1.3) translate(-1.5 -1.5)"><rect class="tile" x="1" y="0" width="1" height="1"/><rect class="tile" x="2" y="0" width="1" height="1"/><rect class="tile" x="0" y="1" width="1" height="1"/><rect class="tile" x="1" y="1" width="1" height="1"/><rect class="tile" x="1" y="2" width="1" height="1"/></g><g transform="translate(12 6.7) scale(1.3) translate(-1.5 -1.5)"><rect class="mark" x="1" y="0" width="1" height="1"/><rect class="mark" x="2" y="0" width="1" height="1"/><rect class="mark" x="0" y="1" width="1" height="1"/><rect class="mark" x="1" y="1" width="1" height="1"/><rect class="mark" x="1" y="2" width="1" height="1"/></g></svg></span>
             <a class="icon launch" aria-disabled="true" data-launch="sq" href="square-lab/index.html" data-i18n-data-tip="hub.launchSqTip" data-i18n-aria-label="hub.launchSqAria"
                data-tip="Ferme une barrière ici (aire ≥ 1) pour ouvrir le labo du Défi 2 · 12 pentominos" data-tip-pos="below"
                aria-label="Ouvrir le labo du Défi 2">🚀</a>
@@ -351,9 +367,9 @@
             <button class="icon act" data-flip="hex" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 8.5h14M15 5l3.5 3.5L15 12M19.5 15.5h-14M9 12l-3.5 3.5L9 19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </span>
             <span class="pIconSet nav">
-            <span class="icon goal" role="img" tabindex="0" data-tip-pos="below"
+            <span class="icon goal" role="img" tabindex="0" data-tip-pos="below" data-goal="hex"
                   data-i18n-data-tip="hub.goalTip" data-tip="Enclos la plus grande aire possible."
-                  data-i18n-aria-label="hub.goalAria" aria-label="But de la mission : enclos la plus grande aire possible.">🏆</span>
+                  data-i18n-aria-label="hub.goalAria" aria-label="But de la mission : enclos la plus grande aire possible. Trophée pas encore gagné."><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="cup" d="M6.8 1.2h10.4v6.4a5.2 5.2 0 0 1-10.4 0V1.2z"/><path class="rest" d="M6.8 3.4H3.9v1.6a3.7 3.7 0 0 0 3.7 3.7M17.2 3.4h2.9v1.6a3.7 3.7 0 0 1-3.7 3.7M12 12.9v6.6"/><rect class="rest" x="8" y="19.6" width="8" height="3.7" rx="1"/><g transform="translate(12 6.7) scale(1.12) translate(-0.75 -0.433)"><polygon class="tile" points="1,0 0.5,0.866 -0.5,0.866 -1,0 -0.5,-0.866 0.5,-0.866"/><polygon class="tile" points="1,1.732 0.5,2.598 -0.5,2.598 -1,1.732 -0.5,0.866 0.5,0.866"/><polygon class="tile" points="2.5,-0.866 2,0 1,0 0.5,-0.866 1,-1.732 2,-1.732"/><polygon class="tile" points="2.5,0.866 2,1.732 1,1.732 0.5,0.866 1,0 2,0"/></g><g transform="translate(12 6.7) scale(1.12) translate(-0.75 -0.433)"><polygon class="mark" points="1,0 0.5,0.866 -0.5,0.866 -1,0 -0.5,-0.866 0.5,-0.866"/><polygon class="mark" points="1,1.732 0.5,2.598 -0.5,2.598 -1,1.732 -0.5,0.866 0.5,0.866"/><polygon class="mark" points="2.5,-0.866 2,0 1,0 0.5,-0.866 1,-1.732 2,-1.732"/><polygon class="mark" points="2.5,0.866 2,1.732 1,1.732 0.5,0.866 1,0 2,0"/></g></svg></span>
             <a class="icon launch" aria-disabled="true" data-launch="hex" href="hex-lab/index.html" data-i18n-data-tip="hub.launchHexTip" data-i18n-aria-label="hub.launchHexAria"
                data-tip="Ferme une barrière (aire ≥ 1) pour débloquer" data-tip-pos="below"
                aria-label="Ouvrir le Défi 3">🚀</a>
@@ -388,9 +404,9 @@
             <button class="icon act" data-flip="tri" data-tip-pos="below" data-i18n-data-tip="hub.flipTip" data-tip="Retourne la pièce choisie (touche F)" data-i18n-aria-label="hub.flipAria" aria-label="Retourne la pièce choisie"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4.5 8.5h14M15 5l3.5 3.5L15 12M19.5 15.5h-14M9 12l-3.5 3.5L9 19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             </span>
             <span class="pIconSet nav">
-            <span class="icon goal" role="img" tabindex="0" data-tip-pos="below"
+            <span class="icon goal" role="img" tabindex="0" data-tip-pos="below" data-goal="tri"
                   data-i18n-data-tip="hub.goalTip" data-tip="Enclos la plus grande aire possible."
-                  data-i18n-aria-label="hub.goalAria" aria-label="But de la mission : enclos la plus grande aire possible.">🏆</span>
+                  data-i18n-aria-label="hub.goalAria" aria-label="But de la mission : enclos la plus grande aire possible. Trophée pas encore gagné."><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="cup" d="M6.8 1.2h10.4v6.4a5.2 5.2 0 0 1-10.4 0V1.2z"/><path class="rest" d="M6.8 3.4H3.9v1.6a3.7 3.7 0 0 0 3.7 3.7M17.2 3.4h2.9v1.6a3.7 3.7 0 0 1-3.7 3.7M12 12.9v6.6"/><rect class="rest" x="8" y="19.6" width="8" height="3.7" rx="1"/><g transform="translate(12 6.7)"><polygon class="tile" points="2.5,0 1.25,2.165 -1.25,2.165 -2.5,0 -1.25,-2.165 1.25,-2.165"/><path class="tile" d="M2.5 0H-2.5M1.25 2.165L-1.25-2.165M-1.25 2.165L1.25-2.165"/></g><g transform="translate(12 6.7)"><polygon class="mark" points="2.5,0 1.25,2.165 -1.25,2.165 -2.5,0 -1.25,-2.165 1.25,-2.165"/><path class="mark" d="M2.5 0H-2.5M1.25 2.165L-1.25-2.165M-1.25 2.165L1.25-2.165"/></g></svg></span>
             <a class="icon launch" aria-disabled="true" data-launch="tri" href="triangle-lab/index.html" data-i18n-data-tip="hub.launchTriTip" data-i18n-aria-label="hub.launchTriAria"
                data-tip="Ferme une barrière (aire ≥ 1) pour débloquer" data-tip-pos="below"
                aria-label="Ouvrir le Défi 4">🚀</a>

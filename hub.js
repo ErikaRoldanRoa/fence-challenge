@@ -14,6 +14,41 @@
     return area >= 1 && regionCount === 1 && !cornerLeak;
   }
 
+  // The trophy of each card is its goal icon: dark until the best fence of the card's pieces on its board is built, then lit for
+  // good on this device. BEST_AREA is that best area, proven by exhaustion for the card's own pieces and board and checked with
+  // this page's own rule (isFence); it is never shown: the trophy only lights.
+  const BEST_AREA = { sq: 9, hex: 12, tri: 5 };
+  const goalWon = {};
+  const liveGoal = {};
+  function showGoal(card, won, fresh) {
+    const el = document.querySelector('.icon.goal[data-goal="' + card + '"]');
+    if (!el) return;
+    goalWon[card] = won;
+    el.classList.toggle("won", won);
+    const tip = won ? "hub.goalTipOn" : "hub.goalTip";
+    const aria = won ? "hub.goalAriaOn" : "hub.goalAria";
+    el.setAttribute("data-i18n-data-tip", tip);
+    el.setAttribute("data-tip", i18n.t(tip));
+    el.setAttribute("data-i18n-aria-label", aria);
+    el.setAttribute("aria-label", i18n.t(aria));
+    if (fresh) {
+      el.classList.remove("pop");
+      void el.offsetWidth; // restart the animation
+      el.classList.add("pop");
+    }
+  }
+  function winGoal(card) {
+    if (goalWon[card]) return;
+    try { localStorage.setItem("fc-hub-trophy-" + card, "1"); } catch (e) {}
+    showGoal(card, true, true);
+    liveGoal[card] = true;
+  }
+  function restoreGoal(card) {
+    let won = false;
+    try { won = localStorage.getItem("fc-hub-trophy-" + card) === "1"; } catch (e) {}
+    if (won) showGoal(card, true, false);
+  }
+
   // Polite announcements for screen readers: a card's verdict once the
   // board has been still for a moment, and a lab when it unlocks.
   const live = document.getElementById("hubLive");
@@ -37,6 +72,10 @@
       if (liveUnlocked[card]) {
         text = (text ? text + " " : "") + i18n.t(CARD_UNLOCKED[card]);
         liveUnlocked[card] = false;
+      }
+      if (liveGoal[card]) {
+        text = (text ? text + " " : "") + i18n.t("hub.liveBest");
+        liveGoal[card] = false;
       }
       if (text && live) live.textContent = text;
     }, 900);
@@ -118,6 +157,7 @@
           coin.classList.toggle("leak", !!cornerLeak);
           coinLab.textContent = i18n.t("hub.coinLabel");
           if (valid) { noteUnlock("sq", launch); unlock(); }
+          if (valid && area === BEST_AREA.sq) winGoal("sq");
           noteArea("sq", info);
         },
         onStatus: (msg) => { root.dataset.status = msg; },
@@ -135,6 +175,7 @@
     try {
       if (localStorage.getItem("unlock-sq") === "1") unlock();
     } catch (e) {}
+    restoreGoal("sq");
 
     const refresh = () => engine.detectArea();
     const canvas = root.querySelector("canvas");
@@ -214,6 +255,7 @@
           document.getElementById("pill-hex").classList.toggle("live", valid);
           root.dataset.pockets = regionCount > 1 ? String(regionCount) : "";
           if (valid) { noteUnlock("hex", launch); unlock(); }
+          if (valid && area === BEST_AREA.hex) winGoal("hex");
           noteArea("hex", info);
         },
         onStatus: (msg) => { root.dataset.status = msg; },
@@ -231,6 +273,7 @@
     try {
       if (localStorage.getItem("unlock-hex") === "1") unlock();
     } catch (e) {}
+    restoreGoal("hex");
 
     const refresh = () => engine.detectArea();
     const canvas = root.querySelector("canvas");
@@ -299,6 +342,7 @@
           document.getElementById("coin-tri").classList.toggle("leak", !!cornerLeak);
           root.dataset.pockets = regionCount > 1 ? String(regionCount) : "";
           if (valid) { noteUnlock("tri", launch); unlock(); }
+          if (valid && area === BEST_AREA.tri) winGoal("tri");
           noteArea("tri", info);
         },
         onStatus: (msg) => { root.dataset.status = msg; },
@@ -316,6 +360,7 @@
     try {
       if (localStorage.getItem("unlock-tri") === "1") unlock();
     } catch (e) {}
+    restoreGoal("tri");
 
     const refresh = () => engine.detectArea();
     const canvas = root.querySelector("canvas");

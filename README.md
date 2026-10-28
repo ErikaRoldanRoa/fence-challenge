@@ -167,6 +167,8 @@ root, with the server running on port 8000 where a base address is asked:
   trophy section), `python3 triangle-lab/test/trophy_check.py http://localhost:8000/ OUTDIR`
 - the pieces of the three cards on the home page follow the finger:
   `python3 test/engine_drag_check.py http://localhost:8000/`
+- the trophies of the three cards on the home page (a smaller fence leaves them dark, the best fence of the card lights them,
+  a reload keeps them; the three languages): `python3 test/hub_trophy_check.py http://localhost:8000/ OUTDIR`
 - the three 2D labs' checks and this one also run in the engine of Safari (a mouse drag stands in for touch there):
   `FC_BROWSER=webkit python3 hex-lab/test/ui_check.py http://localhost:8000/ OUTDIR`
 - the hub, and the layout of the 2026 labs and of the shelf and case of the square and triangle labs:
