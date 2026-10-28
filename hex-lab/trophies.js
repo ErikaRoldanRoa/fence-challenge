@@ -73,7 +73,7 @@
   const TIERS = ["gold", "silver", "bronze"];
 
   function tierOfKey(key) {
-    return TIERS[DATA.best - DATA.areaByOrder[key]];
+    return TIERS[Math.min(2, Math.max(0, DATA.best - DATA.areaByOrder[key]))];   // 0, 1 or 2 cells short; never off the list
   }
 
   function entries(state) {

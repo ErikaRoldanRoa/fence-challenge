@@ -34,6 +34,19 @@ PIECE = """(id) => {
   return { x: far.x, y: far.y, step, n: cells.length, onBoard: cells.every((c) => st.board.map.has(lat.cellKey(c))) };
 }"""
 SPAWN = "(id) => { const eng = document.getElementById('engine-' + id)._engine; eng.clear(); eng.spawnPiece(eng.pieceTypes[0].id); eng.render(); }"
+# a piece that a turn changes (not the square tetromino, which is its own turn), and where its anchor cell stands on the screen
+SPAWN_TURNING = "(id) => { const eng = document.getElementById('engine-' + id)._engine; eng.clear(); const t = eng.pieceTypes.find((q) => q.rotateMap[q.spawnVariant] !== q.spawnVariant); eng.spawnPiece(t.id); eng.render(); }"
+MARKER = """(id) => {
+  const root = document.getElementById('engine-' + id), eng = root._engine, st = eng.state, lat = eng.lattice;
+  const p = st.placedPieces[0]; if (!p) return null;
+  const canvas = root.querySelector('canvas'), r = canvas.getBoundingClientRect(), v = st.view, k = r.width / canvas.width;
+  const e = st.board.map.get(lat.cellKey(p.marker));
+  const own = st.pieceTypeMap.get(p.typeId).variants[p.variantIndex];
+  const cells = own.cells.map((c) => st.board.map.get(lat.cellKey(lat.translateCell(c, p.marker))));
+  let step = Infinity;
+  for (let i = 0; i < cells.length; i++) for (let j = i + 1; j < cells.length; j++) step = Math.min(step, Math.hypot(cells[i].centroid.x - cells[j].centroid.x, cells[i].centroid.y - cells[j].centroid.y) * v.scale * k);
+  return { x: r.left + (e.centroid.x * v.scale + v.offsetX) * k, y: r.top + (e.centroid.y * v.scale + v.offsetY) * k, step };
+}"""
 
 
 def check(cond, msg):
@@ -94,6 +107,30 @@ with sync_playwright() as pw:
                 gap = math.hypot(g1["x"] - b[0], g1["y"] - b[1]) / g0["step"]
                 check(g1["onBoard"] and gap <= limit, f"[{name} {card}] a drag of ({dx}, {dy}) steps: the cell taken ends {gap:.2f} step from the finger (at most {limit})")
                 a = (g1["x"], g1["y"])
+        if not touch:
+            # a turn (the R key) while a piece is held keeps it where it is: it does not jump to the pointer
+            for card in CARDS:
+                page.evaluate("(id) => document.getElementById('engine-' + id).scrollIntoView({block: 'center'})", card)
+                page.wait_for_timeout(250)
+                page.evaluate(SPAWN_TURNING, card)
+                page.wait_for_timeout(150)
+                g = page.evaluate(PIECE, card)
+                a = (g["x"], g["y"])
+                page.mouse.move(*a)
+                page.mouse.down()
+                for k in range(1, 7):
+                    page.mouse.move(a[0] + g["step"] * 1.0 * k / 6, a[1] + g["step"] * 0.5 * k / 6)
+                page.wait_for_timeout(100)
+                held = (a[0] + g["step"], a[1] + g["step"] * 0.5)
+                page.keyboard.press("r")
+                page.wait_for_timeout(100)
+                m1 = page.evaluate(MARKER, card)
+                page.mouse.move(held[0] + g["step"] * 0.15, held[1])      # a small move after the turn
+                page.wait_for_timeout(100)
+                m2 = page.evaluate(MARKER, card)
+                page.mouse.up()
+                jump = math.hypot(m2["x"] - m1["x"], m2["y"] - m1["y"]) / m1["step"]       # from where the turn left the anchor
+                check(jump <= 1.2, f"[{name} {card}] a turn while the piece is held: its anchor moves {jump:.2f} step by the next small move (at most 1.2)")
         check(not errors, f"[{name}] no errors in the page {errors[:2]}")
         ctx.close()
     browser.close()

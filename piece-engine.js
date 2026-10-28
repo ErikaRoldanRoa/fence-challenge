@@ -228,7 +228,7 @@
         }
         if (reorientPlacedPiece(selected, next)) {
           state.freshPieceId = selected.id; // the next tap on it only selects it
-          state._grabOffset = null; // a new shape: no grabbed cell to follow
+          // the grab offset (set at pointer down, cleared at pointer up) stays: a turn while the piece is held must not make it jump
           setStatus(`${verb} ${selected.typeId}.`);
           resetArea();
           render();
