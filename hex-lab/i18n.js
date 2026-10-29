@@ -64,7 +64,9 @@
     "hx.t.tier.gold": "Toutes les configurations en or",
     "hx.t.tier.silver": "Toutes les configurations en argent",
     "hx.t.tier.bronze": "Toutes les configurations en bronze",
-    "hx.t.seen": "Configuration"
+    "hx.t.seen": "Configuration",
+    "hx.t.saved": "Gardé sur cet appareil",
+    "hx.t.unsaved": "Rien n’est gardé dans ce navigateur"
   });
 
   Object.assign(DICT.de, {
@@ -123,7 +125,9 @@
     "hx.t.tier.gold": "Alle Konfigurationen in Gold",
     "hx.t.tier.silver": "Alle Konfigurationen in Silber",
     "hx.t.tier.bronze": "Alle Konfigurationen in Bronze",
-    "hx.t.seen": "Konfiguration"
+    "hx.t.seen": "Konfiguration",
+    "hx.t.saved": "Auf diesem Gerät gespeichert",
+    "hx.t.unsaved": "In diesem Browser wird nichts gespeichert"
   });
 
   Object.assign(DICT.en, {
@@ -182,6 +186,8 @@
     "hx.t.tier.gold": "All the gold configurations",
     "hx.t.tier.silver": "All the silver configurations",
     "hx.t.tier.bronze": "All the bronze configurations",
-    "hx.t.seen": "Configuration"
+    "hx.t.seen": "Configuration",
+    "hx.t.saved": "Kept on this device",
+    "hx.t.unsaved": "Nothing is kept in this browser"
   });
 })();

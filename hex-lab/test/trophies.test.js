@@ -77,6 +77,10 @@ assert.deepStrictEqual(T.load(store), { g: false, c: [V.canonicalKey(orders[34])
 const broken = { getItem() { throw new Error("blocked"); }, setItem() { throw new Error("blocked"); } };
 assert.deepStrictEqual(T.load(broken), T.empty(), "a storage that throws is an empty one");
 assert.strictEqual(T.save(broken, state), false, "and saving to it fails quietly");
+const full = { getItem() { return null; }, setItem() { throw new Error("quota"); } };
+assert.deepStrictEqual(T.load(full), T.empty(), "a storage that is full still reads as an empty one");
+assert.strictEqual(T.save(full, state), false, "and a save to it says that nothing was kept (the saving icon of the case follows that answer)");
+assert.strictEqual(T.save(storage(), state), true, "while a save that goes through says so");
 
 /* ---- the case: every configuration once, the global trophies derived from what is won ---- */
 const all = T.entries(T.empty());

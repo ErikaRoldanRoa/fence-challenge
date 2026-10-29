@@ -65,7 +65,9 @@
     "tri.t.milestone": "{n} configurations gagnées",
     "tri.t.tier.gold": "Toutes les configurations en or",
     "tri.t.tier.silver": "Toutes les configurations en argent",
-    "tri.t.seen": "Configuration"
+    "tri.t.seen": "Configuration",
+    "tri.t.saved": "Gardé sur cet appareil",
+    "tri.t.unsaved": "Rien n’est gardé dans ce navigateur"
   });
 
   Object.assign(DICT.de, {
@@ -125,7 +127,9 @@
     "tri.t.milestone": "{n} Konfigurationen gewonnen",
     "tri.t.tier.gold": "Alle Konfigurationen in Gold",
     "tri.t.tier.silver": "Alle Konfigurationen in Silber",
-    "tri.t.seen": "Konfiguration"
+    "tri.t.seen": "Konfiguration",
+    "tri.t.saved": "Auf diesem Gerät gespeichert",
+    "tri.t.unsaved": "In diesem Browser wird nichts gespeichert"
   });
 
   Object.assign(DICT.en, {
@@ -185,6 +189,8 @@
     "tri.t.milestone": "{n} configurations won",
     "tri.t.tier.gold": "All the gold configurations",
     "tri.t.tier.silver": "All the silver configurations",
-    "tri.t.seen": "Configuration"
+    "tri.t.seen": "Configuration",
+    "tri.t.saved": "Kept on this device",
+    "tri.t.unsaved": "Nothing is kept in this browser"
   });
 })();

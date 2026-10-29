@@ -64,7 +64,7 @@ PLACE = """(fence) => {
 SEEN = """() => ({
   config: { on: document.getElementById('trophy-config').classList.contains('on'), tier: ['gold', 'silver', 'bronze'].find((t) => document.getElementById('trophy-config').classList.contains('tier-' + t)) || null, title: document.getElementById('trophy-config').title },
   global: { on: document.getElementById('trophy-global').classList.contains('on'), title: document.getElementById('trophy-global').title },
-  stored: localStorage.getItem('fc-trophies-tri12'),
+  stored: (() => { try { return localStorage.getItem('fc-trophies-tri12'); } catch (e) { return 'blocked'; } })(),
   status: document.getElementById('status').textContent,
 })"""
 
@@ -81,9 +81,11 @@ def check(cond, msg):
         fails.append(msg)
 
 
-def new_page(browser, w, h, touch, lang, storage=None):
+def new_page(browser, w, h, touch, lang, storage=None, init=""):
     ctx = browser.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch, device_scale_factor=2)
     ctx.add_init_script("try{localStorage.setItem('fc-lang','%s')}catch(e){}" % lang)
+    if init:
+        ctx.add_init_script(init)
     if storage is not None:
         ctx.add_init_script("try{if(!sessionStorage.getItem('seeded')){localStorage.setItem('fc-trophies-tri12', %s);sessionStorage.setItem('seeded','1')}}catch(e){}" % json.dumps(storage))
     page = ctx.new_page()
@@ -99,6 +101,61 @@ def new_page(browser, w, h, touch, lang, storage=None):
 def measure(page):
     page.click("#detect-area")
     page.wait_for_timeout(120)
+
+
+# The saving icon of the case: a picture right after the count (not a control, no focus stop) that says whether this browser keeps what
+# is won, and is struck through when it keeps nothing.
+SAVED = {
+    "en": ("Kept on this device", "Nothing is kept in this browser"),
+    "fr": ("Gardé sur cet appareil", "Rien n’est gardé dans ce navigateur"),
+    "de": ("Auf diesem Gerät gespeichert", "In diesem Browser wird nichts gespeichert"),
+}
+SAVED_ICON = """() => {
+  const e = document.getElementById('case-saved');
+  if (!e) return null;
+  const rb = (n) => n.getBoundingClientRect();
+  const head = document.querySelector('.case-head'), count = document.getElementById('case-count'), close = document.getElementById('case-close');
+  const i = rb(e), c = rb(count), x = rb(close), h = rb(head);
+  const hit = (a, b) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+  const shown = (k) => { const g = e.querySelector('.' + k); return !!g && getComputedStyle(g).display !== 'none'; };
+  const mid = document.elementFromPoint((i.left + i.right) / 2, (i.top + i.bottom) / 2);
+  return { role: e.getAttribute('role'), label: e.getAttribute('aria-label'), title: e.getAttribute('title'), off: e.classList.contains('off'),
+    drawing: ['kept', 'lost'].filter(shown), tabIndex: e.tabIndex, text: e.textContent.trim(), hiddenPicture: e.querySelector('svg').getAttribute('aria-hidden') === 'true',
+    stops: Array.from(document.querySelectorAll('#case a[href], #case button, #case input, #case select, #case textarea, #case [tabindex]')).filter((n) => n.tabIndex >= 0).map((n) => n.id),
+    afterCount: count.nextElementSibling === e, size: [Math.round(i.width * 10) / 10, Math.round(i.height * 10) / 10],
+    sameRow: Math.abs((i.top + i.bottom) / 2 - (c.top + c.bottom) / 2) < 2,
+    rows: new Set(Array.from(head.children).filter((n) => getComputedStyle(n).display !== 'none' && !n.classList.contains('case-bar')).map((n) => Math.round((rb(n).top + rb(n).bottom) / 2))).size,
+    inHead: i.left >= h.left - 0.5 && i.right <= h.right + 0.5, touchesCount: hit(i, c), touchesCross: hit(i, x), gapToCross: Math.round((x.left - i.right) * 10) / 10,
+    reached: !!mid && (mid === e || e.contains(mid)), at: [(i.left + i.right) / 2, (i.top + i.bottom) / 2],
+    maskOk: (() => { const g = e.querySelector('.lost g[mask]'), m = g && /#([\\w-]+)/.exec(g.getAttribute('mask')), k = m && document.getElementById(m[1]); return !!k && k.tagName.toLowerCase() === 'mask'; })() };
+}"""
+
+
+def saved_checks(page, label, lang, off, touch=False):
+    """The open case has its saving icon: an image after the count, named (and told in its tooltip) in the language of the page, whole
+    when this browser keeps what is won and struck through when it keeps nothing; no focus stop, no word; a tap on it does nothing."""
+    s = page.evaluate(SAVED_ICON)
+    check(s is not None, f"[{label}] the open case has its saving icon")
+    if s is None:
+        return None
+    want = SAVED[lang][1 if off else 0]
+    check(s["role"] == "img" and s["label"] == want and s["title"] == want, f"[{label}] the icon is an image named {want!r}, its tooltip says the same ({s['label']!r} / {s['title']!r})")
+    check(s["off"] == off and s["drawing"] == (["lost"] if off else ["kept"]), f"[{label}] it is drawn {'struck through' if off else 'whole'} {s['drawing']}")
+    check(s["maskOk"], f"[{label}] and the gap around the strike is made by a mask that exists")
+    check(s["tabIndex"] == -1 and s["stops"] == ["case-close", "case-grid"], f"[{label}] it is no focus stop: the case's tab stops stay the cross and the grid {s['stops']}")
+    check(s["text"] == "" and s["hiddenPicture"], f"[{label}] no word is written in it, and its drawing is hidden from readers")
+    check(s["afterCount"] and s["sameRow"] and s["rows"] == 1 and s["inHead"], f"[{label}] it stands right after the count, on the header's one row ({s['rows']} row)")
+    check(not s["touchesCount"] and not s["touchesCross"] and s["gapToCross"] >= 8 and s["reached"], f"[{label}] it touches neither the count nor the cross ({s['gapToCross']} px from the cross)")
+    check(18 <= s["size"][0] <= 20 and 18 <= s["size"][1] <= 20, f"[{label}] it is {s['size']} px")
+    (page.touchscreen.tap if touch else page.mouse.click)(*s["at"])
+    page.wait_for_timeout(80)
+    check(page.evaluate("() => !document.getElementById('case').hidden"), f"[{label}] a tap on it does nothing: the case stays open")
+    return s
+
+# a browser that refuses storage altogether, and one whose storage is full for the trophies (window.__full tells it to stop being)
+BLOCKED = "Object.defineProperty(window,'localStorage',{get(){throw new Error('blocked')}});"
+FULL = ("window.__full = true; (() => { const set = Storage.prototype.setItem; Storage.prototype.setItem = function (k, v) { "
+        "if (window.__full && String(k).indexOf('fc-trophies') === 0) throw new DOMException('full', 'QuotaExceededError'); return set.call(this, k, v); }; })();")
 
 
 with sync_playwright() as pw:
@@ -150,6 +207,7 @@ with sync_playwright() as pw:
         check(box["panel"][0] >= -0.5 and box["panel"][2] <= box["iw"] + 0.5 and box["panel"][3] <= box["ih"] + 0.5, f"[{label}] the case is on the screen")
         check(box["closeHit"], f"[{label}] the cross can be tapped")
         check(box["seenFits"], f"[{label}] the twelve pieces fit their row")
+        saved_checks(page, label, "en", False, touch)
         page.screenshot(path=str(OUT / f"case-{label.replace(' ', '-')}.png"))
         page.click("#case-grid .sc >> nth=1")
         page.wait_for_timeout(100)
@@ -189,6 +247,7 @@ with sync_playwright() as pw:
         page.click("#shelf")
         page.wait_for_timeout(150)
         check(page.evaluate("document.getElementById('case-count').getAttribute('aria-label')") is not None, f"[{lang}] the count has a label")
+        saved_checks(page, lang, lang, False, True)
         page.screenshot(path=str(OUT / f"case-{lang}.png"))
         check(not errors, f"[{lang}] no errors in the console {errors[:2]}")
         ctx.close()
@@ -232,6 +291,46 @@ with sync_playwright() as pw:
     stored = json.loads(page.evaluate(SEEN)["stored"])
     check(stored["g"] is True, "with the corner closed the best of all is won")
     check(not errors, f"no errors in the console {errors[:2]}")
+    ctx.close()
+
+    # ---- a browser that refuses storage, in each language: a win still lights the trophy for the visit, nothing is kept, the icon says so
+    for lang in ("en", "fr", "de"):
+        ctx, page, errors = new_page(browser, 390, 844, True, "en", init=BLOCKED)
+        page.evaluate("(l) => document.querySelector('[data-lang-btn=\"' + l + '\"]').click()", lang)    # the language cannot be kept either
+        r = page.evaluate(PLACE, FENCES[0])
+        measure(page)
+        s = page.evaluate(SEEN)
+        check("error" not in r and s["config"]["on"] and s["stored"] == "blocked", f"[{lang}, storage refused] a win still lights the trophy for the visit, and nothing is kept")
+        page.click("#shelf")
+        page.wait_for_timeout(200)
+        saved_checks(page, f"{lang}, storage refused", lang, True, True)
+        check(not errors, f"[{lang}, storage refused] no errors in the console {errors[:2]}")
+        ctx.close()
+
+    # ---- a save that fails (the storage is full): the icon is whole, turns struck through at the first win that cannot be kept, and is whole
+    # again once a save goes through (it follows the real state, not the first guess)
+    ctx, page, errors = new_page(browser, 390, 844, True, "en", init=FULL)
+    page.click("#shelf")
+    page.wait_for_timeout(200)
+    saved_checks(page, "full storage, before a win", "en", False, True)
+    page.keyboard.press("Escape")
+    page.evaluate(PLACE, FENCES[0])
+    measure(page)
+    s = page.evaluate(SEEN)
+    check(s["config"]["on"] and s["stored"] is None, "[full storage] a win still lights the trophy for the visit, and nothing is stored")
+    page.click("#shelf")
+    page.wait_for_timeout(200)
+    saved_checks(page, "full storage, after a win that could not be kept", "en", True, True)
+    page.keyboard.press("Escape")
+    page.evaluate("window.__full = false")
+    page.evaluate(PLACE, FENCES[1])
+    measure(page)
+    s = page.evaluate(SEEN)
+    check(s["stored"] is not None and len(json.loads(s["stored"])["c"]) == 2, "[full storage] the next win is saved, with the first one")
+    page.click("#shelf")
+    page.wait_for_timeout(200)
+    saved_checks(page, "full storage, after a save that went through", "en", False, True)
+    check(not errors, f"[full storage] no errors in the console {errors[:2]}")
     ctx.close()
 
     browser.close()

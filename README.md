@@ -162,8 +162,8 @@ root, with the server running on port 8000 where a base address is asked:
   `python3 square-lab/test/ui_check.py http://localhost:8000/ OUTDIR`,
   `python3 hex-lab/test/ui_check.py http://localhost:8000/ OUTDIR`,
   `python3 triangle-lab/test/ui_check.py http://localhost:8000/ OUTDIR`,
-  the trophies of the square, hexagonal and triangular labs (a closed fence of all the pieces on the board, the shelf, the case, three
-  languages): `python3 square-lab/test/trophy_check.py http://localhost:8000/ OUTDIR`, `python3 hex-lab/test/ui_check.py ...` (its
+  the trophies of the square, hexagonal and triangular labs (a closed fence of all the pieces on the board, the shelf, the case and its saving
+  icon, struck through when the browser keeps nothing, three languages): `python3 square-lab/test/trophy_check.py http://localhost:8000/ OUTDIR`, `python3 hex-lab/test/ui_check.py ...` (its
   trophy section), `python3 triangle-lab/test/trophy_check.py http://localhost:8000/ OUTDIR`
 - the pieces of the three cards on the home page follow the finger:
   `python3 test/engine_drag_check.py http://localhost:8000/`

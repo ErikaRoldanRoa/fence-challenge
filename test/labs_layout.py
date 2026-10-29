@@ -1,4 +1,5 @@
-"""Layout check of the four 2026 labs, the hub of all the labs, and the trophy shelf and case of the square, triangle and hex labs.
+"""Layout check of the four 2026 labs, the hub of all the labs, and the trophy shelf and case of the square, triangle and hex labs
+(the case's header stays on one row with its saving icon in it).
 
 For each lab, viewport and state: no horizontal scroll, every visible control
 is hit at its centre, no two controls overlap, an open math card stays inside
@@ -91,6 +92,17 @@ CHECK = r"""
     if (r.left < 0 || r.top < 0 || r.right > vw + 0.5 || r.bottom > vh + 0.5) issues.push('card outside viewport');
     if (pop.scrollWidth > pop.clientWidth + 1) issues.push('card scrolls sideways by ' + (pop.scrollWidth - pop.clientWidth) + 'px');
     ctrls = ctrls.filter((el) => pop.contains(el));
+  }
+  // The trophy case's header (square, triangle and hex labs): one row, and the saving icon inside it, touching neither the count nor the cross.
+  const saved = pop && document.getElementById('case-saved');
+  if (saved && pop.contains(saved)) {
+    const rb = (n) => n.getBoundingClientRect(), head = pop.querySelector('.case-head');
+    const row = Array.from(head.children).filter((n) => getComputedStyle(n).display !== 'none' && !n.classList.contains('case-bar'));
+    if (new Set(row.map((n) => Math.round((rb(n).top + rb(n).bottom) / 2))).size > 1) issues.push('case header wraps');
+    const a = rb(saved), c = rb(document.getElementById('case-count')), x = rb(document.getElementById('case-close')), h = rb(head);
+    const hit = (p, q) => p.left < q.right - 0.5 && q.left < p.right - 0.5 && p.top < q.bottom - 0.5 && q.top < p.bottom - 0.5;
+    if (hit(a, c) || hit(a, x)) issues.push('saving icon touches the count or the cross');
+    if (a.left < h.left - 0.5 || a.right > h.right + 0.5) issues.push('saving icon outside the case header');
   }
   // A control scrolled out of its own scroll box (a tray) is not covered; neither is the line of a wrapped pill that has gone out of it.
   const clippedAt = (el, cx, cy) => {

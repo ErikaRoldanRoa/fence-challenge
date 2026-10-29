@@ -89,6 +89,7 @@ const dom = {
   casePanel: document.getElementById("case-panel"),
   caseClose: document.getElementById("case-close"),
   caseCount: document.getElementById("case-count"),
+  caseSaved: document.getElementById("case-saved"),
   caseGlobals: document.getElementById("case-globals"),
   caseSeen: document.getElementById("case-seen"),
   caseGrid: document.getElementById("case-grid"),
@@ -133,8 +134,9 @@ const state = {
 // hushed: a view closed without a message.
 const camera = { view: null, auto: false, hushed: null };
 
-// What the player has won (kept on the device, trophies.js) and the configuration now on the board.
-const trophies = { state: null, storage: null, order: null, opener: null, seen: null };
+// What the player has won (kept on the device, trophies.js), whether this browser keeps it (there is a storage and the last save went
+// through: the saving icon of the case says so), and the configuration now on the board.
+const trophies = { state: null, storage: null, kept: false, order: null, opener: null, seen: null };
 
 init();
 
@@ -1741,6 +1743,7 @@ function initTrophies() {
   }
   try { trophies.storage = window.localStorage; } catch (e) { trophies.storage = null; }
   trophies.state = trophies.storage ? TriTrophies.load(trophies.storage) : TriTrophies.empty();
+  trophies.kept = Boolean(trophies.storage);
   renderTrophies();
   dom.shelf.addEventListener("click", openCase);
   dom.caseClose.addEventListener("click", closeCase);
@@ -1769,7 +1772,7 @@ function updateTrophies(result, settled = true) {
     const r = TriTrophies.record(trophies.state, trophies.order, result.area, !result.cornerLeak);
     if (r.wonConfig || r.wonGlobal) {
       trophies.state = r.state;
-      if (trophies.storage) TriTrophies.save(trophies.storage, r.state);
+      trophies.kept = Boolean(trophies.storage) && TriTrophies.save(trophies.storage, r.state);
       popConfig = r.wonConfig;
       popGlobal = r.wonGlobal;
       won = r.wonGlobal ? "tri.t.wonGlobal" : "tri.t.wonConfig";
@@ -1787,6 +1790,19 @@ function renderTrophies(popConfig, popGlobal) {
   const n = TriTrophies.counts(trophies.state);
   dom.shelf.setAttribute("aria-label", t("tri.t.case") + ": " + countText(n) + ". " +
     dom.trophyConfig.title + ". " + dom.trophyGlobal.title + ".");
+  renderSaved();
+}
+
+// The saving icon of the case: the sentence that says whether this browser keeps what is won, and the strike through the disk when
+// it keeps nothing (no storage, or a save that failed).
+function renderSaved() {
+  if (!dom.caseSaved) return;
+  const key = trophies.kept ? "tri.t.saved" : "tri.t.unsaved";
+  dom.caseSaved.classList.toggle("off", !trophies.kept);
+  for (const attr of ["title", "aria-label"]) {
+    dom.caseSaved.setAttribute("data-i18n-" + attr, key);   // the language switch writes the same sentence again
+    dom.caseSaved.setAttribute(attr, t(key));
+  }
 }
 
 function countText(n) {

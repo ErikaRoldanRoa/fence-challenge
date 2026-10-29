@@ -227,6 +227,14 @@ body {
 .case-cup { width: 30px; height: 30px; --tc: #ffd24a; }
 .case-count { margin-left: auto; color: var(--accent); font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 
+/* The saving icon, right after the count: an outline floppy disk in the count's colour, drawn with the same round line as the cross. It is a
+   picture (not a control, no focus stop); its tooltip and its label say whether this browser keeps what is won. When it keeps nothing the
+   disk is struck through, the diagonal with a small gap around it. */
+.saved-icon { flex: none; display: block; width: 20px; height: 20px; margin-left: -6px; color: var(--accent); cursor: default; }
+.saved-icon svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.saved-icon .lost, .saved-icon.off .kept { display: none; }
+.saved-icon.off .lost { display: inline; }
+
 .case-close {
   display: grid;
   place-items: center;

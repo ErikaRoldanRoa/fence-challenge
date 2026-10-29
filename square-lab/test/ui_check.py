@@ -102,6 +102,56 @@ def inside(a, w, h):
     return a[0] >= -0.5 and a[1] >= -0.5 and a[2] <= w + 0.5 and a[3] <= h + 0.5
 
 
+# The saving icon of the case: a picture right after the count (not a control, no focus stop) that says whether this browser keeps what
+# is won, and is struck through when it keeps nothing.
+SAVED = {
+    "en": ("Kept on this device", "Nothing is kept in this browser"),
+    "fr": ("Gardé sur cet appareil", "Rien n’est gardé dans ce navigateur"),
+    "de": ("Auf diesem Gerät gespeichert", "In diesem Browser wird nichts gespeichert"),
+}
+SAVED_ICON = """() => {
+  const e = document.getElementById('case-saved');
+  if (!e) return null;
+  const rb = (n) => n.getBoundingClientRect();
+  const head = document.querySelector('.case-head'), count = document.getElementById('case-count'), close = document.getElementById('case-close');
+  const i = rb(e), c = rb(count), x = rb(close), h = rb(head);
+  const hit = (a, b) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+  const shown = (k) => { const g = e.querySelector('.' + k); return !!g && getComputedStyle(g).display !== 'none'; };
+  const mid = document.elementFromPoint((i.left + i.right) / 2, (i.top + i.bottom) / 2);
+  return { role: e.getAttribute('role'), label: e.getAttribute('aria-label'), title: e.getAttribute('title'), off: e.classList.contains('off'),
+    drawing: ['kept', 'lost'].filter(shown), tabIndex: e.tabIndex, text: e.textContent.trim(), hiddenPicture: e.querySelector('svg').getAttribute('aria-hidden') === 'true',
+    stops: Array.from(document.querySelectorAll('#case a[href], #case button, #case input, #case select, #case textarea, #case [tabindex]')).filter((n) => n.tabIndex >= 0).map((n) => n.id),
+    afterCount: count.nextElementSibling === e, size: [Math.round(i.width * 10) / 10, Math.round(i.height * 10) / 10],
+    sameRow: Math.abs((i.top + i.bottom) / 2 - (c.top + c.bottom) / 2) < 2,
+    rows: new Set(Array.from(head.children).filter((n) => getComputedStyle(n).display !== 'none' && !n.classList.contains('case-bar')).map((n) => Math.round((rb(n).top + rb(n).bottom) / 2))).size,
+    inHead: i.left >= h.left - 0.5 && i.right <= h.right + 0.5, touchesCount: hit(i, c), touchesCross: hit(i, x), gapToCross: Math.round((x.left - i.right) * 10) / 10,
+    reached: !!mid && (mid === e || e.contains(mid)), at: [(i.left + i.right) / 2, (i.top + i.bottom) / 2],
+    maskOk: (() => { const g = e.querySelector('.lost g[mask]'), m = g && /#([\\w-]+)/.exec(g.getAttribute('mask')), k = m && document.getElementById(m[1]); return !!k && k.tagName.toLowerCase() === 'mask'; })() };
+}"""
+
+
+def saved_checks(page, label, lang, off, touch=False):
+    """The open case has its saving icon: an image after the count, named (and told in its tooltip) in the language of the page, whole
+    when this browser keeps what is won and struck through when it keeps nothing; no focus stop, no word; a tap on it does nothing."""
+    s = page.evaluate(SAVED_ICON)
+    check(s is not None, f"[{label}] the open case has its saving icon")
+    if s is None:
+        return None
+    want = SAVED[lang][1 if off else 0]
+    check(s["role"] == "img" and s["label"] == want and s["title"] == want, f"[{label}] the icon is an image named {want!r}, its tooltip says the same ({s['label']!r} / {s['title']!r})")
+    check(s["off"] == off and s["drawing"] == (["lost"] if off else ["kept"]), f"[{label}] it is drawn {'struck through' if off else 'whole'} {s['drawing']}")
+    check(s["maskOk"], f"[{label}] and the gap around the strike is made by a mask that exists")
+    check(s["tabIndex"] == -1 and s["stops"] == ["case-close", "case-grid"], f"[{label}] it is no focus stop: the case's tab stops stay the cross and the grid {s['stops']}")
+    check(s["text"] == "" and s["hiddenPicture"], f"[{label}] no word is written in it, and its drawing is hidden from readers")
+    check(s["afterCount"] and s["sameRow"] and s["rows"] == 1 and s["inHead"], f"[{label}] it stands right after the count, on the header's one row ({s['rows']} row)")
+    check(not s["touchesCount"] and not s["touchesCross"] and s["gapToCross"] >= 8 and s["reached"], f"[{label}] it touches neither the count nor the cross ({s['gapToCross']} px from the cross)")
+    check(18 <= s["size"][0] <= 20 and 18 <= s["size"][1] <= 20, f"[{label}] it is {s['size']} px")
+    (page.touchscreen.tap if touch else page.mouse.click)(*s["at"])
+    page.wait_for_timeout(80)
+    check(page.evaluate("() => !document.getElementById('case').hidden"), f"[{label}] a tap on it does nothing: the case stays open")
+    return s
+
+
 def touch_drag(page, a, b, steps=10):
     if ENGINE != "chromium":   # only Chromium takes touch events from a script: elsewhere a mouse drag stands in
         page.mouse.move(a[0], a[1])
@@ -240,6 +290,11 @@ def cup_checks(browser, fences):
     check(s["configOn"] and s["configTier"] == "gold", "[cup] the small trophy of that configuration is lit in gold")
     check(s["words"] == "", "[cup] nothing is written under it")
     page.screenshot(path=str(OUT / "cup-won.png"))
+    page.click("#shelf")
+    page.wait_for_timeout(200)
+    saved_checks(page, "cup, case", "en", False)
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(80)
     clear(page)
     page.reload()
     page.wait_for_selector("#piece-tray .piece-btn")
@@ -264,8 +319,35 @@ def cup_checks(browser, fences):
     check(build(page, fences["best"]["pieces"]), "[cup, storage refused] the best fence goes on the board")
     s = page.evaluate(CUP)
     check(s["on"] and s["stored"] == "blocked", "[cup, storage refused] a win still lights the cup for the visit")
+    page.click("#shelf")
+    page.wait_for_timeout(200)
+    saved_checks(page, "cup, storage refused, case", "en", True)
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(80)
     check(not page.errors, f"[cup, storage refused] and raises no error {page.errors[:2]}")
     ctx.close()
+
+
+def saved_refused(browser):
+    """A browser that refuses storage, in each language: the icon of the case is struck through and says that nothing is kept."""
+    for lang in LANGS:
+        ctx = browser.new_context(viewport={"width": 390, "height": 844}, has_touch=True, is_mobile=True, device_scale_factor=2)
+        ctx.add_init_script("Object.defineProperty(window,'localStorage',{get(){throw new Error('blocked')}});")
+        page = ctx.new_page()
+        errors = []
+        page.on("console", lambda m: m.type == "error" and errors.append(m.text))
+        page.on("pageerror", lambda e: errors.append(str(e)))
+        page.goto(URL)
+        page.wait_for_selector("#piece-tray .piece-btn")
+        page.wait_for_timeout(350)
+        # the language cannot be kept either, so it is chosen on the page, as a visitor would
+        page.evaluate("(l) => document.querySelector('[data-lang-btn=\"' + l + '\"]').click()", lang)
+        page.wait_for_timeout(100)
+        page.tap("#shelf")
+        page.wait_for_timeout(150)
+        saved_checks(page, f"{lang}, storage refused", lang, True, True)
+        check(not errors, f"[{lang}, storage refused] and raises no error {errors[:2]}")
+        ctx.close()
 
 
 with sync_playwright() as pw:
@@ -337,6 +419,13 @@ with sync_playwright() as pw:
         if lang == "en":
             page.screenshot(path=str(OUT / f"{name.replace(' ', '-')}.png"))
 
+        # the saving icon of the case, in this language and on this screen: whole, since this browser keeps what is won
+        (page.tap if touch else page.click)("#shelf")
+        page.wait_for_timeout(150)
+        saved_checks(page, label, lang, False, touch)
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(80)
+
         # play: a chip puts its piece on the board, a drag moves it as far as the finger goes, rotate and flip turn it, erase empties the board
         chip = page.locator("#piece-tray .piece-btn").first
         (chip.tap if touch else chip.click)()
@@ -377,6 +466,7 @@ with sync_playwright() as pw:
         ctx.close()
     fences = json.loads(subprocess.run(["node", "-e", FENCES_JS, str(ROOT)], capture_output=True, text=True, check=True).stdout)
     cup_checks(browser, fences)
+    saved_refused(browser)
     browser.close()
 
 print("\n%d check(s) failed" % len(fails) if fails else "\nall checks passed")

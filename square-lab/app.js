@@ -177,6 +177,7 @@
     casePanel: document.getElementById("case-panel"),
     caseClose: document.getElementById("case-close"),
     caseCount: document.getElementById("case-count"),
+    caseSaved: document.getElementById("case-saved"),
     caseGlobals: document.getElementById("case-globals"),
     caseSeen: document.getElementById("case-seen"),
     caseGrid: document.getElementById("case-grid"),
@@ -202,8 +203,9 @@
 
   const pieceButtons = new Map();
 
-  // What the player has won (kept on the device, trophies.js), the storage it lives in, and the configuration now on the board.
-  const trophies = { state: null, storage: null, order: null, opener: null, seen: null };
+  // What the player has won (kept on the device, trophies.js), the storage it lives in, whether this browser keeps it (there is a
+  // storage and the last save went through: the saving icon of the case says so), and the configuration now on the board.
+  const trophies = { state: null, storage: null, kept: false, order: null, opener: null, seen: null };
 
   // The camera view inside the board (../camera/inboard.js), while it is open.
   const cameraState = {
@@ -1105,6 +1107,7 @@
       trophies.storage = null;
     }
     trophies.state = trophies.storage ? SqTrophies.load(trophies.storage) : SqTrophies.empty();
+    trophies.kept = Boolean(trophies.storage);
     renderTrophies();
     dom.shelf.addEventListener("click", openCase);
     dom.caseClose.addEventListener("click", closeCase);
@@ -1143,7 +1146,7 @@
       const r = SqTrophies.record(trophies.state, trophies.order, analysis.totalArea, !analysis.cornerLeak);
       if (r.wonConfig || r.wonGlobal) {
         trophies.state = r.state;
-        if (trophies.storage) SqTrophies.save(trophies.storage, r.state);
+        trophies.kept = Boolean(trophies.storage) && SqTrophies.save(trophies.storage, r.state);
         popConfig = r.wonConfig;
         popGlobal = r.wonGlobal;
         said = r.wonGlobal ? "sq.t.won" : "sq.t.wonConfig";
@@ -1160,6 +1163,19 @@
     setTrophy(dom.trophyGlobal, lit.global, "", t(lit.global ? "sq.t.on" : "sq.t.off"), popGlobal);
     const n = SqTrophies.counts(trophies.state);
     dom.shelf.setAttribute("aria-label", t("sq.t.case") + ": " + countText(n) + ". " + dom.trophyConfig.title + ". " + dom.trophyGlobal.title + ".");
+    renderSaved();
+  }
+
+  // The saving icon of the case: the sentence that says whether this browser keeps what is won, and the strike through the disk when
+  // it keeps nothing (no storage, or a save that failed).
+  function renderSaved() {
+    if (!dom.caseSaved) return;
+    const key = trophies.kept ? "sq.t.saved" : "sq.t.unsaved";
+    dom.caseSaved.classList.toggle("off", !trophies.kept);
+    for (const attr of ["title", "aria-label"]) {
+      dom.caseSaved.setAttribute("data-i18n-" + attr, key); // the language switch writes the same sentence again
+      dom.caseSaved.setAttribute(attr, t(key));
+    }
   }
 
   function numberText(n) {
