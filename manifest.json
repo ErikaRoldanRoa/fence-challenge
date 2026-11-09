@@ -2,11 +2,36 @@
   "name": "Fence Challenge",
   "short_name": "Fence",
   "description": "Interactive fence-building labs for polyforms on the three regular tilings of the plane, on screen or on paper with the camera.",
-  "start_url": "./index.html",
+  "start_url": "./hub/",
   "display": "standalone",
   "background_color": "#07060a",
   "theme_color": "#07060a",
   "icons": [
-    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
-  ]
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "id": "./",
+  "scope": "./"
 }
