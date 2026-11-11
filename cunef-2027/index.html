@@ -24,6 +24,8 @@ a{color:inherit}
 h1{margin:10px 0 6px;font-weight:800;line-height:1;letter-spacing:-.01em;font-size:clamp(44px,11vw,84px)}
 .where{margin:0;font-weight:700;font-size:clamp(17px,3.4vw,22px)}
 .when{display:inline-block;margin:14px 0 0;padding:7px 16px;border-radius:999px;border:2px solid var(--amber);color:var(--amber);font-weight:800;font-size:clamp(15px,3vw,18px)}
+.count{margin:14px 0 0;font-weight:700;font-size:clamp(16px,3.2vw,19px)}
+.count b{display:inline-block;padding:0 .12em;font-size:1.9em;line-height:1;color:var(--amber);vertical-align:-.1em;font-variant-numeric:tabular-nums}
 .lead{text-wrap:balance;max-width:640px;margin:22px auto 26px;text-align:center;font-size:clamp(17px,3.2vw,21px)}
 .boards{list-style:none;margin:0;padding:0;display:grid;gap:14px}
 .board{--c:var(--amber);border:2px solid var(--line);border-radius:20px;padding:18px 16px;background:rgba(255,255,255,.03)}
@@ -51,6 +53,7 @@ footer a{display:inline-block;padding:12px 6px;color:var(--cyan);font-weight:800
   <h1 translate="no">Fence Challenge</h1>
   <p class="where">CUNEF Universidad · Madrid</p>
   <p class="when">Del <time datetime="2027-01-27">27</time> al <time datetime="2027-01-29">29 de enero de 2027</time></p>
+  <p class="count" id="count" hidden></p>
  </header>
 
  <p class="lead">Une piezas en una valla y encierra la mayor superficie que puedas: con las piezas sobre el tablero o en tu pantalla.</p>
@@ -59,19 +62,19 @@ footer a{display:inline-block;padding:12px 6px;color:var(--cyan);font-weight:800
   <li class="board" data-board="sq20">
    <p class="tag">Tu tablero</p>
    <h2><b aria-hidden="true">▢</b>Cuadrados</h2>
-   <p>12 pentominós sobre un tablero de 20 × 20.</p>
+   <p>12 pentominós sobre un tablero de 20&nbsp;×&nbsp;20.</p>
    <div class="go"><a class="cam" href="../camera/?board=sq20">Abrir la cámara</a><a class="play" href="../square-lab/index.html">Jugar en la pantalla</a></div>
   </li>
   <li class="board" data-board="hex6">
    <p class="tag">Tu tablero</p>
    <h2><b aria-hidden="true">⬡</b>Hexágonos</h2>
-   <p>7 tetrahexes sobre un hexágono de radio 6.</p>
+   <p>7 tetrahexes sobre un hexágono de radio&nbsp;6.</p>
    <div class="go"><a class="cam" href="../camera/?board=hex6">Abrir la cámara</a><a class="play" href="../hex-lab/index.html">Jugar en la pantalla</a></div>
   </li>
   <li class="board" data-board="tri8">
    <p class="tag">Tu tablero</p>
    <h2><b aria-hidden="true">△</b>Triángulos</h2>
-   <p>12 hexiamantes sobre un hexágono de lado 8 hecho de triángulos.</p>
+   <p>12 hexiamantes sobre un hexágono de lado&nbsp;8 hecho de triángulos.</p>
    <div class="go"><a class="cam" href="../camera/?board=tri8">Abrir la cámara</a><a class="play" href="../triangle-lab/index.html">Jugar en la pantalla</a></div>
   </li>
  </ul>
@@ -82,6 +85,34 @@ footer a{display:inline-block;padding:12px 6px;color:var(--cyan);font-weight:800
  </footer>
 </main>
 <script>
+(function () {
+  "use strict";
+  // Days until the Jornadas open (Wed 27.01.2027), counted on the calendar of Madrid whatever the phone's time zone.
+  var el = document.getElementById("count");
+  if (!el) return;
+  var DAY = 864e5, OPEN = Date.UTC(2027, 0, 27), LAST = Date.UTC(2027, 0, 29);
+  function today() {
+    var now = new Date();
+    try {
+      var g = {};
+      new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit" })
+        .formatToParts(now).forEach(function (x) { g[x.type] = x.value; });
+      return Date.UTC(+g.year, +g.month - 1, +g.day);
+    } catch (e) {
+      return Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    }
+  }
+  function show() {
+    var t = today(), n = Math.round((OPEN - t) / DAY);
+    if (n > 1) el.innerHTML = "Faltan <b>" + n + "</b> días para las Jornadas";
+    else if (n === 1) el.textContent = "Mañana empiezan las Jornadas";
+    else if (t <= LAST) el.textContent = "Las Jornadas están en marcha: el Fence Challenge te espera";
+    else el.textContent = "Las Jornadas 2027 han terminado: el Fence Challenge sigue abierto aquí, en línea";
+    el.hidden = false;
+  }
+  show();
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) show(); });
+})();
 (function () {
   "use strict";
   var b = null;
