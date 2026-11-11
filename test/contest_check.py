@@ -17,6 +17,10 @@ OUT = sys.argv[2] if len(sys.argv) > 2 else "/tmp/contest-check"
 os.makedirs(OUT, exist_ok=True)
 failures, count = [], 0
 API = "https://api.contest.test/exec"
+# The faked server is a route of the context. Outside Chromium, Playwright's routes do not see the requests of a page that the
+# site's service worker controls (sw.js leaves every POST to the network): there the worker is blocked; Chromium keeps it on,
+# which also checks that the contest goes through it.
+SW = "allow" if os.environ.get("ENGINE", "chromium") == "chromium" else "block"
 OPEN_AT = "2026-10-22T14:00:00+02:00"   # a moment of the contest day, before it closes: no scenario depends on today's date
 
 
@@ -32,7 +36,7 @@ TICKET = {"api": API, "workshop": "cigales-2026", "token": "tok", "device": "dev
 
 
 def phone(browser, lang="fr", reduced=False, now=None, ticket=None):
-    ctx = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, reduced_motion="reduce" if reduced else "no-preference", bypass_csp=False)
+    ctx = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, reduced_motion="reduce" if reduced else "no-preference", bypass_csp=False, service_workers=SW)
     ctx.add_init_script("try { localStorage.setItem('fc-lang', %s); localStorage.setItem('fc-contest', %s); localStorage.setItem('cigales-team', 'f'); } catch (e) {}" % (json.dumps(lang), json.dumps(json.dumps(ticket or TICKET))))
     posts = []
     answer = {"fn": lambda body: {"status": "ok", "board": body["board"], "best": body["area"], "record": True, "top": 0, "leader": True, "closes": "2026-10-22T19:30:00+02:00"}}
@@ -169,7 +173,7 @@ with sync_playwright() as p:
     pg.goto(BASE + "cigales/index.html", wait_until="networkidle")
     check(pg.evaluate("getComputedStyle(document.getElementById('teams')).pointerEvents") == "none", "the teams stay closed")
     # a phone that comes to the contest page for the first time after the end: its pseudonym opens the game as before (a fresh phone, so no ticket is put back on each page)
-    ctx2 = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, locale="fr-FR")
+    ctx2 = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True, locale="fr-FR", service_workers=SW)
     ctx2.route("https://script.google.com/**", lambda route: route.fulfill(status=200, headers={"access-control-allow-origin": "*", "content-type": "application/json"}, body=json.dumps({"status": "ok", "teams": {}})))
     pg2 = ctx2.new_page()
     pg2.clock.set_fixed_time("2026-10-22T19:31:00+02:00")
