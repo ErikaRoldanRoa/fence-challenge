@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="darkreader-lock">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0d1117">
+<title>Fence Challenge · Jornadas de Topología de Datos 2027</title>
+<meta name="description" content="El Fence Challenge en las Jornadas de Topología de Datos 2027, CUNEF Universidad, Madrid, del 27 al 29 de enero de 2027.">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../fonts/manrope.css?v=20261019a">
+<style>
+:root{--bg:#0d1117;--text:#e9f7ff;--muted:rgba(216,246,255,.66);--line:rgba(255,255,255,.12);--amber:#ffd24a;--cyan:#2ff3ff;--pink:#ff3bd4;--lime:#70ff7a}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg)}
+body{min-height:100vh;color:var(--text);font-family:Manrope,"Avenir Next","Segoe UI",system-ui,sans-serif;line-height:1.45;
+ background:radial-gradient(90% 60% at 50% -10%,#18273a 0,var(--bg) 70%);padding:max(24px,env(safe-area-inset-top)) 16px max(32px,env(safe-area-inset-bottom))}
+main{max-width:880px;margin:0 auto}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--cyan);outline-offset:3px;border-radius:12px}
+.top{text-align:center;padding:8px 0 4px}
+.kicker{margin:0;text-wrap:balance;color:var(--amber);font-weight:800;letter-spacing:.16em;text-transform:uppercase;font-size:clamp(12px,2.6vw,15px)}
+h1{margin:10px 0 6px;font-weight:800;line-height:1;letter-spacing:-.01em;font-size:clamp(44px,11vw,84px)}
+.where{margin:0;font-weight:700;font-size:clamp(17px,3.4vw,22px)}
+.when{display:inline-block;margin:14px 0 0;padding:7px 16px;border-radius:999px;border:2px solid var(--amber);color:var(--amber);font-weight:800;font-size:clamp(15px,3vw,18px)}
+.lead{text-wrap:balance;max-width:640px;margin:22px auto 26px;text-align:center;font-size:clamp(17px,3.2vw,21px)}
+.boards{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.board{--c:var(--amber);border:2px solid var(--line);border-radius:20px;padding:18px 16px;background:rgba(255,255,255,.03)}
+.board[data-board="hex6"]{--c:var(--cyan)}
+.board[data-board="tri8"]{--c:var(--pink)}
+.board.yours{border-color:var(--c);box-shadow:0 0 26px -10px var(--c);background:rgba(255,255,255,.05)}
+.board .tag{display:none;margin:0 0 8px;color:var(--c);font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:13px}
+.board.yours .tag{display:block}
+.board h2{margin:0;display:flex;align-items:center;gap:10px;font-size:clamp(21px,4vw,27px)}
+.board h2 b{color:var(--c);font-size:1.1em;line-height:1}
+.board p{margin:6px 0 14px;color:var(--muted);font-size:16px}
+.go{display:flex;flex-wrap:wrap;gap:10px}
+.go a{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 18px;border-radius:999px;font-weight:800;font-size:16px;text-decoration:none;border:2px solid var(--c)}
+.go .cam{background:var(--c);color:#0d1117}
+.go .play{color:var(--text)}
+footer{margin:30px 0 0;text-align:center;color:var(--muted);font-size:15px}
+footer a{display:inline-block;padding:12px 6px;color:var(--cyan);font-weight:800;text-decoration:none}
+@media (min-width:760px){.boards{grid-template-columns:repeat(3,1fr)}.board{display:flex;flex-direction:column}.board p{flex:1}.go{flex-direction:column}}
+</style>
+</head>
+<body>
+<main>
+ <header class="top">
+  <p class="kicker">Jornadas de Topología de Datos 2027</p>
+  <h1 translate="no">Fence Challenge</h1>
+  <p class="where">CUNEF Universidad · Madrid</p>
+  <p class="when">Del <time datetime="2027-01-27">27</time> al <time datetime="2027-01-29">29 de enero de 2027</time></p>
+ </header>
+
+ <p class="lead">Une piezas en una valla y encierra la mayor superficie que puedas: con las piezas sobre el tablero o en tu pantalla.</p>
+
+ <ul class="boards" id="boards">
+  <li class="board" data-board="sq20">
+   <p class="tag">Tu tablero</p>
+   <h2><b aria-hidden="true">▢</b>Cuadrados</h2>
+   <p>12 pentominós sobre un tablero de 20 × 20.</p>
+   <div class="go"><a class="cam" href="../camera/?board=sq20">Abrir la cámara</a><a class="play" href="../square-lab/index.html">Jugar en la pantalla</a></div>
+  </li>
+  <li class="board" data-board="hex6">
+   <p class="tag">Tu tablero</p>
+   <h2><b aria-hidden="true">⬡</b>Hexágonos</h2>
+   <p>7 tetrahexes sobre un hexágono de radio 6.</p>
+   <div class="go"><a class="cam" href="../camera/?board=hex6">Abrir la cámara</a><a class="play" href="../hex-lab/index.html">Jugar en la pantalla</a></div>
+  </li>
+  <li class="board" data-board="tri8">
+   <p class="tag">Tu tablero</p>
+   <h2><b aria-hidden="true">△</b>Triángulos</h2>
+   <p>12 hexiamantes sobre un hexágono de lado 8 hecho de triángulos.</p>
+   <div class="go"><a class="cam" href="../camera/?board=tri8">Abrir la cámara</a><a class="play" href="../triangle-lab/index.html">Jugar en la pantalla</a></div>
+  </li>
+ </ul>
+
+ <footer>
+  <p>La cámara reconoce el tablero impreso por sus cuatro esquinas y pasa tus piezas a la pantalla.</p>
+  <a href="../hub/">Todos los laboratorios del <span translate="no">Fence Challenge</span></a>
+ </footer>
+</main>
+<script>
+(function () {
+  "use strict";
+  var b = null;
+  try { b = new URLSearchParams(location.search).get("board"); } catch (e) {}
+  var list = document.getElementById("boards");
+  var card = b && list && list.querySelector('.board[data-board="' + b.replace(/[^a-z0-9]/g, "") + '"]');
+  if (!card) return;
+  card.classList.add("yours");
+  list.insertBefore(card, list.firstElementChild);
+})();
+</script>
+</body>
+</html>
