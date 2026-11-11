@@ -64,9 +64,9 @@ The labs, one per result:
   close and count its area.
 
 Every element of a lab has a small "∑" chip that opens the mathematics
-behind it. What a card says about the paper names the result it comes from
-(Table 4, Fig. 28, § 6.3): that name is a small link that opens the result in
-place, with its page and, for the tables and figures the lab holds, the data
+behind it. What a card says about the paper names the result it comes from,
+by its number in the paper (a table, a figure, a section): that name is a small
+link that opens the result in place, with its page and, for the tables and figures the lab holds, the data
 itself; once the paper is public it also links to its page.
 
 ## The follow-up in the Mitteilungen der DMV

@@ -17,6 +17,15 @@ import sys
 import threading
 from pathlib import Path
 
+# A pill's text as the page's own registry gives it (a section carries its title): the paper's numbers follow its build.
+PILL_JS = "k => PaperRef.label(k) + (PAPER_REFS.refs[k].kind === 'section' ? ' ' + PAPER_REFS.refs[k].title : '')"
+
+
+def pill_text(page, key):
+    return page.evaluate(PILL_JS, key)
+
+
+
 from playwright.sync_api import sync_playwright
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -128,7 +137,7 @@ def run(browser, name, w, h, touch):
     check(pg.locator(".math-pop").is_visible() and "inside" in pg.inner_text(".math-pop h2"), "a math chip opens its panel")
     check("label" not in pg.inner_text(".math-pop") and "\\" not in pg.inner_text(".math-pop"), "no LaTeX in the panel")
     pills = lambda: pg.eval_on_selector_all(".math-pop .math-src .paper-ref", "els => els.map(e => e.textContent)")
-    check(pills() == ["§ 7.1 Definitions", "§ 2.1 Fences and their area"], f"the panel's footer names where the paper says it: {pills()}")
+    check(pills() == [pill_text(pg, "sec:3d-def"), pill_text(pg, "sec:def-area")], f"the panel's footer names where the paper says it: {pills()}")
     # a chip that gives its own source (our argument, not the paper's) keeps it: no pill on the paper
     pg.keyboard.press("Escape")
     # (even when the chip also names a place in the paper: the chip's own source wins)
@@ -266,10 +275,10 @@ def run(browser, name, w, h, touch):
     check(pg.locator("#walls .ctl.wall").count() == 3, "three walls in the pentacube step")
     pg.click('[data-math="m.wallinfo"]')
     check("146" in pg.inner_text(".math-pop"), "wall 1 chip: best possible")
-    check(pg.eval_on_selector_all(".math-pop .math-src .paper-ref", "els => els.map(e => e.textContent)") == ["§ 7.3 Pentacubes", "Fig. 30"], "wall 1 chip: the footer names the pentacube section and the figure of the wall")
+    check(pg.eval_on_selector_all(".math-pop .math-src .paper-ref", "els => els.map(e => e.textContent)") == [pill_text(pg, "sec:pentacubes"), pill_text(pg, "fig:52")], "wall 1 chip: the footer names the pentacube section and the figure of the wall")
     card_q = pg.inner_text(".math-pop h2")
     pg.click('.math-pop .math-src .paper-ref[data-ref="fig:52"]')
-    check(pg.inner_text(".math-pop h2") == "Figure 30" and pg.locator(".math-pop .math-back").count() == 1, "the figure's pill opens its page, with Back")
+    check(pg.inner_text(".math-pop h2") == pg.evaluate("PaperRef.longLabel('fig:52')") and pg.locator(".math-pop .math-back").count() == 1, "the figure's pill opens its page, with Back")
     pg.click(".math-pop .math-back")
     check(pg.inner_text(".math-pop h2") == card_q, "Back returns to the card")
     pg.keyboard.press("Escape")
@@ -693,7 +702,7 @@ def three_walls(browser):
         pills = pg.eval_on_selector_all(".math-pop .math-src .paper-ref", "els => els.map(e => e.textContent)")
         check("146" in pop and "144 cubes line the pocket exactly and a single cube sticks out" in pop, f"wall {k + 1} chip: best possible, 144 line the pocket and one cube sticks out")
         check("It is one of many: more than 35 million walls of volume 52 had been found when the search was stopped." in pop, f"wall {k + 1} chip: one of many, as the paper's search found")
-        check(pills == (["§ 7.3 Pentacubes", "Fig. 30"] if k == 0 else ["§ 7.3 Pentacubes"]), f"wall {k + 1} chip: the footer {pills}")
+        check(pills == ([pill_text(pg, "sec:pentacubes"), pill_text(pg, "fig:52")] if k == 0 else [pill_text(pg, "sec:pentacubes")]), f"wall {k + 1} chip: the footer {pills}")
         pg.keyboard.press("Escape")
         pg.click('.math-chip[data-math="m.bound"]')
         check("The three walls here reach 52" in pg.inner_text(".math-pop"), f"wall {k + 1}: the bound card speaks of the three walls")

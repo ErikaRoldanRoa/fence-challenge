@@ -4,7 +4,7 @@
  * fence (data/optimal.js): each piece once, in the place the fence gives it,
  * with the arrow between its two attachment edges; the pieces are the tiles on
  * the left and each side of the polygon wears its piece's colour. For
- * n = 7..15 it is the paper's greedy fence (Section 6.2): each piece once,
+ * n = 7..15 it is the paper's greedy fence (sec:greedy): each piece once,
  * drawn exactly from the distinct arrows of data/greedy.js, the left box
  * showing the kinds of arrows. Both against the circle of the polygon's
  * bounding box. At 500 cells the loop is the paper's curve, from its 13.5
@@ -39,9 +39,9 @@
   const FENCE_REF = { 4: "fig:fence-art", 5: "sec:all-5", 6: "sec:all-6" };
   const fenceRef = () => FENCE_REF[n] || "sec:greedy";
   const LAST_OPT = 6;                      // the optimal fences, n = 4..6
-  const FIRST_FENCE = 7, LAST_FENCE = 15;   // the greedy fences of Section 6.2
+  const FIRST_FENCE = 7, LAST_FENCE = 15;   // the greedy fences of the paper (sec:greedy)
   // The paper's fences for n = 7, 8: the best fence found and the upper bound (dynamic programming). From 9 on,
-  // the greedy fence and the upper bound of Table 4 come with the polygon; up to 6 the optimum comes with the fence.
+  // the greedy fence and the upper bound of the table of the heuristic solutions (tab:heur) come with the polygon; up to 6 the optimum comes with the fence.
   const FENCES = {
     7: { best: 19733, bound: 19830 }, 8: { best: 279134, bound: 280389 },
   };
@@ -1006,8 +1006,8 @@
 
   // ---------- the data of the paper's results, on their reference pages (paper-ref.js) ----------
   // What the lab holds of a result is shown as the paper prints it, so that a reader sees the result itself:
-  // the rows of Tables 3 and 4 (the row of the size on show lit), the curve of Figure 28, the histogram of
-  // Figure 26, the polygons of Figure 24.
+  // the rows of tab:hepto-octo and tab:heur (the row of the size on show lit), the curve of fig:deviation, the histogram of
+  // fig:angle-225, the polygons of fig:large-ref-polygons.
   const plainPct = (frac) => fmtNum(frac * 100, 2) + (lang() === "fr" ? " " : lang() === "de" ? " " : "") + "%";
   const cap = (k) => `<p class="ref-cap">${t(k)}</p>`;
   // A curve or two as an SVG: series of [x, y]; x in degrees 0..45; the y range is given.

@@ -1,9 +1,9 @@
-/* Fence Challenge · limit-shape lab: the greedy reference polygons of Section 6.2 (n = 7..15).
+/* Fence Challenge · limit-shape lab: the greedy reference polygons of the paper (n = 7..15).
  * arrows: the polygon's arrows as runs of equal arrows [dx2, dy2, multiplicity], in doubled coordinates (the
  * four corner arrows are half-integral), in the order of the vertex file: sorted by direction from the
  * south, counterclockwise, and inside a side in the order of the pieces along it. The polygon is their
  * concatenation from the first one, vertex for vertex. count = A'(n) = the number of arrows; U, L: the
- * upper bound and the greedy fence of Table 4. Generated from the paper's vertex files and Table 4; each
+ * upper bound and the greedy fence of the paper's table of the heuristic solutions. Generated from the vertex files and that table; each
  * polygon was rebuilt from these runs and compared with its file, vertex by vertex. */
 (function (root) {
   "use strict";

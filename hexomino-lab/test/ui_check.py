@@ -16,6 +16,14 @@ URL = BASE + "hexomino-lab/"
 fails = []
 
 
+# A pill's text as the page's own registry gives it (a section carries its title): the paper's numbers follow its build.
+PILL_JS = "k => PaperRef.label(k) + (PAPER_REFS.refs[k].kind === 'section' ? ' ' + PAPER_REFS.refs[k].title : '')"
+
+
+def pill_text(page, key):
+    return page.evaluate(PILL_JS, key)
+
+
 def check(cond, msg):
     print(("ok   " if cond else "FAIL ") + msg)
     if not cond:
@@ -125,7 +133,7 @@ def run(browser, lang, vp, touch, shots):
     s = state(page)
     check(s["area"] == 1586 and s["valid"], f"{tag}: previous best fence encloses 1586")
     tip = page.get_attribute("#reveal", "data-lab-tip") or ""
-    check("Fig. 14" in tip and "1597" not in tip, f"{tag}: the reveal button names the paper's figure, not the answer: {tip!r}")
+    check(page.evaluate("PaperRef.label('fig:1597')") in tip and "1597" not in tip, f"{tag}: the reveal button names the paper's figure, not the answer: {tip!r}")
     page.click("#reveal")
     wait_idle(page)
     s = state(page)
@@ -167,7 +175,7 @@ def run(browser, lang, vp, touch, shots):
     check(page.is_visible(".math-pop .math-close") and page.inner_text(".math-pop h2").strip().endswith("?"), f"{tag}: the card has a close button and its question")
     txt = page.inner_text(".math-pop")
     check(not any(w in txt for w in ("sec:", "thm:", "paper-tech", "in preparation", "en préparation", "Vorbereitung")), f"{tag}: no labels or file names on the card")
-    check(page.eval_on_selector_all(".math-pop .math-src .paper-ref", "els => els.map(e => e.textContent)") == ["§ 4.1.2 Eight-way partitioning"], f"{tag}: the card's footer names its section of the paper")
+    check(page.eval_on_selector_all(".math-pop .math-src .paper-ref", "els => els.map(e => e.textContent)") == [pill_text(page, "sec:8way")], f"{tag}: the card's footer names its section of the paper")
     page.screenshot(path=str(OUT / f"{tag}-card-p2.png"))
     page.mouse.click(5, 300)
     page.wait_for_timeout(200)
@@ -177,11 +185,11 @@ def run(browser, lang, vp, touch, shots):
     page.wait_for_timeout(400)
     check(page.get_attribute(".math-pop", "data-label") == "thm:1597", f"{tag}: theorem card")
     # Its footer is a pill on the theorem; the page it opens says what the result is, never the answer, and Back returns to the card.
-    check(page.eval_on_selector_all(".math-pop .math-src .paper-ref", "els => els.map(e => e.textContent)") == ["Thm. 1"], f"{tag}: the theorem card names Theorem 1")
+    check(page.eval_on_selector_all(".math-pop .math-src .paper-ref", "els => els.map(e => e.textContent)") == [pill_text(page, "thm:1597")], f"{tag}: the theorem card names the theorem")
     card_q = page.inner_text(".math-pop h2")
     page.click(".math-pop .math-src .paper-ref")
     page.wait_for_timeout(200)
-    check(page.inner_text(".math-pop h2") == "Theorem 1" and "1597" not in page.inner_text(".math-pop"), f"{tag}: the page of Theorem 1 does not give the answer away")
+    check(page.inner_text(".math-pop h2") == page.evaluate("PaperRef.longLabel('thm:1597')") and "1597" not in page.inner_text(".math-pop"), f"{tag}: the theorem's page does not give the answer away")
     page.click(".math-pop .math-back")
     check(page.inner_text(".math-pop h2") == card_q, f"{tag}: Back returns to the card")
     page.click(".math-pop .math-close")

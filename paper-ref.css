@@ -94,7 +94,7 @@
   font: 17px/1.7 "Times New Roman", serif; color: #eefbff;
 }
 .math-pop .math-formula i { font-size: 1em; }
-/* The polygons of Figure 24: one box with its inset, and the legend. */
+/* The polygons of fig:large-ref-polygons: one box with its inset, and the legend. */
 .math-pop .ref-polys { display: grid; grid-template-columns: 1.7fr 1fr; gap: 10px; align-items: center; margin: 0 10px; }
 .math-pop .ref-poly-main, .math-pop .ref-poly-inset { display: block; width: 100%; height: auto; }
 .math-pop .ref-poly-main polygon, .math-pop .ref-poly-inset polygon { stroke-width: 1.3; }

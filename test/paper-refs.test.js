@@ -65,26 +65,29 @@ for (const k of keys) {
 }
 check(new Set(keys.map((k) => PR.label(k))).size === keys.length, "no two results share a label");
 
-// ---- the labels ----
+// ---- the labels (the numbers are the registry's, which follows the paper's build; the forms are checked here) ----
+const N = (k) => D.refs[k].num;
 const L = {
-  "tab:heur": ["Table 4", "Table 4"], "fig:deviation": ["Fig. 28", "Figure 28"], "thm:1597": ["Thm. 1", "Theorem 1"], "def:reference-vector": ["Def. 3", "Definition 3"],
-  "lem:area-decomposition": ["Lemma 3", "Lemma 3"], "eq:an-asymptot": ["Eq. (13)", "Equation (13)"], "sec:limit": ["§ 6.3", "Section 6.3"],
+  "tab:heur": ["Table " + N("tab:heur"), "Table " + N("tab:heur")], "fig:deviation": ["Fig. " + N("fig:deviation"), "Figure " + N("fig:deviation")],
+  "thm:1597": ["Thm. " + N("thm:1597"), "Theorem " + N("thm:1597")], "def:reference-vector": ["Def. " + N("def:reference-vector"), "Definition " + N("def:reference-vector")],
+  "lem:area-decomposition": ["Lemma " + N("lem:area-decomposition"), "Lemma " + N("lem:area-decomposition")],
+  "eq:an-asymptot": ["Eq. (" + N("eq:an-asymptot") + ")", "Equation (" + N("eq:an-asymptot") + ")"], "sec:limit": ["§ " + N("sec:limit"), "Section " + N("sec:limit")],
 };
 for (const [k, [s, l]] of Object.entries(L)) {
   check(PR.label(k) === s, `${k}: the short label is ${s}: ${PR.label(k)}`);
   check(PR.longLabel(k) === l, `${k}: the long label is ${l}: ${PR.longLabel(k)}`);
 }
-check(PR.expand("see [[tab:heur]] and [[sec:limit]]", "text") === "see Table 4 and § 6.3", "a token becomes its label in a plain string");
-check(/^see <span class="paper-ref" role="button" tabindex="0" data-ref="tab:heur" data-lab-tip="[^"]+" title="[^"]+" aria-label="Table 4, page \d+"><span class="nb">Table 4<\/span><\/span>$/.test(PR.expand("see [[tab:heur]]", "html")) && PR.expand("see [[tab:heur]]", "html").includes("Table 4, page " + D.refs["tab:heur"].page + "\""), "and a pill in HTML, with the page the registry gives: " + PR.expand("see [[tab:heur]]", "html"));
+check(PR.expand("see [[tab:heur]] and [[sec:limit]]", "text") === "see " + L["tab:heur"][0] + " and " + L["sec:limit"][0], "a token becomes its label in a plain string");
+check(new RegExp('^see <span class="paper-ref" role="button" tabindex="0" data-ref="tab:heur" data-lab-tip="[^"]+" title="[^"]+" aria-label="' + L["tab:heur"][0] + ', page \\d+"><span class="nb">' + L["tab:heur"][0] + '<\\/span><\\/span>$').test(PR.expand("see [[tab:heur]]", "html")) && PR.expand("see [[tab:heur]]", "html").includes(L["tab:heur"][0] + ", page " + D.refs["tab:heur"].page + "\""), "and a pill in HTML, with the page the registry gives: " + PR.expand("see [[tab:heur]]", "html"));
 check(PR.expand("a [[nope:key]] b", "text") === "a [[nope:key]] b", "an unknown token is left as it is, where a test sees it");
-check(PR.pill("sec:limit", { title: true }).includes('<span class="nb">§ 6.3</span> The limit shape</span>'), "a section's pill may carry its title, the number staying whole");
+check(PR.pill("sec:limit", { title: true }).includes('<span class="nb">' + L["sec:limit"][0] + '</span> The limit shape</span>'), "a section's pill may carry its title, the number staying whole");
 check(PR.footer(["sec:limit", "fig:chain", "not:there"]).split('class="paper-ref"').length === 3, "a footer keeps the keys it knows");
 check(!/ ·/.test(PR.footer(["sec:limit", "fig:chain"]).replace(/\u00a0·/g, "")), "and its dots stay with what comes before them (no line starts with one)");
 check(PR.footer(["", "x"]) === "", "and is empty when it knows none");
 check(["eq:an-asymptot", "eq:rotation-sum", "eq:cell-cover", "lem:area-decomposition", "def:reference-vector"].every((k) => D.text[k].math), "the equations, the lemma and the definition the labs cite carry their formula");
 check(PR.content("sec:limit").body.split("paper-ref").length === 5, "a section page lists the four results it holds: " + PR.content("sec:limit").body);
 check(PR.content("fig:deviation").body === undefined && PR.content("eq:an-asymptot").math === D.text["eq:an-asymptot"].math, "a figure page lists nothing; an equation page carries its formula");
-check(PR.tip("fig:deviation") === "Figure 28, page " + D.refs["fig:deviation"].page + " of the paper: tap to read more", "the bubble of a pill says what and where: " + PR.tip("fig:deviation"));
+check(PR.tip("fig:deviation") === L["fig:deviation"][1] + ", page " + D.refs["fig:deviation"].page + " of the paper: tap to read more", "the bubble of a pill says what and where: " + PR.tip("fig:deviation"));
 const html = PR.expand("[[tab:heur]]", "html");
 check(!/["<>&]/.test(PR.label("tab:heur")) && html.includes("&") === false, "labels need no escaping");
 
