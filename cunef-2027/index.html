@@ -13,6 +13,7 @@
 <style>
 :root{--bg:#0d1117;--text:#e9f7ff;--muted:rgba(216,246,255,.66);--line:rgba(255,255,255,.12);--amber:#ffd24a;--cyan:#2ff3ff;--pink:#ff3bd4;--lime:#70ff7a}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0;background:var(--bg)}
 body{min-height:100vh;color:var(--text);font-family:Manrope,"Avenir Next","Segoe UI",system-ui,sans-serif;line-height:1.45;
  background:radial-gradient(90% 60% at 50% -10%,#18273a 0,var(--bg) 70%);padding:max(24px,env(safe-area-inset-top)) 16px max(32px,env(safe-area-inset-bottom))}
@@ -43,6 +44,9 @@ h1{margin:10px 0 6px;font-weight:800;line-height:1;letter-spacing:-.01em;font-si
 .go .play{color:var(--text)}
 footer{margin:30px 0 0;text-align:center;color:var(--muted);font-size:15px}
 footer a{display:inline-block;padding:12px 6px;color:var(--cyan);font-weight:800;text-decoration:none}
+.soon{display:inline-block;margin:0;padding:9px 16px;border-radius:999px;border:2px dashed var(--c);color:var(--c);font-weight:800;font-size:15px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.nw{white-space:nowrap}
 @media (min-width:760px){.boards{grid-template-columns:repeat(3,1fr)}.board{display:flex;flex-direction:column}.board p{flex:1}.go{flex-direction:column}}
 </style>
 </head>
@@ -50,47 +54,50 @@ footer a{display:inline-block;padding:12px 6px;color:var(--cyan);font-weight:800
 <main>
  <header class="top">
   <p class="kicker">Jornadas de Topología de Datos 2027</p>
-  <h1 translate="no">Fence Challenge</h1>
+  <h1 translate="no" lang="en">Fence Challenge</h1>
   <p class="where">CUNEF Universidad · Madrid</p>
   <p class="when">Del <time datetime="2027-01-27">27</time> al <time datetime="2027-01-29">29 de enero de 2027</time></p>
   <p class="count" id="count" hidden></p>
  </header>
 
- <p class="lead">Une piezas en una valla y encierra la mayor superficie que puedas: con las piezas sobre el tablero o en tu pantalla.</p>
+ <p class="lead">Une piezas en una valla y encierra el área más grande que puedas: con las piezas sobre el tablero o en tu pantalla.</p>
 
  <ul class="boards" id="boards">
   <li class="board" data-board="sq20">
    <p class="tag">Tu tablero</p>
    <h2><b aria-hidden="true">▢</b>Cuadrados</h2>
    <p>12 pentominós sobre un tablero de 20&nbsp;×&nbsp;20.</p>
-   <div class="go"><a class="cam" href="../camera/?board=sq20">Abrir la cámara</a><a class="play" href="../square-lab/index.html">Jugar en la pantalla</a></div>
+   <p class="soon" hidden>Se abre el miércoles 27 de enero</p>
+   <div class="go" data-board="sq20" hidden></div>
   </li>
   <li class="board" data-board="hex6">
    <p class="tag">Tu tablero</p>
    <h2><b aria-hidden="true">⬡</b>Hexágonos</h2>
-   <p>7 tetrahexes sobre un hexágono de radio&nbsp;6.</p>
-   <div class="go"><a class="cam" href="../camera/?board=hex6">Abrir la cámara</a><a class="play" href="../hex-lab/index.html">Jugar en la pantalla</a></div>
+   <p>7 tetrahexes sobre un hexágono de 7&nbsp;casillas por lado.</p>
+   <p class="soon" hidden>Se abre el miércoles 27 de enero</p>
+   <div class="go" data-board="hex6" hidden></div>
   </li>
   <li class="board" data-board="tri8">
    <p class="tag">Tu tablero</p>
    <h2><b aria-hidden="true">△</b>Triángulos</h2>
-   <p>12 hexiamantes sobre un hexágono de lado&nbsp;8 hecho de triángulos.</p>
-   <div class="go"><a class="cam" href="../camera/?board=tri8">Abrir la cámara</a><a class="play" href="../triangle-lab/index.html">Jugar en la pantalla</a></div>
+   <p>12 hexiamantes sobre un hexágono de lado&nbsp;8 dividido en triángulos.</p>
+   <p class="soon" hidden>Se abre el miércoles 27 de enero</p>
+   <div class="go" data-board="tri8" hidden></div>
   </li>
  </ul>
 
- <footer>
-  <p>La cámara reconoce el tablero impreso por sus cuatro esquinas y pasa tus piezas a la pantalla.</p>
-  <a href="../hub/">Todos los laboratorios del <span translate="no">Fence Challenge</span></a>
+ <footer id="opened" hidden>
+  <p>La cámara reconoce el tablero impreso por las marcas de sus cuatro esquinas y pasa tus piezas a la pantalla.</p>
  </footer>
 </main>
 <script>
 (function () {
   "use strict";
-  // Days until the Jornadas open (Wed 27.01.2027), counted on the calendar of Madrid whatever the phone's time zone.
-  var el = document.getElementById("count");
-  if (!el) return;
+  // The door opens with the Jornadas, Wed 27.01.2027 at 00:00 in Madrid (the calendar of Madrid, whatever the phone's time zone).
+  // Before: the dates and the days left, the boards as what is coming, no way into a lab, the camera or the hub (the links are
+  // not in the page at all). From then on: the camera and the labs of each board; after the 29th they stay open.
   var DAY = 864e5, OPEN = Date.UTC(2027, 0, 27), LAST = Date.UTC(2027, 0, 29);
+  var LAB = { sq20: ["square-lab", "cuadrados"], hex6: ["hex-lab", "hexágonos"], tri8: ["triangle-lab", "triángulos"] };
   function today() {
     var now = new Date();
     try {
@@ -102,16 +109,57 @@ footer a{display:inline-block;padding:12px 6px;color:var(--cyan);font-weight:800
       return Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
     }
   }
-  function show() {
-    var t = today(), n = Math.round((OPEN - t) / DAY);
-    if (n > 1) el.innerHTML = "Faltan <b>" + n + "</b> días para las Jornadas";
-    else if (n === 1) el.textContent = "Mañana empiezan las Jornadas";
-    else if (t <= LAST) el.textContent = "Las Jornadas están en marcha: el Fence Challenge te espera";
-    else el.textContent = "Las Jornadas 2027 han terminado: el Fence Challenge sigue abierto aquí, en línea";
-    el.hidden = false;
+  function link(cls, href, text, name) {
+    var a = document.createElement("a");
+    a.className = cls;
+    a.href = href;
+    a.textContent = text;
+    var s = document.createElement("span");
+    s.className = "sr";
+    s.textContent = " · " + name;
+    a.appendChild(s);
+    return a;
   }
-  show();
-  document.addEventListener("visibilitychange", function () { if (!document.hidden) show(); });
+  function render() {
+    var t = today(), n = Math.round((OPEN - t) / DAY), open = n <= 0, i;
+    var el = document.getElementById("count");
+    if (el) {
+      if (n > 1) el.innerHTML = "Se abre en <b>" + n + "</b> días";
+      else if (n === 1) el.textContent = "Se abre mañana";
+      else if (t <= LAST) el.textContent = "Ya está abierto: el Fence Challenge te espera";
+      else el.textContent = "Las Jornadas 2027 han terminado: el Fence Challenge sigue abierto aquí, en línea";
+      el.hidden = false;
+    }
+    var soon = document.querySelectorAll(".soon");
+    for (i = 0; i < soon.length; i++) soon[i].hidden = open;
+    var go = document.querySelectorAll(".go[data-board]");
+    for (i = 0; i < go.length; i++) {
+      var g = go[i], lab = LAB[g.getAttribute("data-board")];
+      if (open && lab && !g.firstChild) {
+        g.appendChild(link("cam", "../camera/?board=" + g.getAttribute("data-board"), "Abrir la cámara", lab[1]));
+        g.appendChild(link("play", "../" + lab[0] + "/index.html", "Jugar en pantalla", lab[1]));
+      }
+      g.hidden = !open;
+    }
+    var foot = document.getElementById("opened");
+    if (foot) {
+      if (open && !foot.querySelector("a")) {
+        var a = document.createElement("a");
+        a.href = "../hub/";
+        a.appendChild(document.createTextNode("Todos los laboratorios del "));
+        var nm = document.createElement("span");
+        nm.className = "nw";
+        nm.setAttribute("translate", "no");
+        nm.setAttribute("lang", "en");
+        nm.textContent = "Fence Challenge";
+        a.appendChild(nm);
+        foot.appendChild(a);
+      }
+      foot.hidden = !open;
+    }
+  }
+  render();
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) render(); });
 })();
 (function () {
   "use strict";
