@@ -80,7 +80,7 @@ function audit(name, fr, en, es) { // failures, as messages
     const v = String(es[k]);
     if (PH(v) !== PH(fr[k])) out.push(`${name} ${k}: placeholders «${PH(v)}», French «${PH(fr[k])}»`);
     if (en && v === en[k] && !SAME_AS_EN.has(k)) out.push(`${name} ${k}: the Spanish is the English («${v}»)`);
-    if (/—/.test(v)) out.push(`${name} ${k}: an em dash`);
+    if (/\u2014/.test(v)) out.push(`${name} ${k}: an em dash`);
     if (/!/.test(v) && !/¡/.test(v)) out.push(`${name} ${k}: « ! » without « ¡ »`);
     const q = v.replace(/«\?»/g, "");
     if (/\?/.test(q) && !/¿/.test(q)) out.push(`${name} ${k}: « ? » without « ¿ »`);
