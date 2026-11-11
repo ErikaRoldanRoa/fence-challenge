@@ -43,6 +43,10 @@ TEXT = {
            "glob_on": "Das Beste aller Konfigurationen", "glob_off": "Noch nicht das Beste aller Konfigurationen",
            "won_cfg": "Pokal gewonnen: das Beste dieser Konfiguration.", "won_glob": "Pokal gewonnen: das Beste aller Konfigurationen.",
            "closed": "Zaun geschlossen, Fläche %d Sechsecke!"},
+    "es": {"case": "Vitrina de trofeos", "count": "%d de 360 configuraciones", "cfg_on": "La mejor valla de esta configuración", "cfg_off": "Todavía no es la mejor valla de esta configuración",
+           "glob_on": "La mejor valla de todas las configuraciones", "glob_off": "Todavía no es la mejor valla de todas las configuraciones",
+           "won_cfg": "Trofeo ganado: la mejor valla de esta configuración.", "won_glob": "Trofeo ganado: la mejor valla de todas las configuraciones.",
+           "closed": "¡Valla cerrada, área de %d hexágonos!"},
 }
 
 PLACE = """(pieces) => {
@@ -122,6 +126,7 @@ SAVED = {
     "en": ("Kept on this device", "Nothing is kept in this browser"),
     "fr": ("Gardé sur cet appareil", "Rien n’est gardé dans ce navigateur"),
     "de": ("Auf diesem Gerät gespeichert", "In diesem Browser wird nichts gespeichert"),
+    "es": ("Guardado en este dispositivo", "No se guarda nada en este navegador"),
 }
 SAVED_ICON = """() => {
   const e = document.getElementById('case-saved');
@@ -265,6 +270,7 @@ def run(browser, lang, vp, touch, tag):
     t = TEXT[lang]
     label = f"{lang} {tag}"
     ctx, page, errors = new_page(browser, lang, vp, touch)
+    check(page.evaluate("document.documentElement.lang") == lang, f"[{lang} {tag}] the page speaks {lang}")
     tall_phone = touch and vp["height"] > vp["width"] and vp["height"] >= 680
     short_phone = touch and vp["height"] > vp["width"] and vp["height"] < 680
 
@@ -401,7 +407,7 @@ def run_special(browser):
     ctx.close()
 
     # a browser that refuses storage, in each language: the case's icon is struck through and says that nothing is kept
-    for lang in ("en", "fr", "de"):
+    for lang in ("en", "fr", "de", "es"):
         ctx, page, errors = new_page(browser, "en", {"width": 390, "height": 844}, True, init=BLOCKED)
         page.evaluate("(l) => document.querySelector('[data-lang-btn=\"' + l + '\"]').click()", lang)    # the language cannot be kept either
         page.wait_for_timeout(100)
@@ -487,7 +493,7 @@ def drag_checks(browser):
 with sync_playwright() as p:
     browser = getattr(p, ENGINE).launch()
     desk, tall, short, side = {"width": 1280, "height": 800}, {"width": 390, "height": 844}, {"width": 360, "height": 640}, {"width": 844, "height": 390}
-    for lang in ("en", "fr", "de"):
+    for lang in ("en", "fr", "de", "es"):
         run(browser, lang, desk, False, "desk")
         run(browser, lang, tall, True, "tall")
         run(browser, lang, short, True, "short")

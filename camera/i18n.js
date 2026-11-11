@@ -1,4 +1,4 @@
-/* Fence Challenge · "Play on paper" strings (FR / DE / EN).
+/* Fence Challenge · "Play on paper" strings (FR / DE / EN / ES).
  * Loaded right after ../i18n.js and merged into its dictionary before the
  * page is translated. French uses a narrow no-break space (U+202F) before
  * ; : ! ? and inside guillemets. */
@@ -219,8 +219,80 @@
     "cam.lattice.triangular": "Triangles",
   };
 
+  var es = {
+    "cam.pageTitle": "Jugar sobre papel · Fence Challenge",
+    "cam.title": "Jugar sobre papel",
+    "cam.lede": "Construye tu valla con piezas de verdad sobre el tablero impreso. En la imagen de tu tablero, la cámara ilumina el interior que encierras.",
+    "cam.needTitle": "Necesitas:",
+    "cam.needBoard": "el tablero impreso, con los cuatro cuadrados de sus esquinas",
+    "cam.needPieces": "las piezas recortadas",
+    "cam.needLight": "una mesa bien iluminada",
+    "cam.kitLink": "Imprimir el kit",
+    "cam.privacy": "La imagen se queda en este dispositivo. No se graba ni se envía nada.",
+    "cam.start": "Encender la cámara",
+    "cam.starting": "Abriendo la cámara…",
+    "cam.retry": "Reintentar",
+    "cam.photo": "Usar una foto en su lugar",
+    "cam.photoPick": "Elegir una foto",
+    "cam.photoAgain": "Otra foto",
+    "cam.useCamera": "Usar la cámara",
+    "cam.close": "Cerrar",
+    "cam.pause": "Pausa",
+    "cam.resume": "Seguir",
+    "cam.torch": "Linterna",
+    "cam.continue": "Continuar en pantalla",
+    "cam.why.find": "Primero muestra el tablero entero.",
+    "cam.why.wait": "Espera a que la imagen esté quieta.",
+    "cam.why.empty": "Primero coloca tus piezas.",
+    "cam.why.pieces": "Usa solo las piezas del kit, sin repetir ninguna.",
+    "cam.area": "área",
+    "cam.countFirst": "Contar primero",
+    "cam.reveal": "Mostrar el área",
+    "cam.videoLabel": "Imagen de la cámara con tu valla dibujada encima",
+    "cam.photoLabel": "Tu foto con tu valla dibujada encima",
+    "cam.controlsLabel": "Controles de la cámara",
+    "cam.err.denied": "La cámara está bloqueada. Puedes darle permiso en los ajustes del navegador o hacer una foto en su lugar.",
+    "cam.err.busy": "Otra app está usando la cámara. Ciérrala y vuelve a intentarlo, o haz una foto en su lugar.",
+    "cam.err.none": "No se ha encontrado ninguna cámara en este dispositivo. Puedes usar una foto en su lugar.",
+    "cam.err.unsupported": "Este navegador no puede abrir la cámara aquí. Puedes hacer una foto en su lugar.",
+    "cam.err.homeScreen": "Desde la pantalla de inicio, la cámara no siempre se abre. Una foto funciona siempre.",
+    "cam.err.slow": "La cámara está tardando mucho en abrirse. Mira si el navegador te está preguntando algo, vuelve a intentarlo o haz una foto en su lugar.",
+    "cam.err.photo": "No se ha encontrado ningún tablero en esta foto. Muestra los cuatro cuadrados de las esquinas.",
+    "cam.err.photoFile": "Este archivo no se ha podido abrir como imagen. Prueba con una foto JPEG o PNG.",
+    "cam.err.reader": "Ahora mismo no se puede leer la imagen. Recarga la página para volver a intentarlo.",
+    "cam.err.framed": "La cámara no se enciende dentro de otra página.",
+    "cam.openTab": "Abrir esta página en su propia pestaña",
+    "cam.desk.title": "¿Estás en un ordenador?",
+    "cam.desk.scan": "Escanea este código con tu móvil para abrir esta página en él.",
+    "cam.desk.photo": "O haz una foto de tu tablero con el móvil y elígela aquí.",
+    "cam.qrLabel": "Código QR que abre esta página en tu móvil",
+    "cam.zoom": "Ampliar el tablero",
+    "cam.s.find": "Muestra los cuatro cuadrados de las esquinas.",
+    "cam.s.notKit": "Hay algo en el tablero que no es una pieza del kit, o una pieza está torcida. Vuelve a hacer la foto.",
+    "cam.s.steady": "No te muevas…",
+    "cam.s.hands": "¿Estás colocando las piezas? Tómate tu tiempo.",
+    "cam.s.empty": "Coloca tus piezas en el tablero.",
+    "cam.s.open": "Todavía no hay interior. Sigue construyendo tu valla.",
+    "cam.s.fence": "¡Valla cerrada, área {n}!",
+    "cam.s.fenceCount": "Valla cerrada. Cuenta el interior y luego toca el «?».",
+    "cam.s.leak": "El exterior se cuela por una esquina.",
+    "cam.s.pockets": "{n} interiores separados. Una valla encierra uno solo.",
+    "cam.s.paused": "En pausa.",
+    "cam.s.stopped": "La cámara está apagada. Toca «Seguir» para volver a encenderla.",
+    "cam.s.tap": "Toca la imagen para encender la cámara.",
+    "cam.s.reading": "Leyendo la foto…",
+    "cam.metaDescription": "Construye una valla con piezas de verdad sobre un tablero impreso del Fence Challenge. La cámara de tu móvil sigue tus piezas e ilumina el interior en la imagen de tu tablero. La imagen se queda en tu dispositivo.",
+    "cam.boardFound": "Tablero reconocido:",
+    "cam.board.square": "Cuadrados · {w} × {h}",
+    "cam.board.side": "{lattice} · lado {n}",
+    "cam.board.classic": "Cuadrados · {w} × {h}, kit clásico",
+    "cam.lattice.hexagonal": "Hexágonos",
+    "cam.lattice.triangular": "Triángulos",
+  };
+
   if (typeof DICT === "undefined") return;
   Object.assign(DICT.fr, fr);
   Object.assign(DICT.de, de);
   Object.assign(DICT.en, en);
+  DICT.es = Object.assign(DICT.es || {}, es);
 })();

@@ -29,6 +29,7 @@ CLOSED = "2026-11-11T13:50:00Z"
 PLACE = {"sq20": "square-lab/index.html", "hex6": "hex-lab/index.html", "tri8": "triangle-lab/index.html"}
 SIZES = {"phone": (390, 844), "se": (375, 553), "small": (320, 568), "laptop": (1440, 900)}
 OPEN_TXT = "Ya está abierto: el Fence Challenge te espera"
+LANGS_TXT = "Los tres laboratorios y la cámara hablan español: si tu móvil está en otro idioma, toca ES. El resto del sitio está, por ahora, en inglés, francés y alemán."   # the three boards' labs speak Spanish, the rest of the site not yet
 OVER = "Las Jornadas 2027 han terminado: el Fence Challenge sigue abierto aquí, en línea"
 CLOCK = [  # instant, phone time zone, board, countdown, open
     ("2026-11-11T13:50:00Z", "Europe/Zurich", None, "Se abre en 77 días", False),
@@ -65,6 +66,7 @@ STATE = """() => {
     manifest: document.querySelectorAll('link[rel=manifest]').length,
     install: vis(document.getElementById('install')),
     first: document.querySelector('#boards .board').dataset.board,
+    langs: (() => { const l = document.querySelector('.langs'); return l && vis(l) ? l.textContent.trim() : null; })(),
   };
 }"""
 fails, oks = [], 0
@@ -172,8 +174,10 @@ with sync_playwright() as p:
         if opened:
             check(len(st["hrefs"]) == 7 and st["shown"] == 7 and st["soon"] == 0 and st["manifest"] == 1,
                   f"{tag}: open, the seven links and the manifest, no « se abre » ({st})")
+            check(st["langs"] == LANGS_TXT, f"{tag}: open, the line on languages ({st['langs']!r})")
         else:
             ways = [h for h in st["hrefs"] if h and WAY_IN.search(h)]
+            check(st["langs"] is None, f"{tag}: closed, no line on languages ({st['langs']!r})")
             check(st["hrefs"] == [] and ways == [] and st["manifest"] == 0 and not st["install"] and st["soon"] == 3,
                   f"{tag}: closed, no a element, no way into a lab, the camera or the hub, no manifest, no offer; the boards say when ({st})")
         if board:

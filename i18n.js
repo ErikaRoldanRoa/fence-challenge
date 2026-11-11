@@ -1,5 +1,5 @@
-/* Fence Challenge · shared strings (FR / DE / EN): common.* and the hub.
- * Each other page adds its own keys from the i18n.js in its folder. */
+/* Fence Challenge · shared strings (FR / DE / EN): common.* and the hub; Spanish (ES) only for the keys
+ * of the pages that speak it (see data-langs below). Each other page adds its own keys from the i18n.js in its folder. */
 var DICT = {
  "fr": {
   "common.detectArea": "Mesurer l’aire",
@@ -252,17 +252,39 @@ var DICT = {
   "hub.piece.pbar": "bar",
   "hub.chipPublications": "Publications",
   "hub.pubEnglish": "English version: <em>Extremal fences with polyforms</em>, {arxiv} (2026)."
+ },
+ "es": {
+  "common.detectArea": "Medir el área",
+  "common.clear": "Borrar",
+  "common.areaLabel": "Área",
+  "common.langLabel": "Idioma",
+  "common.more": "Más herramientas",
+  "common.clearConfirm": "Toca otra vez para borrar",
+  "common.home": "Volver a la página de inicio del Fence Challenge",
+  "hub.kitAria": "Imprimir este tablero y sus piezas"
  }
 };
 
-/* Fence Challenge · i18n (FR / DE / EN). Self-contained, no dependencies. */
+/* Fence Challenge · i18n. Self-contained, no dependencies. A page speaks the languages its <html data-langs="fr de en es">
+ * names (each one that has a dictionary here), else French, German and English. The language shown: the one chosen
+ * before (fc-lang) if this page speaks it, else the first of the phone's languages it speaks, else English; a page that
+ * does not speak the chosen one shows another and leaves the choice as it is, so the next page that speaks it shows it. */
 (function () {
   "use strict";
-  var SUPPORTED = ["fr", "de", "en"];
+  var SUPPORTED = (function () {
+    var el = document.documentElement, v = el && el.getAttribute ? el.getAttribute("data-langs") : null;
+    var list = v ? String(v).split(/\s+/).filter(function (l) { return Object.prototype.hasOwnProperty.call(DICT, l); }) : [];
+    return list.length ? list : ["fr", "de", "en"];
+  })();
   function detect() {
     try { var s = localStorage.getItem("fc-lang"); if (s && SUPPORTED.indexOf(s) >= 0) return s; } catch (e) {}
-    var n = (navigator.language || "en").slice(0, 2).toLowerCase();
-    return SUPPORTED.indexOf(n) >= 0 ? n : "en";
+    // the phone's languages in its order (a phone in Catalan that also reads Spanish gets Spanish where a page speaks it)
+    var asked = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || "en"]);
+    for (var i = 0; i < asked.length; i++) {
+      var n = String(asked[i] || "").slice(0, 2).toLowerCase();
+      if (SUPPORTED.indexOf(n) >= 0) return n;
+    }
+    return SUPPORTED.indexOf("en") >= 0 ? "en" : SUPPORTED[0];
   }
   var lang = detect();
   // The string of a key, its {placeholders} filled. raw() leaves any [[key]] (a result of the paper, see

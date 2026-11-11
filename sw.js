@@ -5,13 +5,13 @@
 // the version). Other files of the site: the cached copy at once, refreshed in the background.
 // Never cached: other sites, anything but GET, the live contest and feedback pages (cigales/, retours/), test/, archive/,
 // failed or opaque answers, answers marked no-store.
-const VERSION = '2026-11-09a';
+const VERSION = '2026-11-11a';
 const PREFIX = 'fence-challenge-';
 const CACHE = PREFIX + VERSION;
 const ROOT = new URL('./', self.location).pathname;          // "/fence-challenge/"
 const SHELL = [
   'hub/', 'hub/index.html', 'hub/hub.css?v=20261020c', 'hub/hub.js?v=20261019a', 'hub/i18n.js?v=20261020a',
-  'i18n.js?v=20261028b', 'play-ui.css?v=20261019a', 'lab-tip.css?v=20261020c', 'lab-tip.js?v=20261020c',
+  'i18n.js?v=20261111es', 'play-ui.css?v=20261019a', 'lab-tip.css?v=20261020c', 'lab-tip.js?v=20261020c',
   'fonts/manrope.css?v=20261019a', 'fonts/manrope-latin.woff2', 'favicon.svg', 'manifest.json',
 ];
 const NEVER = ['cigales/', 'retours/', 'test/', 'archive/'];

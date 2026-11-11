@@ -38,15 +38,16 @@ VIEWS = [
     ("phone sideways", 844, 390, True, 14),
     ("small phone sideways", 640, 360, True, None),
 ]
-LANGS = ["en", "fr", "de"]
+LANGS = ["en", "fr", "de", "es"]
 # the cup: not yet, won, and the sentence read out at the win
 TEXT = {
     "en": ("Not yet the best fence of all", "The best fence of all", "Trophy won: the best fence of all."),
     "fr": ("Pas encore la meilleure barrière de toutes", "La meilleure barrière de toutes", "Trophée gagné\u202f: la meilleure barrière de toutes."),
     "de": ("Noch nicht der beste Zaun von allen", "Der beste Zaun von allen", "Pokal gewonnen: der beste Zaun von allen."),
+    "es": ("Todavía no es la mejor valla de todas", "La mejor valla de todas", "Trofeo ganado: la mejor valla de todas."),
 }
 # the small trophy, for the configuration on the board, before it is won
-CONFIG_OFF = {"en": "Not yet the best fence of this configuration", "fr": "Pas encore la meilleure barrière de cette configuration", "de": "Noch nicht der beste Zaun dieser Konfiguration"}
+CONFIG_OFF = {"en": "Not yet the best fence of this configuration", "fr": "Pas encore la meilleure barrière de cette configuration", "de": "Noch nicht der beste Zaun dieser Konfiguration", "es": "Todavía no es la mejor valla de esta configuración"}
 CONTROLS = ["#detect-game-area", ".langSel", "#rotate-piece", "#flip-piece", ".lab-nav a:nth-child(1)", ".lab-nav a:nth-child(2)",
             "#clear-board", "#camera-toggle", ".side-brand", "#shelf"]
 
@@ -108,6 +109,7 @@ SAVED = {
     "en": ("Kept on this device", "Nothing is kept in this browser"),
     "fr": ("Gardé sur cet appareil", "Rien n’est gardé dans ce navigateur"),
     "de": ("Auf diesem Gerät gespeichert", "In diesem Browser wird nichts gespeichert"),
+    "es": ("Guardado en este dispositivo", "No se guarda nada en este navegador"),
 }
 SAVED_ICON = """() => {
   const e = document.getElementById('case-saved');
@@ -366,6 +368,7 @@ with sync_playwright() as pw:
         s = page.evaluate(STATE)
         portrait_phone = touch and w < 500 and h > w
         check(not errors, f"[{label}] no errors in the console {errors[:2]}")
+        check(page.evaluate("document.documentElement.lang") == lang, f"[{label}] the page speaks {lang}")
         check(s["square"], f"[{label}] the board is square")
         check(s["scrollW"] <= s["iw"] + 1, f"[{label}] nothing scrolls sideways")
         if portrait_phone:

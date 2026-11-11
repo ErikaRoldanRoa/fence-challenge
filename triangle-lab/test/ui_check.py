@@ -34,7 +34,7 @@ VIEWS = [
     ("laptop", 1400, 900, False, None),
     ("phone sideways", 844, 390, True, 12),
 ]
-LANGS = ["en", "fr", "de"]
+LANGS = ["en", "fr", "de", "es"]
 CONTROLS = ["#detect-area", "#shelf", ".langSel", "#rotate-piece", "#flip-piece", ".lab-nav a:nth-child(1)", ".lab-nav a:nth-child(2)", "#clear-board", "#camera-chip", ".side-brand"]
 
 STATE = """() => {
@@ -76,6 +76,7 @@ SAVED = {
     "en": ("Kept on this device", "Nothing is kept in this browser"),
     "fr": ("Gardé sur cet appareil", "Rien n’est gardé dans ce navigateur"),
     "de": ("Auf diesem Gerät gespeichert", "In diesem Browser wird nichts gespeichert"),
+    "es": ("Guardado en este dispositivo", "No se guarda nada en este navegador"),
 }
 SAVED_ICON = """() => {
   const e = document.getElementById('case-saved');
@@ -176,6 +177,7 @@ with sync_playwright() as pw:
         s = page.evaluate(STATE)
         portrait_phone = touch and w < 500 and h > w
         check(not errors, f"[{label}] no errors in the console {errors[:2]}")
+        check(page.evaluate("document.documentElement.lang") == lang, f"[{label}] the page speaks {lang}")
         check(s["cells"] == 384, f"[{label}] the board has 384 triangles")
         check(s["scrollW"] <= s["iw"] + 1, f"[{label}] nothing scrolls sideways")
         if portrait_phone:

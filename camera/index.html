@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" translate="no" class="notranslate">
+<html lang="en" translate="no" class="notranslate" data-langs="fr de en es">
   <head>
     <meta charset="UTF-8" />
     <meta name="google" content="notranslate" />
@@ -18,8 +18,8 @@
     <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="../fonts/manrope.css" />
     <link rel="stylesheet" href="view.css" />
-    <script src="../i18n.js"></script>
-    <script src="i18n.js"></script>
+    <script src="../i18n.js?v=20261111es"></script>
+    <script src="i18n.js?v=20261111es"></script>
       <link rel="manifest" href="../manifest.json" />
     <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png" />
     <script defer src="../sw-register.js?v=20261109a"></script>
@@ -35,10 +35,11 @@
       <button id="countBtn" class="chip toggle" type="button" aria-pressed="false" hidden>
         <span class="sw" aria-hidden="true"></span><span data-i18n="cam.countFirst">Count first</span>
       </button>
-      <nav class="langSel" aria-label="Language / Langue / Sprache">
+      <nav class="langSel" data-i18n-aria-label="common.langLabel" aria-label="Language">
         <button type="button" data-lang-btn="fr" aria-pressed="false" lang="fr">FR</button>
         <button type="button" data-lang-btn="de" aria-pressed="false" lang="de">DE</button>
         <button type="button" data-lang-btn="en" aria-pressed="false" lang="en">EN</button>
+        <button type="button" data-lang-btn="es" aria-pressed="false" lang="es">ES</button>
       </nav>
     </header>
 

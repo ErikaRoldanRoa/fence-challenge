@@ -23,10 +23,10 @@ ENGINE = os.environ.get("FC_BROWSER", "chromium")
 FENCES = json.load(open(Path(__file__).with_name("fences.fixture.json")))
 fails = []
 
-CONFIG_TITLE = {"en": "The best of this configuration", "fr": "Le meilleur de cette configuration", "de": "Das Beste dieser Konfiguration"}
-GLOBAL_TITLE = {"en": "The best of all configurations", "fr": "Le meilleur de toutes les configurations", "de": "Das Beste aller Konfigurationen"}
-NOT_YET = {"en": "Not yet", "fr": "Pas encore", "de": "Noch nicht"}
-WON = {"en": "Trophy won", "fr": "Trophée gagné", "de": "Pokal gewonnen"}
+CONFIG_TITLE = {"en": "The best of this configuration", "fr": "Le meilleur de cette configuration", "de": "Das Beste dieser Konfiguration", "es": "La mejor valla de esta configuración"}
+GLOBAL_TITLE = {"en": "The best of all configurations", "fr": "Le meilleur de toutes les configurations", "de": "Das Beste aller Konfigurationen", "es": "La mejor valla de todas las configuraciones"}
+NOT_YET = {"en": "Not yet", "fr": "Pas encore", "de": "Noch nicht", "es": "Todavía no"}
+WON = {"en": "Trophy won", "fr": "Trophée gagné", "de": "Pokal gewonnen", "es": "Trofeo ganado"}
 
 # The fence as pieces on the board: the board is moved so that every triangle is on it, each piece gets the orientation and
 # the place that cover exactly its triangles.
@@ -95,6 +95,7 @@ def new_page(browser, w, h, touch, lang, storage=None, init=""):
     page.goto(URL)
     page.wait_for_selector("#piece-tray [data-type]")
     page.wait_for_timeout(350)
+    check(page.evaluate("document.documentElement.lang") == lang, f"[{lang}] the page opens in {lang}")
     return ctx, page, errors
 
 
@@ -109,6 +110,7 @@ SAVED = {
     "en": ("Kept on this device", "Nothing is kept in this browser"),
     "fr": ("Gardé sur cet appareil", "Rien n’est gardé dans ce navigateur"),
     "de": ("Auf diesem Gerät gespeichert", "In diesem Browser wird nichts gespeichert"),
+    "es": ("Guardado en este dispositivo", "No se guarda nada en este navegador"),
 }
 SAVED_ICON = """() => {
   const e = document.getElementById('case-saved');
@@ -162,7 +164,7 @@ with sync_playwright() as pw:
     browser = getattr(pw, ENGINE).launch()
 
     # ---- a new visitor: both trophies dark, nothing stored, nothing to open but an empty case
-    for lang in ("en", "fr", "de"):
+    for lang in ("en", "fr", "de", "es"):
         ctx, page, errors = new_page(browser, 1280, 800, False, lang)
         s = page.evaluate(SEEN)
         check(not s["config"]["on"] and not s["global"]["on"], f"[{lang}] a new visitor has both trophies dark")
@@ -232,7 +234,7 @@ with sync_playwright() as pw:
         ctx.close()
 
     # ---- what was won comes back after a reload, in each language
-    for lang in ("en", "fr", "de"):
+    for lang in ("en", "fr", "de", "es"):
         ctx, page, errors = new_page(browser, 390, 844, True, lang)
         page.evaluate(PLACE, FENCES[0])
         measure(page)
@@ -294,7 +296,7 @@ with sync_playwright() as pw:
     ctx.close()
 
     # ---- a browser that refuses storage, in each language: a win still lights the trophy for the visit, nothing is kept, the icon says so
-    for lang in ("en", "fr", "de"):
+    for lang in ("en", "fr", "de", "es"):
         ctx, page, errors = new_page(browser, 390, 844, True, "en", init=BLOCKED)
         page.evaluate("(l) => document.querySelector('[data-lang-btn=\"' + l + '\"]').click()", lang)    # the language cannot be kept either
         r = page.evaluate(PLACE, FENCES[0])

@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-langs="fr de en es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="preload" as="script" href="../i18n.js" />
-    <link rel="preload" as="script" href="i18n.js" />
+    <link rel="preload" as="script" href="../i18n.js?v=20261111es" />
+    <link rel="preload" as="script" href="i18n.js?v=20261111es" />
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'"
@@ -16,17 +16,18 @@
     <link rel="stylesheet" href="styles.css?v=20261029b" />
     <link rel="stylesheet" href="../camera/inboard.css" />
     <link rel="stylesheet" href="../play-ui.css" />
-    <script src="../i18n.js"></script>
-    <script src="i18n.js?v=20261029a"></script>
+    <script src="../i18n.js?v=20261111es"></script>
+    <script src="i18n.js?v=20261111es"></script>
       <link rel="manifest" href="../manifest.json" />
     <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png" />
     <script defer src="../sw-register.js?v=20261109a"></script>
   </head>
   <body class="sq-lab">
-    <nav class="langSel" aria-label="Language / Langue / Sprache">
+    <nav class="langSel" data-i18n-aria-label="common.langLabel" aria-label="Language">
       <button type="button" data-lang-btn="fr" aria-pressed="false" lang="fr">FR</button>
       <button type="button" data-lang-btn="de" aria-pressed="false" lang="de">DE</button>
       <button type="button" data-lang-btn="en" aria-pressed="false" lang="en">EN</button>
+      <button type="button" data-lang-btn="es" aria-pressed="false" lang="es">ES</button>
     </nav>
 
     <main class="app-shell">
@@ -103,7 +104,7 @@ Dr. Erika Roldán</a>
     <script defer src="../vendor/js-aruco2/dictionaries/aruco_4x4_1000.js"></script>
     <script defer src="../camera/boards.js"></script>
     <script defer src="../camera/core.js"></script>
-    <script defer src="../camera/inboard.js"></script>
+    <script defer src="../camera/inboard.js?v=20261111es"></script>
     <script defer src="../play-ui.js"></script>
     <script defer src="data/pentomino-moves.js?v=20261028a"></script>
     <script defer src="data/pentomino-exceptions.js?v=20261028a"></script>

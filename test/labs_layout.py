@@ -21,6 +21,7 @@ QUICK = "--quick" in sys.argv
 RUN = [int(a.split("=",1)[1]) for a in sys.argv if a.startswith("--run=")]   # only these runs (viewport + states) of each lab: to share a long check between processes
 VIEWS = [(390, 664, True), (390, 844, True), (820, 1180, True), (1400, 900, False)]
 LANGS = ["fr", "de", "en"]
+ES_LABS = {"square-lab", "hex-lab", "triangle-lab"}   # the pages that also speak Spanish (<html data-langs>)
 
 # Each lab: list of (state name, js to reach it, wait ms).
 # A player who has won forty configurations (the storage the lab reads before it draws), for the states that show the case full.
@@ -184,7 +185,7 @@ def main():
                 runs += [(v, [s for s in all_states if s[0] in EXTRA[lab][1]]) for v in EXTRA[lab][0]]
             for ri, ((w, h, touch), states) in enumerate(runs):
                 if RUN and ri not in RUN: continue
-                for lang in (["en"] if QUICK else LANGS):
+                for lang in (["en"] if QUICK else LANGS + (["es"] if lab in ES_LABS else [])):
                     ctx = b.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch and not WEBKIT,
                                         device_scale_factor=2 if touch else 1)
                     ctx.add_init_script("try{localStorage.setItem('fc-lang','%s')}catch(e){}" % lang)
@@ -195,6 +196,8 @@ def main():
                         pg.goto(BASE + lab + "/?lang=" + lang, wait_until="networkidle")
                         pg.evaluate("()=>{const b=document.querySelector('[data-lang-btn=\"%s\"]'); if(b) b.click();}" % lang)
                         pg.wait_for_timeout(700)
+                        shown = pg.evaluate("()=>document.documentElement.lang")
+                        if shown != lang: fails.append("%s %dx%d %s %s: the page shows %r, not %s" % (lab, w, h, lang, st, shown, lang))
                         if js:
                             pg.evaluate("()=>{" + js + "}")
                             pg.wait_for_timeout(wait)
@@ -202,6 +205,7 @@ def main():
                         for i in pg.evaluate(CHECK): fails.append(tag + ": " + i)
                         for e in errs: fails.append(tag + ": pageerror " + e)
                         if OUT and lang == "en": pg.screenshot(path=os.path.join(OUT, "%s_%d_%s.png" % (lab, w * 10000 + h, st)))
+                        if OUT and lang == "es": pg.screenshot(path=os.path.join(OUT, "%s_%d_%s_es.png" % (lab, w * 10000 + h, st)))
                         chips = pg.evaluate("()=>[...document.querySelectorAll('.math-chip')].filter(c=>{const r=c.getBoundingClientRect();return r.width>2&&!c.closest('[hidden]')&&!c.hidden}).length")
                         for k in range(chips):
                             pg.evaluate("(k)=>{const c=[...document.querySelectorAll('.math-chip')].filter(c=>{const r=c.getBoundingClientRect();return r.width>2&&!c.closest('[hidden]')&&!c.hidden});c[k]&&c[k].click()}", k)

@@ -36,8 +36,8 @@
     tri13: "../triangle-lab/index.html#camera",
   };
   const SCRIPTS = [
-    "../i18n.js",
-    "i18n.js",
+    "../i18n.js?v=20261111es",
+    "i18n.js?v=20261111es",
     "../lattice-square.js",
     "../lattice-hex.js",
     "../lattice-triangular.js",

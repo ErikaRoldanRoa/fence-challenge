@@ -1,4 +1,4 @@
-/* Fence Challenge · square lab strings (FR / DE / EN).
+/* Fence Challenge · square lab strings (FR / DE / EN / ES).
  * Loaded right after ../i18n.js and merged into its dictionary before the
  * page is translated. Placeholders use {name}. French uses a narrow no-break
  * space (U+202F) before ; : ! ? and inside guillemets. */
@@ -204,8 +204,75 @@
     "sq.s.imported": "Pieces from paper: {count}."
   };
 
+  var es = {
+    "sq.docTitle": "Reto 2 · 12 pentominós · Fence Challenge",
+    "sq.title": "Reto 2 · 12 pentominós",
+    "sq.brand.line": "Fence Challenge · LRMR25\nDr. Erika Roldán",
+    "sq.brand.citeTitle": "Cómo citar: Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025, doi:10.1515/dmvm-2025-0056",
+    "sq.t.off": "Todavía no es la mejor valla de todas",
+    "sq.t.on": "La mejor valla de todas",
+    "sq.t.won": "Trofeo ganado: la mejor valla de todas.",
+    "sq.t.config.off": "Todavía no es la mejor valla de esta configuración",
+    "sq.t.config.on": "La mejor valla de esta configuración",
+    "sq.t.wonConfig": "Trofeo ganado: la mejor valla de esta configuración.",
+    "sq.t.case": "Vitrina de trofeos",
+    "sq.t.close": "Cerrar",
+    "sq.t.grid": "Las configuraciones ganadas",
+    "sq.t.count": "{n} de {all} configuraciones",
+    "sq.t.state.on": "ganada",
+    "sq.t.state.off": "todavía no",
+    "sq.t.best": "La mejor valla de todas",
+    "sq.t.milestone": "{n} configuraciones ganadas",
+    "sq.t.tier.gold": "Todas las configuraciones de oro",
+    "sq.t.tier.silver": "Todas las configuraciones de plata",
+    "sq.t.seen": "Configuración",
+    "sq.t.saved": "Guardado en este dispositivo",
+    "sq.t.unsaved": "No se guarda nada en este navegador",
+    "sq.pieceDock.aria": "Bandeja de piezas",
+    "sq.board.aria": "Tablero de 20 por 20 casillas: las flechas mueven la pieza seleccionada, R la gira, F la voltea, Supr la quita.",
+    "sq.cam.open": "Abrir la cámara sobre el tablero",
+    "sq.cam.close": "Cerrar la cámara",
+    "sq.s.camStarting": "La cámara se está abriendo. Muestra el tablero impreso con los cuatro cuadrados de sus esquinas.",
+    "sq.s.camLocked": "Tablero encontrado. No muevas el móvil.",
+    "sq.s.camSearching": "Muestra los cuatro cuadrados de las esquinas del tablero impreso.",
+    "sq.s.camError": "La cámara no se puede abrir aquí. Revisa el permiso de la cámara.",
+    "sq.s.camClosed": "Cámara cerrada. Las piezas se quedan en el tablero.",
+    "sq.measure": "Medir el área",
+    "sq.clear": "Borrar",
+    "sq.rotate": "Girar",
+    "sq.rotateTip": "Gira la pieza seleccionada (tecla R)",
+    "sq.flip": "Voltear",
+    "sq.flipTip": "Voltea la pieza seleccionada (tecla F)",
+    "sq.piece": "Pieza {name}",
+    "sq.s.start": "Toca una pieza para colocarla. Arrástrala para moverla. Toca una pieza seleccionada para quitarla. Una valla se cierra lado contra lado, nunca solo por una esquina.",
+    "sq.s.added": "Pieza {name} colocada. Arrástrala adonde quieras.",
+    "sq.s.selected": "Pieza {name} seleccionada. Tócala otra vez para quitarla.",
+    "sq.s.noSpace": "Ya no queda sitio para la pieza {name}.",
+    "sq.s.rotated": "Pieza {name} girada.",
+    "sq.s.flipped": "Pieza {name} volteada.",
+    "sq.s.cannotRotate": "Aquí no hay sitio para girar la pieza {name}.",
+    "sq.s.cannotFlip": "Aquí no hay sitio para voltear la pieza {name}.",
+    "sq.s.selectFirst": "Primero toca una pieza del tablero.",
+    "sq.s.releaseFirst": "Primero suelta la pieza que estás moviendo.",
+    "sq.s.dragging": "Estás moviendo la pieza {name}. Suéltala para dejarla.",
+    "sq.s.moved": "Pieza {name} movida.",
+    "sq.s.invalidDrop": "La pieza {name} no cabe ahí: ha vuelto a su sitio.",
+    "sq.s.removed": "Pieza {name} quitada.",
+    "sq.s.cleared": "Tablero vacío.",
+    "sq.s.noArea": "Todavía no hay interior. Cierra tu valla.",
+    "sq.s.leak": "El exterior se cuela por una esquina: todavía no hay nada encerrado.",
+    "sq.s.fence1": "¡Valla cerrada, área de 1 casilla!",
+    "sq.s.fence": "¡Valla cerrada, área de {area} casillas!",
+    "sq.s.fenceLeak1": "Área de 1 casilla. Pero el exterior también se cuela por una esquina en otras casillas.",
+    "sq.s.fenceLeak": "Área de {area} casillas. Pero el exterior también se cuela por una esquina en otras casillas.",
+    "sq.s.pockets": "Área de {area} casillas en {count} interiores separados. Una valla encierra uno solo.",
+    "sq.s.pocketsLeak": "Área de {area} casillas en {count} interiores separados, y el exterior se cuela por una esquina. Una valla encierra uno solo.",
+    "sq.s.imported": "Piezas traídas del papel: {count}."
+  };
+
   if (typeof DICT === "undefined") return;
   Object.assign(DICT.fr, fr);
   Object.assign(DICT.de, de);
   Object.assign(DICT.en, en);
+  DICT.es = Object.assign(DICT.es || {}, es);
 })();

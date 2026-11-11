@@ -1,4 +1,4 @@
-/* Fence Challenge · Challenge 3 lab strings (FR / DE / EN).
+/* Fence Challenge · Challenge 3 lab strings (FR / DE / EN / ES).
  * Loaded right after ../i18n.js and merged into its dictionary before the
  * page is translated. Placeholders use the {name} form of i18n.t.
  * French uses a narrow no-break space (U+202F) before ; : ! ? and inside
@@ -189,5 +189,66 @@
     "hx.t.seen": "Configuration",
     "hx.t.saved": "Kept on this device",
     "hx.t.unsaved": "Nothing is kept in this browser"
+  });
+
+  DICT.es = Object.assign(DICT.es || {}, {
+    "hx.pageTitle": "Reto 3 · 7 tetrahexes · Fence Challenge",
+    "hx.h1": "Reto 3 · 7 tetrahexes",
+    "hx.cameraOpen": "Abrir la cámara sobre el tablero",
+    "hx.cameraClose": "Cerrar la cámara",
+    "hx.tray.ariaLabel": "Bandeja de tetrahexes",
+    "hx.board.ariaLabel": "Tablero de hexágonos: las flechas mueven la pieza seleccionada, R la gira, F la voltea, Supr la quita.",
+    "hx.piece.aria": "Pieza {name}",
+    "hx.rotate": "Girar (R)",
+    "hx.rotateTip": "Gira la pieza seleccionada (tecla R)",
+    "hx.rotateTipTouch": "Gira la pieza seleccionada",
+    "hx.flip": "Voltear (F)",
+    "hx.flipTip": "Voltea la pieza seleccionada (tecla F)",
+    "hx.flipTipTouch": "Voltea la pieza seleccionada",
+    "hx.cite.text": "Valla de polihexes · LRMR25\nDr. Erika Roldán",
+    "hx.cite.title": "Cómo citar: Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025, doi:10.1515/dmvm-2025-0056",
+    "hx.s.ready": "Toca una pieza para colocarla. Arrástrala para moverla. Toca una pieza seleccionada para quitarla. Una valla se cierra lado contra lado.",
+    "hx.s.areaNone": "Todavía no hay interior. Cierra tu valla.",
+    "hx.s.fence1": "¡Valla cerrada, área de 1 hexágono!",
+    "hx.s.fence": "¡Valla cerrada, área de {area} hexágonos!",
+    "hx.s.areaSplit": "Área encerrada: {area} hexágonos, en {regions} interiores separados. Una valla encierra uno solo.",
+    "hx.s.cleared": "Tablero vacío.",
+    "hx.s.placed": "Pieza {name} colocada. Arrástrala para moverla.",
+    "hx.s.selected": "Pieza {name} seleccionada. Arrástrala por el tablero.",
+    "hx.s.selectedTap": "Pieza {name} seleccionada. Arrástrala, o tócala otra vez para quitarla.",
+    "hx.s.removed": "Pieza {name} quitada.",
+    "hx.s.moving": "Estás moviendo la pieza {name}. Suéltala para dejarla.",
+    "hx.s.moved": "Pieza {name} movida.",
+    "hx.s.rotated": "Pieza {name} girada.",
+    "hx.s.flipped": "Pieza {name} volteada.",
+    "hx.s.symRot": "La pieza {name} se ve igual cuando la giras.",
+    "hx.s.symFlip": "En esta posición, la pieza {name} es su propia imagen en el espejo.",
+    "hx.s.noRoom": "Aquí no hay sitio para girar o voltear la pieza {name}.",
+    "hx.s.noSpace": "Ya no queda sitio libre para la pieza {name}.",
+    "hx.s.camStarting": "La cámara se está abriendo. Muestra el tablero impreso con los cuatro cuadrados de sus esquinas.",
+    "hx.s.camSearching": "Muestra los cuatro cuadrados de las esquinas del tablero impreso.",
+    "hx.s.camLocked": "Tablero encontrado. No muevas el móvil.",
+    "hx.s.camError": "La cámara no se puede abrir aquí. Revisa el permiso de la cámara.",
+    "hx.s.camClosed": "Cámara cerrada. Las piezas se quedan en el tablero.",
+    "hx.t.config.off": "Todavía no es la mejor valla de esta configuración",
+    "hx.t.config.on": "La mejor valla de esta configuración",
+    "hx.t.global.off": "Todavía no es la mejor valla de todas las configuraciones",
+    "hx.t.global.on": "La mejor valla de todas las configuraciones",
+    "hx.t.wonConfig": "Trofeo ganado: la mejor valla de esta configuración.",
+    "hx.t.wonGlobal": "Trofeo ganado: la mejor valla de todas las configuraciones.",
+    "hx.t.case": "Vitrina de trofeos",
+    "hx.t.close": "Cerrar",
+    "hx.t.grid": "Las configuraciones",
+    "hx.t.count": "{n} de {all} configuraciones",
+    "hx.t.state.on": "ganada",
+    "hx.t.state.off": "todavía no",
+    "hx.t.best": "La mejor valla de todas las configuraciones",
+    "hx.t.milestone": "{n} configuraciones ganadas",
+    "hx.t.tier.gold": "Todas las configuraciones de oro",
+    "hx.t.tier.silver": "Todas las configuraciones de plata",
+    "hx.t.tier.bronze": "Todas las configuraciones de bronce",
+    "hx.t.seen": "Configuración",
+    "hx.t.saved": "Guardado en este dispositivo",
+    "hx.t.unsaved": "No se guarda nada en este navegador"
   });
 })();

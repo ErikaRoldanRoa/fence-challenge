@@ -139,6 +139,24 @@
       "cam.in.unsupported": "This browser cannot open the camera here.",
       "cam.in.reader": "The picture cannot be read right now. Reload the page to try again.",
     },
+    es: {
+      "cam.videoLabel": "Imagen de la cámara con tu valla dibujada encima",
+      "cam.starting": "Abriendo la cámara…",
+      "cam.s.find": "Muestra los cuatro cuadrados de las esquinas.",
+      "cam.boardFound": "Tablero reconocido:",
+      "cam.board.square": "Cuadrados · {w} × {h}",
+      "cam.board.side": "{lattice} · lado {n}",
+      "cam.lattice.hexagonal": "Hexágonos",
+      "cam.lattice.triangular": "Triángulos",
+      "cam.s.stopped": "La cámara está apagada. Toca «Seguir» para volver a encenderla.",
+      "cam.resume": "Seguir",
+      "cam.retry": "Reintentar",
+      "cam.in.denied": "La cámara está bloqueada. Puedes darle permiso en los ajustes del navegador.",
+      "cam.in.busy": "Otra app está usando la cámara. Ciérrala y vuelve a intentarlo.",
+      "cam.in.none": "No se ha encontrado ninguna cámara en este dispositivo.",
+      "cam.in.unsupported": "Este navegador no puede abrir la cámara aquí.",
+      "cam.in.reader": "Ahora mismo no se puede leer la imagen. Recarga la página para volver a intentarlo.",
+    },
   };
 
   const ICONS = {

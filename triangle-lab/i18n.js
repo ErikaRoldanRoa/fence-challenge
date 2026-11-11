@@ -1,4 +1,4 @@
-/* Fence Challenge · Challenge 4 lab strings (FR / DE / EN).
+/* Fence Challenge · Challenge 4 lab strings (FR / DE / EN / ES).
  * Loaded right after ../i18n.js and merged into its dictionary before the
  * page is translated. Placeholders use the {name} form of i18n.t.
  * French uses a narrow no-break space (U+202F) before ; : ! ? and inside
@@ -192,5 +192,67 @@
     "tri.t.seen": "Configuration",
     "tri.t.saved": "Kept on this device",
     "tri.t.unsaved": "Nothing is kept in this browser"
+  });
+
+  DICT.es = Object.assign(DICT.es || {}, {
+    "tri.pageTitle": "Reto 4 · 12 hexiamantes · Fence Challenge",
+    "tri.h1": "Reto 4 · 12 hexiamantes",
+    "tri.cameraOpen": "Abrir la cámara sobre el tablero",
+    "tri.cameraClose": "Cerrar la cámara",
+    "tri.tray.ariaLabel": "Bandeja de hexiamantes",
+    "tri.board.ariaLabel": "Tablero de triángulos: las flechas mueven la pieza seleccionada, R la gira, F la voltea, Supr la quita.",
+    "tri.piece.aria": "Pieza {name}",
+    "tri.rotate": "Girar (R)",
+    "tri.rotateTip": "Gira la pieza seleccionada (tecla R)",
+    "tri.rotateTipTouch": "Gira la pieza seleccionada",
+    "tri.flip": "Voltear (F)",
+    "tri.flipTip": "Voltea la pieza seleccionada (tecla F)",
+    "tri.flipTipTouch": "Voltea la pieza seleccionada",
+    "tri.cite.text": "Valla de hexiamantes · LRMR25\nDr. Erika Roldán",
+    "tri.cite.title": "Cómo citar: Langlois-Rémillard · Müßig · Roldán, Maximale Zäune mit Polyformen, DMVM Mitteilungen 33(3), 187–199, 2025, doi:10.1515/dmvm-2025-0056",
+    "tri.s.ready": "Toca una pieza para colocarla. Arrástrala para moverla. Toca una pieza seleccionada para quitarla. Una valla se cierra lado contra lado, nunca solo por una esquina.",
+    "tri.s.leakOnly": "Todavía no hay interior: el exterior se cuela por una esquina y las casillas punteadas siguen abiertas.",
+    "tri.s.leak": "El exterior se cuela por una esquina: las casillas punteadas siguen abiertas.",
+    "tri.s.areaNone": "Todavía no hay interior. Cierra tu valla.",
+    "tri.s.area1": "Área encerrada: 1 triángulo.",
+    "tri.s.area": "Área encerrada: {area} triángulos.",
+    "tri.s.fence1": "¡Valla cerrada, área de 1 triángulo!",
+    "tri.s.fence": "¡Valla cerrada, área de {area} triángulos!",
+    "tri.s.areaSplit": "Área encerrada: {area} triángulos, en {regions} interiores separados. Una valla encierra uno solo.",
+    "tri.s.cleared": "Tablero vacío.",
+    "tri.s.placed": "Pieza {name} colocada. Arrástrala para moverla.",
+    "tri.s.selected": "Pieza {name} seleccionada. Arrástrala por el tablero.",
+    "tri.s.selectedTap": "Pieza {name} seleccionada. Arrástrala, o tócala otra vez para quitarla.",
+    "tri.s.removed": "Pieza {name} quitada.",
+    "tri.s.moving": "Estás moviendo la pieza {name}. Suéltala para dejarla.",
+    "tri.s.moved": "Pieza {name} movida.",
+    "tri.s.rotated": "Pieza {name} girada.",
+    "tri.s.flipped": "Pieza {name} volteada.",
+    "tri.s.noRoom": "Aquí no hay sitio para girar o voltear la pieza {name}.",
+    "tri.s.noSpace": "Ya no queda sitio libre para la pieza {name}.",
+    "tri.s.camStarting": "La cámara se está abriendo. Muestra el tablero impreso con los cuatro cuadrados de sus esquinas.",
+    "tri.s.camSearching": "Muestra los cuatro cuadrados de las esquinas del tablero impreso.",
+    "tri.s.camLocked": "Tablero encontrado. No muevas el móvil.",
+    "tri.s.camError": "La cámara no se puede abrir aquí. Revisa el permiso de la cámara.",
+    "tri.s.camClosed": "Cámara cerrada. Las piezas se quedan en el tablero.",
+    "tri.t.config.off": "Todavía no es la mejor valla de esta configuración",
+    "tri.t.config.on": "La mejor valla de esta configuración",
+    "tri.t.global.off": "Todavía no es la mejor valla de todas las configuraciones",
+    "tri.t.global.on": "La mejor valla de todas las configuraciones",
+    "tri.t.wonConfig": "Trofeo ganado: la mejor valla de esta configuración.",
+    "tri.t.wonGlobal": "Trofeo ganado: la mejor valla de todas las configuraciones.",
+    "tri.t.case": "Vitrina de trofeos",
+    "tri.t.close": "Cerrar",
+    "tri.t.grid": "Las configuraciones ganadas",
+    "tri.t.count": "{n} de {all} configuraciones",
+    "tri.t.state.on": "ganada",
+    "tri.t.state.off": "todavía no",
+    "tri.t.best": "La mejor valla de todas las configuraciones",
+    "tri.t.milestone": "{n} configuraciones ganadas",
+    "tri.t.tier.gold": "Todas las configuraciones de oro",
+    "tri.t.tier.silver": "Todas las configuraciones de plata",
+    "tri.t.seen": "Configuración",
+    "tri.t.saved": "Guardado en este dispositivo",
+    "tri.t.unsaved": "No se guarda nada en este navegador"
   });
 })();

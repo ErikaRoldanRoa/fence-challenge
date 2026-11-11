@@ -25,11 +25,11 @@ ENGINE = os.environ.get("FC_BROWSER", "chromium")
 FENCES = json.load(open(Path(__file__).with_name("fences.fixture.json")))
 fails = []
 
-CONFIG_ON = {"en": "The best fence of this configuration", "fr": "La meilleure barrière de cette configuration", "de": "Der beste Zaun dieser Konfiguration"}
-CONFIG_OFF = {"en": "Not yet the best fence of this configuration", "fr": "Pas encore la meilleure barrière de cette configuration", "de": "Noch nicht der beste Zaun dieser Konfiguration"}
-GLOBAL_ON = {"en": "The best fence of all", "fr": "La meilleure barrière de toutes", "de": "Der beste Zaun von allen"}
-GLOBAL_OFF = {"en": "Not yet the best fence of all", "fr": "Pas encore la meilleure barrière de toutes", "de": "Noch nicht der beste Zaun von allen"}
-WON = {"en": "Trophy won: the best fence of this configuration.", "fr": "Trophée gagné : la meilleure barrière de cette configuration.", "de": "Pokal gewonnen: der beste Zaun dieser Konfiguration."}
+CONFIG_ON = {"en": "The best fence of this configuration", "fr": "La meilleure barrière de cette configuration", "de": "Der beste Zaun dieser Konfiguration", "es": "La mejor valla de esta configuración"}
+CONFIG_OFF = {"en": "Not yet the best fence of this configuration", "fr": "Pas encore la meilleure barrière de cette configuration", "de": "Noch nicht der beste Zaun dieser Konfiguration", "es": "Todavía no es la mejor valla de esta configuración"}
+GLOBAL_ON = {"en": "The best fence of all", "fr": "La meilleure barrière de toutes", "de": "Der beste Zaun von allen", "es": "La mejor valla de todas"}
+GLOBAL_OFF = {"en": "Not yet the best fence of all", "fr": "Pas encore la meilleure barrière de toutes", "de": "Noch nicht der beste Zaun von allen", "es": "Todavía no es la mejor valla de todas"}
+WON = {"en": "Trophy won: the best fence of this configuration.", "fr": "Trophée gagné : la meilleure barrière de cette configuration.", "de": "Pokal gewonnen: der beste Zaun dieser Konfiguration.", "es": "Trofeo ganado: la mejor valla de esta configuración."}
 
 # The fence as the pieces of a printed board: each piece gets the camera piece type, the orientation and the place that cover
 # exactly its cells (the board is the lab's 20 x 20), and the page takes them when the address ends in #paper.
@@ -105,6 +105,7 @@ def new_page(browser, w, h, touch, lang, storage=None, init=""):
     page.goto(URL)
     page.wait_for_selector("#piece-tray .piece-btn")
     page.wait_for_timeout(350)
+    check(page.evaluate("document.documentElement.lang") == lang, f"[{lang}] the page opens in {lang}")
     return ctx, page, errors
 
 
@@ -120,6 +121,7 @@ SAVED = {
     "en": ("Kept on this device", "Nothing is kept in this browser"),
     "fr": ("Gardé sur cet appareil", "Rien n’est gardé dans ce navigateur"),
     "de": ("Auf diesem Gerät gespeichert", "In diesem Browser wird nichts gespeichert"),
+    "es": ("Guardado en este dispositivo", "No se guarda nada en este navegador"),
 }
 SAVED_ICON = """() => {
   const e = document.getElementById('case-saved');
@@ -173,7 +175,7 @@ with sync_playwright() as pw:
     browser = getattr(pw, ENGINE).launch()
 
     # ---- a new visitor: both trophies dark, nothing stored, nothing of the best written anywhere
-    for lang in ("en", "fr", "de"):
+    for lang in ("en", "fr", "de", "es"):
         ctx, page, errors = new_page(browser, 1280, 800, False, lang)
         s = page.evaluate(SEEN)
         check(not s["config"]["on"] and not s["global"]["on"], f"[{lang}] a new visitor has both trophies dark")
@@ -239,7 +241,7 @@ with sync_playwright() as pw:
         ctx.close()
 
     # ---- what was won comes back after a reload, in each language
-    for lang in ("en", "fr", "de"):
+    for lang in ("en", "fr", "de", "es"):
         ctx, page, errors = new_page(browser, 390, 844, True, lang)
         put(page, FENCES[0])
         page.goto(URL)
@@ -285,7 +287,7 @@ with sync_playwright() as pw:
     ctx.close()
 
     # ---- a browser that refuses storage, in each language: a win still lights the trophy for the visit, nothing is kept, the icon says so
-    for lang in ("en", "fr", "de"):
+    for lang in ("en", "fr", "de", "es"):
         ctx, page, errors = new_page(browser, 390, 844, True, "en", init=BLOCKED)
         page.evaluate("(l) => document.querySelector('[data-lang-btn=\"' + l + '\"]').click()", lang)    # the language cannot be kept either
         r = put(page, FENCES[0])
