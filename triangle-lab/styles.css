@@ -631,6 +631,19 @@ body {
   .boardbar { min-width: min(100%, 216px); }
 }
 
+/* Under 375 px, even the screen's width leaves the area too little room beside the switch of four languages (210 px
+   wide, 14 px from the edge) for the German word and three digits side by side: the word then stands above the number,
+   which keeps at most 24 px. The same in the three labs. */
+@media (max-width: 374px) and (max-height: 679px) and (orientation: portrait) {
+  .toolbar .measure {
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 12px;
+  }
+  .toolbar .measure .area-num { font-size: min(var(--area-num, 24px), 24px); }
+}
+
 /* ---------- phones held sideways: a top strip 56 px tall (rotate and flip
    on the left, the area in the middle, back to the hub, print and the
    language switch on the right); under it the board on the left, and on its

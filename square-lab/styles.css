@@ -762,11 +762,14 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
 /* A phone that is not tall (under 680 px: the board is then about as wide as
    erase, the camera and the area side by side, and in German the area does
    not fit between them): the area stays in the top strip, left, beside the
-   language switch. */
+   language switch. The strip takes the screen's width, as in the other two
+   labs: the board is narrower than the screen, and the switch of four
+   languages leaves the area no room over the board's width. */
 @media (max-width: 640px) and (orientation: portrait) and (max-height: 679px) {
   .sq-lab .game-toolbar {
     grid-area: toolbar;
-    width: 100%;
+    width: calc(100vw - 20px);
+    margin-left: calc((var(--board-size) - 100vw + 20px) / 2);
     height: var(--toolbar-height);
     justify-self: stretch;
     justify-content: flex-start;
@@ -808,10 +811,19 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
   }
 }
 
-@media (max-width: 359px) and (orientation: portrait) and (max-height: 679px) {
-  .sq-lab .game-toolbar {
-    width: calc(100vw - 20px);
-    margin-left: calc((var(--board-size) - 100vw + 20px) / 2);
+/* Under 375 px, even the screen's width leaves the area too little room beside the switch of four languages (210 px
+   wide, 14 px from the edge) for the German word and three digits side by side: the word then stands above the number,
+   which keeps at most 24 px. The same in the three labs. */
+@media (max-width: 374px) and (orientation: portrait) and (max-height: 679px) {
+  .sq-lab .measure {
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 12px;
+  }
+
+  .sq-lab .measure .area-num {
+    font-size: min(var(--area-num, 24px), 24px);
   }
 }
 

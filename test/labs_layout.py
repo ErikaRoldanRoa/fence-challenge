@@ -29,14 +29,17 @@ def _won(key, n=40, step=497731):
     return "try{localStorage.setItem('%s',%s)}catch(e){}" % (key, json.dumps(json.dumps({"g": True, "c": [[i * step, i % 3] for i in range(n)]})))
 SHELF = "document.getElementById('shelf').click()"
 SEEN = "setTimeout(()=>document.querySelector('#case-grid .sc').click(), 200)"
+# The widest number the area pill shows, three digits: it keeps clear of what stands beside it, as the idle 0 does (play-ui.css sizes the
+# number so that three digits keep 8 px from their neighbours).
+WIDE = "const n = document.querySelector('.measure .area-num'); if (n) { n.textContent = '888'; window.dispatchEvent(new Event('resize')); }"
 def trophy_states(key):
     seed = _won(key)
-    return [("idle", "", 0), ("case", SHELF, 600), ("case-won", SHELF, 600, seed), ("case-seen", SHELF + ";" + SEEN, 900, seed)]
+    return [("idle", "", 0), ("wide", WIDE, 400), ("case", SHELF, 600), ("case-won", SHELF, 600, seed), ("case-seen", SHELF + ";" + SEEN, 900, seed)]
 
 # The hex lab keeps the configurations it has won as keys of its own table, not as [rank, shortfall] pairs: its won state is set once
 # the page has loaded (every ninth configuration won, and the best of all).
 HEXSEED = "const keys = Object.keys(HexOrderData.areaByOrder); trophies.state = {g: true, c: keys.filter((k, i) => i % 9 === 0)}; renderTrophies(false, false);"
-HEX_STATES = [("idle", "", 0), ("case", SHELF, 600), ("case-won", HEXSEED + SHELF, 700), ("case-seen", HEXSEED + SHELF + ";" + SEEN, 1000)]
+HEX_STATES = [("idle", "", 0), ("wide", WIDE, 400), ("case", SHELF, 600), ("case-won", HEXSEED + SHELF, 700), ("case-seen", HEXSEED + SHELF + ";" + SEEN, 1000)]
 
 STATES = {
     "hub": [("idle", "", 0)],
@@ -65,9 +68,9 @@ STATES = {
 # Extra viewports for one lab, in some of its states: (views, state names).
 SMALL = [(360, 640, True), (320, 568, True), (375, 553, True), (360, 500, True), (667, 375, True), (1024, 600, False)]   # a short phone, a narrow one, an iPhone SE in Safari, a very short one, one held sideways, a small laptop
 EXTRA = {
-    "hex-lab": (SMALL, ("idle", "case-won", "case-seen")),
-    "square-lab": (SMALL, ("idle", "case-won", "case-seen")),
-    "triangle-lab": (SMALL, ("idle", "case-won", "case-seen")),
+    "hex-lab": (SMALL, ("idle", "wide", "case-won", "case-seen")),
+    "square-lab": (SMALL, ("idle", "wide", "case-won", "case-seen")),
+    "triangle-lab": (SMALL, ("idle", "wide", "case-won", "case-seen")),
     "limit-shape-lab": ([(320, 640, True), (667, 375, True), (960, 600, False), (1100, 700, False), (1366, 768, False)],
                         ("idle", "n6", "n6-card", "n11-card", "n500")),
 }
