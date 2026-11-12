@@ -194,6 +194,14 @@ with sync_playwright() as pw:
         shown = [(sel, r) for sel, r in s["controls"] if r]
         pairs = [(a[0], b[0]) for a, b in itertools.combinations(shown, 2) if overlap(a[1], b[1])]
         check(not pairs, f"[{label}] no two controls overlap {pairs[:2]}")
+        # held sideways, the trophies stand in the row of erase and the camera, between them (since 12.11, as on a short upright phone:
+        # the strip keeps its room for the area beside the switch of four languages)
+        if touch and w > h and h <= 500:
+            box = dict(s["controls"])
+            sh, er, cam = box.get("#shelf"), box.get("#clear-board"), box.get("#camera-chip")
+            mid = lambda r: (r[1] + r[3]) / 2
+            check(bool(sh and er) and er[2] < sh[0] and (cam is None or sh[2] < cam[0]) and abs(mid(sh) - mid(er)) < 14,
+                  f"[{label}] held sideways, the trophies stand between erase and the camera, in their row")
         check(all(inside(r, w, h) for _, r in shown), f"[{label}] every control is on the screen")
         hits = page.evaluate("""(sels) => sels.map((s) => { const e = document.querySelector(s); if (!e) return true;
             const b = e.getBoundingClientRect(); const t = document.elementFromPoint((b.left + b.right) / 2, (b.top + b.bottom) / 2);

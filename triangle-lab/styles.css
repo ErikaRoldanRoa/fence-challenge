@@ -656,11 +656,16 @@ body {
     padding: 0;
   }
 
-  /* The trophies stand right of rotate and flip. */
+  /* The trophies stand in the row of erase and the camera, between them, as on a short phone held upright: the strip keeps
+     rotate, flip, the area, back to the hub, print and the switch of four languages, and at 640 px the area had no room
+     beside the trophies in German. */
   .shelf {
-    top: 8px;
-    left: 118px;
+    top: calc(var(--sw-bar-top, calc(100dvh - 126px)) + 28px);
+    left: calc(var(--sw-panel-left, calc(26px + min(calc(100dvh - 74px), 52vw))) + var(--sw-panel-width, calc(100vw - 36px - min(calc(100dvh - 74px), 52vw))) / 2);
+    transform: translate(-50%, -50%);
   }
+  /* beside the camera's chip they move half the difference of their widths to the left, as in a short phone held upright */
+  .main-stage:has(#camera-chip:not([hidden])) > .shelf { transform: translate(calc(-50% - 16px), -50%); }
 
   .langSel {
     top: 5px;

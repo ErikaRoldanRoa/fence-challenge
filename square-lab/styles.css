@@ -909,10 +909,18 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
     top: 5px;
   }
 
-  /* The cup stands right of rotate and flip. */
+  /* The cup stands in the row of erase and the camera, between them, as on a short phone held upright: the strip keeps rotate,
+     flip, the area, back to the hub, print and the switch of four languages, and at 640 px the area had no room beside the cup. */
   .sq-lab .shelf {
-    top: 8px;
-    left: 118px;
+    position: static;
+    grid-area: bar;
+    justify-self: center;
+    align-self: center;
+    z-index: 10;
+  }
+
+  .sq-lab .game-layout:has(#camera-toggle:not([hidden])) > .shelf {
+    transform: translateX(-16px);
   }
 
   .game-main {

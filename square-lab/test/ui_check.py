@@ -404,14 +404,15 @@ with sync_playwright() as pw:
         if portrait_phone and h < 680:
             check(d["#detect-game-area"][1] < 80, f"[{label}] the area pill stays in the top strip on a short phone")
 
-        # where the cup stands: top left, or between erase and the camera on a short phone, or right of flip when held sideways
+        # where the cup stands: top left, or between erase and the camera, in their row, on a short phone and on a phone held sideways
+        # (sideways since 12.11: the strip keeps its room for the area beside the switch of four languages)
         cup = d["#shelf"]
         sideways = touch and w > h and h <= 500
-        if portrait_phone and h < 680:
+        if (portrait_phone and h < 680) or sideways:
             gap_l, gap_r = cup[0] - d["#clear-board"][2], d["#camera-toggle"][0] - cup[2]
             check(gap_l > 0 and gap_r > 0 and abs(gap_l - gap_r) < 8, f"[{label}] the cup stands in the middle of the room between erase and the camera ({gap_l:.0f} | {gap_r:.0f} px)")
-        elif sideways:
-            check(cup[0] >= d["#flip-piece"][2] and cup[1] < 20, f"[{label}] the cup stands right of rotate and flip")
+            mid = lambda r: (r[1] + r[3]) / 2
+            check(abs(mid(cup) - mid(d["#clear-board"])) < 14, f"[{label}] the cup stands in the row of erase and the camera")
         else:
             check(cup[0] < 30 and cup[1] < 20, f"[{label}] the cup stands in the top-left corner")
         off = TEXT[lang][0]

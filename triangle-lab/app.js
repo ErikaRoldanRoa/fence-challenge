@@ -1068,8 +1068,10 @@ function placeAreaPill(vw) {
   root.removeProperty("--sw-strip-right");
   const nav = dom.actions.querySelector(".lab-nav");
   if (!nav) return;
-  const shelf = dom.shelf && !dom.shelf.hidden ? dom.shelf.getBoundingClientRect() : null;
-  const lo = Math.max(dom.flipBtn.getBoundingClientRect().right, shelf ? shelf.right : 0) + SW.gap;
+  const flip = dom.flipBtn.getBoundingClientRect();
+  const box = dom.shelf && !dom.shelf.hidden ? dom.shelf.getBoundingClientRect() : null;
+  const shelf = box && box.top < flip.bottom && box.bottom > flip.top ? box : null;   // the trophies count only where they stand in the strip
+  const lo = Math.max(flip.right, shelf ? shelf.right : 0) + SW.gap;
   const hi = nav.getBoundingClientRect().left - SW.gap;
   const pill = dom.detectAreaBtn.getBoundingClientRect();
   const num = dom.areaChip.getBoundingClientRect();
