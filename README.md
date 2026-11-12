@@ -94,7 +94,8 @@ The labs let you build fences by hand on all three regular tilings of the
 plane (square: polyominoes, hexagonal: polyhexes, triangular: polyiamonds),
 dragging, rotating, flipping and snapping the pieces while the lab
 measures the enclosed area. The maximum for each board is left for the player to
-discover. The interface is available in French, German and English.
+discover. These three labs and the camera speak French, German, English and Spanish; the other pages
+French, German and English.
 
 - **The first Fence Challenge page:** [erikaroldanroa.github.io/fence-challenge](https://erikaroldanroa.github.io/fence-challenge/):
   three mini-challenges, one per tiling; close a fence to unlock the full lab
@@ -163,7 +164,7 @@ root, with the server running on port 8000 where a base address is asked:
   `python3 hex-lab/test/ui_check.py http://localhost:8000/ OUTDIR`,
   `python3 triangle-lab/test/ui_check.py http://localhost:8000/ OUTDIR`,
   the trophies of the square, hexagonal and triangular labs (a closed fence of all the pieces on the board, the shelf, the case and its saving
-  icon, struck through when the browser keeps nothing, three languages): `python3 square-lab/test/trophy_check.py http://localhost:8000/ OUTDIR`, `python3 hex-lab/test/ui_check.py ...` (its
+  icon, struck through when the browser keeps nothing, four languages): `python3 square-lab/test/trophy_check.py http://localhost:8000/ OUTDIR`, `python3 hex-lab/test/ui_check.py ...` (its
   trophy section), `python3 triangle-lab/test/trophy_check.py http://localhost:8000/ OUTDIR`
 - the pieces of the three cards on the home page follow the finger:
   `python3 test/engine_drag_check.py http://localhost:8000/`
