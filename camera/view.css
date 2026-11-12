@@ -112,11 +112,15 @@ video.media { transition: opacity 0.4s var(--ease); }
 
 /* ---------- top bar ---------- */
 
+/* The bar wraps when the screen is too narrow for all its controls (on a phone, the four languages and « count
+ * first »): the language switch then takes a row of its own, at the right, and view.js gives the picture the
+ * room left below the bar. */
 .topbar {
   position: fixed;
   z-index: 20;
   top: 0; left: 0; right: 0;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   padding: calc(12px + var(--safe-t)) calc(14px + var(--safe-r)) 12px calc(14px + var(--safe-l));
@@ -191,6 +195,7 @@ video.media { transition: opacity 0.4s var(--ease); }
 .langSel {
   display: flex;
   gap: 0;
+  margin-left: auto;
   padding: 2px;
   border-radius: 999px;
   background: var(--glass);

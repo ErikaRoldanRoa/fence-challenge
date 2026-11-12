@@ -281,17 +281,18 @@ var DICT = {
     // the phone's languages in its order (a phone in Catalan that also reads Spanish gets Spanish where a page speaks it)
     var asked = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || "en"]);
     for (var i = 0; i < asked.length; i++) {
-      var n = String(asked[i] || "").slice(0, 2).toLowerCase();
-      if (SUPPORTED.indexOf(n) >= 0) return n;
+      var n = String(asked[i] || "").toLowerCase().split(/[-_]/)[0]; // the language of a tag (es-MX: es; frr is not fr)
+      if (n.length === 2 && SUPPORTED.indexOf(n) >= 0) return n;
     }
     return SUPPORTED.indexOf("en") >= 0 ? "en" : SUPPORTED[0];
   }
   var lang = detect();
   // The string of a key, its {placeholders} filled. raw() leaves any [[key]] (a result of the paper, see
   // paper-ref.js) as it is, for a lab that writes HTML and turns it into a pill; t() makes it its label, "Table 4".
+  function own(d, key) { return d && Object.prototype.hasOwnProperty.call(d, key) ? d[key] : null; } // never a name every object has
   function raw(key, vars) {
-    var s = (DICT[lang] && DICT[lang][key]);
-    if (s == null) s = (DICT.en && DICT.en[key]);
+    var s = own(DICT[lang], key);
+    if (s == null) s = own(DICT.en, key);
     if (s == null) s = key;
     if (vars) s = s.replace(/\{(\w+)\}/g, function (m, k) { return (k in vars) ? vars[k] : m; });
     return s;

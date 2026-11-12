@@ -479,12 +479,13 @@ body {
   text-align: center;
 }
 
-/* Back to the hub and print the kit: in the top strip, left of the
-   language switch. */
+/* Back to the hub and print the kit: in the top strip, 8 px left of the
+   language switch (four languages: a 44 px box for each, 8 px apart, in 4 px
+   of padding and a 1 px border, 210 px wide, 14 px from the edge). */
 .lab-nav {
   position: fixed;
   top: 13px;
-  right: 180px;
+  right: 232px;
   z-index: 9999;
 }
 
@@ -618,7 +619,7 @@ body {
     align-self: stretch;
     justify-self: stretch;
     justify-content: flex-start;
-    padding-right: 172px;
+    padding-right: 224px;
     transform: none;
   }
   .main-stage:has(#camera-chip:not([hidden])) > .toolbar { transform: none; }
@@ -687,7 +688,7 @@ body {
   .lab-nav {
     position: fixed;
     top: 6px;
-    right: 180px;
+    right: 232px;
   }
 
   .board-wrap {

@@ -173,6 +173,11 @@ body {
   z-index: 9999;
 }
 
+/* The square lab speaks four languages: its switch is 210 px wide (a 44 px box for each, 8 px apart, 4 px of padding
+   and a 1 px border) and 14 px from the edge, so its nav stands 8 px further left. The pentomino DP lab, which loads
+   this sheet, keeps three languages and the 180 px above. */
+.sq-lab .lab-nav { right: 232px; }
+
 .game-toolbar {
   grid-area: toolbar;
   display: flex;
@@ -719,6 +724,10 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
     justify-content: flex-start;
     padding-right: 172px;
   }
+
+  .sq-lab .game-toolbar {
+    padding-right: 224px;
+  }
 }
 
 @media (max-width: 640px) and (orientation: portrait) {
@@ -761,7 +770,7 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
     height: var(--toolbar-height);
     justify-self: stretch;
     justify-content: flex-start;
-    padding-right: 172px;
+    padding-right: 224px;
     transform: none;
   }
 
@@ -881,6 +890,8 @@ body[data-fc-camera]:not([data-fc-camera="stopped"]) .board-stage {
     top: 6px;
     right: 180px;
   }
+
+  .sq-lab .lab-nav { right: 232px; }
 
   .langSel {
     top: 5px;

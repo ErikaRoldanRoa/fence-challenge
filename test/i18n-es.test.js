@@ -36,15 +36,17 @@ function htmlFiles(dir) {
 const ENGINE_PAGES = htmlFiles("").filter((f) => /<script[^>]+src="(\.\.\/)*i18n\.js[?"]/.test(read(f)));
 
 // ---- the dictionaries ----
-function engine({ langs = null, stored = null, phone = "en", phones = null } = {}, pageDir = null) {
+function engine({ langs = null, stored = null, phone = "en", phones = null, languages, blocked = false } = {}, pageDir = null) {
   const store = new Map();
   if (stored) store.set("fc-lang", stored);
   const events = [];
   const html = { lang: "", getAttribute: (a) => (a === "data-langs" ? langs : null) };
   const doc = { readyState: "complete", documentElement: html, querySelectorAll: () => [], addEventListener() {}, dispatchEvent: (e) => events.push(e) };
   const ctx = vm.createContext({
-    window: {}, document: doc, navigator: { language: phones ? phones[0] : phone, languages: phones || [phone] }, console,
-    localStorage: { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)) },
+    window: {}, document: doc, console,
+    navigator: { language: phones ? phones[0] : phone, languages: languages !== undefined ? languages : phones || [phone] },
+    localStorage: blocked ? { getItem() { throw new Error("blocked"); }, setItem() { throw new Error("blocked"); } }
+      : { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)) },
     CustomEvent: function (type, init) { this.type = type; this.detail = init && init.detail; },
   });
   vm.runInContext(read("i18n.js") + "\n;this.DICT = DICT;", ctx, { filename: "i18n.js" });
@@ -99,6 +101,7 @@ for (const p of ES_PAGES) {
   const d = ownDict(p);
   check(Object.keys(d.fr).length > 20, `${p}: its French dictionary is read (${Object.keys(d.fr).length} keys)`);
   for (const f of audit(p, d.fr, d.en, d.es || {})) check(false, f);
+  for (const k of new Set([...Object.keys(d.en || {}), ...Object.keys(d.de || {})])) if (!(k in d.fr) && !(k in (d.es || {}))) check(false, `${p}: no Spanish for ${k}, a key of the English or German only`);
   for (const k of sharedKeysUsed(p, base.en)) sharedEs[k] = true;
 }
 const sharedFr = {}, sharedEn = {};
@@ -112,6 +115,7 @@ for (const k of Object.keys(baseEs)) check(k in sharedFr, `shared: the Spanish k
 const IB = inboardStrings();
 check(IB.es && Object.keys(IB.fr).length >= 10, `the in-lab camera's table has Spanish (${IB.es ? Object.keys(IB.es).length : 0} of ${Object.keys(IB.fr).length})`);
 for (const f of audit("camera/inboard.js", IB.fr, IB.en, IB.es || {})) check(false, f);
+for (const k of new Set([...Object.keys(IB.en || {}), ...Object.keys(IB.de || {})])) if (!(k in IB.fr) && !(k in (IB.es || {}))) check(false, `camera/inboard.js: no Spanish for ${k}, a key of the English or German only`);
 
 // the witness: one key removed, one placeholder renamed; exactly those two must fail
 {
@@ -200,6 +204,28 @@ for (const [phone, want] of [["es-ES", "es"], ["es-MX", "es"], ["es", "es"], ["c
 {
   const e = engine({ langs: "xx toString constructor __proto__", phone: "fr" });
   check(JSON.stringify(e.i18n.SUPPORTED) === '["fr","de","en"]', `a declaration with no known language falls back to fr de en (${e.i18n.SUPPORTED})`);
+}
+
+{
+  const e = engine({ langs: "fr de en es", phones: ["es-ES"], blocked: true }, SQ);
+  const first = e.i18n.get();
+  let threw = false;
+  try { e.i18n.setLang("fr"); } catch (err) { threw = true; }
+  check(first === "es" && !threw && e.i18n.get() === "fr", `storage blocked: the phone's language (${first}), and a tap still switches, without an error (${e.i18n.get()})`);
+}
+for (const languages of [[], null]) {
+  const e = engine({ langs: "fr de en es", phone: "es-AR", languages }, SQ);
+  check(e.i18n.get() === "es", `no list of the phone's languages (${JSON.stringify(languages)}): its one language, Spanish (${e.i18n.get()})`);
+}
+for (const [phones, langs, want] of [[["frr-DE", "de-DE"], null, "de"], [["esu"], "fr de en es", "en"], [["es_ES"], "fr de en es", "es"]]) {
+  const e = engine({ langs, phones }, langs ? SQ : null);
+  check(e.i18n.get() === want, `phone languages ${phones.join(",")}: ${want}, a language being the two letters before the region (${e.i18n.get()})`);
+}
+{
+  const a = engine({ langs: "fr de en es", phone: "es" }, SQ), b = engine({ phone: "fr" });
+  const safe = (e, k) => { try { return e.i18n.t(k); } catch (err) { return "threw"; } };
+  const keys = ["constructor", "toString", "__proto__", "hasOwnProperty"];
+  check(keys.every((k) => safe(a, k) === k && safe(b, k) === k), `a key named like a property of every object is an unknown key (${keys.map((k) => safe(a, k)).join(", ")})`);
 }
 
 console.log(failures.length ? `i18n-es: ${failures.length} of ${count} assertions failed` : `i18n-es: all ${count} assertions passed`);

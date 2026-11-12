@@ -92,7 +92,8 @@ def check(cond, msg):
 
 
 def new_page(browser, w, h, touch, lang, storage=None, init=""):
-    ctx = browser.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch, device_scale_factor=2)
+    # the phone in English, so that a page with no stored choice (storage blocked) opens in English on any machine
+    ctx = browser.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch, device_scale_factor=2, locale="en-US")
     ctx.add_init_script("try{localStorage.setItem('fc-lang','%s')}catch(e){}" % lang)
     if init:
         ctx.add_init_script(init)
