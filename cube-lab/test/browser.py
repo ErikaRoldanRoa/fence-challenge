@@ -28,6 +28,8 @@ def pill_text(page, key):
 
 from playwright.sync_api import sync_playwright
 
+import chrome   # Google Chrome started by the test (cube-lab/test/chrome.py), so that closing it never waits for its updater
+
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUT = sys.argv[1] if len(sys.argv) > 1 else "/tmp/cube-lab-test"
 os.makedirs(OUT, exist_ok=True)
@@ -941,7 +943,7 @@ def classes_names_looks(browser):
 
 
 with sync_playwright() as p:
-    b = p.chromium.launch(channel="chrome", args=["--use-angle=swiftshader", "--enable-unsafe-swiftshader"])
+    b = chrome.launch(p, args=["--use-angle=swiftshader"])   # chrome.launch adds --enable-unsafe-swiftshader
     only = os.environ.get("ONLY")      # ONLY=classes_names_looks runs that one part alone
     part = lambda f: (not only or only == f.__name__) and f(b)
     if not only or only == "run":
